@@ -26,4 +26,5 @@
     <string name="rating_explicit">Explicit</string>
     <string name="rating">Rating</string>
     <string name="any">Any</string>
+    <string name="posts">Posts</string>
 </resources>

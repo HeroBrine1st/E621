@@ -26,4 +26,5 @@
     <string name="rating_safe">Безопасный</string>
     <string name="rating">Рейтинг</string>
     <string name="any">Любой</string>
+    <string name="posts">Посты</string>
 </resources>

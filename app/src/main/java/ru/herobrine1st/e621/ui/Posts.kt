@@ -5,6 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.NavController
 
 @Composable
-fun Posts(navController: NavController, query: String) {
+fun Posts(query: String) {
     Text(query)
 }
