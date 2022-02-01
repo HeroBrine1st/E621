@@ -1,3 +1,29 @@
 <resources>
-    <string name="app_name">e621</string>
+    <string name="app_name" translatable="false">App</string>
+    <string name="add">Add</string>
+    <string name="add_tag">Add tag</string>
+    <string name="remove">Remove</string>
+    <string name="search">Search</string>
+    <string name="tags">Tags</string>
+    <string name="tag">Tag</string>
+    <string name="order">Order</string>
+    <string name="order_score">By score</string>
+    <string name="order_favcount">By favorite count</string>
+    <string name="order_tagcount">By tag count</string>
+    <string name="order_comment_count">By comment count</string>
+    <string name="order_mpixels">By resolution</string>
+    <string name="order_filesize">By filesize</string>
+    <string name="order_landscape">Wide and short to tall and thin</string>
+    <string name="order_portrait">Tall and thin to wide and short</string>
+    <string name="order_change">By last update sequence</string>
+    <string name="order_duration">By video duration</string>
+    <string name="order_random">Random</string>
+    <string name="order_id">Oldest to newest</string>
+    <string name="order_none">Newest to oldest</string>
+    <string name="order_ascending">Reverse order</string>
+    <string name="rating_safe">Safe</string>
+    <string name="rating_questionable">Questionable</string>
+    <string name="rating_explicit">Explicit</string>
+    <string name="rating">Rating</string>
+    <string name="any">Any</string>
 </resources>

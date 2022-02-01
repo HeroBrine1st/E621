@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="add">Добавить</string>
+    <string name="add_tag">Добавить тег</string>
+    <string name="remove">Удалить</string>
+    <string name="search">Поиск</string>
+    <string name="tags">Теги</string>
+    <string name="tag">Тег</string>
+    <string name="order">Сортировка</string>
+    <string name="order_score">По рейтингу</string>
+    <string name="order_favcount">По количеству пользователей, добавивших в избранное</string>
+    <string name="order_tagcount">По количеству тегов</string>
+    <string name="order_comment_count">По количеству комментариев</string>
+    <string name="order_mpixels">По разрешению</string>
+    <string name="order_filesize">По размеру файла</string>
+    <string name="order_landscape">Широкоформатные к узкоформатным</string>
+    <string name="order_portrait">Узкоформатные к широкоформатным</string>
+    <string name="order_change">По последнему изменению</string>
+    <string name="order_duration">По длительности видео</string>
+    <string name="order_random">Случайная</string>
+    <string name="order_id">От старого к новому</string>
+    <string name="order_none">От нового к старому</string>
+    <string name="order_ascending">Обратить порядок</string>
+    <string name="rating_explicit">Откровенный</string>
+    <string name="rating_questionable">Сомнительный</string>
+    <string name="rating_safe">Безопасный</string>
+    <string name="rating">Рейтинг</string>
+    <string name="any">Любой</string>
+</resources>
