@@ -21,9 +21,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import ru.herobrine1st.e621.api.Order
+import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.Posts
 import ru.herobrine1st.e621.ui.Screens
 import ru.herobrine1st.e621.ui.Search
+import ru.herobrine1st.e621.ui.SearchOptions
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.theme.E621Theme
 
@@ -73,9 +76,18 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             }
-                            composable(Screens.Search.route, Screens.Search.arguments) {
-
-                                Search {
+                            composable(Screens.Search.route, Screens.Search.arguments) { entry ->
+                                val arguments: Bundle =
+                                    entry.arguments!!
+                                val searchOptions = remember {
+                                    SearchOptions(
+                                        arguments.getString("tags")!!.let { if(it.isBlank()) emptyList() else it.split(",") },
+                                        Order.valueOf(arguments.getString("order")!!),
+                                        arguments.getBoolean("ascending"),
+                                        Rating.valueOf(arguments.getString("rating")!!)
+                                    )
+                                }
+                                Search(searchOptions) {
                                     navController.navigate(
                                         Screens.Posts.buildRoute {
                                             addArgument("tags", it.tags.joinToString(","))
@@ -91,15 +103,13 @@ class MainActivity : ComponentActivity() {
                             composable(Screens.Posts.route, Screens.Posts.arguments) {
                                 val arguments =
                                     it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
-                                val query = arguments.getString("tags")
-                                val order = arguments.getString("order")
+                                val tags = arguments.getString("tags")!!
+                                val order = arguments.getString("order")!!
                                 val ascending = arguments.getBoolean("ascending")
-                                val rating = arguments.getString("rating")
-                                query?.let {
-                                    Posts(
-                                        query = query
-                                    )
-                                } ?: Text("Arguments field is null")
+                                val rating = arguments.getString("rating")!!
+                                Posts(
+                                    query = tags
+                                )
                             }
                         }
                     }

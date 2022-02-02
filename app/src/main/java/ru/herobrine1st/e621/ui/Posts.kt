@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.ui.component.Base
 
 
 val PostsAppBarActions: @Composable RowScope.(NavHostController) -> Unit = { navController ->
@@ -33,5 +34,7 @@ val PostsAppBarActions: @Composable RowScope.(NavHostController) -> Unit = { nav
 
 @Composable
 fun Posts(query: String) {
-    Text(query)
+    Base {
+        Text(query)
+    }
 }

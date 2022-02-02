@@ -23,7 +23,6 @@ import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
-import java.io.Serializable
 
 
 @Composable
@@ -97,21 +96,23 @@ data class SearchOptions(
     val rating: Rating
 )
 
+val defaultSearchOptions = SearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, Rating.ANY)
+
 @Composable
-fun Search(onSearch: (SearchOptions) -> Unit) {
+fun Search(searchOptions: SearchOptions = defaultSearchOptions, onSearch: (SearchOptions) -> Unit) {
     var openDialog by remember { mutableStateOf(false) }
 
     // Tags
-    val tags = remember { mutableStateListOf<String>() }
+    val tags = remember { mutableStateListOf<String>().also { it.addAll(searchOptions.tags) } }
     // Order
-    var order: Order by remember { mutableStateOf(Order.NEWEST_TO_OLDEST) }
-    var orderAscending by remember { mutableStateOf(false) }
-    var supportsAscending by remember { mutableStateOf(true) }
+    var order: Order by remember { mutableStateOf(searchOptions.order) }
+    var orderAscending by remember { mutableStateOf(searchOptions.orderAscending) }
+    var supportsAscending by remember { mutableStateOf(searchOptions.order.supportsAscending) }
 
     @Suppress("ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE")
-    var pagingAllowed by remember { mutableStateOf(true) } // TODO добавить "со страницы"
+    var pagingAllowed by remember { mutableStateOf(searchOptions.order.supportsPaging) } // TODO добавить "со страницы"
     // Rating
-    var rating: Rating by remember { mutableStateOf(Rating.ANY) }
+    var rating: Rating by remember { mutableStateOf(searchOptions.rating) }
 
     if (openDialog) {
         AddTagDialog(onClose = { openDialog = false }, onAdd = { tags.add(it) })
