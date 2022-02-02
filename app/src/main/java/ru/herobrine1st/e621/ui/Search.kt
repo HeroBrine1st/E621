@@ -23,6 +23,7 @@ import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
+import java.io.Serializable
 
 
 @Composable

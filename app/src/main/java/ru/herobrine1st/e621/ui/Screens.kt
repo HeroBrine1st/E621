@@ -1,18 +1,26 @@
 package ru.herobrine1st.e621.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Feed
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavHostController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.Order
+import ru.herobrine1st.e621.api.Rating
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
-class RouteBuilder constructor(
+class RouteBuilder(
     private val initialRoute: String,
-    private val initialArguments: Array<out String>
+    private val initialArguments: Collection<String>
 ) {
     private val arguments: MutableMap<String, String> = HashMap()
     fun addArgument(key: String, value: Any, encode: Boolean = false) {
@@ -31,26 +39,69 @@ enum class Screens(
     @StringRes val title: Int,
     val icon: ImageVector,
     val initialRoute: String,
-    private vararg val arguments: String
+    vararg arguments: NamedNavArgument,
+    val appBarActions: @Composable RowScope.(NavHostController) -> Unit = {}
 ) {
     Home(R.string.app_name, Icons.Default.Home, "main"),
     Search(
         R.string.search,
         Icons.Default.Search,
         "search",
-        "tags", "order", "ascending", "rating"
+        navArgument("tags") {
+            type = NavType.StringType
+            defaultValue = ""
+        },
+        navArgument("order") {
+            type = NavType.StringType
+            defaultValue = Order.NEWEST_TO_OLDEST.name
+        },
+        navArgument("ascending") {
+            type = NavType.BoolType
+            defaultValue = false
+        },
+        navArgument("rating") {
+            type = NavType.StringType
+            defaultValue = Rating.ANY.name
+        },
+        appBarActions = {
+            androidx.compose.material.Text(text = "Test")
+        }
     ),
     Posts(
         R.string.posts,
         Icons.Default.Feed,
         "posts",
-        "tags", "order", "ascending", "rating" // TODO переделать на navArgument
+        navArgument("tags") {
+            type = NavType.StringType
+            defaultValue = ""
+        },
+        navArgument("order") {
+            type = NavType.StringType
+            defaultValue = Order.NEWEST_TO_OLDEST.name
+        },
+        navArgument("ascending") {
+            type = NavType.BoolType
+            defaultValue = false
+        },
+        navArgument("rating") {
+            type = NavType.StringType
+            defaultValue = Rating.ANY.name
+        }
     );
 
+    companion object {
+        val byRoute: Map<String, Screens> = HashMap<String, Screens>().apply {
+            for(value in values()) {
+                put(value.route, value)
+            }
+        }
+    }
+
+    val arguments = listOf(*arguments)
     val route: String
         get() {
             if (arguments.isEmpty()) return initialRoute
-            return initialRoute + arguments.joinToString(
+            return initialRoute + arguments.map { it.name }.joinToString(
                 separator = "&",
                 prefix = "?"
             ) {
@@ -59,6 +110,6 @@ enum class Screens(
         }
 
     fun buildRoute(builder: RouteBuilder.() -> Unit): String {
-        return RouteBuilder(initialRoute, arguments).apply(builder).build()
+        return RouteBuilder(initialRoute, arguments.map { it.name }).apply(builder).build()
     }
 }
