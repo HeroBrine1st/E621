@@ -23,7 +23,7 @@ class RouteBuilder(
     private val initialArguments: Collection<String>
 ) {
     private val arguments: MutableMap<String, String> = HashMap()
-    fun addArgument(key: String, value: Any, encode: Boolean = false) {
+    fun addArgument(key: String, value: Any?, encode: Boolean = false) {
         assert(key in initialArguments) { "Invalid argument key" }
         if (encode)
             arguments[key] = URLEncoder.encode(value.toString(), StandardCharsets.UTF_8.toString())
@@ -40,7 +40,7 @@ enum class Screens(
     val icon: ImageVector,
     val initialRoute: String,
     vararg arguments: NamedNavArgument,
-    val appBarActions: @Composable RowScope.(NavHostController) -> Unit = {}
+    val appBarActions: @Composable RowScope.(navHostController: NavHostController) -> Unit = {}
 ) {
     Home(R.string.app_name, Icons.Default.Home, "main"),
     Search(
@@ -63,9 +63,6 @@ enum class Screens(
             type = NavType.StringType
             defaultValue = Rating.ANY.name
         },
-        appBarActions = {
-            androidx.compose.material.Text(text = "Test")
-        }
     ),
     Posts(
         R.string.posts,
@@ -86,7 +83,8 @@ enum class Screens(
         navArgument("rating") {
             type = NavType.StringType
             defaultValue = Rating.ANY.name
-        }
+        },
+        appBarActions = PostsAppBarActions
     );
 
     companion object {
