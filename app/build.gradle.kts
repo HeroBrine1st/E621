@@ -34,6 +34,10 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
+        }
+        debug {
+            buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
         }
     }
     compileOptions {
@@ -77,9 +81,7 @@ dependencies {
     implementation("androidx.room:room-runtime:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
-
-    // optional - Kotlin Extensions and Coroutines support for Room
-    // implementation("androidx.room:room-ktx:$roomVersion")
+    implementation("androidx.room:room-ktx:$roomVersion")
 
     // optional - RxJava2 support for Room
     // implementation("androidx.room:room-rxjava2:$roomVersion")

@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.room.Room
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.*
@@ -25,6 +26,10 @@ import ru.herobrine1st.e621.ui.theme.E621Theme
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val db: Database = Room.databaseBuilder(
+            applicationContext,
+            Database::class.java, BuildConfig.DATABASE_NAME
+        ).build()
         setContent {
             E621Theme {
                 val navController = rememberNavController()
@@ -54,7 +59,7 @@ class MainActivity : ComponentActivity() {
                             startDestination = Screens.Home.route
                         ) {
                             composable(Screens.Home.route) {
-                                Home(navController)
+                                Home(navController, db)
                             }
                             composable(Screens.Search.route, Screens.Search.arguments) { entry ->
                                 val arguments: Bundle =
