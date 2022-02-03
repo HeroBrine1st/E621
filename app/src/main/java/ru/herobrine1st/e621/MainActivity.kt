@@ -5,11 +5,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.NavigateNext
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -23,11 +19,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
-import ru.herobrine1st.e621.ui.Posts
-import ru.herobrine1st.e621.ui.Screens
-import ru.herobrine1st.e621.ui.Search
-import ru.herobrine1st.e621.ui.SearchOptions
-import ru.herobrine1st.e621.ui.component.Base
+import ru.herobrine1st.e621.ui.*
 import ru.herobrine1st.e621.ui.theme.E621Theme
 
 class MainActivity : ComponentActivity() {
@@ -59,22 +51,10 @@ class MainActivity : ComponentActivity() {
                     ) {
                         NavHost(
                             navController = navController,
-                            startDestination = Screens.Home.initialRoute
+                            startDestination = Screens.Home.route
                         ) {
-                            composable(Screens.Home.initialRoute) {
-                                Base {
-                                    Button(
-                                        onClick = {
-                                            navController.navigate("search")
-                                        },
-                                        modifier = Modifier
-                                            .padding(4.dp)
-                                            .fillMaxWidth()
-                                    ) {
-                                        Text(stringResource(R.string.search))
-                                        Icon(Icons.Rounded.NavigateNext, contentDescription = null)
-                                    }
-                                }
+                            composable(Screens.Home.route) {
+                                Home(navController)
                             }
                             composable(Screens.Search.route, Screens.Search.arguments) { entry ->
                                 val arguments: Bundle =
@@ -108,7 +88,8 @@ class MainActivity : ComponentActivity() {
                                 val ascending = arguments.getBoolean("ascending")
                                 val rating = arguments.getString("rating")!!
                                 Posts(
-                                    query = tags
+                                    query = tags,
+                                    navController = navController
                                 )
                             }
                         }

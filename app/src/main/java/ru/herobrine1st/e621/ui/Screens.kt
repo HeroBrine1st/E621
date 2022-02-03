@@ -38,11 +38,11 @@ class RouteBuilder(
 enum class Screens(
     @StringRes val title: Int,
     val icon: ImageVector,
-    val initialRoute: String,
+    private val initialRoute: String,
     vararg arguments: NamedNavArgument,
     val appBarActions: @Composable RowScope.(navHostController: NavHostController) -> Unit = {}
 ) {
-    Home(R.string.app_name, Icons.Default.Home, "main"),
+    Home(R.string.app_name, Icons.Default.Home, "main", appBarActions = HomeAppBarActions),
     Search(
         R.string.search,
         Icons.Default.Search,
@@ -89,22 +89,20 @@ enum class Screens(
 
     companion object {
         val byRoute: Map<String, Screens> = HashMap<String, Screens>().apply {
-            for(value in values()) {
+            for (value in values()) {
                 put(value.route, value)
             }
         }
     }
 
     val arguments = listOf(*arguments)
-    val route: String
-        get() {
-            if (arguments.isEmpty()) return initialRoute
-            return initialRoute + arguments.map { it.name }.joinToString(
-                separator = "&",
-                prefix = "?"
-            ) {
-                return@joinToString "$it={$it}"
-            }
+    val route: String =
+        if (arguments.isEmpty()) initialRoute
+        else initialRoute + arguments.map { it.name }.joinToString(
+            separator = "&",
+            prefix = "?"
+        ) {
+            return@joinToString "$it={$it}"
         }
 
     fun buildRoute(builder: RouteBuilder.() -> Unit): String {
