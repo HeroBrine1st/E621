@@ -6,13 +6,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -35,8 +33,10 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val screen by remember { derivedStateOf { Screens.byRoute[navBackStackEntry?.destination?.route] } }
-                LaunchedEffect(screen) {
-                    Log.d("MainActivity", screen?.name ?: "No screen")
+                val applicationViewModel: ApplicationViewModel = viewModel()
+                LaunchedEffect(true) {
+                    applicationViewModel.injectDatabase(db)
+                    applicationViewModel.fetchAuthData()
                 }
                 Scaffold(
                     topBar = {
@@ -59,7 +59,7 @@ class MainActivity : ComponentActivity() {
                             startDestination = Screens.Home.route
                         ) {
                             composable(Screens.Home.route) {
-                                Home(navController, db)
+                                Home(navController, applicationViewModel)
                             }
                             composable(Screens.Search.route, Screens.Search.arguments) { entry ->
                                 val arguments: Bundle =

@@ -28,10 +28,14 @@ android {
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
-            buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
         }
         debug {
-            buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
+
+        }
+        forEach {
+            it.buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
+            it.buildConfigField("String", "API_URL", "\"e621.net\"")
+            it.buildConfigField("String", "USER_AGENT", "\"Android App/${android.defaultConfig.versionName} (${properties["E621_USERNAME"]})\"") // set in ~/.gradle/gradle.properties
         }
     }
     compileOptions {
