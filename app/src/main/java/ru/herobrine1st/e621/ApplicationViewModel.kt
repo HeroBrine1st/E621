@@ -52,12 +52,18 @@ class ApplicationViewModel : ViewModel() {
         .addInterceptor(UserAgentInterceptor(BuildConfig.USER_AGENT))
         .build()
 
-    private suspend fun addSnackbarMessage(@StringRes resourceId: Int, duration: SnackbarDuration) {
+    private suspend fun addSnackbarMessageInternal(@StringRes resourceId: Int, duration: SnackbarDuration) {
         snackbarMutex.withLock {
             snackbarMessages.add(resourceId to duration)
             if (snackbarMessage == null) {
                 snackbarMessage = snackbarMessages[0]
             }
+        }
+    }
+
+    fun addSnackbarMessage(@StringRes resourceId: Int, duration: SnackbarDuration) {
+        viewModelScope.launch {
+            addSnackbarMessageInternal(resourceId, duration)
         }
     }
 
@@ -122,17 +128,17 @@ class ApplicationViewModel : ViewModel() {
                             AuthState.AUTHORIZED
                         } catch (e: SQLiteException) {
                             Log.e(TAG, "SQL Error while trying to save credentials", e)
-                            addSnackbarMessage(R.string.database_error, SnackbarDuration.Long)
+                            addSnackbarMessageInternal(R.string.database_error, SnackbarDuration.Long)
                             AuthState.SQL_ERROR
                         }
                     } else {
-                        addSnackbarMessage(R.string.authentication_error, SnackbarDuration.Long)
+                        addSnackbarMessageInternal(R.string.authentication_error, SnackbarDuration.Long)
                         AuthState.UNAUTHORIZED
                     }
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "IO Error while trying to check credentials", e)
-                addSnackbarMessage(R.string.network_error, SnackbarDuration.Long)
+                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
                 authState = AuthState.IO_ERROR
             }
         }
