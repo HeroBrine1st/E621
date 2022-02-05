@@ -27,4 +27,8 @@
     <string name="rating">Rating</string>
     <string name="any">Any</string>
     <string name="posts">Posts</string>
+    <string name="database_error">Database error occurred</string>
+    <string name="network_error">Unknown network error occurred. No internet available?</string>
+    <string name="authentication_error">Invalid login and/or API key</string>
+    <string name="okay">Okay</string>
 </resources>

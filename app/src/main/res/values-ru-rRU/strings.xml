@@ -27,4 +27,8 @@
     <string name="rating">Рейтинг</string>
     <string name="any">Любой</string>
     <string name="posts">Посты</string>
+    <string name="database_error">Произошла ошибка базы данных</string>
+    <string name="network_error">Произошла неизвестная ошибка сети. Нет доступа в интернет?</string>
+    <string name="authentication_error">Неправильный логин и/или ключ API</string>
+    <string name="okay">Хорошо</string>
 </resources>

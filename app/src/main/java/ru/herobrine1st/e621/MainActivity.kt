@@ -16,12 +16,17 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.*
 import ru.herobrine1st.e621.ui.theme.E621Theme
 
+
 class MainActivity : ComponentActivity() {
+    companion object {
+        val TAG = MainActivity::class.simpleName
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val db: Database = Room.databaseBuilder(
@@ -34,10 +39,13 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val screen by remember { derivedStateOf { Screens.byRoute[navBackStackEntry?.destination?.route] } }
                 val applicationViewModel: ApplicationViewModel = viewModel()
+                val scaffoldState = rememberScaffoldState()
+
                 LaunchedEffect(true) {
                     applicationViewModel.injectDatabase(db)
                     applicationViewModel.fetchAuthData()
                 }
+                SnackbarController(applicationViewModel, scaffoldState)
                 Scaffold(
                     topBar = {
                         TopAppBar(
@@ -48,7 +56,8 @@ class MainActivity : ComponentActivity() {
                             elevation = 12.dp,
                             actions = { screen?.appBarActions?.let { it(navController) } }
                         )
-                    }
+                    },
+                    scaffoldState = scaffoldState
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -66,7 +75,8 @@ class MainActivity : ComponentActivity() {
                                     entry.arguments!!
                                 val searchOptions = remember {
                                     SearchOptions(
-                                        arguments.getString("tags")!!.let { if(it.isBlank()) emptyList() else it.split(",") },
+                                        arguments.getString("tags")!!
+                                            .let { if (it.isBlank()) emptyList() else it.split(",") },
                                         Order.valueOf(arguments.getString("order")!!),
                                         arguments.getBoolean("ascending"),
                                         Rating.valueOf(arguments.getString("rating")!!)
