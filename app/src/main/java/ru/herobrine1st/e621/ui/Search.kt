@@ -101,7 +101,7 @@ data class SearchOptions(
 
 val defaultSearchOptions = SearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, Rating.ANY)
 
-class SearchStateHolder(
+class SearchScreenState(
     initialSearchOptions: SearchOptions = defaultSearchOptions,
     openDialog: Boolean = false
 ) {
@@ -116,7 +116,7 @@ class SearchStateHolder(
         SearchOptions(ArrayList(tags), order, orderAscending, rating)
 
     companion object {
-        val Saver: Saver<SearchStateHolder, Bundle> = Saver(
+        val Saver: Saver<SearchScreenState, Bundle> = Saver(
             save = {
                 val bundle = Bundle()
                 bundle.putStringArrayList("tags", ArrayList(it.tags))
@@ -133,7 +133,7 @@ class SearchStateHolder(
                     it.getBoolean("orderAscending"),
                     Rating.valueOf(it.getString("rating")!!)
                 )
-                return@Saver SearchStateHolder(searchOptions, it.getBoolean("openDialog"))
+                return@Saver SearchScreenState(searchOptions, it.getBoolean("openDialog"))
             }
         )
     }
@@ -144,8 +144,8 @@ fun Search(
     initialSearchOptions: SearchOptions = defaultSearchOptions,
     onSearch: (SearchOptions) -> Unit
 ) {
-    val state = rememberSaveable(initialSearchOptions, saver = SearchStateHolder.Saver) {
-        SearchStateHolder(initialSearchOptions)
+    val state = rememberSaveable(initialSearchOptions, saver = SearchScreenState.Saver) {
+        SearchScreenState(initialSearchOptions)
     }
 
     if (state.openDialog) {
