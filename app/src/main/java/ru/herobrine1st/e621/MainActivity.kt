@@ -73,6 +73,7 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 Search(searchOptions) {
+                                    navController.popBackStack()
                                     navController.navigate(
                                         Screens.Posts.buildRoute {
                                             addArgument("tags", it.tags.joinToString(","))
@@ -80,9 +81,7 @@ class MainActivity : ComponentActivity() {
                                             addArgument("ascending", it.orderAscending)
                                             addArgument("rating", it.rating.name)
                                         }
-                                    ) {
-                                        navController.popBackStack()
-                                    }
+                                    )
                                 }
                             }
                             composable(Screens.Posts.route, Screens.Posts.arguments) {
