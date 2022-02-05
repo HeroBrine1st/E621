@@ -1,12 +1,14 @@
 package ru.herobrine1st.e621
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -16,11 +18,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
-import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.api.Order
-import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.*
 import ru.herobrine1st.e621.ui.theme.E621Theme
+import ru.herobrine1st.e621.util.SearchOptions
 
 
 class MainActivity : ComponentActivity() {
@@ -73,15 +73,7 @@ class MainActivity : ComponentActivity() {
                             composable(Screens.Search.route, Screens.Search.arguments) { entry ->
                                 val arguments: Bundle =
                                     entry.arguments!!
-                                val searchOptions = remember {
-                                    SearchOptions(
-                                        arguments.getString("tags")!!
-                                            .let { if (it.isBlank()) emptyList() else it.split(",") },
-                                        Order.valueOf(arguments.getString("order")!!),
-                                        arguments.getBoolean("ascending"),
-                                        Rating.valueOf(arguments.getString("rating")!!)
-                                    )
-                                }
+                                val searchOptions = remember { SearchOptions(arguments) }
                                 Search(searchOptions) {
                                     navController.popBackStack()
                                     navController.navigate(
@@ -89,7 +81,7 @@ class MainActivity : ComponentActivity() {
                                             addArgument("tags", it.tags.joinToString(","))
                                             addArgument("order", it.order.name)
                                             addArgument("ascending", it.orderAscending)
-                                            addArgument("rating", it.rating.name)
+                                            addArgument("rating", it.rating.joinToString(",") { it.name })
                                         }
                                     )
                                 }
@@ -97,12 +89,9 @@ class MainActivity : ComponentActivity() {
                             composable(Screens.Posts.route, Screens.Posts.arguments) {
                                 val arguments =
                                     it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
-                                val tags = arguments.getString("tags")!!
-                                val order = arguments.getString("order")!!
-                                val ascending = arguments.getBoolean("ascending")
-                                val rating = arguments.getString("rating")!!
+                                val searchOptions = remember { SearchOptions(arguments) }
                                 Posts(
-                                    query = tags,
+                                    query = searchOptions.tags,
                                     navController = navController
                                 )
                             }

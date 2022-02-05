@@ -61,7 +61,7 @@ enum class Screens(
         },
         navArgument("rating") {
             type = NavType.StringType
-            defaultValue = Rating.ANY.name
+            defaultValue = Rating.values().joinToString(",") { it.name }
         },
     ),
     Posts(
@@ -82,7 +82,7 @@ enum class Screens(
         },
         navArgument("rating") {
             type = NavType.StringType
-            defaultValue = Rating.ANY.name
+            defaultValue = Rating.values().joinToString(",") { it.name }
         },
         appBarActions = PostsAppBarActions
     );

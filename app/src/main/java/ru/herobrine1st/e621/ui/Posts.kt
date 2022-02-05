@@ -42,13 +42,13 @@ val PostsAppBarActions: @Composable RowScope.(NavHostController) -> Unit = { nav
 }
 
 @Composable
-fun Posts(query: String, navController: NavHostController) {
+fun Posts(query: List<String>, navController: NavHostController) {
     vm = viewModel()
     Base {
         Button(onClick = {
             navController.navigate(Screens.Home.route)
         }) {
-            Text(query)
+            Text(query.joinToString(","))
         }
     }
 }

@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.google.accompanist.flowlayout.FlowRow
@@ -26,6 +27,7 @@ import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
+import ru.herobrine1st.e621.util.SearchOptions
 
 
 @Composable
@@ -92,14 +94,18 @@ fun AddTagDialog(onClose: () -> Unit, onAdd: (String) -> Unit) {
     }
 }
 
-data class SearchOptions(
-    val tags: List<String>,
-    val order: Order,
-    val orderAscending: Boolean,
-    val rating: Rating
-)
+@Composable
+@Preview
+fun AddTagDialogPreview() {
+    AddTagDialog({}, {})
+}
 
-val defaultSearchOptions = SearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, Rating.ANY)
+val defaultSearchOptions = SearchOptions(
+    emptyList(),
+    Order.NEWEST_TO_OLDEST,
+    false,
+    Rating.values().toList()
+)
 
 class SearchScreenState(
     initialSearchOptions: SearchOptions = defaultSearchOptions,
@@ -108,7 +114,7 @@ class SearchScreenState(
     val tags = mutableStateListOf<String>().also { it.addAll(initialSearchOptions.tags) }
     var order by mutableStateOf(initialSearchOptions.order)
     var orderAscending by mutableStateOf(initialSearchOptions.orderAscending)
-    var rating by mutableStateOf(initialSearchOptions.rating)
+    var rating = mutableStateListOf<Rating>().also { it.addAll(initialSearchOptions.rating) }
 
     var openDialog by mutableStateOf(openDialog)
 
@@ -117,23 +123,18 @@ class SearchScreenState(
 
     companion object {
         val Saver: Saver<SearchScreenState, Bundle> = Saver(
-            save = {
+            save = { state ->
                 val bundle = Bundle()
-                bundle.putStringArrayList("tags", ArrayList(it.tags))
-                bundle.putString("order", it.order.name)
-                bundle.putBoolean("orderAscending", it.orderAscending)
-                bundle.putString("rating", it.rating.name)
-                bundle.putBoolean("openDialog", it.openDialog)
+                bundle.putString("tags", state.tags.joinToString(",")) // Couldn't use putStringArrayList because restore constructor used with Navigation
+                bundle.putString("order", state.order.name)
+                bundle.putBoolean("orderAscending", state.orderAscending)
+                bundle.putString("rating", state.rating.joinToString(",") { it.name })
+                bundle.putBoolean("openDialog", state.openDialog)
                 return@Saver bundle
             },
-            restore = {
-                val searchOptions = SearchOptions(
-                    it.getStringArrayList("tags")!!,
-                    Order.valueOf(it.getString("order")!!),
-                    it.getBoolean("orderAscending"),
-                    Rating.valueOf(it.getString("rating")!!)
-                )
-                return@Saver SearchScreenState(searchOptions, it.getBoolean("openDialog"))
+            restore = { bundle ->
+                val searchOptions = SearchOptions(bundle)
+                return@Saver SearchScreenState(searchOptions, bundle.getBoolean("openDialog"))
             }
         )
     }
@@ -230,11 +231,49 @@ fun Search(
         }
         Spacer(modifier = Modifier.height(4.dp))
         SettingCard(title = stringResource(R.string.rating)) {
+            key(null) {
+                val selected = state.rating.size == 3
+                val onClick: () -> Unit = {
+                    state.rating.clear()
+                    state.rating.addAll(Rating.values().toList())
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.selectable(
+                        selected = selected,
+                        onClick = onClick
+                    )
+                ) {
+                    RadioButton(
+                        modifier = Modifier.padding(start = 8.dp),
+                        selected = selected,
+                        onClick = onClick
+                    )
+                    Text(
+                        text = stringResource(R.string.any),
+                        modifier = Modifier.padding(start = 4.dp, end = 8.dp)
+                    )
+                }
+            }
             for (v in Rating.values()) {
                 key(v.apiName) {
-                    val selected = v == state.rating
+                    val selected = v in state.rating && state.rating.size != 3
                     val onClick: () -> Unit = {
-                        state.rating = v
+                        when {
+                            state.rating.size == 3 -> {
+                                state.rating.clear()
+                                state.rating.add(v)
+                            }
+                            v in state.rating -> {
+                                state.rating.remove(v)
+                            }
+                            else -> {
+                                state.rating.add(v)
+                            }
+                        }
+                        if(state.rating.isEmpty()) {
+                            state.rating.addAll(Rating.values())
+                        }
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -243,10 +282,10 @@ fun Search(
                             onClick = onClick
                         )
                     ) {
-                        RadioButton(
+                        Checkbox(
                             modifier = Modifier.padding(start = 8.dp),
-                            selected = selected,
-                            onClick = onClick
+                            checked = selected,
+                            onCheckedChange = { onClick() }
                         )
                         Text(
                             text = stringResource(v.descriptionId),
