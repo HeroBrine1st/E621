@@ -16,4 +16,19 @@ data class SearchOptions(
         Order.valueOf(bundle.getString("order")!!),
         bundle.getBoolean("orderAscending"),
         bundle.getString("rating")!!.split(",").map { Rating.valueOf(it) })
+
+    fun compileToQuery(): String {
+        var query = tags.joinToString("+")
+        (if(orderAscending) this.order.ascendingApiName else this.order.apiName)?.let {
+            query += "+order:$it"
+        }
+        if(rating.size < Rating.values().size && rating.isNotEmpty()) {
+            query += "+" + if(rating.size == 1) {
+                "rating:${rating[0].apiName}"
+            } else {
+                rating.joinToString("+") { "~rating:${it.apiName}" }
+            }
+        }
+        return query
+    }
 }

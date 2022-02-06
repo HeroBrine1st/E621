@@ -90,10 +90,7 @@ class MainActivity : ComponentActivity() {
                                 val arguments =
                                     it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
                                 val searchOptions = remember { SearchOptions(arguments) }
-                                Posts(
-                                    query = searchOptions.tags,
-                                    navController = navController
-                                )
+                                Posts(searchOptions, applicationViewModel)
                             }
                         }
                     }

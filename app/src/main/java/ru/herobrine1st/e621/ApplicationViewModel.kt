@@ -9,6 +9,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -17,6 +19,8 @@ import okhttp3.Credentials
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
+import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostsEndpoint
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.net.UserAgentInterceptor
 import ru.herobrine1st.e621.util.lateinitMutableState
@@ -51,6 +55,9 @@ class ApplicationViewModel : ViewModel() {
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(UserAgentInterceptor(BuildConfig.USER_AGENT))
         .build()
+    private var credentials: String? = null
+    private val objectMapper = ObjectMapper()
+        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
     private suspend fun addSnackbarMessageInternal(
         @StringRes resourceId: Int,
@@ -163,6 +170,7 @@ class ApplicationViewModel : ViewModel() {
             auth.apiKey = apiKey
             database.authDao().insert(auth)
         }
+        credentials = Credentials.basic(login, apiKey)
     }
 
     fun logout() {
@@ -171,11 +179,38 @@ class ApplicationViewModel : ViewModel() {
             try {
                 database.authDao().delete(auth)
             } catch (e: SQLiteException) {
-                Log.e(TAG, "IO Error while trying to logout", e)
+                Log.e(TAG, "SQLite Error while trying to logout", e)
+                addSnackbarMessageInternal(
+                    R.string.database_error,
+                    SnackbarDuration.Long
+                )
                 return@launch
-                // TODO snackbar
             }
+            credentials = null
             authState = AuthState.NO_DATA
+        }
+    }
+
+    fun fetchPosts(tags: String, page: Int = 1): List<Post> {
+        val req = Request.Builder()
+            .url(
+                HttpUrl.Builder()
+                    .scheme("https")
+                    .host(BuildConfig.API_URL)
+                    .addPathSegments("posts.json")
+                    .addEncodedQueryParameter("tags", tags)
+                    .addQueryParameter("page", page.toString())
+                    .build()
+                    .also { Log.d(TAG, it.toString()) }
+            )
+            .apply { credentials?.let { header("Authorization", it) } }
+            .addHeader("Accept", "application/json")
+            .build()
+        okHttpClient.newCall(req).execute().use {
+            return objectMapper.readValue(
+                it.body!!.charStream(),
+                PostsEndpoint::class.java
+            ).posts
         }
     }
 }
