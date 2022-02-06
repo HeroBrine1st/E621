@@ -52,7 +52,10 @@ class ApplicationViewModel : ViewModel() {
         .addInterceptor(UserAgentInterceptor(BuildConfig.USER_AGENT))
         .build()
 
-    private suspend fun addSnackbarMessageInternal(@StringRes resourceId: Int, duration: SnackbarDuration) {
+    private suspend fun addSnackbarMessageInternal(
+        @StringRes resourceId: Int,
+        duration: SnackbarDuration
+    ) {
         snackbarMutex.withLock {
             snackbarMessages.add(resourceId to duration)
             if (snackbarMessage == null) {
@@ -68,9 +71,10 @@ class ApplicationViewModel : ViewModel() {
     }
 
     fun notifySnackbarMessageWillDisplay() {
-        if(snackbarShowing)
+        if (snackbarShowing) {
             Log.w(TAG, "Snackbar behavior may be unpredictable")
             Log.w(TAG, "notifySnackbarMessageWillDisplay called when snackbarShowing is true")
+        }
         snackbarShowing = true
     }
 
@@ -128,11 +132,17 @@ class ApplicationViewModel : ViewModel() {
                             AuthState.AUTHORIZED
                         } catch (e: SQLiteException) {
                             Log.e(TAG, "SQL Error while trying to save credentials", e)
-                            addSnackbarMessageInternal(R.string.database_error, SnackbarDuration.Long)
+                            addSnackbarMessageInternal(
+                                R.string.database_error,
+                                SnackbarDuration.Long
+                            )
                             AuthState.SQL_ERROR
                         }
                     } else {
-                        addSnackbarMessageInternal(R.string.authentication_error, SnackbarDuration.Long)
+                        addSnackbarMessageInternal(
+                            R.string.authentication_error,
+                            SnackbarDuration.Long
+                        )
                         AuthState.UNAUTHORIZED
                     }
                 }
