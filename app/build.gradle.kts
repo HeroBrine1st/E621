@@ -7,6 +7,7 @@ plugins {
 val composeVersion = "1.0.5"
 val kotlinVersion = "1.5.31"
 val roomVersion = "2.4.1"
+val pagingVersion = "3.1.0"
 
 android {
     compileSdk = 32
@@ -80,22 +81,11 @@ dependencies {
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
+    implementation("androidx.room:room-paging:2.4.1")
 
-    // optional - RxJava2 support for Room
-    // implementation("androidx.room:room-rxjava2:$roomVersion")
 
-    // optional - RxJava3 support for Room
-    // implementation("androidx.room:room-rxjava3:$roomVersion")
-
-    // optional - Guava support for Room, including Optional and ListenableFuture
-    // implementation("androidx.room:room-guava:$roomVersion")
-
-    // optional - Test helpers
-    // testImplementation("androidx.room:room-testing:$roomVersion")
-
-    // optional - Paging 3 Integration
-    // implementation("androidx.room:room-paging:2.4.1")
-
+    implementation("androidx.paging:paging-runtime:$pagingVersion")
+    implementation("androidx.paging:paging-compose:1.0.0-alpha14")
 
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
     implementation("com.google.accompanist:accompanist-flowlayout:0.20.3")

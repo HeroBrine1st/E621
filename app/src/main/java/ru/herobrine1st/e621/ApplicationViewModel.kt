@@ -191,17 +191,17 @@ class ApplicationViewModel : ViewModel() {
         }
     }
 
-    fun fetchPosts(tags: String, page: Int = 1): List<Post> {
+    fun fetchPosts(tags: String, page: Int = 1, limit: Int? = null): List<Post> {
         val req = Request.Builder()
             .url(
-                HttpUrl.Builder()
-                    .scheme("https")
-                    .host(BuildConfig.API_URL)
-                    .addPathSegments("posts.json")
-                    .addEncodedQueryParameter("tags", tags)
-                    .addQueryParameter("page", page.toString())
-                    .build()
-                    .also { Log.d(TAG, it.toString()) }
+                HttpUrl.Builder().apply {
+                    scheme("https")
+                    host(BuildConfig.API_URL)
+                    addPathSegments("posts.json")
+                    addEncodedQueryParameter("tags", tags)
+                    limit?.let { addQueryParameter("limit", it.toString()) }
+                    addQueryParameter("page", page.toString())
+                }.build().also { Log.d(TAG, it.toString()) }
             )
             .apply { credentials?.let { header("Authorization", it) } }
             .addHeader("Accept", "application/json")
