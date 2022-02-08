@@ -33,7 +33,7 @@ fun Base(horizontalAlignment: Alignment.Horizontal = Alignment.Start, content: @
 }
 
 @Composable
-fun LazyBase(lazyListState: LazyListState = rememberLazyListState(), content: LazyListScope.() -> Unit) {
+fun LazyBase(lazyListState: LazyListState = rememberLazyListState(), horizontalAlignment: Alignment.Horizontal = Alignment.Start, content: LazyListScope.() -> Unit) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
@@ -43,6 +43,7 @@ fun LazyBase(lazyListState: LazyListState = rememberLazyListState(), content: La
                 .fillMaxHeight()
                 .fillMaxWidth(width),
             state = lazyListState,
+            horizontalAlignment = horizontalAlignment,
             content = content
         )
     }

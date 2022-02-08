@@ -110,7 +110,7 @@ fun Home(navController: NavHostController, applicationViewModel: ApplicationView
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        applicationViewModel.tryAuthenticate(username, password) {
+                        applicationViewModel.authenticate(username, password) {
                             username = ""
                             password = ""
                         }

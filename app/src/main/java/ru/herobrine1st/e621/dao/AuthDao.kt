@@ -12,8 +12,8 @@ interface AuthDao {
     @Insert
     suspend fun insert(auth: Auth)
 
-    @Delete
-    suspend fun delete(user: Auth)
+    @Query("DELETE FROM auth")
+    suspend fun logout()
 
     @Update
     suspend fun update(user: Auth)

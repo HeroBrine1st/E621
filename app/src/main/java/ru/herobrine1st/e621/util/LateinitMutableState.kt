@@ -7,7 +7,7 @@ import java.lang.NullPointerException
 import kotlin.reflect.KProperty
 
 /**
- * Костыль для того, чтобы использовать state для хранения общей (между Screen и соответствующего actionBarActions) ViewModel
+ * Костыль для того, чтобы использовать state для хранения общей (между Screen и соответствующего actionBarActions) ViewModel/StateHolder
  * Без использования этого класса возможны гейзенбаги
  * P.s. на самом деле хватило бы обычного mutableStateOf, но мне нужен lateinit
  */

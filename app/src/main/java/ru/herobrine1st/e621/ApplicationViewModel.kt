@@ -9,24 +9,14 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import okhttp3.Credentials
-import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.api.model.PostsEndpoint
+import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.entity.Auth
-import ru.herobrine1st.e621.net.UserAgentInterceptor
-import ru.herobrine1st.e621.util.lateinitMutableState
 import java.io.IOException
 
-val TAG = ApplicationViewModel::class.simpleName
 
 enum class AuthState {
     NO_DATA, // default if no auth info at the start of app
@@ -38,9 +28,10 @@ enum class AuthState {
 }
 
 class ApplicationViewModel : ViewModel() {
+    companion object {
+        val TAG = ApplicationViewModel::class.simpleName
+    }
     lateinit var database: Database
-        private set
-    var auth: Auth by lateinitMutableState()
         private set
     var authState: AuthState by mutableStateOf(AuthState.LOADING)
         private set
@@ -51,13 +42,6 @@ class ApplicationViewModel : ViewModel() {
         private set
     var snackbarMessage by mutableStateOf<Pair<@StringRes Int, SnackbarDuration>?>(null)
         private set
-
-    private val okHttpClient = OkHttpClient.Builder()
-        .addInterceptor(UserAgentInterceptor(BuildConfig.USER_AGENT))
-        .build()
-    private var credentials: String? = null
-    private val objectMapper = ObjectMapper()
-        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
     private suspend fun addSnackbarMessageInternal(
         @StringRes resourceId: Int,
@@ -109,54 +93,58 @@ class ApplicationViewModel : ViewModel() {
             if (auth == null) {
                 authState = AuthState.NO_DATA
             } else {
-                authState = AuthState.AUTHORIZED
-                this@ApplicationViewModel.auth = auth
+                authState = try {
+                    if (Api.checkCredentials(auth.login, auth.apiKey)) {
+                        AuthState.AUTHORIZED
+                    } else {
+                        try {
+                            database.authDao().logout()
+                        } catch(e: Throwable) {
+                            Log.e(TAG, "Unknown exception occurred while purging invalid auth data", e)
+                        }
+                        AuthState.NO_DATA
+                    }
+                } catch (e: IOException) {
+                    Log.e(TAG, "IO Error while trying to check credentials", e)
+                    addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                    AuthState.IO_ERROR
+                } catch (e: Throwable) {
+                    AuthState.NO_DATA
+                }
             }
         }
     }
 
-    fun tryAuthenticate(login: String, apiKey: String, onSuccess: () -> Unit = {}) {
-        assert(authState != AuthState.LOADING)
+    fun authenticate(
+        login: String,
+        apiKey: String,
+        onSuccess: () -> Unit = {}
+    ) {
         viewModelScope.launch(Dispatchers.IO) {
             authState = AuthState.LOADING
-            val req = Request.Builder()
-                .url(
-                    HttpUrl.Builder()
-                        .scheme("https")
-                        .host(BuildConfig.API_URL)
-                        .addPathSegments("users/$login.json")
-                        .build()
-                )
-                .header("Authorization", Credentials.basic(login, apiKey))
-                .addHeader("Accept", "application/json")
-                .build()
-            try {
-                okHttpClient.newCall(req).execute().use {
-                    authState = if (it.isSuccessful) {
-                        try {
-                            updateAuthData(login, apiKey)
-                            onSuccess()
-                            AuthState.AUTHORIZED
-                        } catch (e: SQLiteException) {
-                            Log.e(TAG, "SQL Error while trying to save credentials", e)
-                            addSnackbarMessageInternal(
-                                R.string.database_error,
-                                SnackbarDuration.Long
-                            )
-                            AuthState.SQL_ERROR
-                        }
-                    } else {
-                        addSnackbarMessageInternal(
-                            R.string.authentication_error,
-                            SnackbarDuration.Long
-                        )
-                        AuthState.UNAUTHORIZED
-                    }
+            authState = try {
+                if (Api.checkCredentials(login, apiKey)) {
+                    updateAuthData(login, apiKey)
+                    onSuccess()
+                    AuthState.AUTHORIZED
+                } else {
+                    addSnackbarMessageInternal(
+                        R.string.authentication_error,
+                        SnackbarDuration.Long
+                    )
+                    AuthState.UNAUTHORIZED
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "IO Error while trying to check credentials", e)
                 addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
-                authState = AuthState.IO_ERROR
+                AuthState.IO_ERROR
+            } catch (e: SQLiteException) {
+                Log.e(TAG, "SQL Error while trying to save credentials", e)
+                addSnackbarMessageInternal(
+                    R.string.database_error,
+                    SnackbarDuration.Long
+                )
+                AuthState.SQL_ERROR
             }
         }
     }
@@ -170,14 +158,13 @@ class ApplicationViewModel : ViewModel() {
             auth.apiKey = apiKey
             database.authDao().insert(auth)
         }
-        credentials = Credentials.basic(login, apiKey)
     }
 
     fun logout() {
         assert(authState == AuthState.AUTHORIZED)
         viewModelScope.launch {
             try {
-                database.authDao().delete(auth)
+                database.authDao().logout()
             } catch (e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to logout", e)
                 addSnackbarMessageInternal(
@@ -186,31 +173,8 @@ class ApplicationViewModel : ViewModel() {
                 )
                 return@launch
             }
-            credentials = null
+            Api.logout()
             authState = AuthState.NO_DATA
-        }
-    }
-
-    fun fetchPosts(tags: String, page: Int = 1, limit: Int? = null): List<Post> {
-        val req = Request.Builder()
-            .url(
-                HttpUrl.Builder().apply {
-                    scheme("https")
-                    host(BuildConfig.API_URL)
-                    addPathSegments("posts.json")
-                    addEncodedQueryParameter("tags", tags)
-                    limit?.let { addQueryParameter("limit", it.toString()) }
-                    addQueryParameter("page", page.toString())
-                }.build().also { Log.d(TAG, it.toString()) }
-            )
-            .apply { credentials?.let { header("Authorization", it) } }
-            .addHeader("Accept", "application/json")
-            .build()
-        okHttpClient.newCall(req).execute().use {
-            return objectMapper.readValue(
-                it.body!!.charStream(),
-                PostsEndpoint::class.java
-            ).posts
         }
     }
 }
