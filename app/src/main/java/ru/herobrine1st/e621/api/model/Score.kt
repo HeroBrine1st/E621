@@ -1,22 +1,14 @@
-package ru.herobrine1st.e621.api.model;
+package ru.herobrine1st.e621.api.model
 
-public class Score {
-    public int getUp() {
-        return up;
-    }
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import ru.herobrine1st.e621.api.model.Score
+import ru.herobrine1st.e621.api.model.Tags
+import ru.herobrine1st.e621.api.model.Relationships
+import ru.herobrine1st.e621.api.model.Post
 
-    public int getDown() {
-        return down;
-    }
-
-    public int getTotal() {
-        return total;
-    }
-
-
-    int up;
-    int down;
-
-
-    int total;
-}
+data class Score(
+    val up: Int,
+    val down: Int,
+    val total: Int
+)

@@ -1,37 +1,13 @@
-package ru.herobrine1st.e621.api.model;
+package ru.herobrine1st.e621.api.model
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonProperty
 
-public class File {
-    public int getWidth() {
-        return width;
-    }
-
-    public int getHeight() {
-        return height;
-    }
-
-    public String getExtension() {
-        return extension;
-    }
-
-    public long getSize() {
-        return size;
-    }
-
-    public String getMd5() {
-        return md5;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    int width;
-    int height;
+data class File(
+    val width: Int,
+    val height: Int,
     @JsonProperty("ext")
-    String extension;
-    long size;
-    String md5;
-    String url;
-}
+    val extension: String?,
+    val size: Long,
+    val md5: String,
+    val url: String
+)

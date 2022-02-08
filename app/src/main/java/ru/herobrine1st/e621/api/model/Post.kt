@@ -1,42 +1,20 @@
-package ru.herobrine1st.e621.api.model;
+package ru.herobrine1st.e621.api.model
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import ru.herobrine1st.e621.api.Rating
+import ru.herobrine1st.e621.api.model.Score
+import ru.herobrine1st.e621.api.model.Tags
+import ru.herobrine1st.e621.api.model.Relationships
+import ru.herobrine1st.e621.api.model.Post
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class Post {
-    public int getId() {
-        return id;
-    }
-
-    public File getFile() {
-        return file;
-    }
-
-    public Score getScore() {
-        return score;
-    }
-
-    public Tags getTags() {
-        return tags;
-    }
-
-    public String getRating() {
-        return rating;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public Relationships getRelationships() {
-        return relationships;
-    }
-
-    int id;
-    File file;
-    Score score;
-    Tags tags;
-    String rating;
-    String description;
-    Relationships relationships;
-}
+data class Post(
+    val id: Int,
+    val file: File,
+    val score: Score,
+    val tags: Tags,
+    val rating: Rating,
+    val description: String,
+    val relationships: Relationships
+)

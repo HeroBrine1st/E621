@@ -1,44 +1,22 @@
-package ru.herobrine1st.e621.api.model;
+package ru.herobrine1st.e621.api.model
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
-import java.util.List;
+@JsonIgnoreProperties("invalid")
+data class Tags(
+    var general: List<String>,
+    var species: List<String>,
+    var character: List<String>,
+    var copyright: List<String>,
+    var artist: List<String>,
+    var lore: List<String>,
+    var meta: List<String>
+) {
+    val all by lazy {
+        artist + copyright + character + species + general + lore + meta
 
-@JsonIgnoreProperties({"invalid"})
-public class Tags {
-    List<String> general;
-    List<String> species;
-    List<String> character;
-    List<String> copyright;
-    List<String> artist;
-    List<String> lore;
-    List<String> meta;
-
-    public List<String> getGeneral() {
-        return general;
     }
-
-    public List<String> getSpecies() {
-        return species;
-    }
-
-    public List<String> getCharacter() {
-        return character;
-    }
-
-    public List<String> getCopyright() {
-        return copyright;
-    }
-
-    public List<String> getArtist() {
-        return artist;
-    }
-
-    public List<String> getLore() {
-        return lore;
-    }
-
-    public List<String> getMeta() {
-        return meta;
+    val reduced by lazy {
+        copyright + artist + character
     }
 }
