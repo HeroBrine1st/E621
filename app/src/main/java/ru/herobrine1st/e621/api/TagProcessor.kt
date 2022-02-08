@@ -101,8 +101,8 @@ fun createTagProcessor(query: String): Predicate<Post> {
     microQueries.filter { it.startsWith("~") }.let {
         if (it.isNotEmpty()) {
             microQueries.removeAll(it)
-            predicates.addAll(
-                it.map { it1 -> parseSimpleMicroQuery(it1.substring(1)) }
+            predicates.add(
+                it.map { it1 -> parseSimpleMicroQuery(it1.substring(1)) }.reduce {a, b -> a.or(b)}
             )
         }
     }

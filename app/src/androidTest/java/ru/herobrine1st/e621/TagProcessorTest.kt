@@ -190,4 +190,22 @@ class TagProcessorTest {
         test(true, "id:<3159689")
         test(true, "id:>3159687")
     }
+
+    @Test
+    fun tagProcessor_negative_integer() {
+        test(false, "score:<10")
+        test(false, "score:>12")
+        test(false, "score:10")
+        test(false, "score:15..20")
+        test(false, "score:5..10")
+        test(false, "id:3159689")
+        test(false, "id:>3159689")
+        test(false, "id:<3159687")
+    }
+
+    @Test
+    fun tagProcessor_positive_or() {
+        test(true, "~tom_fischbach ~test")
+        test(true, "~rating:q ~rating:s")
+    }
 }
