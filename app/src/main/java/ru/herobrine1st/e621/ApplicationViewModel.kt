@@ -8,6 +8,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -27,12 +28,22 @@ enum class AuthState {
     UNAUTHORIZED // error when trying to authenticate
 }
 
-class ApplicationViewModel : ViewModel() {
+class ApplicationViewModel(val database: Database) : ViewModel() {
+    class Factory(val database: Database): ViewModelProvider.Factory{
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            return ApplicationViewModel(database) as T
+        }
+    }
+
     companion object {
         val TAG = ApplicationViewModel::class.simpleName
     }
-    lateinit var database: Database
-        private set
+
+    init {
+        loadAuthDataFromDatabase()
+    }
+
     var authState: AuthState by mutableStateOf(AuthState.LOADING)
         private set
 
@@ -82,12 +93,7 @@ class ApplicationViewModel : ViewModel() {
 
     }
 
-    fun injectDatabase(db: Database) { // В Hilt ровно такая же документация, как у compose, так что нахуй его
-        // К тому же Hilt требует объекты для инжекта ещё до запуска активити, а получить базу данных без активити невозможно. В документации не описан (читать как описан в дебрях документации) другой способов
-        database = db
-    }
-
-    fun fetchAuthData() {
+    private fun loadAuthDataFromDatabase() {
         viewModelScope.launch(Dispatchers.IO) {
             val auth = database.authDao().get()
             if (auth == null) {

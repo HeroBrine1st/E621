@@ -38,13 +38,9 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val screen by remember { derivedStateOf { Screens.byRoute[navBackStackEntry?.destination?.route] } }
-                val applicationViewModel: ApplicationViewModel = viewModel()
+                val applicationViewModel: ApplicationViewModel = viewModel(factory = ApplicationViewModel.Factory(db))
                 val scaffoldState = rememberScaffoldState()
 
-                LaunchedEffect(true) {
-                    applicationViewModel.injectDatabase(db)
-                    applicationViewModel.fetchAuthData()
-                }
                 SnackbarController(applicationViewModel, scaffoldState)
                 Scaffold(
                     topBar = {
