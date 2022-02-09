@@ -5,17 +5,35 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import okhttp3.Credentials
-import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.*
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostsEndpoint
 
+/**
+ * Blocking interceptor that allows only one request at the same time and specified requests per second
+ *
+ * @param requestsPerSecond Requests per second
+ */
+class RateLimitInterceptor(requestsPerSecond: Double): Interceptor {
+    private var lastRequestTimeMs = 0L
+    private val requestWindowMs = (1000 / requestsPerSecond).toInt()
+    override fun intercept(chain: Interceptor.Chain): Response {
+        synchronized(this) {
+            if(lastRequestTimeMs + requestWindowMs > System.currentTimeMillis()) {
+                Thread.sleep(lastRequestTimeMs + requestWindowMs - System.currentTimeMillis())
+            }
+            lastRequestTimeMs = System.currentTimeMillis()
+        }
+        return chain.proceed(chain.request())
+    }
+}
+
 object Api {
     private const val TAG = "API"
-    private val okHttpClient = OkHttpClient()
+    private val okHttpClient = OkHttpClient.Builder()
+        .addInterceptor(RateLimitInterceptor(1.5))
+        .build()
     private var credentials: String? = null
     private var login: String? = null
     private val objectMapper = jacksonObjectMapper()
@@ -46,12 +64,8 @@ object Api {
             .addHeader("Accept", "application/json")
             .build()
         okHttpClient.newCall(req).execute().use {
-            return if (it.isSuccessful) {
-                updateCredentialsInternal(login, apiKey)
-                true
-            } else {
-                false
-            }
+            if(it.isSuccessful) updateCredentialsInternal(login, apiKey)
+            return it.isSuccessful
         }
     }
 
