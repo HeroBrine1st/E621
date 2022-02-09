@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -16,6 +17,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.entity.Auth
+import ru.herobrine1st.e621.entity.Blacklist
 import java.io.IOException
 
 
@@ -29,7 +31,7 @@ enum class AuthState {
 }
 
 class ApplicationViewModel(val database: Database) : ViewModel() {
-    class Factory(val database: Database): ViewModelProvider.Factory{
+    class Factory(val database: Database) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             return ApplicationViewModel(database) as T
@@ -46,7 +48,9 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
 
     var authState: AuthState by mutableStateOf(AuthState.LOADING)
         private set
+    val blacklist = mutableStateListOf<Blacklist>()
 
+    //region Snackbar
     private val snackbarMutex = Mutex()
     private val snackbarMessages = ArrayList<Pair<@StringRes Int, SnackbarDuration>>()
     var snackbarShowing by mutableStateOf(false)
@@ -92,6 +96,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         }
 
     }
+    //endregion
 
     private fun loadAuthDataFromDatabase() {
         viewModelScope.launch(Dispatchers.IO) {
@@ -101,12 +106,17 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
             } else {
                 authState = try {
                     if (Api.checkCredentials(auth.login, auth.apiKey)) {
+                        // Do not synchronize blacklist
                         AuthState.AUTHORIZED
                     } else {
                         try {
                             database.authDao().logout()
-                        } catch(e: Throwable) {
-                            Log.e(TAG, "Unknown exception occurred while purging invalid auth data", e)
+                        } catch (e: Throwable) {
+                            Log.e(
+                                TAG,
+                                "Unknown exception occurred while purging invalid auth data",
+                                e
+                            )
                         }
                         AuthState.NO_DATA
                     }
@@ -131,6 +141,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
             authState = try {
                 if (Api.checkCredentials(login, apiKey)) {
                     updateAuthData(login, apiKey)
+                    updateBlacklistFromAccount()
                     onSuccess()
                     AuthState.AUTHORIZED
                 } else {
@@ -182,5 +193,27 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
             Api.logout()
             authState = AuthState.NO_DATA
         }
+    }
+
+    private suspend fun clearBlacklistLocally() {
+        database.blacklistDao().clear()
+        blacklist.clear()
+    }
+
+    private suspend fun updateBlacklistFromAccount(force: Boolean = false) {
+        if (force) clearBlacklistLocally()
+        else if (database.blacklistDao().count() != 0) return
+        val entries = Api.getBlacklistedTags().map { Blacklist(query = it, enabled = true) }
+        blacklist.addAll(entries)
+        try {
+            entries.forEach { entry -> database.blacklistDao().insert(entry) }
+        } catch (e: SQLiteException) {
+            Log.e(TAG, "SQLite Error while trying to add tag to blacklist", e)
+            addSnackbarMessageInternal(
+                R.string.database_error,
+                SnackbarDuration.Long
+            )
+        }
+
     }
 }
