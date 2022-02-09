@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui
+package ru.herobrine1st.e621.ui.screen
 
 import android.util.Log
 import androidx.compose.foundation.layout.*
@@ -27,6 +27,7 @@ import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.ui.screen.Screens
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.LazyBase
 import ru.herobrine1st.e621.util.SearchOptions

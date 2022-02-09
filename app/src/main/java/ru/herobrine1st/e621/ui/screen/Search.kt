@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui
+package ru.herobrine1st.e621.ui.screen
 
 import android.os.Bundle
 import androidx.compose.foundation.clickable

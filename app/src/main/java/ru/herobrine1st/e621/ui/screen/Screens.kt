@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui
+package ru.herobrine1st.e621.ui.screen
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.RowScope
@@ -15,6 +15,7 @@ import androidx.navigation.navArgument
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
+import ru.herobrine1st.e621.ui.screen.PostsAppBarActions
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
