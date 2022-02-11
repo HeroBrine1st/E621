@@ -6,6 +6,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Feed
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NamedNavArgument
@@ -15,7 +16,6 @@ import androidx.navigation.navArgument
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
-import ru.herobrine1st.e621.ui.screen.PostsAppBarActions
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -86,7 +86,8 @@ enum class Screens(
             defaultValue = Rating.values().joinToString(",") { it.name }
         },
         appBarActions = PostsAppBarActions
-    );
+    ),
+    Settings(R.string.settings, Icons.Default.Settings, "settings");
 
     companion object {
         val byRoute: Map<String, Screens> = HashMap<String, Screens>().apply {

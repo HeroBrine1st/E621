@@ -16,9 +16,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ru.herobrine1st.e621.api.Api
+import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.entity.Auth
-import ru.herobrine1st.e621.entity.Blacklist
+import ru.herobrine1st.e621.entity.BlacklistEntry
 import java.io.IOException
+import java.util.function.Predicate
 
 
 enum class AuthState {
@@ -42,15 +44,15 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         val TAG = ApplicationViewModel::class.simpleName
     }
 
-    init {
-        loadAuthDataFromDatabase()
+    fun loadAllFromDatabase() {
+        viewModelScope.launch(Dispatchers.IO) {
+            loadAuthDataFromDatabase()
+            loadBlacklistLocally()
+        }
     }
 
-    var authState: AuthState by mutableStateOf(AuthState.LOADING)
-        private set
-    val blacklist = mutableStateListOf<Blacklist>()
-
     //region Snackbar
+    // TODO enhance snackbar system so that string format available
     private val snackbarMutex = Mutex()
     private val snackbarMessages = ArrayList<Pair<@StringRes Int, SnackbarDuration>>()
     var snackbarShowing by mutableStateOf(false)
@@ -96,37 +98,38 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         }
 
     }
-    //endregion
 
-    private fun loadAuthDataFromDatabase() {
-        viewModelScope.launch(Dispatchers.IO) {
-            val auth = database.authDao().get()
-            if (auth == null) {
-                authState = AuthState.NO_DATA
-            } else {
-                authState = try {
-                    if (Api.checkCredentials(auth.login, auth.apiKey)) {
-                        // Do not synchronize blacklist
-                        AuthState.AUTHORIZED
-                    } else {
-                        try {
-                            database.authDao().logout()
-                        } catch (e: Throwable) {
-                            Log.e(
-                                TAG,
-                                "Unknown exception occurred while purging invalid auth data",
-                                e
-                            )
-                        }
-                        AuthState.NO_DATA
+    //endregion
+    //region Auth
+    var authState: AuthState by mutableStateOf(AuthState.LOADING)
+        private set
+
+    private suspend fun loadAuthDataFromDatabase() {
+        val auth = database.authDao().get()
+        if (auth == null) {
+            authState = AuthState.NO_DATA
+        } else {
+            authState = try {
+                if (Api.checkCredentials(auth.login, auth.apiKey)) {
+                    AuthState.AUTHORIZED
+                } else {
+                    try {
+                        database.authDao().logout()
+                    } catch (e: Throwable) {
+                        Log.e(
+                            TAG,
+                            "Unknown exception occurred while purging invalid auth data",
+                            e
+                        )
                     }
-                } catch (e: IOException) {
-                    Log.e(TAG, "IO Error while trying to check credentials", e)
-                    addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
-                    AuthState.IO_ERROR
-                } catch (e: Throwable) {
                     AuthState.NO_DATA
                 }
+            } catch (e: IOException) {
+                Log.e(TAG, "IO Error while trying to check credentials", e)
+                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                AuthState.IO_ERROR
+            } catch (e: Throwable) {
+                AuthState.NO_DATA
             }
         }
     }
@@ -195,25 +198,91 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         }
     }
 
+    //endregion
+    //region Blacklist
+    val blacklistDoNotUseAsFilter =
+        mutableStateListOf<BlacklistEntry>() // This list doesn't change when user enables/disables entries
+    val blacklist = mutableStateListOf<Predicate<Post>>() // This does
+
+    var blacklistLoading by mutableStateOf(false)
+        private set
+
     private suspend fun clearBlacklistLocally() {
         database.blacklistDao().clear()
+        blacklistDoNotUseAsFilter.clear()
         blacklist.clear()
+    }
+
+    private fun updateFilteringBlacklistEntriesList() {
+        blacklist.clear()
+        blacklist.addAll(blacklistDoNotUseAsFilter.map { it.predicate })
     }
 
     private suspend fun updateBlacklistFromAccount(force: Boolean = false) {
         if (force) clearBlacklistLocally()
         else if (database.blacklistDao().count() != 0) return
-        val entries = Api.getBlacklistedTags().map { Blacklist(query = it, enabled = true) }
-        blacklist.addAll(entries)
+        assert(blacklist.size == 0)
+        assert(blacklistDoNotUseAsFilter.size == 0)
+        blacklistLoading = true
+        val entries = Api.getBlacklistedTags().map { BlacklistEntry(query = it, enabled = true) }
         try {
-            entries.forEach { entry -> database.blacklistDao().insert(entry) }
+            database.blacklistDao().apply {
+                entries.forEach { entry -> insert(entry) }
+            }
         } catch (e: SQLiteException) {
             Log.e(TAG, "SQLite Error while trying to add tag to blacklist", e)
             addSnackbarMessageInternal(
                 R.string.database_error,
                 SnackbarDuration.Long
             )
+            return
+        } finally {
+            blacklistLoading = false
         }
-
+        blacklistDoNotUseAsFilter.addAll(entries)
+        updateFilteringBlacklistEntriesList()
     }
+
+    private suspend fun loadBlacklistLocally() {
+        blacklistLoading = true
+        try {
+            val entries: Array<BlacklistEntry> = database.blacklistDao().getAll()
+            blacklistDoNotUseAsFilter.clear()
+            blacklistDoNotUseAsFilter.addAll(entries)
+            updateFilteringBlacklistEntriesList()
+        } catch (e: SQLiteException) {
+            Log.e(TAG, "SQLite Error while trying to load blacklist from database", e)
+            addSnackbarMessageInternal(
+                R.string.database_error,
+                SnackbarDuration.Long
+            )
+        } finally {
+            blacklistLoading = false
+        }
+    }
+
+    suspend fun updateBlacklistSelection(selection: List<Pair<BlacklistEntry, Boolean>>) {
+        assert(blacklistDoNotUseAsFilter.size == selection.size)
+        for (it in selection) {
+            val entry = it.first
+            val enabled = it.second
+            if (entry.enabled != enabled) {
+                entry.enabled = enabled
+                try {
+                    database.blacklistDao().update(entry)
+                } catch (e: SQLiteException) {
+                    entry.enabled = !entry.enabled // Undo
+                    Log.e(TAG, "SQLite Error while trying to enable/disable tag", e)
+                    // TODO tell the user the entry error happened with
+                    addSnackbarMessageInternal(
+                        R.string.database_error,
+                        SnackbarDuration.Long
+                    )
+                    break
+                }
+            }
+        }
+        updateFilteringBlacklistEntriesList()
+    }
+    //endregion
 }

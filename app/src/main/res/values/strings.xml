@@ -31,4 +31,15 @@
     <string name="network_error">Unknown network error occurred. No internet available?</string>
     <string name="authentication_error">Invalid login and/or API key</string>
     <string name="okay">Okay</string>
+    <string name="settings">Settings</string>
+    <string name="setting_blacklist">Blacklist tags</string>
+    <string name="setting_blacklist_subtitle">Hide arts so that you don\'t see what you don\'t want to see</string>
+    <string name="appbar_morevert">More actions</string>
+    <string name="blacklist">Blacklist</string>
+    <string name="close">Close</string>
+    <string name="apply">Apply</string>
+    <string name="cancel">Cancel</string>
+    <string name="undo">Undo</string>
+    <string name="dialog_blacklist_empty">Blacklist empty. Add entries in settings or authorize to import from account.</string>
+    <string name="selection_all">All</string>
 </resources>

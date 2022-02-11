@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 1,
-    "identityHash": "690f50f305859fc2d3d2388626a97d43",
+    "version": 2,
+    "identityHash": "721af939f73c632b176eb93c593d452a",
     "entities": [
       {
         "tableName": "Auth",
@@ -37,7 +37,7 @@
         "foreignKeys": []
       },
       {
-        "tableName": "blacklist",
+        "tableName": "Blacklist",
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`query` TEXT NOT NULL, `enabled` INTEGER NOT NULL, `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL)",
         "fields": [
           {
@@ -72,7 +72,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '690f50f305859fc2d3d2388626a97d43')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '721af939f73c632b176eb93c593d452a')"
     ]
   }
 }

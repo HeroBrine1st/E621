@@ -64,8 +64,9 @@ configurations.all {
         force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     }
 }
-
+@Suppress("SpellCheckingInspection")
 dependencies {
+    // Jetpack Compose
     implementation("androidx.core:core-ktx:1.7.0")
     implementation("androidx.compose.ui:ui:$composeVersion")
     implementation("androidx.compose.material:material:$composeVersion")
@@ -73,25 +74,31 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:$composeVersion")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
     implementation("androidx.activity:activity-compose:1.4.0")
+
+    // Jetpack Navigation
     implementation("androidx.navigation:navigation-compose:2.4.0")
 
-
-
+    // Jetpack Room
     implementation("androidx.room:room-runtime:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     implementation("androidx.room:room-paging:2.4.1")
 
+    // Jetpack Datastore
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
+    // Jetpack Paging
     implementation("androidx.paging:paging-runtime:$pagingVersion")
     implementation("androidx.paging:paging-compose:1.0.0-alpha14")
 
+    // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
     implementation("com.google.accompanist:accompanist-flowlayout:0.20.3")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
 
+    // Tests
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")

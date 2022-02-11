@@ -31,4 +31,15 @@
     <string name="network_error">Произошла неизвестная ошибка сети. Нет доступа в интернет?</string>
     <string name="authentication_error">Неправильный логин и/или ключ API</string>
     <string name="okay">Хорошо</string>
+    <string name="settings">Настройки</string>
+    <string name="setting_blacklist">Чёрный список тегов</string>
+    <string name="setting_blacklist_subtitle">Скрывайте арты, которые вы не хотите видеть</string>
+    <string name="appbar_morevert">Больше действий</string>
+    <string name="blacklist">Чёрный список</string>
+    <string name="close">Закрыть</string>
+    <string name="apply">Применить</string>
+    <string name="cancel">Отменить</string>
+    <string name="undo">Отменить</string>
+    <string name="dialog_blacklist_empty">Чёрный список пуст. Добавьте записи в настройках или авторизуйтесь, чтобы импортировать из аккаунта.</string>
+    <string name="selection_all">Всё</string>
 </resources>

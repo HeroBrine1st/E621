@@ -4,8 +4,11 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NavigateNext
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -15,7 +18,6 @@ import androidx.navigation.NavHostController
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.AuthState
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.ui.component.Base
 
 /**

@@ -1,7 +1,7 @@
 package ru.herobrine1st.e621.dao
 
 import androidx.room.*
-import ru.herobrine1st.e621.entity.Blacklist
+import ru.herobrine1st.e621.entity.BlacklistEntry
 
 @Dao
 interface BlacklistDao {
@@ -9,16 +9,16 @@ interface BlacklistDao {
     suspend fun count(): Int
 
     @Query("SELECT * FROM blacklist")
-    suspend fun getAll(): Array<Blacklist>
+    suspend fun getAll(): Array<BlacklistEntry>
 
     @Delete
-    suspend fun delete(blacklist: Blacklist)
+    suspend fun delete(blacklist: BlacklistEntry)
 
     @Insert
-    suspend fun insert(blacklist: Blacklist)
+    suspend fun insert(blacklist: BlacklistEntry)
 
     @Update
-    suspend fun update(blacklist: Blacklist)
+    suspend fun update(blacklist: BlacklistEntry)
 
     @Query("DELETE FROM blacklist")
     suspend fun clear()
