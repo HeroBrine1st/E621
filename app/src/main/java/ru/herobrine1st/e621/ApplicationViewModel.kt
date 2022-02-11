@@ -52,7 +52,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     }
 
     //region Snackbar
-    // TODO enhance snackbar system so that string format available
+    // TODO enhance snackbar system so that string format is available
     private val snackbarMutex = Mutex()
     private val snackbarMessages = ArrayList<Pair<@StringRes Int, SnackbarDuration>>()
     var snackbarShowing by mutableStateOf(false)
@@ -202,7 +202,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     //region Blacklist
     val blacklistDoNotUseAsFilter =
         mutableStateListOf<BlacklistEntry>() // This list doesn't change when user enables/disables entries
-    val blacklist = mutableStateListOf<Predicate<Post>>() // This does
+    var blacklistPostPredicate by mutableStateOf<Predicate<Post>>(Predicate { true }) // This does
 
     var blacklistLoading by mutableStateOf(false)
         private set
@@ -210,19 +210,22 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     private suspend fun clearBlacklistLocally() {
         database.blacklistDao().clear()
         blacklistDoNotUseAsFilter.clear()
-        blacklist.clear()
+        blacklistPostPredicate = Predicate<Post> { true }
     }
 
     private fun updateFilteringBlacklistEntriesList() {
-        blacklist.clear()
-        blacklist.addAll(blacklistDoNotUseAsFilter.map { it.predicate })
+        blacklistPostPredicate = blacklistDoNotUseAsFilter
+            .filter { it.enabled }
+            .map { it.predicate }
+            .reduceOrNull { acc, predicate -> acc.and(predicate) }
+            ?: Predicate { true }
     }
 
     private suspend fun updateBlacklistFromAccount(force: Boolean = false) {
         if (force) clearBlacklistLocally()
         else if (database.blacklistDao().count() != 0) return
-        assert(blacklist.size == 0)
         assert(blacklistDoNotUseAsFilter.size == 0)
+        assert(!blacklistLoading)
         blacklistLoading = true
         val entries = Api.getBlacklistedTags().map { BlacklistEntry(query = it, enabled = true) }
         try {

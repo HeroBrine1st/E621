@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 
-// TODO Test performance on release app
 @Composable
 fun BlacklistTogglesDialog(
     applicationViewModel: ApplicationViewModel,
