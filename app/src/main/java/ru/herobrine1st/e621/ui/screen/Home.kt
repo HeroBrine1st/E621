@@ -1,6 +1,9 @@
 package ru.herobrine1st.e621.ui.screen
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NavigateNext
@@ -19,31 +22,6 @@ import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.AuthState
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.component.Base
-
-/**
- * Минусы:
- *
- * - Глобальная переменная
- *
- * Плюсы:
- *
- * - DRY
- * - KISS
- * - Не синглтон
- *
- * Других способов поднять произвольную viewModel в AppBar нет. Возможно, здесь будет полезна библиотека Hilt.
- *
- */
-//private var vm: HomeViewModel by lateinitMutableState()
-//
-//class HomeViewModel : ViewModel() {
-//
-//}
-
-
-val HomeAppBarActions: @Composable RowScope.(NavHostController) -> Unit = { _ ->
-
-}
 
 @Composable
 fun Home(navController: NavHostController, applicationViewModel: ApplicationViewModel) {

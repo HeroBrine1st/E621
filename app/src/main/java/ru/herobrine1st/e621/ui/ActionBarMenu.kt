@@ -17,6 +17,7 @@ import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Screens
+import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 
 @Composable
 fun MenuAction(
@@ -45,7 +46,8 @@ fun ActionBarMenu(navController: NavController, applicationViewModel: Applicatio
     IconButton(onClick = { openMenu = !openMenu }) {
         Icon(
             Icons.Default.MoreVert,
-            contentDescription = stringResource(R.string.appbar_morevert)
+            contentDescription = stringResource(R.string.appbar_morevert),
+            tint = ActionBarIconColor
         )
     }
 
@@ -59,6 +61,7 @@ fun ActionBarMenu(navController: NavController, applicationViewModel: Applicatio
         }
         MenuAction(Icons.Outlined.Settings, stringResource(R.string.settings)) {
             openMenu = false
+            if (navController.backQueue.any { it.destination.route == Screens.Settings.route }) return@MenuAction
             navController.navigate(Screens.Settings.route) {
                 launchSingleTop = true
             }

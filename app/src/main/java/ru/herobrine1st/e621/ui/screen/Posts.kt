@@ -27,7 +27,6 @@ import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.ui.screen.Screens
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.LazyBase
 import ru.herobrine1st.e621.util.SearchOptions
@@ -58,7 +57,7 @@ class PostsViewModelFactory(
     }
 }
 
-val PostsAppBarActions: @Composable RowScope.(NavHostController) -> Unit = { navController ->
+@Composable fun PostsAppBarActions(navController: NavHostController) {
     IconButton(onClick = {
         val arguments = navController.currentBackStackEntry!!.arguments!!
         navController.navigate(

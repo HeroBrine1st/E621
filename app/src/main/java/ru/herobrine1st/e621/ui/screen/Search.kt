@@ -250,6 +250,8 @@ fun Search(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier.selectable(
                         selected = selected,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
                         onClick = onClick
                     )
                 ) {
@@ -283,6 +285,8 @@ fun Search(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.toggleable(
                             value = value,
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
                             onValueChange = onValueChange
                         )
                     ) {

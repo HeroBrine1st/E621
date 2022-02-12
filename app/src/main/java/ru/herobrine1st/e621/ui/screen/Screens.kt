@@ -3,19 +3,19 @@ package ru.herobrine1st.e621.ui.screen
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Feed
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
+import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
+import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
+import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -41,9 +41,10 @@ enum class Screens(
     val icon: ImageVector,
     private val initialRoute: String,
     vararg arguments: NamedNavArgument,
-    val appBarActions: @Composable RowScope.(navHostController: NavHostController) -> Unit = {}
+    val appBarActions: @Composable RowScope.(NavHostController, ApplicationViewModel) -> Unit = { _, _ -> },
+    val floatingActionButton: @Composable (ApplicationViewModel) -> Unit = {}
 ) {
-    Home(R.string.app_name, Icons.Default.Home, "main", appBarActions = HomeAppBarActions),
+    Home(R.string.app_name, Icons.Default.Home, "main"),
     Search(
         R.string.search,
         Icons.Default.Search,
@@ -85,9 +86,15 @@ enum class Screens(
             type = NavType.StringType
             defaultValue = Rating.values().joinToString(",") { it.name }
         },
-        appBarActions = PostsAppBarActions
+        appBarActions = { it, _ -> PostsAppBarActions(it) }
     ),
-    Settings(R.string.settings, Icons.Default.Settings, "settings");
+    Settings(R.string.settings, Icons.Default.Settings, "settings"),
+    SettingsBlacklist(
+        R.string.blacklist,
+        Icons.Default.Block,
+        "settings/blacklist",
+        appBarActions = { _, it -> SettingsBlacklistAppBarActions(applicationViewModel = it) },
+        floatingActionButton = { SettingsBlacklistFloatingActionButton(it) });
 
     companion object {
         val byRoute: Map<String, Screens> = HashMap<String, Screens>().apply {

@@ -208,6 +208,8 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
 
     var blacklistLoading by mutableStateOf(true)
         private set
+    var blacklistUpdating by mutableStateOf(false)
+        private set
 
     private suspend fun clearBlacklistLocally() {
         database.blacklistDao().clear()
@@ -248,6 +250,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     }
 
     private suspend fun loadBlacklistLocally() {
+        if(blacklistDoNotUseAsFilter.isNotEmpty()) return // Already loaded, don't need to do it again
         blacklistLoading = true
         try {
             val entries = database.blacklistDao().getAllAsStateful()
@@ -266,10 +269,14 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     }
 
     suspend fun applyBlacklistChanges() {
+        if(blacklistUpdating) {
+            Log.w(TAG, "applyBlacklistChanges called again, but last call has not ended")
+            return
+        }
+        blacklistUpdating = true
         for (entry in blacklistDoNotUseAsFilter) {
             try {
                 entry.applyChanges(database)
-                if(entry.pendingDeletion) blacklistDoNotUseAsFilter.remove(entry)
             } catch(e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to update blacklist entry", e)
                 addSnackbarMessageInternal(
@@ -277,12 +284,34 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
                     SnackbarDuration.Long,
                     entry.query
                 )
-                blacklistDoNotUseAsFilter.removeIf { it.isPendingInsertion() }
                 blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
+                blacklistDoNotUseAsFilter.removeIf { it.isPendingInsertion() }
                 break
             }
         }
+        blacklistDoNotUseAsFilter.removeIf { it.isPendingDeletion() }
         updateFilteringBlacklistEntriesList()
+        blacklistUpdating = false
     }
+
+    fun resetBlacklistEntry(entry: StatefulBlacklistEntry) {
+        if(entry.isPendingInsertion()) blacklistDoNotUseAsFilter.remove(entry)
+        else entry.resetChanges()
+    }
+
+    fun deleteBlacklistEntry(entry: StatefulBlacklistEntry) {
+        if(entry.isPendingInsertion()) blacklistDoNotUseAsFilter.remove(entry)
+        else entry.markAsDeleted()
+    }
+
+    fun addBlacklistEntry(query: String) {
+        blacklistDoNotUseAsFilter.add(StatefulBlacklistEntry.create(query))
+    }
+
+    fun resetBlacklistChanges() {
+        blacklistDoNotUseAsFilter.removeIf { it.isPendingInsertion() }
+        blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
+    }
+
     //endregion
 }

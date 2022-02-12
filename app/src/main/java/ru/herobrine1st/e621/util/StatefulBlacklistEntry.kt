@@ -13,41 +13,51 @@ class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistE
         fun of(blacklistEntry: BlacklistEntry): StatefulBlacklistEntry =
             StatefulBlacklistEntry(blacklistEntry)
 
-        fun create(query: String): StatefulBlacklistEntry =
-            StatefulBlacklistEntry(BlacklistEntry(query = query, enabled = true))
+        fun create(query: String, enabled: Boolean = true): StatefulBlacklistEntry =
+            StatefulBlacklistEntry(BlacklistEntry(query = query, enabled))
     }
+
     var query by mutableStateOf(dbEntry.query)
     var enabled by mutableStateOf(dbEntry.enabled)
+
+    // Make them stateful so that database update will trigger recomposition
+    private var dbEntryEnabled by mutableStateOf(dbEntry.enabled)
+    private var dbEntryQuery by mutableStateOf(dbEntry.query)
+    private var dbEntryId by mutableStateOf(dbEntry.id)
 
     var pendingDeletion by mutableStateOf(false)
         private set
 
-    fun isToggled() = enabled != dbEntry.enabled
-    fun isQueryChanged() = query != dbEntry.query
-    fun isPendingDeletion() = pendingDeletion // maybe won't work
-    fun isPendingInsertion() = dbEntry.id == 0
+    fun isToggled() = enabled != dbEntryEnabled
+    fun isQueryChanged() = query != dbEntryQuery
+    fun isPendingDeletion() = pendingDeletion
+    fun isPendingInsertion() = dbEntryId == 0
     fun isPendingUpdate() = isToggled() || isQueryChanged()
     fun isChanged() = isPendingInsertion() || isPendingUpdate() || isPendingDeletion()
 
 
     fun resetChanges() {
-        query = dbEntry.query
-        enabled = dbEntry.enabled
+        query = dbEntry.query; dbEntryQuery = dbEntryQuery
+        enabled = dbEntry.enabled; dbEntryEnabled = dbEntryEnabled
         pendingDeletion = false
     }
 
-    fun markAsDeleted() {
-        assert(!isPendingInsertion())
-        pendingDeletion = true
+
+    fun markAsDeleted(deleted: Boolean = true) {
+        assert(dbEntry.id != 0)
+        pendingDeletion = deleted
     }
 
     val predicate by derivedStateOf { createTagProcessor(query) }
 
     private suspend fun createDatabaseRecord(database: Database) {
-        assert(isPendingInsertion())
+        assert(dbEntry.id == 0)
         dbEntry.query = query
         dbEntry.enabled = enabled
-        database.blacklistDao().insert(dbEntry)
+        dbEntry.id = database.blacklistDao().insert(dbEntry).toInt()
+        dbEntryQuery = query
+        dbEntryEnabled = dbEntryEnabled
+        dbEntryId = dbEntry.id
     }
 
     private suspend fun updateDatabaseRecord(database: Database) {
@@ -64,6 +74,9 @@ class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistE
             enabled = oldEnabled
             throw e
         }
+        dbEntryEnabled = enabled
+        dbEntryQuery = query
+        dbEntryId = dbEntry.id
     }
 
     private suspend fun deleteDatabaseRecord(database: Database) {

@@ -8,3 +8,4 @@ val Purple700 = Color(0xFF3700B3)
 val Teal200 = Color(0xFF03DAC5)
 
 val statusBarDarkModeColor = Color(0xFF222222)
+val ActionBarIconColor = Color.White

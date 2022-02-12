@@ -28,7 +28,7 @@ fun BlacklistTogglesDialog(
     val coroutineScope = rememberCoroutineScope()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val blacklist = applicationViewModel.blacklistDoNotUseAsFilter
-    var updating by remember { mutableStateOf(false) }
+    val updating = applicationViewModel.blacklistUpdating
 
     //region "Fucking dialog does not change its fucking size" workaround
     var fuckingDialogDoesNotChangeItsFuckingSizeWorkaround by remember {
@@ -149,10 +149,8 @@ fun BlacklistTogglesDialog(
                         enabled = !updating,
                         onClick = {
                             coroutineScope.launch {
-                                updating = true
                                 applicationViewModel.applyBlacklistChanges()
                                 onClose()
-                                updating = false
                             }
                         }
                     ) {

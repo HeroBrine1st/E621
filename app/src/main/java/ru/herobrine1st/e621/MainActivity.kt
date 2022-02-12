@@ -25,6 +25,7 @@ import ru.herobrine1st.e621.ui.screen.Posts
 import ru.herobrine1st.e621.ui.screen.Screens
 import ru.herobrine1st.e621.ui.screen.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
+import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.SearchOptions
 
@@ -64,12 +65,15 @@ class MainActivity : ComponentActivity() {
                             backgroundColor = MaterialTheme.colors.primarySurface,
                             elevation = 12.dp,
                             actions = {
-                                screen?.appBarActions?.let { it(navController) }
+                                screen?.appBarActions?.invoke(this, navController, applicationViewModel)
                                 ActionBarMenu(navController, applicationViewModel)
                             }
                         )
                     },
-                    scaffoldState = scaffoldState
+                    scaffoldState = scaffoldState,
+                    floatingActionButton = {
+                        screen?.floatingActionButton?.invoke(applicationViewModel)
+                    }
                 ) {
                     Surface(
                         modifier = Modifier.fillMaxSize(),
@@ -107,7 +111,12 @@ class MainActivity : ComponentActivity() {
                                 Posts(searchOptions, applicationViewModel)
                             }
                             composable(Screens.Settings.route) {
-                                Settings()
+                                Settings(navController)
+                            }
+                            composable(Screens.SettingsBlacklist.route) {
+                                SettingsBlacklist(applicationViewModel) {
+                                    navController.popBackStack()
+                                }
                             }
                         }
                     }

@@ -38,9 +38,18 @@
     <string name="blacklist">Blacklist</string>
     <string name="close">Close</string>
     <string name="apply">Apply</string>
-    <string name="cancel">Cancel</string>
     <string name="undo">Undo</string>
     <string name="dialog_blacklist_empty">Blacklist is empty. Add entries in settings or authorize to import from account.</string>
     <string name="selection_all">All</string>
     <string name="database_error_updating_blacklist">Database error occurred while updating blacklist entry \"%s\"</string>
+    <string name="edit">Edit</string>
+    <string name="new_item">New</string>
+    <string name="submit">Submit</string>
+    <string name="edit_blacklist_entry">Edit blacklist entry</string>
+    <string name="tag_combination">Tag combination</string>
+    <string name="add_entry_to_blacklist">Add entry to blacklist</string>
+    <string name="unsaved_changes">Unsaved changes</string>
+    <string name="unsaved_changes_message">Are you sure you want to exit? Your changes will be lost.</string>
+    <string name="cancel">Cancel</string>
+    <string name="leave_discard_changes">Discard</string>
 </resources>

@@ -38,9 +38,18 @@
     <string name="blacklist">Чёрный список</string>
     <string name="close">Закрыть</string>
     <string name="apply">Применить</string>
-    <string name="cancel">Отменить</string>
     <string name="undo">Отменить</string>
     <string name="dialog_blacklist_empty">Чёрный список пуст. Добавьте записи в настройках или авторизуйтесь, чтобы импортировать из аккаунта.</string>
     <string name="selection_all">Всё</string>
     <string name="database_error_updating_blacklist">Произошла ошибка при обновлении записи чёрного списка \"%s\"</string>
+    <string name="edit">Редактировать</string>
+    <string name="new_item">Новый</string>
+    <string name="submit">Отправить</string>
+    <string name="edit_blacklist_entry">Изменение записи чёрного списка</string>
+    <string name="tag_combination">Комбинация тегов</string>
+    <string name="add_entry_to_blacklist">Добавление записи в чёрный список</string>
+    <string name="unsaved_changes">Несохранённые изменения</string>
+    <string name="unsaved_changes_message">Вы точно хотите выйти? Ваши изменения будут потеряны.</string>
+    <string name="cancel">Отмена</string>
+    <string name="leave_discard_changes">Выйти</string>
 </resources>
