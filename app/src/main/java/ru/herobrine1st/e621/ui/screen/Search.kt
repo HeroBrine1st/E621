@@ -2,9 +2,11 @@ package ru.herobrine1st.e621.ui.screen
 
 import android.os.Bundle
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -100,15 +102,8 @@ fun AddTagDialogPreview() {
     AddTagDialog({}, {})
 }
 
-val defaultSearchOptions = SearchOptions(
-    emptyList(),
-    Order.NEWEST_TO_OLDEST,
-    false,
-    Rating.values().toList()
-)
-
 class SearchScreenState(
-    initialSearchOptions: SearchOptions = defaultSearchOptions,
+    initialSearchOptions: SearchOptions,
     openDialog: Boolean = false
 ) {
     val tags = mutableStateListOf<String>().also { it.addAll(initialSearchOptions.tags) }
@@ -125,7 +120,10 @@ class SearchScreenState(
         val Saver: Saver<SearchScreenState, Bundle> = Saver(
             save = { state ->
                 val bundle = Bundle()
-                bundle.putString("tags", state.tags.joinToString(",")) // Couldn't use putStringArrayList because restore constructor used with Navigation
+                bundle.putString(
+                    "tags",
+                    state.tags.joinToString(",")
+                ) // Couldn't use putStringArrayList because restore constructor used with Navigation
                 bundle.putString("order", state.order.name)
                 bundle.putBoolean("orderAscending", state.orderAscending)
                 bundle.putString("rating", state.rating.joinToString(",") { it.name })
@@ -142,7 +140,7 @@ class SearchScreenState(
 
 @Composable
 fun Search(
-    initialSearchOptions: SearchOptions = defaultSearchOptions,
+    initialSearchOptions: SearchOptions,
     onSearch: (SearchOptions) -> Unit
 ) {
     val state = rememberSaveable(initialSearchOptions, saver = SearchScreenState.Saver) {
@@ -192,15 +190,20 @@ fun Search(
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.selectable(
-                            selected = selected,
-                            onClick = onClick
-                        )
+                        modifier = Modifier
+                            .selectable(
+                                selected = selected,
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = onClick
+                            )
+                            .fillMaxWidth()
                     ) {
                         RadioButton(
                             modifier = Modifier.padding(start = 8.dp),
                             selected = selected,
-                            onClick = onClick
+                            onClick = onClick,
+                            colors = RadioButtonDefaults.colors(MaterialTheme.colors.primary)
                         )
                         Text(
                             text = stringResource(v.descriptionId),
@@ -211,9 +214,15 @@ fun Search(
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(enabled = state.order.supportsAscending) {
-                    state.orderAscending = !state.orderAscending
-                }
+                modifier = Modifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        enabled = state.order.supportsAscending
+                    ) {
+                        state.orderAscending = !state.orderAscending
+                    }
+                    .fillMaxWidth()
             ) {
                 Checkbox(
                     enabled = state.order.supportsAscending,
@@ -247,7 +256,8 @@ fun Search(
                     RadioButton(
                         modifier = Modifier.padding(start = 8.dp),
                         selected = selected,
-                        onClick = onClick
+                        onClick = onClick,
+                        colors = RadioButtonDefaults.colors(MaterialTheme.colors.primary)
                     )
                     Text(
                         text = stringResource(R.string.any),
@@ -257,35 +267,30 @@ fun Search(
             }
             for (v in Rating.values()) {
                 key(v.apiName) {
-                    val selected = v in state.rating && state.rating.size != 3
-                    val onClick: () -> Unit = {
+                    val value = v in state.rating && state.rating.size != 3
+                    val onValueChange: (Boolean) -> Unit = {
                         when {
-                            state.rating.size == 3 -> {
-                                state.rating.clear()
-                                state.rating.add(v)
+                            state.rating.size == 3 -> state.rating.apply {
+                                clear()
+                                add(v)
                             }
-                            v in state.rating -> {
-                                state.rating.remove(v)
-                            }
-                            else -> {
-                                state.rating.add(v)
-                            }
+                            v in state.rating -> state.rating.remove(v)
+                            else -> state.rating.add(v)
                         }
-                        if(state.rating.isEmpty()) {
-                            state.rating.addAll(Rating.values())
-                        }
+                        if (state.rating.isEmpty()) state.rating.addAll(Rating.values())
                     }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.selectable(
-                            selected = selected,
-                            onClick = onClick
+                        modifier = Modifier.toggleable(
+                            value = value,
+                            onValueChange = onValueChange
                         )
                     ) {
                         Checkbox(
                             modifier = Modifier.padding(start = 8.dp),
-                            checked = selected,
-                            onCheckedChange = { onClick() }
+                            checked = value,
+                            onCheckedChange = onValueChange,
+                            colors = CheckboxDefaults.colors(MaterialTheme.colors.primary)
                         )
                         Text(
                             text = stringResource(v.descriptionId),
