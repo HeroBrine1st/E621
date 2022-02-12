@@ -42,4 +42,5 @@
     <string name="undo">Undo</string>
     <string name="dialog_blacklist_empty">Blacklist empty. Add entries in settings or authorize to import from account.</string>
     <string name="selection_all">All</string>
+    <string name="database_error_updating_blacklist">Database error occurred while updating blacklist entry \"%s\"</string>
 </resources>

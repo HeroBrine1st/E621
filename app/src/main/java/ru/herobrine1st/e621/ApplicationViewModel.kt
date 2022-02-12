@@ -19,6 +19,7 @@ import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.ui.SnackbarMessage
 import java.io.IOException
 import java.util.function.Predicate
 
@@ -54,27 +55,28 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     //region Snackbar
     // TODO enhance snackbar system so that string format is available
     private val snackbarMutex = Mutex()
-    private val snackbarMessages = ArrayList<Pair<@StringRes Int, SnackbarDuration>>()
+    private val snackbarMessages = ArrayList<SnackbarMessage>()
     var snackbarShowing by mutableStateOf(false)
         private set
-    var snackbarMessage by mutableStateOf<Pair<@StringRes Int, SnackbarDuration>?>(null)
+    var snackbarMessage by mutableStateOf<SnackbarMessage?>(null)
         private set
 
     private suspend fun addSnackbarMessageInternal(
         @StringRes resourceId: Int,
-        duration: SnackbarDuration
+        duration: SnackbarDuration,
+        vararg formatArgs: Any
     ) {
         snackbarMutex.withLock {
-            snackbarMessages.add(resourceId to duration)
+            snackbarMessages.add(SnackbarMessage(resourceId, duration, formatArgs))
             if (snackbarMessage == null) {
                 snackbarMessage = snackbarMessages[0]
             }
         }
     }
 
-    fun addSnackbarMessage(@StringRes resourceId: Int, duration: SnackbarDuration) {
+    fun addSnackbarMessage(@StringRes resourceId: Int, duration: SnackbarDuration, vararg formatArgs: Any) {
         viewModelScope.launch {
-            addSnackbarMessageInternal(resourceId, duration)
+            addSnackbarMessageInternal(resourceId, duration, *formatArgs)
         }
     }
 
@@ -278,8 +280,9 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
                     Log.e(TAG, "SQLite Error while trying to enable/disable tag", e)
                     // TODO tell the user the entry error happened with
                     addSnackbarMessageInternal(
-                        R.string.database_error,
-                        SnackbarDuration.Long
+                        R.string.database_error_updating_blacklist,
+                        SnackbarDuration.Long,
+                        entry.query
                     )
                     break
                 }

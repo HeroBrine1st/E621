@@ -42,4 +42,5 @@
     <string name="undo">Отменить</string>
     <string name="dialog_blacklist_empty">Чёрный список пуст. Добавьте записи в настройках или авторизуйтесь, чтобы импортировать из аккаунта.</string>
     <string name="selection_all">Всё</string>
+    <string name="database_error_updating_blacklist">Произошла ошибка при обновлении записи чёрного списка \"%s\"</string>
 </resources>
