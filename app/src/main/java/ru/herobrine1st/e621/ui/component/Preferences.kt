@@ -62,17 +62,19 @@ fun SettingActionBox(modifier: Modifier = Modifier, content: @Composable BoxScop
 }
 
 /**
- * Switch with clickable and toggleable parts
+ * Setting with clickable and action parts
  */
 @Composable
-fun SettingLinkSwitch(
+fun SettingLinkAction(
     checked: Boolean,
     title: String,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
     subtitle: String? = null,
+    enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    action: @Composable (BoxScope.() -> Unit)
 ) {
     Surface {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -93,22 +95,52 @@ fun SettingLinkSwitch(
             SettingActionBox(
                 modifier = Modifier
                     .toggleable(
-                        checked,
-                        remember { MutableInteractionSource() },
-                        null,
+                        value = checked,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        enabled = enabled,
                         onValueChange = { onCheckedChange(it) },
-                    )
-            ) {
-                Switch(
-                    checked = checked,
-                    onCheckedChange = onCheckedChange,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = MaterialTheme.colors.primary,
-                        uncheckedThumbColor = MaterialTheme.colors.onSurface
-                    )
-                )
-            }
+                    ),
+                content = action
+            )
         }
+    }
+}
+
+/**
+ * Switch with clickable and toggleable parts
+ */
+@Composable
+fun SettingLinkSwitch(
+    checked: Boolean,
+    title: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    subtitle: String? = null,
+    enabled: Boolean = true,
+    switchColors: SwitchColors = SwitchDefaults.colors(
+        checkedThumbColor = MaterialTheme.colors.primary,
+        uncheckedThumbColor = MaterialTheme.colors.onSurface
+    ),
+    onCheckedChange: (Boolean) -> Unit,
+    onClick: () -> Unit
+) {
+    SettingLinkAction(
+        checked = checked,
+        title = title,
+        modifier = modifier,
+        icon = icon,
+        subtitle = subtitle,
+        enabled = enabled,
+        onCheckedChange = onCheckedChange,
+        onClick = onClick
+    ) {
+        Switch(
+            checked = checked,
+            enabled = enabled,
+            onCheckedChange = onCheckedChange,
+            colors = switchColors
+        )
     }
 }
 
