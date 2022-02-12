@@ -10,37 +10,77 @@ import ru.herobrine1st.e621.entity.BlacklistEntry
 
 class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistEntry) {
     companion object {
-        fun of(blacklistEntry: BlacklistEntry): StatefulBlacklistEntry {
-            return StatefulBlacklistEntry(blacklistEntry)
-        }
+        fun of(blacklistEntry: BlacklistEntry): StatefulBlacklistEntry =
+            StatefulBlacklistEntry(blacklistEntry)
+
+        fun create(query: String): StatefulBlacklistEntry =
+            StatefulBlacklistEntry(BlacklistEntry(query = query, enabled = true))
     }
     var query by mutableStateOf(dbEntry.query)
     var enabled by mutableStateOf(dbEntry.enabled)
 
+    var pendingDeletion by mutableStateOf(false)
+        private set
+
     fun isToggled() = enabled != dbEntry.enabled
     fun isQueryChanged() = query != dbEntry.query
-    fun isChanged() = isToggled() || isQueryChanged()
+    fun isPendingDeletion() = pendingDeletion // maybe won't work
+    fun isPendingInsertion() = dbEntry.id == 0
+    fun isPendingUpdate() = isToggled() || isQueryChanged()
+    fun isChanged() = isPendingInsertion() || isPendingUpdate() || isPendingDeletion()
+
 
     fun resetChanges() {
         query = dbEntry.query
         enabled = dbEntry.enabled
+        pendingDeletion = false
+    }
+
+    fun markAsDeleted() {
+        assert(!isPendingInsertion())
+        pendingDeletion = true
     }
 
     val predicate by derivedStateOf { createTagProcessor(query) }
 
-    suspend fun updateDatabaseRecord(database: Database) {
+    private suspend fun createDatabaseRecord(database: Database) {
+        assert(isPendingInsertion())
+        dbEntry.query = query
+        dbEntry.enabled = enabled
+        database.blacklistDao().insert(dbEntry)
+    }
+
+    private suspend fun updateDatabaseRecord(database: Database) {
         val oldQuery = dbEntry.query
         val oldEnabled = dbEntry.enabled
         dbEntry.query = query
         dbEntry.enabled = enabled
         try {
             database.blacklistDao().update(dbEntry)
-        } catch (e: Throwable) {
+        } catch (e: Throwable) { // Undo
             dbEntry.query = oldQuery
             dbEntry.enabled = oldEnabled
             query = oldQuery
             enabled = oldEnabled
             throw e
+        }
+    }
+
+    private suspend fun deleteDatabaseRecord(database: Database) {
+        assert(dbEntry.id != 0)
+        try {
+            database.blacklistDao().delete(dbEntry)
+        } catch (e: Exception) { // Undo
+            resetChanges()
+            throw e
+        }
+    }
+
+    suspend fun applyChanges(database: Database) {
+        when {
+            dbEntry.id == 0 -> createDatabaseRecord(database)
+            pendingDeletion -> deleteDatabaseRecord(database)
+            else -> updateDatabaseRecord(database)
         }
     }
 }

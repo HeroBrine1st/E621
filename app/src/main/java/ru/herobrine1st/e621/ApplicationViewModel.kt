@@ -54,7 +54,6 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     }
 
     //region Snackbar
-    // TODO enhance snackbar system so that string format is available
     private val snackbarMutex = Mutex()
     private val snackbarMessages = ArrayList<SnackbarMessage>()
     var snackbarShowing by mutableStateOf(false)
@@ -205,7 +204,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     //region Blacklist
     val blacklistDoNotUseAsFilter =
         mutableStateListOf<StatefulBlacklistEntry>() // This list doesn't change when user enables/disables entries
-    var blacklistPostPredicate by mutableStateOf<Predicate<Post>>(Predicate { true }) // This does
+    var blacklistPostPredicate by mutableStateOf<Predicate<Post>>(Predicate { true }) // This field does
 
     var blacklistLoading by mutableStateOf(true)
         private set
@@ -244,7 +243,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         } finally {
             blacklistLoading = false
         }
-        blacklistDoNotUseAsFilter.addAll(entries.map { StatefulBlacklistEntry.of(it) })
+        entries.mapTo(blacklistDoNotUseAsFilter) { StatefulBlacklistEntry.of(it) }
         updateFilteringBlacklistEntriesList()
     }
 
@@ -269,7 +268,8 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     suspend fun applyBlacklistChanges() {
         for (entry in blacklistDoNotUseAsFilter) {
             try {
-                entry.updateDatabaseRecord(database)
+                entry.applyChanges(database)
+                if(entry.pendingDeletion) blacklistDoNotUseAsFilter.remove(entry)
             } catch(e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to update blacklist entry", e)
                 addSnackbarMessageInternal(
@@ -277,6 +277,8 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
                     SnackbarDuration.Long,
                     entry.query
                 )
+                blacklistDoNotUseAsFilter.removeIf { it.isPendingInsertion() }
+                blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
                 break
             }
         }
