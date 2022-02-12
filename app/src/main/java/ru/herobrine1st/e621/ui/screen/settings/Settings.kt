@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.dataStore
-import ru.herobrine1st.e621.ui.component.SettingLinkSwitch
+import ru.herobrine1st.e621.ui.component.SettingLinkWithSwitch
 
 
 class SettingsState(blacklistDefault: Boolean = true) {
@@ -38,7 +38,7 @@ fun Settings() {
 
 
     Column {
-        SettingLinkSwitch(
+        SettingLinkWithSwitch(
             checked = context.getPreference(BLACKLIST_ENABLED, true),
             title = stringResource(R.string.setting_blacklist),
             subtitle = stringResource(R.string.setting_blacklist_subtitle),

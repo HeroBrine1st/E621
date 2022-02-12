@@ -65,7 +65,7 @@ fun SettingActionBox(modifier: Modifier = Modifier, content: @Composable BoxScop
  * Setting with clickable and action parts
  */
 @Composable
-fun SettingLinkAction(
+fun SettingLinkWithAction(
     checked: Boolean,
     title: String,
     modifier: Modifier = Modifier,
@@ -111,7 +111,7 @@ fun SettingLinkAction(
  * Switch with clickable and toggleable parts
  */
 @Composable
-fun SettingLinkSwitch(
+fun SettingLinkWithSwitch(
     checked: Boolean,
     title: String,
     modifier: Modifier = Modifier,
@@ -125,7 +125,7 @@ fun SettingLinkSwitch(
     onCheckedChange: (Boolean) -> Unit,
     onClick: () -> Unit
 ) {
-    SettingLinkAction(
+    SettingLinkWithAction(
         checked = checked,
         title = title,
         modifier = modifier,
