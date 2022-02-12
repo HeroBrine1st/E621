@@ -5,17 +5,28 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
-import okhttp3.Credentials
-import okhttp3.HttpUrl
-import okhttp3.OkHttpClient
-import okhttp3.Request
+import okhttp3.*
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostsEndpoint
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 
+
+fun Response.checkStatus() {
+    if(!this.isSuccessful) {
+        if(BuildConfig.DEBUG) {
+            Log.e(Api.TAG, "Unsuccessful request: $message")
+            body?.use {
+                Log.d(Api.TAG, "Response body:")
+                Log.d(Api.TAG, it.charStream().readText())
+            }
+        }
+        throw ApiException("Unsuccessful request: $message", code)
+    }
+}
+
 object Api {
-    private const val TAG = "API"
+    const val TAG = "API"
     private val okHttpClient = OkHttpClient.Builder()
         .addInterceptor(RateLimitInterceptor(1.5))
         .build()
@@ -85,6 +96,7 @@ object Api {
             )
             .build()
         okHttpClient.newCall(req).execute().use {
+            it.checkStatus()
             it.body!!.use { body ->
                 return objectMapper.readValue<PostsEndpoint>(body.charStream()).posts
             }
@@ -106,6 +118,7 @@ object Api {
             )
             .build()
         okHttpClient.newCall(req).execute().use {
+            it.checkStatus()
             it.body!!.use { body ->
                 return objectMapper.readValue<ObjectNode>(body.charStream())
                     .get("blacklisted_tags").asText()
