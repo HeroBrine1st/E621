@@ -20,6 +20,7 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.ui.SnackbarMessage
+import ru.herobrine1st.e621.util.StatefulBlacklistEntry
 import java.io.IOException
 import java.util.function.Predicate
 
@@ -203,10 +204,10 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     //endregion
     //region Blacklist
     val blacklistDoNotUseAsFilter =
-        mutableStateListOf<BlacklistEntry>() // This list doesn't change when user enables/disables entries
+        mutableStateListOf<StatefulBlacklistEntry>() // This list doesn't change when user enables/disables entries
     var blacklistPostPredicate by mutableStateOf<Predicate<Post>>(Predicate { true }) // This does
 
-    var blacklistLoading by mutableStateOf(false)
+    var blacklistLoading by mutableStateOf(true)
         private set
 
     private suspend fun clearBlacklistLocally() {
@@ -227,7 +228,6 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         if (force) clearBlacklistLocally()
         else if (database.blacklistDao().count() != 0) return
         assert(blacklistDoNotUseAsFilter.size == 0)
-        assert(!blacklistLoading)
         blacklistLoading = true
         val entries = Api.getBlacklistedTags().map { BlacklistEntry(query = it, enabled = true) }
         try {
@@ -244,14 +244,14 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         } finally {
             blacklistLoading = false
         }
-        blacklistDoNotUseAsFilter.addAll(entries)
+        blacklistDoNotUseAsFilter.addAll(entries.map { StatefulBlacklistEntry.of(it) })
         updateFilteringBlacklistEntriesList()
     }
 
     private suspend fun loadBlacklistLocally() {
         blacklistLoading = true
         try {
-            val entries: Array<BlacklistEntry> = database.blacklistDao().getAll()
+            val entries = database.blacklistDao().getAllAsStateful()
             blacklistDoNotUseAsFilter.clear()
             blacklistDoNotUseAsFilter.addAll(entries)
             updateFilteringBlacklistEntriesList()
@@ -266,26 +266,18 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         }
     }
 
-    suspend fun updateBlacklistSelection(selection: List<Pair<BlacklistEntry, Boolean>>) {
-        assert(blacklistDoNotUseAsFilter.size == selection.size)
-        for (it in selection) {
-            val entry = it.first
-            val enabled = it.second
-            if (entry.enabled != enabled) {
-                entry.enabled = enabled
-                try {
-                    database.blacklistDao().update(entry)
-                } catch (e: SQLiteException) {
-                    entry.enabled = !entry.enabled // Undo
-                    Log.e(TAG, "SQLite Error while trying to enable/disable tag", e)
-                    // TODO tell the user the entry error happened with
-                    addSnackbarMessageInternal(
-                        R.string.database_error_updating_blacklist,
-                        SnackbarDuration.Long,
-                        entry.query
-                    )
-                    break
-                }
+    suspend fun applyBlacklistChanges() {
+        for (entry in blacklistDoNotUseAsFilter) {
+            try {
+                entry.updateDatabaseRecord(database)
+            } catch(e: SQLiteException) {
+                Log.e(TAG, "SQLite Error while trying to update blacklist entry", e)
+                addSnackbarMessageInternal(
+                    R.string.database_error_updating_blacklist,
+                    SnackbarDuration.Long,
+                    entry.query
+                )
+                break
             }
         }
         updateFilteringBlacklistEntriesList()

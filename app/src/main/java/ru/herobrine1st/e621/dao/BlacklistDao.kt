@@ -2,6 +2,7 @@ package ru.herobrine1st.e621.dao
 
 import androidx.room.*
 import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.util.StatefulBlacklistEntry
 
 @Dao
 interface BlacklistDao {
@@ -22,4 +23,6 @@ interface BlacklistDao {
 
     @Query("DELETE FROM blacklist")
     suspend fun clear()
+
+    suspend fun getAllAsStateful() = getAll().map { StatefulBlacklistEntry.of(it) }
 }
