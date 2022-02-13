@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621
 
+import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,6 +18,8 @@ import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
 import coil.Coil
 import coil.ImageLoader
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
 import coil.util.CoilUtils
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.ui.ActionBarMenu
@@ -50,6 +53,9 @@ class MainActivity : ComponentActivity() {
                     OkHttpClient.Builder()
                         .cache(CoilUtils.createDefaultCache(applicationContext))
                         .build()
+                }
+                .componentRegistry {
+                    add(if (SDK_INT >= 28) ImageDecoderDecoder(applicationContext) else GifDecoder())
                 }
                 .build()
         }

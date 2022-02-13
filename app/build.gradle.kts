@@ -95,6 +95,7 @@ dependencies {
     // Coroutine Image Loader
     implementation("io.coil-kt:coil:1.4.0")
     implementation("io.coil-kt:coil-compose:1.4.0")
+    implementation("io.coil-kt:coil-gif:1.4.0")
 
     // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
