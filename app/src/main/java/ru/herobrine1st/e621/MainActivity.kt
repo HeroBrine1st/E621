@@ -5,10 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -65,7 +62,11 @@ class MainActivity : ComponentActivity() {
                             backgroundColor = MaterialTheme.colors.primarySurface,
                             elevation = 12.dp,
                             actions = {
-                                screen?.appBarActions?.invoke(this, navController, applicationViewModel)
+                                screen?.appBarActions?.invoke(
+                                    this,
+                                    navController,
+                                    applicationViewModel
+                                )
                                 ActionBarMenu(navController, applicationViewModel)
                             }
                         )
@@ -79,43 +80,48 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colors.background
                     ) {
-                        NavHost(
-                            navController = navController,
-                            startDestination = Screens.Home.route
-                        ) {
-                            composable(Screens.Home.route) {
-                                Home(navController, applicationViewModel)
-                            }
-                            composable(Screens.Search.route, Screens.Search.arguments) { entry ->
-                                val arguments: Bundle =
-                                    entry.arguments!!
-                                val searchOptions = remember { SearchOptions(arguments) }
-                                Search(searchOptions) {
-                                    navController.popBackStack()
-                                    navController.navigate(
-                                        Screens.Posts.buildRoute {
-                                            addArgument("tags", it.tags.joinToString(","))
-                                            addArgument("order", it.order.name)
-                                            addArgument("ascending", it.orderAscending)
-                                            addArgument(
-                                                "rating",
-                                                it.rating.joinToString(",") { it.name })
-                                        }
-                                    )
+                        CompositionLocalProvider(LocalDatabase provides db) {
+                            NavHost(
+                                navController = navController,
+                                startDestination = Screens.Home.route
+                            ) {
+                                composable(Screens.Home.route) {
+                                    Home(navController, applicationViewModel)
                                 }
-                            }
-                            composable(Screens.Posts.route, Screens.Posts.arguments) {
-                                val arguments =
-                                    it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
-                                val searchOptions = remember { SearchOptions(arguments) }
-                                Posts(searchOptions, applicationViewModel)
-                            }
-                            composable(Screens.Settings.route) {
-                                Settings(navController)
-                            }
-                            composable(Screens.SettingsBlacklist.route) {
-                                SettingsBlacklist(applicationViewModel) {
-                                    navController.popBackStack()
+                                composable(
+                                    Screens.Search.route,
+                                    Screens.Search.arguments
+                                ) { entry ->
+                                    val arguments: Bundle =
+                                        entry.arguments!!
+                                    val searchOptions = remember { SearchOptions(arguments) }
+                                    Search(searchOptions) {
+                                        navController.popBackStack()
+                                        navController.navigate(
+                                            Screens.Posts.buildRoute {
+                                                addArgument("tags", it.tags.joinToString(","))
+                                                addArgument("order", it.order.name)
+                                                addArgument("ascending", it.orderAscending)
+                                                addArgument(
+                                                    "rating",
+                                                    it.rating.joinToString(",") { it.name })
+                                            }
+                                        )
+                                    }
+                                }
+                                composable(Screens.Posts.route, Screens.Posts.arguments) {
+                                    val arguments =
+                                        it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
+                                    val searchOptions = remember { SearchOptions(arguments) }
+                                    Posts(searchOptions, applicationViewModel)
+                                }
+                                composable(Screens.Settings.route) {
+                                    Settings(navController)
+                                }
+                                composable(Screens.SettingsBlacklist.route) {
+                                    SettingsBlacklist(applicationViewModel) {
+                                        navController.popBackStack()
+                                    }
                                 }
                             }
                         }
