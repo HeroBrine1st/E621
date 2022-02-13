@@ -119,8 +119,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
                         database.authDao().logout()
                     } catch (e: Throwable) {
                         Log.e(
-                            TAG,
-                            "Unknown exception occurred while purging invalid auth data",
+                            TAG, "Unknown exception occurred while purging invalid auth data",
                             e
                         )
                     }
@@ -204,7 +203,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     //region Blacklist
     val blacklistDoNotUseAsFilter =
         mutableStateListOf<StatefulBlacklistEntry>() // This list doesn't change when user enables/disables entries
-    var blacklistPostPredicate by mutableStateOf<Predicate<Post>>(Predicate { true }) // This field does
+    var blacklistPostPredicate by mutableStateOf<Predicate<Post>>(Predicate { true }) // This state does
 
     var blacklistLoading by mutableStateOf(true)
         private set
@@ -221,7 +220,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         blacklistPostPredicate = blacklistDoNotUseAsFilter
             .filter { it.enabled }
             .map { it.predicate }
-            .reduceOrNull { acc, predicate -> acc.and(predicate) }
+            .reduceOrNull { acc, predicate -> acc.or(predicate) }
             ?: Predicate { true }
     }
 
@@ -250,7 +249,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     }
 
     private suspend fun loadBlacklistLocally() {
-        if(blacklistDoNotUseAsFilter.isNotEmpty()) return // Already loaded, don't need to do it again
+        if (blacklistDoNotUseAsFilter.isNotEmpty()) return // Already loaded, don't need to do it again
         blacklistLoading = true
         try {
             val entries = database.blacklistDao().getAllAsStateful()
@@ -269,7 +268,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     }
 
     suspend fun applyBlacklistChanges() {
-        if(blacklistUpdating) {
+        if (blacklistUpdating) {
             Log.w(TAG, "applyBlacklistChanges called again, but last call has not ended")
             return
         }
@@ -277,7 +276,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         for (entry in blacklistDoNotUseAsFilter) {
             try {
                 entry.applyChanges(database)
-            } catch(e: SQLiteException) {
+            } catch (e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to update blacklist entry", e)
                 addSnackbarMessageInternal(
                     R.string.database_error_updating_blacklist,
@@ -295,12 +294,12 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     }
 
     fun resetBlacklistEntry(entry: StatefulBlacklistEntry) {
-        if(entry.isPendingInsertion()) blacklistDoNotUseAsFilter.remove(entry)
+        if (entry.isPendingInsertion()) blacklistDoNotUseAsFilter.remove(entry)
         else entry.resetChanges()
     }
 
     fun deleteBlacklistEntry(entry: StatefulBlacklistEntry) {
-        if(entry.isPendingInsertion()) blacklistDoNotUseAsFilter.remove(entry)
+        if (entry.isPendingInsertion()) blacklistDoNotUseAsFilter.remove(entry)
         else entry.markAsDeleted()
     }
 
