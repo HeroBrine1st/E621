@@ -76,7 +76,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.4.0")
 
     // Jetpack Navigation
-    implementation("androidx.navigation:navigation-compose:2.4.0")
+    implementation("androidx.navigation:navigation-compose:2.4.1")
 
     // Jetpack Room
     implementation("androidx.room:room-runtime:$roomVersion")
@@ -91,6 +91,10 @@ dependencies {
     // Jetpack Paging
     implementation("androidx.paging:paging-runtime:$pagingVersion")
     implementation("androidx.paging:paging-compose:1.0.0-alpha14")
+
+    // Coroutine Image Loader
+    implementation("io.coil-kt:coil:1.4.0")
+    implementation("io.coil-kt:coil-compose:1.4.0")
 
     // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.0")

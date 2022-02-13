@@ -15,6 +15,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.room.Room
+import coil.Coil
+import coil.ImageLoader
+import coil.util.CoilUtils
+import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.screen.Home
@@ -38,6 +42,18 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             Database::class.java, BuildConfig.DATABASE_NAME
         ).build()
+
+        Coil.setImageLoader {
+            ImageLoader.Builder(applicationContext)
+                .crossfade(true)
+                .okHttpClient {
+                    OkHttpClient.Builder()
+                        .cache(CoilUtils.createDefaultCache(applicationContext))
+                        .build()
+                }
+                .build()
+        }
+
 
         setContent {
             E621Theme(window) {

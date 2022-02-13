@@ -1,12 +1,14 @@
 package ru.herobrine1st.e621.ui.screen
 
 import android.util.Log
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -20,6 +22,8 @@ import androidx.navigation.NavHostController
 import androidx.paging.*
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
+import coil.compose.rememberImagePainter
+import coil.imageLoader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -134,15 +138,6 @@ class PostsSource(
 }
 
 @Composable
-fun Post(post: Post) {
-    Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            Text(post.tags.all.joinToString(" "))
-        }
-    }
-}
-
-@Composable
 fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewModel) {
     val viewModel: PostsViewModel =
         viewModel(factory = PostsViewModelFactory(applicationViewModel, searchOptions))
@@ -182,6 +177,27 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun Post(post: Post) {
+    Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
+        LocalContext.current.imageLoader
+        Column(modifier = Modifier.padding(8.dp)) {
+            Image(
+                painter = rememberImagePainter(
+                    post.file.url,
+                    builder = {
+                        crossfade(true)
+                    }
+                ),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(post.file.width.toFloat() / post.file.height.toFloat()),
+                contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
+            )
         }
     }
 }
