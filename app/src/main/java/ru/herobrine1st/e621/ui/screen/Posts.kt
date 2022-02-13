@@ -165,10 +165,7 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
             val blacklisted =
                 blacklistEnabled && applicationViewModel.blacklistPostPredicate.test(post)
             viewModel.notifyPostState(blacklisted)
-            if (blacklisted) {
-                Divider()
-                return@items
-            }
+            if (blacklisted) return@items
             Post(post)
             Spacer(modifier = Modifier.height(4.dp))
         }
