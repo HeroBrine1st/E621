@@ -52,4 +52,7 @@
     <string name="unsaved_changes_message">Are you sure you want to exit? Your changes will be lost.</string>
     <string name="cancel">Cancel</string>
     <string name="leave_discard_changes">Discard</string>
+    <string name="blacklist_enabled">Enabled</string>
+    <string name="blacklist_disabled">Disabled</string>
+    <string name="maybe_search_query_intersects_with_blacklist">Detected huge consistent sequences of blacklisted posts and loading new may take too long. Maybe your search query intersects with blacklist? Try to disable blacklist or change your query.</string>
 </resources>

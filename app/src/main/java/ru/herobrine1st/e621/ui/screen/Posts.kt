@@ -7,9 +7,9 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
@@ -27,6 +27,8 @@ import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
+import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.LazyBase
 import ru.herobrine1st.e621.util.SearchOptions
@@ -34,16 +36,35 @@ import java.io.IOException
 
 class PostsViewModel(
     private val applicationViewModel: ApplicationViewModel, // will not change
-    private val searchOptions: SearchOptions // will not change
+    private val searchOptions: SearchOptions, // will not change
+    pageSize: Int = 100
 ) : ViewModel() {
-    val postsFlow: Flow<PagingData<Post>> =
-        Pager(PagingConfig(pageSize = 20)) {
-            PostsSource(applicationViewModel, searchOptions)
-        }.flow.cachedIn(viewModelScope)
+    private val pager = Pager(PagingConfig(pageSize = pageSize, initialLoadSize = pageSize)) {
+        PostsSource(applicationViewModel, searchOptions)
+    }
+
+    val postsFlow: Flow<PagingData<Post>> = pager.flow.cachedIn(viewModelScope)
+
     val lazyListState = LazyListState(0, 0)
 
-    init {
-        Log.d("PostsViewModel", "Created new PostsViewModel")
+    private var countBlacklistedPosts = 0
+    private var warnedUser = false
+
+    /**
+     * Very primitive detection of intersection between query and blacklist. Just warns user about it.
+     *
+     * @param blacklisted result of [ApplicationViewModel.blacklistPostPredicate] if blacklist is enabled, otherwise false
+     */
+    fun notifyPostState(blacklisted: Boolean) {
+        if (!blacklisted) countBlacklistedPosts = 0 else countBlacklistedPosts++
+        if (countBlacklistedPosts > 300 && !warnedUser) {
+            warnedUser = true
+            Log.i("PostsViewModel", "Detected intersection between blacklist and query")
+            applicationViewModel.addSnackbarMessage(
+                R.string.maybe_search_query_intersects_with_blacklist,
+                SnackbarDuration.Indefinite
+            )
+        }
     }
 }
 
@@ -57,7 +78,8 @@ class PostsViewModelFactory(
     }
 }
 
-@Composable fun PostsAppBarActions(navController: NavHostController) {
+@Composable
+fun PostsAppBarActions(navController: NavHostController) {
     IconButton(onClick = {
         val arguments = navController.currentBackStackEntry!!.arguments!!
         navController.navigate(
@@ -80,30 +102,30 @@ class PostsViewModelFactory(
 fun Post(post: Post) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(8.dp)) {
-            Text(post.tags.artist.joinToString(" "))
+            Text(post.tags.all.joinToString(" "))
         }
     }
 }
 
 class PostsSource(
     private val applicationViewModel: ApplicationViewModel,
-    searchOptions: SearchOptions
+    searchOptions: SearchOptions,
 ) : PagingSource<Int, Post>() {
     private val query = searchOptions.compileToQuery()
     override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
-        return state.anchorPosition
+        return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Post> {
         return try {
-            val nextPage = params.key ?: 1
+            val page = params.key ?: 1
             val posts: List<Post> = withContext(Dispatchers.IO) {
-                Api.getPosts(query, page = nextPage, limit = params.loadSize)
+                Api.getPosts(query, page = page, limit = params.loadSize)
             }
             LoadResult.Page(
                 data = posts,
-                prevKey = if (nextPage == 1) null else nextPage - 1,
-                nextKey = if (posts.isNotEmpty()) nextPage + 1 else null
+                prevKey = if (page == 1) null else page - 1,
+                nextKey = if (posts.isNotEmpty()) page + 1 else null
             )
         } catch (e: IOException) {
             applicationViewModel.addSnackbarMessage(
@@ -123,12 +145,9 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
     val viewModel: PostsViewModel =
         viewModel(factory = PostsViewModelFactory(applicationViewModel, searchOptions))
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
-    LaunchedEffect(true) {
-        Log.d(
-            "Posts",
-            "Scroll state: ${viewModel.lazyListState.firstVisibleItemIndex} ${viewModel.lazyListState.firstVisibleItemScrollOffset}"
-        )
-    }
+    val blacklistEnabled =
+        LocalContext.current.getPreference(key = BLACKLIST_ENABLED, defaultValue = true)
+
     if (posts.itemCount == 0) { // Do not reset lazyListState
         Base(Alignment.CenterHorizontally) {
             Spacer(modifier = Modifier.height(4.dp))
@@ -142,7 +161,15 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
     ) {
         item { Spacer(modifier = Modifier.height(4.dp)) }
         items(posts, key = { it.id }) { post ->
-            Post(post!!)
+            if (post == null) return@items
+            val blacklisted =
+                blacklistEnabled && applicationViewModel.blacklistPostPredicate.test(post)
+            viewModel.notifyPostState(blacklisted)
+            if (blacklisted) {
+                Divider()
+                return@items
+            }
+            Post(post)
             Spacer(modifier = Modifier.height(4.dp))
         }
         posts.apply {

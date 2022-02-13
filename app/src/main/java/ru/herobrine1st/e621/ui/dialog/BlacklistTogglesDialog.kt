@@ -12,13 +12,18 @@ import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
+import ru.herobrine1st.e621.preference.getPreference
+import ru.herobrine1st.e621.preference.setPreference
 
 @Composable
 fun BlacklistTogglesDialog(
@@ -68,6 +73,37 @@ fun BlacklistTogglesDialog(
                     else Text(stringResource(R.string.dialog_blacklist_empty))
                 else LazyColumn(modifier = Modifier.heightIn(max = screenHeight * 0.4f)) {
                     item {
+                        val context = LocalContext.current
+                        val checked = context.getPreference(BLACKLIST_ENABLED, defaultValue = true)
+                        val onChange: (Boolean) -> Unit = {
+                            coroutineScope.launch {
+                                context.setPreference(BLACKLIST_ENABLED, it)
+                            }
+                        }
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.toggleable(
+                                checked,
+                                remember { MutableInteractionSource() },
+                                null,
+                                onValueChange = onChange
+                            )
+                        ) {
+                            Text(
+                                stringResource(if (checked) R.string.blacklist_enabled else R.string.blacklist_disabled),
+                                modifier = Modifier.weight(1f)
+                            )
+                            Switch(
+                                checked = checked,
+                                onCheckedChange = onChange,
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = MaterialTheme.colors.primary,
+                                    uncheckedThumbColor = MaterialTheme.colors.onSurface
+                                )
+                            )
+                        }
+                    }
+                    item {
                         val checked = blacklist.all { it.enabled }
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -75,6 +111,7 @@ fun BlacklistTogglesDialog(
                                 checked,
                                 remember { MutableInteractionSource() },
                                 null,
+                                enabled = !updating,
                                 onValueChange = {
                                     blacklist.replaceAll { it }
                                 }
@@ -82,7 +119,8 @@ fun BlacklistTogglesDialog(
                         ) {
                             Text(
                                 stringResource(R.string.selection_all),
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                color = if (updating) Color.Gray else Color.Unspecified
                             )
                             Checkbox(
                                 checked = checked,
@@ -104,7 +142,11 @@ fun BlacklistTogglesDialog(
                                 }
                             )
                         ) {
-                            Text(entry.query, modifier = Modifier.weight(1f))
+                            Text(
+                                entry.query,
+                                modifier = Modifier.weight(1f),
+                                color = if (updating) Color.Gray else Color.Unspecified
+                            )
                             if (entry.isToggled()) { // Reset
                                 IconButton(
                                     enabled = !updating,

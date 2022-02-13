@@ -1,10 +1,22 @@
 package ru.herobrine1st.e621.preference
 
 import android.content.Context
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.map
+
+@Composable
+fun <R> Context.getPreference(key: Preferences.Key<R>, defaultValue: R): R =
+    this.dataStore.data.map { it[key] ?: defaultValue }.collectAsState(initial = defaultValue).value
+
+suspend inline fun <R> Context.setPreference(key: Preferences.Key<R>, value: R) {
+    this.dataStore.edit { it[key] = value }
+}
 
 val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 

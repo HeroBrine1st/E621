@@ -52,4 +52,7 @@
     <string name="unsaved_changes_message">Вы точно хотите выйти? Ваши изменения будут потеряны.</string>
     <string name="cancel">Отмена</string>
     <string name="leave_discard_changes">Выйти</string>
+    <string name="blacklist_enabled">Включен</string>
+    <string name="blacklist_disabled">Выключен</string>
+    <string name="maybe_search_query_intersects_with_blacklist">Обнаружены большие последовательные участки заблокированных постов, загрузка новых может занять много времени. Может быть, ваш запрос пересекается с чёрным списком?</string>
 </resources>
