@@ -31,6 +31,7 @@ import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.LazyBase
+import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.SearchOptions
 import java.io.IOException
 
@@ -51,7 +52,7 @@ class PostsViewModel(
     private var warnedUser = false
 
     /**
-     * Very primitive detection of intersection between query and blacklist. Just warns user about it.
+     * Very primitive detection of intersection between query and blacklist. It simply warns user about it.
      *
      * @param blacklisted result of [ApplicationViewModel.blacklistPostPredicate] if blacklist is enabled, otherwise false
      */
@@ -93,17 +94,9 @@ fun PostsAppBarActions(navController: NavHostController) {
     }) {
         Icon(
             imageVector = Icons.Filled.Search,
-            contentDescription = stringResource(R.string.search)
+            contentDescription = stringResource(R.string.search),
+            tint = ActionBarIconColor
         )
-    }
-}
-
-@Composable
-fun Post(post: Post) {
-    Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(8.dp)) {
-            Text(post.tags.all.joinToString(" "))
-        }
     }
 }
 
@@ -136,6 +129,15 @@ class PostsSource(
         } catch (e: Throwable) {
             Log.e("Posts", "Unable to load posts", e)
             LoadResult.Error(e)
+        }
+    }
+}
+
+@Composable
+fun Post(post: Post) {
+    Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
+        Column(modifier = Modifier.padding(8.dp)) {
+            Text(post.tags.all.joinToString(" "))
         }
     }
 }
