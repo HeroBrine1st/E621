@@ -3,7 +3,7 @@ package ru.herobrine1st.e621.ui.dialog
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
@@ -102,6 +102,7 @@ fun BlacklistTogglesDialog(
                                 )
                             )
                         }
+                        Divider()
                     }
                     item {
                         val checked = blacklist.all { it.enabled }
@@ -129,8 +130,10 @@ fun BlacklistTogglesDialog(
                                 colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.secondary)
                             )
                         }
+                        if (blacklist.isNotEmpty())
+                            Divider()
                     }
-                    items(blacklist) { entry ->
+                    itemsIndexed(blacklist) { i, entry ->
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier.toggleable(
@@ -167,6 +170,8 @@ fun BlacklistTogglesDialog(
                                 colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.secondary)
                             )
                         }
+                        if (i < blacklist.size - 1)
+                            Divider()
                     }
                 }
                 Spacer(modifier = Modifier.height(8.dp))

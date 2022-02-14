@@ -3,9 +3,10 @@ package ru.herobrine1st.e621.ui.screen.settings
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -23,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.component.LazyBase
+import ru.herobrine1st.e621.ui.component.width
 import ru.herobrine1st.e621.ui.dialog.StopThereAreUnsavedChangesDialog
 import ru.herobrine1st.e621.ui.dialog.TextInputDialog
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
@@ -101,10 +102,11 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
         openExitDialog = true
     }
 
-    LazyBase {
-        items(applicationViewModel.blacklistDoNotUseAsFilter) { entry: StatefulBlacklistEntry ->
+    LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
+        itemsIndexed(applicationViewModel.blacklistDoNotUseAsFilter) { i, entry ->
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(width)
             ) {
                 if (entry.isPendingInsertion()) {
                     key("New item indicator") {
@@ -130,14 +132,12 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
                     key("Undo button") {
                         IconButton(
                             onClick = { applicationViewModel.resetBlacklistEntry(entry) },
-                            modifier = Modifier.size(24.dp)
                         ) {
                             Icon(
                                 Icons.Outlined.Undo,
                                 contentDescription = stringResource(R.string.cancel)
                             )
                         }
-                        Spacer(modifier = Modifier.width(8.dp))
                     }
                 }
                 key("Delete button") {
@@ -145,33 +145,29 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
                         onClick = {
                             if (entry.isPendingDeletion()) entry.markAsDeleted(false)
                             else applicationViewModel.deleteBlacklistEntry(entry)
-                        },
-                        modifier = Modifier
-                            .size(24.dp)
+                        }
                     ) {
                         Icon(
                             if (entry.isPendingDeletion()) Icons.Default.Add else Icons.Default.Remove,
                             contentDescription = stringResource(R.string.remove)
                         )
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
                 }
 
                 key("Edit button") {
                     IconButton(
-                        onClick = { editQueryEntry = entry },
-                        modifier = Modifier
-                            .size(24.dp)
+                        onClick = { editQueryEntry = entry }
                     ) {
                         Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
                     }
-                    Spacer(modifier = Modifier.width(8.dp))
                 }
 
                 key("Enable/disable checkbox") {
                     Checkbox(checked = entry.enabled, onCheckedChange = { entry.enabled = it })
                 }
             }
+            if (i < applicationViewModel.blacklistDoNotUseAsFilter.size - 1)
+                Divider()
         }
     }
 }
