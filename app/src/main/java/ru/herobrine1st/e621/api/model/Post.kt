@@ -16,7 +16,7 @@ data class Post(
     val sample: Sample,
     val score: Score,
     val tags: Tags,
-    val lockedTags: List<String>,
+    val lockedTags: List<String> = emptyList(),
     @JsonProperty("change_seq")
     val changeSequence: Int,
     // val flags: Flags, // No class
