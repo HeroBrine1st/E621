@@ -4,10 +4,8 @@ plugins {
     id("com.google.devtools.ksp")
 }
 
-val composeVersion = "1.0.5"
-val kotlinVersion = "1.5.31"
-val roomVersion = "2.4.1"
-val pagingVersion = "3.1.0"
+val kotlinVersion = "1.6.10"
+val composeVersion = "1.1.0"
 
 android {
     compileSdk = 32
@@ -72,13 +70,14 @@ dependencies {
     implementation("androidx.compose.material:material:$composeVersion")
     implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
     implementation("androidx.compose.material:material-icons-extended:$composeVersion")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.4.1")
     implementation("androidx.activity:activity-compose:1.4.0")
 
     // Jetpack Navigation
     implementation("androidx.navigation:navigation-compose:2.4.1")
 
     // Jetpack Room
+    val roomVersion = "2.4.1"
     implementation("androidx.room:room-runtime:$roomVersion")
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
@@ -89,6 +88,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
 
     // Jetpack Paging
+    val pagingVersion = "3.1.0"
     implementation("androidx.paging:paging-runtime:$pagingVersion")
     implementation("androidx.paging:paging-compose:1.0.0-alpha14")
 
