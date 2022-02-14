@@ -14,7 +14,7 @@ data class SearchOptions(
         bundle.getString("tags")!!
             .let { if (it.isBlank()) emptyList() else it.split(",") },
         Order.valueOf(bundle.getString("order")!!),
-        bundle.getBoolean("orderAscending"),
+        bundle.getBoolean("ascending"),
         bundle.getString("rating")!!.split(",").map { Rating.valueOf(it) })
 
     fun compileToQuery(): String {

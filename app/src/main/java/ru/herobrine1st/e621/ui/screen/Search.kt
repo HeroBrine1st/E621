@@ -120,12 +120,9 @@ class SearchScreenState(
         val Saver: Saver<SearchScreenState, Bundle> = Saver(
             save = { state ->
                 val bundle = Bundle()
-                bundle.putString(
-                    "tags",
-                    state.tags.joinToString(",")
-                ) // Couldn't use putStringArrayList because restore constructor used with Navigation
+                bundle.putString("tags", state.tags.joinToString(",")) // Couldn't use putStringArrayList because restore constructor used with Navigation
                 bundle.putString("order", state.order.name)
-                bundle.putBoolean("orderAscending", state.orderAscending)
+                bundle.putBoolean("ascending", state.orderAscending)
                 bundle.putString("rating", state.rating.joinToString(",") { it.name })
                 bundle.putBoolean("openDialog", state.openDialog)
                 return@Saver bundle
