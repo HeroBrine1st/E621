@@ -1,8 +1,10 @@
 package ru.herobrine1st.e621.ui.screen
 
+import android.text.format.DateUtils
 import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -11,6 +13,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -23,7 +26,7 @@ import androidx.paging.*
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import coil.compose.rememberImagePainter
-import coil.imageLoader
+import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
@@ -34,7 +37,7 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.ui.component.Base
-import ru.herobrine1st.e621.ui.component.LazyBase
+import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.SearchOptions
 import java.io.IOException
@@ -129,6 +132,7 @@ class PostsSource(
                 R.string.network_error,
                 SnackbarDuration.Indefinite
             )
+            Log.e("Posts", "Unable to load posts", e)
             LoadResult.Error(e)
         } catch (e: Throwable) {
             Log.e("Posts", "Unable to load posts", e)
@@ -152,8 +156,8 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
         }
         return
     }
-    LazyBase(
-        lazyListState = viewModel.lazyListState,
+    LazyColumn(
+        state = viewModel.lazyListState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item { Spacer(modifier = Modifier.height(4.dp)) }
@@ -184,20 +188,47 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
 @Composable
 fun Post(post: Post) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
-        LocalContext.current.imageLoader
-        Column(modifier = Modifier.padding(8.dp)) {
-            Image(
-                painter = rememberImagePainter(
-                    post.file.url,
-                    builder = {
-                        crossfade(true)
-                    }
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(post.file.width.toFloat() / post.file.height.toFloat()),
-                contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
-            )
+        Column(modifier = Modifier.padding(bottom = 8.dp)) {
+            Box(contentAlignment = Alignment.TopStart) {
+                Image(
+                    painter = rememberImagePainter(
+                        post.sample.url,
+                        builder = {
+                            crossfade(true)
+                        }
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(post.sample.width.toFloat() / post.sample.height.toFloat()),
+                    contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
+                )
+                OutlinedChip( // TODO
+                    modifier = Modifier.offset(x = 10.dp, y = 10.dp),
+                    backgroundColor = Color.Transparent
+                ) {
+                    Text(post.file.type.extension)
+                }
+            }
+            Column(
+                modifier = Modifier.padding(horizontal = 8.dp),
+                horizontalAlignment = Alignment.Start
+            ) {
+                FlowRow {
+                    post.tags.reduced
+                        .let {
+                            it.take(6).let { it1 ->
+                                if (it.size > 6) it1 + "..." else it
+                            }
+                        }
+                        .forEach {
+                            OutlinedChip(modifier = Modifier.padding(4.dp)) {
+                                Text(it)
+                            }
+                        }
+                }
+                Text(stringResource(R.string.post_score, post.score.total))
+                Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochMilli())}") // TODO i18n
+            }
         }
     }
 }

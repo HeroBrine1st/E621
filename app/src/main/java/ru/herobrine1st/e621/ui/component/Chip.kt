@@ -10,6 +10,7 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -23,12 +24,14 @@ fun OutlinedChip(
         color = MaterialTheme.colors.primary
     ),
     innerPadding: Dp = 8.dp,
+    backgroundColor: Color = MaterialTheme.colors.surface,
     content: @Composable RowScope.() -> Unit
 ) {
     Surface(
         modifier = modifier,
         shape = shape,
         border = border,
+        color = backgroundColor
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,

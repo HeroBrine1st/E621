@@ -55,4 +55,5 @@
     <string name="blacklist_enabled">Enabled</string>
     <string name="blacklist_disabled">Disabled</string>
     <string name="maybe_search_query_intersects_with_blacklist">Detected huge consistent sequences of blacklisted posts - loading new may take too long. Maybe your search query intersects with blacklist? Try to disable blacklist or change your query.</string>
+    <string name="post_score">Score: %s</string>
 </resources>

@@ -31,7 +31,9 @@ import ru.herobrine1st.e621.ui.screen.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme
+import ru.herobrine1st.e621.util.LocalClock
 import ru.herobrine1st.e621.util.SearchOptions
+import java.time.Clock
 
 
 class MainActivity : ComponentActivity() {
@@ -45,6 +47,8 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             Database::class.java, BuildConfig.DATABASE_NAME
         ).build()
+
+        val clock = Clock.systemDefaultZone()
 
         Coil.setImageLoader {
             ImageLoader.Builder(applicationContext)
@@ -102,7 +106,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colors.background
                     ) {
-                        CompositionLocalProvider(LocalDatabase provides db) {
+                        CompositionLocalProvider(LocalDatabase provides db, LocalClock provides clock) {
                             NavHost(
                                 navController = navController,
                                 startDestination = Screens.Home.route
