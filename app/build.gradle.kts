@@ -97,11 +97,15 @@ dependencies {
     implementation("io.coil-kt:coil-compose:1.4.0")
     implementation("io.coil-kt:coil-gif:1.4.0")
 
+    // Jackson
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1")
+
     // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
     implementation("com.google.accompanist:accompanist-flowlayout:0.20.3")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
+    implementation("org.jsoup:jsoup:1.14.3")
 
     // Tests
     testImplementation("junit:junit:4.13.2")

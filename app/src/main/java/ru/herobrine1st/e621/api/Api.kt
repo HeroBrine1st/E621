@@ -1,24 +1,30 @@
 package ru.herobrine1st.e621.api
 
 import android.util.Log
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import okhttp3.*
 import ru.herobrine1st.e621.BuildConfig
-import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.api.model.PostsEndpoint
+import ru.herobrine1st.e621.api.model.*
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 
+fun objectMapperFactory(): ObjectMapper = jsonMapper {
+    addModule(kotlinModule())
+    addModule(JavaTimeModule())
+}.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
 fun Response.checkStatus() {
-    if(!this.isSuccessful) {
-        if(BuildConfig.DEBUG) {
+    if (!this.isSuccessful) {
+        if (BuildConfig.DEBUG) {
             Log.e(Api.TAG, "Unsuccessful request: $message")
-            body?.use {
+            body?.let {
                 Log.d(Api.TAG, "Response body:")
-                Log.d(Api.TAG, it.charStream().readText())
+                Log.d(Api.TAG, it.string())
             }
         }
         throw ApiException("Unsuccessful request: $message", code)
@@ -32,8 +38,7 @@ object Api {
         .build()
     private var credentials: String? = null
     private var login: String? = null
-    private val objectMapper = jacksonObjectMapper()
-        .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+    private val objectMapper = objectMapperFactory()
 
     private fun updateCredentialsInternal(login: String?, apiKey: String?) {
         this.login = login
@@ -97,9 +102,7 @@ object Api {
             .build()
         okHttpClient.newCall(req).execute().use {
             it.checkStatus()
-            it.body!!.use { body ->
-                return objectMapper.readValue<PostsEndpoint>(body.charStream()).posts
-            }
+            return objectMapper.readValue<PostEndpoint>(it.body!!.charStream()).posts
         }
     }
 
@@ -119,11 +122,30 @@ object Api {
             .build()
         okHttpClient.newCall(req).execute().use {
             it.checkStatus()
-            it.body!!.use { body ->
-                return objectMapper.readValue<ObjectNode>(body.charStream())
-                    .get("blacklisted_tags").asText()
-                    .split("\n")
-            }
+            return objectMapper.readValue<ObjectNode>(it.body!!.charStream())
+                .get("blacklisted_tags").asText()
+                .split("\n")
+
         }
+    }
+
+    fun getCommendsForPost(post: Post) = getCommentsForPost(id = post.id)
+
+    @Suppress("MemberVisibilityCanBePrivate")
+    fun getCommentsForPost(id: Int): List<Comment> {
+        val req = requestBuilder()
+            .url(
+                HttpUrl.Builder()
+                    .scheme("https")
+                    .host(BuildConfig.API_URL)
+                    .addPathSegments("posts/$id/comments.json")
+                    .build()
+            )
+            .build()
+        val response = okHttpClient.newCall(req).execute().use {
+            it.checkStatus()
+            objectMapper.readValue<PostCommentsEndpoint>(it.body!!.charStream())
+        }
+        return parseComments(response)
     }
 }
