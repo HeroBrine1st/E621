@@ -139,7 +139,9 @@ class MainActivity : ComponentActivity() {
                                     val arguments =
                                         it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
                                     val searchOptions = remember { SearchOptions(arguments) }
-                                    Posts(searchOptions, applicationViewModel)
+                                    Posts(searchOptions, applicationViewModel) { id, scrollToComments ->
+
+                                    }
                                 }
                                 composable(Screens.Settings.route) {
                                     Settings(navController)

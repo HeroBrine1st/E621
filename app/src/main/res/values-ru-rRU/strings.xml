@@ -56,4 +56,10 @@
     <string name="blacklist_disabled">Выключен</string>
     <string name="maybe_search_query_intersects_with_blacklist">Обнаружены большие последовательные участки заблокированных постов, загрузка новых может занять много времени. Может быть, ваш запрос пересекается с чёрным списком?</string>
     <string name="post_score">Счёт: %s</string>
+    <string name="score_up">Лайк</string>
+    <string name="score_down">Дизлайк</string>
+    <string name="comments">Комментарии</string>
+    <string name="favorite">Сохранить</string>
+    <string name="share">Поделиться</string>
+    <string name="unfavorite">Удалить</string>
 </resources>

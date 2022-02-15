@@ -3,14 +3,17 @@ package ru.herobrine1st.e621.ui.screen
 import android.text.format.DateUtils
 import android.util.Log
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Comment
+import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -31,6 +34,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.ApplicationViewModel
+import ru.herobrine1st.e621.AuthState
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
@@ -142,7 +146,7 @@ class PostsSource(
 }
 
 @Composable
-fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewModel) {
+fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewModel, openPost: (id: Int, scrollToComments: Boolean) -> Unit) {
     val viewModel: PostsViewModel =
         viewModel(factory = PostsViewModelFactory(applicationViewModel, searchOptions))
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
@@ -167,7 +171,9 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
                 blacklistEnabled && applicationViewModel.blacklistPostPredicate.test(post)
             viewModel.notifyPostState(blacklisted)
             if (blacklisted) return@items
-            Post(post)
+            Post(post, applicationViewModel) {
+                openPost(post.id, it)
+            }
             Spacer(modifier = Modifier.height(4.dp))
         }
         posts.apply {
@@ -186,7 +192,7 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
 }
 
 @Composable
-fun Post(post: Post) {
+fun Post(post: Post, applicationViewModel: ApplicationViewModel, openPost: (scrollToComments: Boolean) -> Unit) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(bottom = 8.dp)) {
             Box(contentAlignment = Alignment.TopStart) {
@@ -209,25 +215,95 @@ fun Post(post: Post) {
                     Text(post.file.type.extension)
                 }
             }
-            Column(
-                modifier = Modifier.padding(horizontal = 8.dp),
-                horizontalAlignment = Alignment.Start
-            ) {
-                FlowRow {
-                    post.tags.reduced
-                        .let {
-                            it.take(6).let { it1 ->
-                                if (it.size > 6) it1 + "..." else it
-                            }
+            FlowRow {
+                var expandTags by remember { mutableStateOf(false) }
+                post.tags.reduced
+                    .let {
+                        if (expandTags) it
+                        else it.take(6)
+                    }
+                    .forEach {
+                        OutlinedChip(
+                            modifier = Modifier.padding(
+                                horizontal = 4.dp,
+                                vertical = 2.dp
+                            )
+                        ) {
+                            Text(it, style = MaterialTheme.typography.caption)
                         }
-                        .forEach {
-                            OutlinedChip(modifier = Modifier.padding(4.dp)) {
-                                Text(it)
-                            }
-                        }
+                    }
+                if (!expandTags && post.tags.reduced.size > 6) {
+                    OutlinedChip(modifier = Modifier
+                        .padding(4.dp)
+                        .clickable {
+                            expandTags = true
+                        }) {
+                        Text("...", style = MaterialTheme.typography.caption)
+                    }
                 }
-                Text(stringResource(R.string.post_score, post.score.total))
-                Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochMilli())}") // TODO i18n
+            }
+            Column(
+                horizontalAlignment = Alignment.Start,
+                modifier = Modifier.padding(horizontal = 8.dp),
+            ) {
+                Divider()
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        IconButton(onClick = { /*TODO*/ }) {
+                            Icon(
+                                Icons.Filled.ArrowUpward,
+                                contentDescription = stringResource(R.string.score_up)
+                            )
+                        }
+                        Text(post.score.total.toString())
+                        IconButton(onClick = { /*TODO*/ }) {
+                            Icon(
+                                Icons.Filled.ArrowDownward,
+                                contentDescription = stringResource(R.string.score_down)
+                            )
+                        }
+                    }
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = rememberRipple(bounded = false, radius = 24.dp)
+                        ) { openPost(true) }
+                    ) {
+                        Text(post.commentCount.toString())
+                        Icon(
+                            Icons.Outlined.Comment,
+                            contentDescription = stringResource(R.string.comments),
+                            modifier = Modifier
+                                .padding(start = 4.dp)
+                                .offset(y = 2.dp)
+                        )
+                    }
+                    if (applicationViewModel.authState == AuthState.AUTHORIZED) {
+                        IconButton(onClick = { /*TODO*/ }) {
+                            val isFavorited = post.isFavorited // TODO cache in view model
+                            if (isFavorited) Icon(
+                                Icons.Filled.Favorite,
+                                contentDescription = stringResource(R.string.unfavorite)
+                            )
+                            else Icon(
+                                Icons.Filled.FavoriteBorder,
+                                contentDescription = stringResource(R.string.favorite)
+                            )
+                        }
+                    }
+                    IconButton(onClick = { /*TODO*/ }) {
+                        Icon(
+                            Icons.Default.Share,
+                            contentDescription = stringResource(R.string.share)
+                        )
+                    }
+                }
+                Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochMilli())}") // TODO i18n; move it somewhere
             }
         }
     }
