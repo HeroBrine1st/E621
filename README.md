@@ -8,6 +8,7 @@ Work in progress
 # Features
 
 - [x] Search posts
+- [ ] Autocomplete 
 - [x] Authorize
 - [x] Blacklists
 - [ ] Add to favorites
