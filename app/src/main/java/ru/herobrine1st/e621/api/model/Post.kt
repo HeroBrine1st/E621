@@ -6,7 +6,7 @@ import ru.herobrine1st.e621.api.FileType
 import ru.herobrine1st.e621.api.Rating
 import java.time.Instant
 
-@JsonIgnoreProperties("preview", "locked_tags", "flags")
+@JsonIgnoreProperties("preview", "flags")
 data class Post(
     val id: Int,
     val createdAt: Instant,
@@ -34,8 +34,16 @@ data class Post(
     val isFavorited: Boolean = false, // may cause crashes
     @JsonProperty(required = false)
     val hasNotes: Boolean = false, // may cause crashes
-    val duration: Float?
-)
+    val duration: Float = 0f
+) {
+    val files: List<NormalizedFile> by lazy {
+        listOf(
+            NormalizedFile(file),
+            NormalizedFile(sample),
+            *sample.alternatives.map { NormalizedFile(it.key, it.value) }.toTypedArray()
+        )
+    }
+}
 
 data class PostReduced(
     val status: String,
