@@ -8,11 +8,15 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.preferencesDataStore
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+
+fun <R> Context.getPreferenceFlow(key: Preferences.Key<R>, defaultValue: R): Flow<R> =
+    this.dataStore.data.map { it[key] ?: defaultValue }
 
 @Composable
 fun <R> Context.getPreference(key: Preferences.Key<R>, defaultValue: R): R =
-    this.dataStore.data.map { it[key] ?: defaultValue }.collectAsState(initial = defaultValue).value
+    getPreferenceFlow(key, defaultValue).collectAsState(initial = defaultValue).value
 
 suspend inline fun <R> Context.setPreference(key: Preferences.Key<R>, value: R) {
     this.dataStore.edit { it[key] = value }
