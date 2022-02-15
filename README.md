@@ -9,6 +9,7 @@ Work in progress
 
 - [x] Search posts
 - [x] Authorize
+- [x] Blacklists
 - [ ] Add to favorites
 - [ ] View posts comments and all tags
 - [ ] Up/down score
