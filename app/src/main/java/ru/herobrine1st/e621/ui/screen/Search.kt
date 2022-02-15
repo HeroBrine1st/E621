@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -22,13 +21,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import com.google.accompanist.flowlayout.FlowRow
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
+import ru.herobrine1st.e621.ui.dialog.ActionDialog
 import ru.herobrine1st.e621.util.SearchOptions
 
 
@@ -51,48 +50,23 @@ fun SettingCard(
 @Composable
 fun AddTagDialog(onClose: () -> Unit, onAdd: (String) -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
-    Dialog(onDismissRequest = onClose) {
-        Card(
-            elevation = 8.dp,
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Column(
-                modifier = Modifier.padding(
-                    start = 12.dp,
-                    end = 12.dp,
-                    top = 12.dp
-                )
-            ) {
-                Text(
-                    text = stringResource(R.string.add_tag),
-                    style = MaterialTheme.typography.h6
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { text = it },
-                    label = { Text(stringResource(R.string.tag)) },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier
-                        .padding(all = 8.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(
-                        onClick = {
-                            onClose()
-                            onAdd(text)
-                        }
-                    ) {
-                        Text(stringResource(R.string.add))
-                    }
-                }
-            }
+
+    ActionDialog(title = stringResource(R.string.add_tag), actions = {
+        TextButton(onClick = onClose) {
+            Text(stringResource(R.string.close))
         }
+        TextButton(onClick = { onClose(); onAdd(text) }) {
+            Text(stringResource(R.string.add))
+        }
+    }, onDismissRequest = onClose) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = { text = it },
+            label = { Text(stringResource(R.string.tag)) },
+            modifier = Modifier
+                .fillMaxWidth()
+        )
+        // TODO autocomplete
     }
 }
 
@@ -120,7 +94,10 @@ class SearchScreenState(
         val Saver: Saver<SearchScreenState, Bundle> = Saver(
             save = { state ->
                 val bundle = Bundle()
-                bundle.putString("tags", state.tags.joinToString(",")) // Couldn't use putStringArrayList because restore constructor used with Navigation
+                bundle.putString(
+                    "tags",
+                    state.tags.joinToString(",")
+                ) // Couldn't use putStringArrayList because restore constructor used with Navigation
                 bundle.putString("order", state.order.name)
                 bundle.putBoolean("ascending", state.orderAscending)
                 bundle.putString("rating", state.rating.joinToString(",") { it.name })
