@@ -146,7 +146,11 @@ class PostsSource(
 }
 
 @Composable
-fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewModel, openPost: (id: Int, scrollToComments: Boolean) -> Unit) {
+fun Posts(
+    searchOptions: SearchOptions,
+    applicationViewModel: ApplicationViewModel,
+    openPost: (id: Int, scrollToComments: Boolean) -> Unit
+) {
     val viewModel: PostsViewModel =
         viewModel(factory = PostsViewModelFactory(applicationViewModel, searchOptions))
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
@@ -192,29 +196,14 @@ fun Posts(searchOptions: SearchOptions, applicationViewModel: ApplicationViewMod
 }
 
 @Composable
-fun Post(post: Post, applicationViewModel: ApplicationViewModel, openPost: (scrollToComments: Boolean) -> Unit) {
+fun Post(
+    post: Post,
+    applicationViewModel: ApplicationViewModel,
+    openPost: (scrollToComments: Boolean) -> Unit
+) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(bottom = 8.dp)) {
-            Box(contentAlignment = Alignment.TopStart) {
-                Image(
-                    painter = rememberImagePainter(
-                        post.sample.url,
-                        builder = {
-                            crossfade(true)
-                        }
-                    ),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(post.sample.width.toFloat() / post.sample.height.toFloat()),
-                    contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
-                )
-                OutlinedChip( // TODO
-                    modifier = Modifier.offset(x = 10.dp, y = 10.dp),
-                    backgroundColor = Color.Transparent
-                ) {
-                    Text(post.file.type.extension)
-                }
-            }
+            PostImagePreview(post)
             FlowRow {
                 var expandTags by remember { mutableStateOf(false) }
                 post.tags.reduced
@@ -305,6 +294,37 @@ fun Post(post: Post, applicationViewModel: ApplicationViewModel, openPost: (scro
                 }
                 Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochMilli())}") // TODO i18n; move it somewhere
             }
+        }
+    }
+}
+
+@Composable
+fun PostImagePreview(post: Post) {
+    val aspectRatio = post.sample.width.toFloat() / post.sample.height.toFloat()
+    if (aspectRatio <= 0) {
+        Box(contentAlignment = Alignment.TopCenter) {
+            Text("Invalid post") // TODO i18n
+        }
+        return
+    }
+    Box(contentAlignment = Alignment.TopStart) {
+        Image(
+            painter = rememberImagePainter(
+                post.sample.url,
+                builder = {
+                    crossfade(true)
+                }
+            ),
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(aspectRatio),
+            contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
+        )
+        if (post.file.type.isNotImage) OutlinedChip( // TODO
+            modifier = Modifier.offset(x = 10.dp, y = 10.dp),
+            backgroundColor = Color.Transparent
+        ) {
+            Text(post.file.type.extension)
         }
     }
 }

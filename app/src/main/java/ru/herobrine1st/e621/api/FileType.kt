@@ -8,4 +8,8 @@ enum class FileType(@JsonValue val extension: String, val isSupported: Boolean =
     GIF("gif", isImage = true),
     SWF("swf", isSupported = false),
     WEBM("webm",  isVideo = true);
+
+    val isNotImage = !isImage
+    val isNotVideo = !isVideo
 }
+
