@@ -20,7 +20,7 @@ fun StopThereAreUnsavedChangesDialog(onClose: () -> Unit, onExit: () -> Unit) {
         TextButton(onClick = onClose) {
             Text(stringResource(R.string.cancel))
         }
-    }, onClose = onClose) {
+    }, onDismissRequest = onClose) {
         Text(stringResource(R.string.unsaved_changes_message))
     }
 }

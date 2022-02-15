@@ -39,7 +39,7 @@ fun BlacklistTogglesDialog(
             actions = {
                 BlacklistTogglesDialogActions(false, applicationViewModel, false)
             },
-            onClose = onClose
+            onDismissRequest = onClose
         ) {
             CircularProgressIndicator()
         }
@@ -57,7 +57,7 @@ fun BlacklistTogglesDialog(
             BlacklistTogglesDialogActions(updating, applicationViewModel) {
                 if (it) closeCancel() else onClose()
             }
-        }, onClose = closeCancel
+        }, onDismissRequest = closeCancel
     ) {
         if (blacklist.isEmpty()) Text(stringResource(R.string.dialog_blacklist_empty))
         else BlacklistTogglesDialogContent(applicationViewModel)

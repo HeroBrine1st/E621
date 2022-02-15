@@ -17,10 +17,10 @@ fun ActionDialog(
     title: String,
     actions: @Composable RowScope.() -> Unit,
     properties: DialogProperties = DialogProperties(),
-    onClose: () -> Unit,
+    onDismissRequest: () -> Unit,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Dialog(onDismissRequest = onClose, properties = properties) {
+    Dialog(onDismissRequest = onDismissRequest, properties = properties) {
         Card(
             elevation = 8.dp,
             shape = RoundedCornerShape(12.dp)

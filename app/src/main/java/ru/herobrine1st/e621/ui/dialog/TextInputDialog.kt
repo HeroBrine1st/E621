@@ -33,7 +33,7 @@ fun TextInputDialog(
                 Text(submitButtonText)
             }
         },
-        onClose = onClose
+        onDismissRequest = onClose
     ) {
         OutlinedTextField(
             value = text,
