@@ -10,7 +10,7 @@ import java.time.Instant
 data class Post(
     val id: Int,
     val createdAt: Instant,
-    val updatedAt: Instant,
+    val updatedAt: Instant?,
     val file: File,
     // preview is not applicable
     val sample: Sample,
