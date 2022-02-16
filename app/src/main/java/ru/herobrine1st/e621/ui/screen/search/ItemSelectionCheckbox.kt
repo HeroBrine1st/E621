@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import ru.herobrine1st.e621.ui.theme.disabledText
 
 @Composable
 fun ItemSelectionCheckbox(
@@ -39,9 +40,10 @@ fun ItemSelectionCheckbox(
             onCheckedChange = onCheckedChange,
             colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.primary)
         )
+
         Text(
             text = text,
-            color = if (enabled) Color.Unspecified else Color.Gray
+            color = if (enabled) Color.Unspecified else MaterialTheme.colors.disabledText
         )
     }
 }

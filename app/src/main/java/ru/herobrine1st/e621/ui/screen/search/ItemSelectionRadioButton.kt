@@ -2,6 +2,7 @@ package ru.herobrine1st.e621.ui.screen.search
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.RadioButton
@@ -21,7 +22,7 @@ fun ItemSelectionRadioButton(selected: Boolean, text: String, onClick: () -> Uni
             interactionSource = remember { MutableInteractionSource() },
             indication = null,
             onClick = onClick
-        )
+        ).fillMaxWidth()
     ) {
         RadioButton(
             selected = selected,

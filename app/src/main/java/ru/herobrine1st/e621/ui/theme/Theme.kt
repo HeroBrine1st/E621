@@ -40,7 +40,7 @@ fun E621Theme(window: Window, darkTheme: Boolean = isSystemInDarkTheme(), conten
     }
 
     LaunchedEffect(darkTheme) {
-        window.statusBarColor = if (darkTheme) statusBarDarkModeColor.toArgb() else colors.primaryVariant.toArgb()
+        window.statusBarColor = colors.statusBar.toArgb()
     }
 
     MaterialTheme(
