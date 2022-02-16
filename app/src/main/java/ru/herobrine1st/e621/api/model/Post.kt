@@ -40,7 +40,7 @@ data class Post(
         listOf(
             NormalizedFile(file),
             NormalizedFile(sample),
-            *sample.alternatives.map { NormalizedFile(it.key, it.value) }.toTypedArray()
+            *sample.alternates.map { NormalizedFile(it.key, it.value) }.toTypedArray()
         )
     }
 }

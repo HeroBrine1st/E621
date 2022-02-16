@@ -8,27 +8,27 @@ data class Sample(
     val height: Int,
     val width: Int,
     val url: String,
-    val alternatives: Map<String, Alternative>
+    val alternates: Map<String, Alternate>
 ) {
     val type by lazy {
         FileType.byExtension[url.splitToSequence(".").lastOrNull()] ?: FileType.UNDEFINED
     }
 }
 
-data class Alternative(
-    val alternativeType: AlternativeType,
+data class Alternate(
+    val type: AlternateType,
     val height: Int,
     val width: Int,
     val urls: List<String?> // yes it really may be nullable
 ) {
-    val type by lazy {
+    val normalizedType by lazy {
         urls.mapNotNull {
             FileType.byExtension[it?.splitToSequence(".")?.lastOrNull()]
         }.firstOrNull() ?: FileType.UNDEFINED
     }
 }
 
-enum class AlternativeType(@JsonValue val apiName: String) {
+enum class AlternateType(@JsonValue val apiName: String) {
     VIDEO("video"),
     IMAGE("image"),
     //maybe more
