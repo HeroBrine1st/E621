@@ -1,6 +1,7 @@
 package ru.herobrine1st.e621.api
 
 import android.util.Log
+import androidx.compose.runtime.compositionLocalOf
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.node.ObjectNode
@@ -31,9 +32,10 @@ fun Response.checkStatus() {
     }
 }
 
-object Api {
-    const val TAG = "API"
-    private val okHttpClient = OkHttpClient.Builder()
+val LocalAPI = compositionLocalOf<Api> { error("No API found") }
+
+class Api(okHttpClient: OkHttpClient? = null) {
+    private val okHttpClient = okHttpClient ?: OkHttpClient.Builder()
         .addInterceptor(RateLimitInterceptor(1.5))
         .build()
     private var credentials: String? = null
@@ -147,5 +149,9 @@ object Api {
             objectMapper.readValue<PostCommentsEndpoint>(it.body!!.charStream())
         }
         return parseComments(response)
+    }
+
+    companion object {
+        const val TAG = "API"
     }
 }

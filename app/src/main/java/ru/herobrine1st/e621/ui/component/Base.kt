@@ -1,6 +1,5 @@
 package ru.herobrine1st.e621.ui.component
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope

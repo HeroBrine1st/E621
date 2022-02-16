@@ -36,13 +36,11 @@ data class Post(
     val hasNotes: Boolean = false, // may cause crashes
     val duration: Float = 0f
 ) {
-    val files: List<NormalizedFile> by lazy {
-        listOf(
-            NormalizedFile(file),
-            NormalizedFile(sample),
-            *sample.alternates.map { NormalizedFile(it.key, it.value) }.toTypedArray()
-        )
-    }
+    val files: List<NormalizedFile> = listOf(
+        NormalizedFile(file),
+        NormalizedFile(sample),
+        *sample.alternates.map { NormalizedFile(it.key, it.value) }.toTypedArray()
+    )
 }
 
 data class PostReduced(

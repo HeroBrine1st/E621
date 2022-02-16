@@ -34,11 +34,11 @@ enum class AuthState {
     UNAUTHORIZED // error when trying to authenticate
 }
 
-class ApplicationViewModel(val database: Database) : ViewModel() {
-    class Factory(val database: Database) : ViewModelProvider.Factory {
+class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
+    class Factory(val database: Database, val api: Api) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-            return ApplicationViewModel(database) as T
+            return ApplicationViewModel(database, api) as T
         }
     }
 
@@ -112,7 +112,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
             authState = AuthState.NO_DATA
         } else {
             authState = try {
-                if (Api.checkCredentials(auth.login, auth.apiKey)) {
+                if (api.checkCredentials(auth.login, auth.apiKey)) {
                     AuthState.AUTHORIZED
                 } else {
                     try {
@@ -143,7 +143,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             authState = AuthState.LOADING
             authState = try {
-                if (Api.checkCredentials(login, apiKey)) {
+                if (api.checkCredentials(login, apiKey)) {
                     updateAuthData(login, apiKey)
                     updateBlacklistFromAccount()
                     onSuccess()
@@ -194,7 +194,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
                 )
                 return@launch
             }
-            Api.logout()
+            api.logout()
             authState = AuthState.NO_DATA
         }
     }
@@ -229,7 +229,7 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
         else if (database.blacklistDao().count() != 0) return
         assert(blacklistDoNotUseAsFilter.size == 0)
         blacklistLoading = true
-        val entries = Api.getBlacklistedTags().map { BlacklistEntry(query = it, enabled = true) }
+        val entries = api.getBlacklistedTags().map { BlacklistEntry(query = it, enabled = true) }
         try {
             database.blacklistDao().apply {
                 entries.forEach { entry -> insert(entry) }
@@ -313,4 +313,5 @@ class ApplicationViewModel(val database: Database) : ViewModel() {
     }
 
     //endregion
+
 }

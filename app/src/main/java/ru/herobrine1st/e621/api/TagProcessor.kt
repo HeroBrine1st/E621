@@ -3,7 +3,6 @@ package ru.herobrine1st.e621.api
 import androidx.core.text.isDigitsOnly
 import ru.herobrine1st.e621.api.model.Post
 import java.util.function.Predicate
-import java.util.regex.Pattern
 
 val integerMetatags: Map<String, (Post) -> Int> = mapOf(
     "id" to { it.id },

@@ -10,7 +10,6 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
-import java.util.regex.Pattern
 
 @Suppress("SpellCheckingInspection")
 val samplePost = """{

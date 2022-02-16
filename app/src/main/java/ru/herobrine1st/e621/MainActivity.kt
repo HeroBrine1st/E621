@@ -2,6 +2,7 @@ package ru.herobrine1st.e621
 
 import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
+import android.os.StatFs
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +22,11 @@ import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.util.CoilUtils
+import okhttp3.Cache
 import okhttp3.OkHttpClient
+import ru.herobrine1st.e621.api.Api
+import ru.herobrine1st.e621.api.LocalAPI
+import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.screen.Home
@@ -31,14 +36,16 @@ import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme
-import ru.herobrine1st.e621.util.LocalClock
 import ru.herobrine1st.e621.util.SearchOptions
-import java.time.Clock
+import java.io.File
 
 
 class MainActivity : ComponentActivity() {
     companion object {
         val TAG = MainActivity::class.simpleName
+        const val DISK_CACHE_PERCENTAGE = 0.02
+        const val MIN_DISK_CACHE_SIZE_BYTES = 10L * 1024 * 1024
+        const val MAX_DISK_CACHE_SIZE_BYTES = 150L * 1024 * 1024
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -47,8 +54,6 @@ class MainActivity : ComponentActivity() {
             applicationContext,
             Database::class.java, BuildConfig.DATABASE_NAME
         ).build()
-
-        val clock = Clock.systemDefaultZone()
 
         Coil.setImageLoader {
             ImageLoader.Builder(applicationContext)
@@ -64,6 +69,7 @@ class MainActivity : ComponentActivity() {
                 .build()
         }
 
+        val api = createAPI()
 
         setContent {
             E621Theme(window) {
@@ -71,7 +77,7 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val screen by remember { derivedStateOf { Screens.byRoute[navBackStackEntry?.destination?.route] } }
                 val applicationViewModel: ApplicationViewModel =
-                    viewModel(factory = ApplicationViewModel.Factory(db))
+                    viewModel(factory = ApplicationViewModel.Factory(db, api))
                 val scaffoldState = rememberScaffoldState()
 
                 LaunchedEffect(true) {
@@ -106,7 +112,7 @@ class MainActivity : ComponentActivity() {
                         modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colors.background
                     ) {
-                        CompositionLocalProvider(LocalDatabase provides db, LocalClock provides clock) {
+                        CompositionLocalProvider(LocalDatabase provides db, LocalAPI provides api) {
                             NavHost(
                                 navController = navController,
                                 startDestination = Screens.Home.route
@@ -157,5 +163,17 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private fun createAPI(): Api {
+        val cacheDir = File(applicationContext.cacheDir, "okhttp").apply { mkdirs() }
+        val size = (StatFs(cacheDir.absolutePath).let {
+            it.blockCountLong * it.blockSizeLong
+        } * DISK_CACHE_PERCENTAGE).toLong().coerceIn(MIN_DISK_CACHE_SIZE_BYTES, MAX_DISK_CACHE_SIZE_BYTES)
+        val okHttpClient = OkHttpClient.Builder()
+            .addNetworkInterceptor(RateLimitInterceptor(1.5))
+            .cache(Cache(cacheDir, size))
+            .build()
+        return Api(okHttpClient)
     }
 }

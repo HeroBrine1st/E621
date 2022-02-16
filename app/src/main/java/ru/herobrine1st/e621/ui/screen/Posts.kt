@@ -36,7 +36,6 @@ import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.AuthState
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.getPreference
@@ -124,7 +123,7 @@ class PostsSource(
         return try {
             val page = params.key ?: 1
             val posts: List<Post> = withContext(Dispatchers.IO) {
-                Api.getPosts(query, page = page, limit = params.loadSize)
+                applicationViewModel.api.getPosts(query, page = page, limit = params.loadSize)
             }
             LoadResult.Page(
                 data = posts,
