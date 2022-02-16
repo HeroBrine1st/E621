@@ -1,3 +1,6 @@
+import java.io.FileInputStream
+import java.util.*
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -6,6 +9,12 @@ plugins {
 
 val kotlinVersion = "1.6.10"
 val composeVersion = "1.1.0"
+
+
+val buildProperties = Properties().apply {
+    load(FileInputStream(rootProject.file("build.properties")))
+}
+
 
 android {
     compileSdk = 32
@@ -34,7 +43,11 @@ android {
         forEach {
             it.buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
             it.buildConfigField("String", "API_URL", "\"e621.net\"")
-            it.buildConfigField("String", "USER_AGENT", "\"Android App/${android.defaultConfig.versionName} (${properties["E621_USERNAME"]})\"") // set in ~/.gradle/gradle.properties
+            it.buildConfigField(
+                "String",
+                "USER_AGENT",
+                "\"Android App/${android.defaultConfig.versionName} (${properties["E621_USERNAME"]})\""
+            ) // set in ~/.gradle/gradle.properties
         }
     }
     compileOptions {
@@ -55,6 +68,12 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+    }
+}
+
+tasks {
+    assemble {
+        println("Test")
     }
 }
 
@@ -83,7 +102,7 @@ dependencies {
     annotationProcessor("androidx.room:room-compiler:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
-    implementation("androidx.room:room-paging:2.4.1")
+    // implementation("androidx.room:room-paging:$roomVersion") unused
 
     // Jetpack Datastore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
@@ -94,14 +113,16 @@ dependencies {
     implementation("androidx.paging:paging-compose:1.0.0-alpha14")
 
     // Coroutine Image Loader
-    implementation("io.coil-kt:coil:1.4.0")
-    implementation("io.coil-kt:coil-compose:1.4.0")
-    implementation("io.coil-kt:coil-gif:1.4.0")
+    val coilVersion = "1.4.0"
+    implementation("io.coil-kt:coil:$coilVersion")
+    implementation("io.coil-kt:coil-compose:$coilVersion")
+    implementation("io.coil-kt:coil-gif:$coilVersion")
 
     // Jackson
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.1")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.13.1")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1")
+    val jacksonVersion = "2.13.1"
+    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
