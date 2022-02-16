@@ -62,4 +62,6 @@
     <string name="favorite">Сохранить</string>
     <string name="share">Поделиться</string>
     <string name="unfavorite">Удалить</string>
+    <string name="expand">Развернуть</string>
+    <string name="collapse">Свернуть</string>
 </resources>

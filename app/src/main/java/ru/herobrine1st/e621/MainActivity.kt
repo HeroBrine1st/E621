@@ -27,7 +27,7 @@ import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Posts
 import ru.herobrine1st.e621.ui.screen.Screens
-import ru.herobrine1st.e621.ui.screen.Search
+import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme

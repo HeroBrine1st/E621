@@ -62,4 +62,6 @@
     <string name="favorite">Favorite</string>
     <string name="unfavorite">Unfavorite</string>
     <string name="share">Share</string>
+    <string name="expand">Expand</string>
+    <string name="collapse">Collapse</string>
 </resources>
