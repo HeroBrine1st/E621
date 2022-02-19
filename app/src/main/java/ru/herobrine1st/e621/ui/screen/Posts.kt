@@ -2,6 +2,7 @@ package ru.herobrine1st.e621.ui.screen
 
 import android.text.format.DateUtils
 import android.util.Log
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -272,16 +273,20 @@ fun Post(
                         )
                     }
                     if (applicationViewModel.authState == AuthState.AUTHORIZED) {
-                        IconButton(onClick = { /*TODO*/ }) {
-                            val isFavorited = post.isFavorited // TODO cache in view model
-                            if (isFavorited) Icon(
-                                Icons.Filled.Favorite,
-                                contentDescription = stringResource(R.string.unfavorite)
-                            )
-                            else Icon(
-                                Icons.Filled.FavoriteBorder,
-                                contentDescription = stringResource(R.string.favorite)
-                            )
+                        val isFavorited =
+                            applicationViewModel.isFavorited(post.id, post.isFavorited)
+                        IconButton(onClick = {
+                            applicationViewModel.handleFavoritePost(post)
+                        }) {
+                            Crossfade(targetState = isFavorited) {
+                                if (it) Icon(
+                                    Icons.Filled.Favorite,
+                                    contentDescription = stringResource(R.string.unfavorite)
+                                ) else Icon(
+                                    Icons.Filled.FavoriteBorder,
+                                    contentDescription = stringResource(R.string.favorite)
+                                )
+                            }
                         }
                     }
                     IconButton(onClick = { /*TODO*/ }) {

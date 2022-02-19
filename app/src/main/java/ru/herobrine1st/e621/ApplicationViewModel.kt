@@ -4,10 +4,7 @@ import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.material.SnackbarDuration
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -312,6 +309,32 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
         blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
     }
 
+    //endregion
+    //region Favorites
+
+    private val favoritesCache = mutableStateMapOf<Int, Boolean>()
+
+    fun isFavorited(postId: Int, apiFavorited: Boolean): Boolean {
+        return favoritesCache.getOrDefault(postId, apiFavorited)
+    }
+
+
+    fun handleFavoritePost(post: Post) {
+        val isFavorited = isFavorited(post.id, post.isFavorited)
+        val isCached = post.id in favoritesCache
+        favoritesCache[post.id] = !isFavorited
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                if (isFavorited) api.deleteFavorite(post.id)
+                else api.favorite(post.id)
+            } catch (e: IOException) {
+                Log.e(TAG, "IO Error while while trying to (un)favorite post (id=${post.id}, isFavorited=$isFavorited)", e)
+                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                if (isCached) favoritesCache[post.id] = isFavorited
+                else favoritesCache.remove(post.id)
+            }
+        }
+    }
     //endregion
 
 }

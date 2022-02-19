@@ -10,6 +10,7 @@ import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import okhttp3.*
+import okhttp3.RequestBody.Companion.toRequestBody
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.*
 import ru.herobrine1st.e621.net.RateLimitInterceptor
@@ -23,7 +24,7 @@ fun Response.checkStatus() {
     if (!this.isSuccessful) {
         if (BuildConfig.DEBUG) {
             Log.e(Api.TAG, "Unsuccessful request: $message")
-            body?.let {
+            body?.use {
                 Log.d(Api.TAG, "Response body:")
                 Log.d(Api.TAG, it.string())
             }
@@ -149,6 +150,39 @@ class Api(okHttpClient: OkHttpClient? = null) {
             objectMapper.readValue<PostCommentsEndpoint>(it.body!!.charStream())
         }
         return parseComments(response)
+    }
+
+    fun favorite(postId: Int) {
+        if (credentials == null) {
+            Log.w(TAG, "favorite(int) called without credentials available")
+            throw RuntimeException("No credentials available")
+        }
+        val request = requestBuilder()
+            .url(HttpUrl.Builder()
+                .scheme("https")
+                .host(BuildConfig.API_URL)
+                .addPathSegments("favorites.json")
+                .addQueryParameter("post_id", postId.toString())
+                .build().also { Log.d(TAG, it.toString()) })
+            .post("".toRequestBody(null))
+            .build()
+        okHttpClient.newCall(request).execute().checkStatus()
+    }
+
+    fun deleteFavorite(postId: Int) {
+        if (credentials == null) {
+            Log.w(TAG, "deleteFavorite(int) called without credentials available")
+            throw RuntimeException("No credentials available")
+        }
+        val request = requestBuilder()
+            .url(HttpUrl.Builder()
+                .scheme("https")
+                .host(BuildConfig.API_URL)
+                .addPathSegments("favorites/$postId.json")
+                .build())
+            .delete()
+            .build()
+        okHttpClient.newCall(request).execute().checkStatus()
     }
 
     companion object {
