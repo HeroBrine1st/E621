@@ -31,9 +31,9 @@ data class Post(
     val description: String,
     val commentCount: Int,
     @JsonProperty(required = false)
-    val isFavorited: Boolean = false, // may cause crashes
+    val isFavorited: Boolean = false,
     @JsonProperty(required = false)
-    val hasNotes: Boolean = false, // may cause crashes
+    val hasNotes: Boolean = false,
     val duration: Float = 0f
 ) {
     val files: List<NormalizedFile> = listOf(

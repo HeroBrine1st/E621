@@ -30,8 +30,8 @@ import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.screen.Home
-import ru.herobrine1st.e621.ui.screen.Posts
 import ru.herobrine1st.e621.ui.screen.Screens
+import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist

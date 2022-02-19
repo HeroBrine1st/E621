@@ -314,13 +314,13 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
 
     private val favoritesCache = mutableStateMapOf<Int, Boolean>()
 
-    fun isFavorited(postId: Int, apiFavorited: Boolean): Boolean {
-        return favoritesCache.getOrDefault(postId, apiFavorited)
+    fun isFavorited(post: Post): Boolean {
+        return favoritesCache.getOrDefault(post.id, post.isFavorited)
     }
 
 
     fun handleFavoritePost(post: Post) {
-        val isFavorited = isFavorited(post.id, post.isFavorited)
+        val isFavorited = isFavorited(post)
         val isCached = post.id in favoritesCache
         favoritesCache[post.id] = !isFavorited
         viewModelScope.launch(Dispatchers.IO) {

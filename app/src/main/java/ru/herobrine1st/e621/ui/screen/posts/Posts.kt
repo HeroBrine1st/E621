@@ -1,23 +1,17 @@
-package ru.herobrine1st.e621.ui.screen
+package ru.herobrine1st.e621.ui.screen.posts
 
 import android.text.format.DateUtils
 import android.util.Log
-import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Comment
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -29,19 +23,18 @@ import androidx.navigation.NavHostController
 import androidx.paging.*
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
-import coil.compose.rememberImagePainter
 import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.ApplicationViewModel
-import ru.herobrine1st.e621.AuthState
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
+import ru.herobrine1st.e621.ui.screen.Screens
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.SearchOptions
 import java.io.IOException
@@ -168,10 +161,9 @@ fun Posts(
         state = viewModel.lazyListState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        item { Spacer(modifier = Modifier.height(4.dp)) }
         items(posts, key = { it.id }) { post ->
             if (post == null) return@items
-            val blacklisted =
+            val blacklisted = !applicationViewModel.isFavorited(post) && // Always show favorited posts
                 blacklistEnabled && applicationViewModel.blacklistPostPredicate.test(post)
             viewModel.notifyPostState(blacklisted)
             if (blacklisted) return@items
@@ -236,99 +228,10 @@ fun Post(
                 modifier = Modifier.padding(horizontal = 8.dp),
             ) {
                 Divider()
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        IconButton(onClick = { /*TODO*/ }) {
-                            Icon(
-                                Icons.Filled.ArrowUpward,
-                                contentDescription = stringResource(R.string.score_up)
-                            )
-                        }
-                        Text(post.score.total.toString())
-                        IconButton(onClick = { /*TODO*/ }) {
-                            Icon(
-                                Icons.Filled.ArrowDownward,
-                                contentDescription = stringResource(R.string.score_down)
-                            )
-                        }
-                    }
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = rememberRipple(bounded = false, radius = 24.dp)
-                        ) { openPost(true) }
-                    ) {
-                        Text(post.commentCount.toString())
-                        Icon(
-                            Icons.Outlined.Comment,
-                            contentDescription = stringResource(R.string.comments),
-                            modifier = Modifier
-                                .padding(start = 4.dp)
-                                .offset(y = 2.dp)
-                        )
-                    }
-                    if (applicationViewModel.authState == AuthState.AUTHORIZED) {
-                        val isFavorited =
-                            applicationViewModel.isFavorited(post.id, post.isFavorited)
-                        IconButton(onClick = {
-                            applicationViewModel.handleFavoritePost(post)
-                        }) {
-                            Crossfade(targetState = isFavorited) {
-                                if (it) Icon(
-                                    Icons.Filled.Favorite,
-                                    contentDescription = stringResource(R.string.unfavorite)
-                                ) else Icon(
-                                    Icons.Filled.FavoriteBorder,
-                                    contentDescription = stringResource(R.string.favorite)
-                                )
-                            }
-                        }
-                    }
-                    IconButton(onClick = { /*TODO*/ }) {
-                        Icon(
-                            Icons.Default.Share,
-                            contentDescription = stringResource(R.string.share)
-                        )
-                    }
-                }
+                PostActionsRow(post, applicationViewModel, openPost)
                 Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochMilli())}") // TODO i18n; move it somewhere
             }
         }
     }
 }
 
-@Composable
-fun PostImagePreview(post: Post) {
-    val aspectRatio = post.sample.width.toFloat() / post.sample.height.toFloat()
-    if (aspectRatio <= 0) {
-        Box(contentAlignment = Alignment.TopCenter) {
-            Text("Invalid post") // TODO i18n
-        }
-        return
-    }
-    Box(contentAlignment = Alignment.TopStart) {
-        Image(
-            painter = rememberImagePainter(
-                post.sample.url,
-                builder = {
-                    crossfade(true)
-                }
-            ),
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(aspectRatio),
-            contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
-        )
-        if (post.file.type.isNotImage) OutlinedChip( // TODO
-            modifier = Modifier.offset(x = 10.dp, y = 10.dp),
-            backgroundColor = Color.Transparent
-        ) {
-            Text(post.file.type.extension)
-        }
-    }
-}
