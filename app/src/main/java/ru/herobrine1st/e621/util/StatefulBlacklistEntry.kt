@@ -1,3 +1,5 @@
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package ru.herobrine1st.e621.util
 
 import androidx.compose.runtime.derivedStateOf
@@ -31,7 +33,7 @@ class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistE
     fun isToggled() = enabled != dbEntryEnabled
     fun isQueryChanged() = query != dbEntryQuery
     fun isPendingDeletion() = pendingDeletion
-    fun isPendingInsertion() = dbEntryId == 0
+    fun isPendingInsertion() = dbEntryId == 0L
     fun isPendingUpdate() = isToggled() || isQueryChanged()
     fun isChanged() = isPendingInsertion() || isPendingUpdate() || isPendingDeletion()
 
@@ -44,17 +46,17 @@ class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistE
 
 
     fun markAsDeleted(deleted: Boolean = true) {
-        assert(dbEntry.id != 0)
+        assert(dbEntry.id != 0L)
         pendingDeletion = deleted
     }
 
     val predicate by derivedStateOf { createTagProcessor(query) }
 
     private suspend fun createDatabaseRecord(database: Database) {
-        assert(dbEntry.id == 0)
+        assert(dbEntry.id == 0L)
         dbEntry.query = query
         dbEntry.enabled = enabled
-        dbEntry.id = database.blacklistDao().insert(dbEntry).toInt()
+        dbEntry.id = database.blacklistDao().insert(dbEntry)
         dbEntryQuery = query
         dbEntryEnabled = dbEntryEnabled
         dbEntryId = dbEntry.id
@@ -80,7 +82,7 @@ class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistE
     }
 
     private suspend fun deleteDatabaseRecord(database: Database) {
-        assert(dbEntry.id != 0)
+        assert(dbEntry.id != 0L)
         try {
             database.blacklistDao().delete(dbEntry)
         } catch (e: Exception) { // Undo
@@ -91,7 +93,7 @@ class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistE
 
     suspend fun applyChanges(database: Database) {
         when {
-            dbEntry.id == 0 -> createDatabaseRecord(database)
+            dbEntry.id == 0L -> createDatabaseRecord(database)
             pendingDeletion -> deleteDatabaseRecord(database)
             else -> updateDatabaseRecord(database)
         }

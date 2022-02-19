@@ -8,5 +8,5 @@ import androidx.room.PrimaryKey
 class BlacklistEntry(
     @ColumnInfo(name = "query") var query: String,
     @ColumnInfo(name = "enabled") var enabled: Boolean,
-    @PrimaryKey(autoGenerate = true) var id: Int = 0
+    @PrimaryKey(autoGenerate = true) var id: Long = 0
 )

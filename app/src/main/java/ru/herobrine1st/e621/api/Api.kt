@@ -20,7 +20,7 @@ fun objectMapperFactory(): ObjectMapper = jsonMapper {
     addModule(JavaTimeModule())
 }.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
-fun Response.checkStatus() {
+fun Response.checkStatus(close: Boolean = false) {
     if (!this.isSuccessful) {
         if (BuildConfig.DEBUG) {
             Log.e(Api.TAG, "Unsuccessful request: $message")
@@ -31,6 +31,7 @@ fun Response.checkStatus() {
         }
         throw ApiException("Unsuccessful request: $message", code)
     }
+    if(close) body?.close()
 }
 
 val LocalAPI = compositionLocalOf<Api> { error("No API found") }
@@ -166,7 +167,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
                 .build().also { Log.d(TAG, it.toString()) })
             .post("".toRequestBody(null))
             .build()
-        okHttpClient.newCall(request).execute().checkStatus()
+        okHttpClient.newCall(request).execute().checkStatus(true)
     }
 
     fun deleteFavorite(postId: Int) {
@@ -182,7 +183,27 @@ class Api(okHttpClient: OkHttpClient? = null) {
                 .build())
             .delete()
             .build()
-        okHttpClient.newCall(request).execute().checkStatus()
+        okHttpClient.newCall(request).execute().checkStatus(true)
+    }
+
+    fun vote(postId: Int, score: Int, noUnvote: Boolean = false): PostVoteEndpoint {
+        if (credentials == null) {
+            throw RuntimeException("No credentials available")
+        }
+        val request = requestBuilder()
+            .url(HttpUrl.Builder()
+                .scheme("https")
+                .host(BuildConfig.API_URL)
+                .addPathSegments("posts/$postId/votes.json")
+                .addQueryParameter("score", score.toString())
+                .addQueryParameter("no_unvote", noUnvote.toString())
+                .build().also { Log.d(TAG, it.toString()) })
+            .post("".toRequestBody(null))
+            .build()
+        okHttpClient.newCall(request).execute().use {
+            it.checkStatus()
+            return objectMapper.readValue(it.body!!.charStream())
+        }
     }
 
     companion object {
