@@ -195,7 +195,7 @@ fun Post(
 ) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(bottom = 8.dp)) {
-            PostImagePreview(post)
+            PostImagePreview(post, openPost = openPost)
             FlowRow {
                 var expandTags by remember { mutableStateOf(false) }
                 post.tags.reduced
@@ -229,7 +229,7 @@ fun Post(
             ) {
                 Divider()
                 PostActionsRow(post, applicationViewModel, openPost)
-                Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochMilli())}") // TODO i18n; move it somewhere
+                Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochSecond()*1000)}") // TODO i18n; move it somewhere
             }
         }
     }

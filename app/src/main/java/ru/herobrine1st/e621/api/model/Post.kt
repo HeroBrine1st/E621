@@ -5,12 +5,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import ru.herobrine1st.e621.api.FileType
 import ru.herobrine1st.e621.api.Rating
 import java.time.Instant
+import java.time.OffsetDateTime
 
 @JsonIgnoreProperties("preview", "flags")
 data class Post(
     val id: Int,
-    val createdAt: Instant,
-    val updatedAt: Instant?,
+    val createdAt: OffsetDateTime,
+    val updatedAt: OffsetDateTime?,
     val file: File,
     // preview is not applicable
     val sample: Sample,
@@ -40,7 +41,7 @@ data class Post(
         NormalizedFile(file),
         NormalizedFile(sample),
         *sample.alternates.map { NormalizedFile(it.key, it.value) }.toTypedArray()
-    )
+    ).sortedBy { it.width }
 }
 
 data class PostReduced(
