@@ -77,7 +77,6 @@ class MainActivity : ComponentActivity() {
                 val applicationViewModel: ApplicationViewModel =
                     viewModel(factory = ApplicationViewModel.Factory(db, api))
                 val scaffoldState = rememberScaffoldState()
-                val saveableStateHolder = rememberSaveableStateHolder()
 
                 LaunchedEffect(true) {
                     applicationViewModel.loadAllFromDatabase()
@@ -93,7 +92,7 @@ class MainActivity : ComponentActivity() {
                             backgroundColor = MaterialTheme.colors.primarySurface,
                             elevation = 12.dp,
                             actions = {
-                                navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
+                                navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
                                     screen?.appBarActions?.invoke(
                                         this,
                                         navController,
@@ -106,7 +105,7 @@ class MainActivity : ComponentActivity() {
                     },
                     scaffoldState = scaffoldState,
                     floatingActionButton = {
-                        navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
+                        navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
                             screen?.floatingActionButton?.invoke(applicationViewModel)
                         }
                     }
