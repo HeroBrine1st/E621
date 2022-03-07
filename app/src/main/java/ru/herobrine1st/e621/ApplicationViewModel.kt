@@ -210,7 +210,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     private suspend fun clearBlacklistLocally() {
         database.blacklistDao().clear()
         blacklistDoNotUseAsFilter.clear()
-        blacklistPostPredicate = Predicate<Post> { true }
+        blacklistPostPredicate = Predicate<Post> { false }
     }
 
     private fun updateFilteringBlacklistEntriesList() {
@@ -218,7 +218,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
             .filter { it.enabled }
             .map { it.predicate }
             .reduceOrNull { acc, predicate -> acc.or(predicate) }
-            ?: Predicate { true }
+            ?: Predicate { false }
     }
 
     private suspend fun updateBlacklistFromAccount(force: Boolean = false) {
