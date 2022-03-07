@@ -65,24 +65,22 @@ fun PostActionsRow(
                     .offset(y = 2.dp)
             )
         }
-        if (applicationViewModel.authState == AuthState.AUTHORIZED) {
-            val isFavorited =
-                applicationViewModel.isFavorited(post)
-            IconButton(
-                onClick = {
-                    applicationViewModel.handleFavoritePost(post)
-                },
-                enabled = authorized
-            ) {
-                Crossfade(targetState = isFavorited) {
-                    if (it) Icon(
-                        Icons.Filled.Favorite,
-                        contentDescription = stringResource(R.string.unfavorite)
-                    ) else Icon(
-                        Icons.Filled.FavoriteBorder,
-                        contentDescription = stringResource(R.string.favorite)
-                    )
-                }
+        val isFavorited =
+            applicationViewModel.isFavorited(post)
+        IconButton(
+            onClick = {
+                applicationViewModel.handleFavoritePost(post)
+            },
+            enabled = authorized
+        ) {
+            Crossfade(targetState = isFavorited) {
+                if (it) Icon(
+                    Icons.Filled.Favorite,
+                    contentDescription = stringResource(R.string.unfavorite)
+                ) else Icon(
+                    Icons.Filled.FavoriteBorder,
+                    contentDescription = stringResource(R.string.favorite)
+                )
             }
         }
         IconButton(onClick = { /*TODO*/ }) {
