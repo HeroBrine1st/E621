@@ -150,7 +150,11 @@ fun Posts(
     val blacklistEnabled =
         LocalContext.current.getPreference(key = BLACKLIST_ENABLED, defaultValue = true)
 
-    if (posts.itemCount == 0) { // Do not reset lazyListState
+    val loadState = posts.loadState
+    val loading = loadState.refresh is LoadState.Loading || loadState.append is LoadState.Loading
+    val error = loadState.refresh is LoadState.Error || loadState.append is LoadState.Error
+
+    if (posts.itemCount == 0 && !error) { // Do not reset lazyListState
         Base(Alignment.CenterHorizontally) {
             Spacer(modifier = Modifier.height(4.dp))
             CircularProgressIndicator()
@@ -163,8 +167,9 @@ fun Posts(
     ) {
         items(posts, key = { it.id }) { post ->
             if (post == null) return@items
-            val blacklisted = !applicationViewModel.isFavorited(post) && // Always show favorited posts
-                blacklistEnabled && applicationViewModel.blacklistPostPredicate.test(post)
+            val blacklisted =
+                !applicationViewModel.isFavorited(post) && // Always show favorited posts
+                        blacklistEnabled && applicationViewModel.blacklistPostPredicate.test(post)
             viewModel.notifyPostState(blacklisted)
             if (blacklisted) return@items
             Post(post, applicationViewModel) {
@@ -174,10 +179,15 @@ fun Posts(
         }
         posts.apply {
             when {
-                loadState.refresh is LoadState.Loading || loadState.append is LoadState.Loading -> {
-                    item { CircularProgressIndicator() }
+                loading -> {
+                    item {
+                        Base(Alignment.CenterHorizontally) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            CircularProgressIndicator()
+                        }
+                    }
                 }
-                loadState.refresh is LoadState.Error || loadState.append is LoadState.Error -> {
+                error -> {
                     item {
                         Text("error")
                     }
@@ -229,7 +239,7 @@ fun Post(
             ) {
                 Divider()
                 PostActionsRow(post, applicationViewModel, openPost)
-                Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochSecond()*1000)}") // TODO i18n; move it somewhere
+                Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochSecond() * 1000)}") // TODO i18n; move it somewhere
             }
         }
     }

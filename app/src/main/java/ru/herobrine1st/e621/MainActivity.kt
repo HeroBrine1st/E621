@@ -29,6 +29,7 @@ import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Screens
+import ru.herobrine1st.e621.ui.screen.posts.Post
 import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
@@ -147,9 +148,27 @@ class MainActivity : ComponentActivity() {
                                     val arguments =
                                         it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
                                     val searchOptions = remember { SearchOptions(arguments) }
-                                    Posts(searchOptions, applicationViewModel) { id, scrollToComments ->
-
+                                    Posts(
+                                        searchOptions,
+                                        applicationViewModel
+                                    ) { id, scrollToComments ->
+                                        navController.navigate(
+                                            Screens.Post.buildRoute {
+                                                // Maybe whole json?
+                                                addArgument("id", id)
+                                                addArgument("scrollToComments", scrollToComments)
+                                            }
+                                        )
                                     }
+                                }
+                                composable(Screens.Post.route, Screens.Post.arguments) {
+                                    val arguments =
+                                        it.arguments!!
+                                    Post(
+                                        applicationViewModel,
+                                        arguments.getInt("id"),
+                                        arguments.getBoolean("scrollToComments")
+                                    )
                                 }
                                 composable(Screens.Settings.route) {
                                     Settings(navController)
@@ -171,7 +190,8 @@ class MainActivity : ComponentActivity() {
         val cacheDir = File(applicationContext.cacheDir, "okhttp").apply { mkdirs() }
         val size = (StatFs(cacheDir.absolutePath).let {
             it.blockCountLong * it.blockSizeLong
-        } * DISK_CACHE_PERCENTAGE).toLong().coerceIn(MIN_DISK_CACHE_SIZE_BYTES, MAX_DISK_CACHE_SIZE_BYTES)
+        } * DISK_CACHE_PERCENTAGE).toLong()
+            .coerceIn(MIN_DISK_CACHE_SIZE_BYTES, MAX_DISK_CACHE_SIZE_BYTES)
         val okHttpClient = OkHttpClient.Builder()
             .addNetworkInterceptor(RateLimitInterceptor(1.5))
             .cache(Cache(cacheDir, size))

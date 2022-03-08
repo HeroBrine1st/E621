@@ -64,4 +64,5 @@
     <string name="unfavorite">Удалить</string>
     <string name="expand">Развернуть</string>
     <string name="collapse">Свернуть</string>
+    <string name="post">Пост</string>
 </resources>

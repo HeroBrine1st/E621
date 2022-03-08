@@ -88,6 +88,14 @@ enum class Screens(
         },
         appBarActions = { it, _ -> PostsAppBarActions(it) }
     ),
+    Post(R.string.post, Icons.Default.Feed, "post",
+        navArgument("id") {
+            type = NavType.IntType
+        },
+        navArgument("scrollToComments") {
+            type = NavType.BoolType
+            defaultValue = false
+        }),
     Settings(R.string.settings, Icons.Default.Settings, "settings"),
     SettingsBlacklist(
         R.string.blacklist,

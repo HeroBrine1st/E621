@@ -42,7 +42,7 @@ android {
         }
         forEach {
             it.buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
-            it.buildConfigField("String", "API_URL", "\"e621.net\"")
+            it.buildConfigField("String", "API_HOST", "\"e621.net\"")
             it.buildConfigField(
                 "String",
                 "USER_AGENT",

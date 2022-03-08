@@ -31,7 +31,7 @@ fun Response.checkStatus(close: Boolean = false) {
         }
         throw ApiException("Unsuccessful request: $message", code)
     }
-    if(close) body?.close()
+    if (close) body?.close()
 }
 
 val LocalAPI = compositionLocalOf<Api> { error("No API found") }
@@ -61,7 +61,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
             .url(
                 HttpUrl.Builder()
                     .scheme("https")
-                    .host(BuildConfig.API_URL)
+                    .host(BuildConfig.API_HOST)
                     .addPathSegments("users/$login.json")
                     .build()
             )
@@ -96,7 +96,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
             .url(
                 HttpUrl.Builder().apply {
                     scheme("https")
-                    host(BuildConfig.API_URL)
+                    host(BuildConfig.API_HOST)
                     addPathSegments("posts.json")
                     addEncodedQueryParameter("tags", tags)
                     limit?.let { addQueryParameter("limit", it.toString()) }
@@ -106,7 +106,23 @@ class Api(okHttpClient: OkHttpClient? = null) {
             .build()
         okHttpClient.newCall(req).execute().use {
             it.checkStatus()
-            return objectMapper.readValue<PostEndpoint>(it.body!!.charStream()).posts
+            return objectMapper.readValue<PostsEndpoint>(it.body!!.charStream()).posts
+        }
+    }
+
+    fun getPost(id: Int): Post {
+        val req = requestBuilder()
+            .url(
+                HttpUrl.Builder().apply {
+                    scheme("https")
+                    host(BuildConfig.API_HOST)
+                    addPathSegments("posts/$id.json")
+                }.build().also { Log.d(TAG, it.toString()) }
+            )
+            .build()
+        okHttpClient.newCall(req).execute().use {
+            it.checkStatus()
+            return objectMapper.readValue<PostEndpoint>(it.body!!.charStream()).post
         }
     }
 
@@ -119,7 +135,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
             .url(
                 HttpUrl.Builder()
                     .scheme("https")
-                    .host(BuildConfig.API_URL)
+                    .host(BuildConfig.API_HOST)
                     .addPathSegments("users/$login.json")
                     .build()
             )
@@ -137,11 +153,15 @@ class Api(okHttpClient: OkHttpClient? = null) {
 
     @Suppress("MemberVisibilityCanBePrivate")
     fun getCommentsForPost(id: Int): List<Comment> {
+        // Получить комментарии:
+        // GET /comments.json?group_by=comment&search[post_id]=$id&page=$page
+        // Не даст ни постов, ни маппинга юзер->аватарка, но даст адекватные комментарии
+        // Посты и маппинги можно получить кодом ниже
         val req = requestBuilder()
             .url(
                 HttpUrl.Builder()
                     .scheme("https")
-                    .host(BuildConfig.API_URL)
+                    .host(BuildConfig.API_HOST)
                     .addPathSegments("posts/$id/comments.json")
                     .build()
             )
@@ -161,7 +181,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
         val request = requestBuilder()
             .url(HttpUrl.Builder()
                 .scheme("https")
-                .host(BuildConfig.API_URL)
+                .host(BuildConfig.API_HOST)
                 .addPathSegments("favorites.json")
                 .addQueryParameter("post_id", postId.toString())
                 .build().also { Log.d(TAG, it.toString()) })
@@ -176,11 +196,13 @@ class Api(okHttpClient: OkHttpClient? = null) {
             throw RuntimeException("No credentials available")
         }
         val request = requestBuilder()
-            .url(HttpUrl.Builder()
-                .scheme("https")
-                .host(BuildConfig.API_URL)
-                .addPathSegments("favorites/$postId.json")
-                .build())
+            .url(
+                HttpUrl.Builder()
+                    .scheme("https")
+                    .host(BuildConfig.API_HOST)
+                    .addPathSegments("favorites/$postId.json")
+                    .build()
+            )
             .delete()
             .build()
         okHttpClient.newCall(request).execute().checkStatus(true)
@@ -193,7 +215,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
         val request = requestBuilder()
             .url(HttpUrl.Builder()
                 .scheme("https")
-                .host(BuildConfig.API_URL)
+                .host(BuildConfig.API_HOST)
                 .addPathSegments("posts/$postId/votes.json")
                 .addQueryParameter("score", score.toString())
                 .addQueryParameter("no_unvote", noUnvote.toString())
