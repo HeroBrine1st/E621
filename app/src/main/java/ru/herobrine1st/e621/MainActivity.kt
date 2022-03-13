@@ -30,12 +30,13 @@ import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Screens
 import ru.herobrine1st.e621.ui.screen.posts.Post
-import ru.herobrine1st.e621.ui.screen.posts.Posts
+import ru.herobrine1st.e621.ui.screen.posts.PostsScreenNavigationComposable
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme
-import ru.herobrine1st.e621.util.SearchOptions
+import ru.herobrine1st.e621.util.FavouritesSearchOptions
+import ru.herobrine1st.e621.util.PostsSearchOptions
 import java.io.File
 
 
@@ -129,7 +130,7 @@ class MainActivity : ComponentActivity() {
                                 ) { entry ->
                                     val arguments: Bundle =
                                         entry.arguments!!
-                                    val searchOptions = remember { SearchOptions(arguments) }
+                                    val searchOptions = remember { PostsSearchOptions(arguments) }
                                     Search(searchOptions) {
                                         navController.popBackStack()
                                         navController.navigate(
@@ -140,6 +141,7 @@ class MainActivity : ComponentActivity() {
                                                 addArgument(
                                                     "rating",
                                                     it.rating.joinToString(",") { it.name })
+                                                addArgument("fav", it.favouritesOf)
                                             }
                                         )
                                     }
@@ -147,19 +149,22 @@ class MainActivity : ComponentActivity() {
                                 composable(Screens.Posts.route, Screens.Posts.arguments) {
                                     val arguments =
                                         it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
-                                    val searchOptions = remember { SearchOptions(arguments) }
-                                    Posts(
-                                        searchOptions,
-                                        applicationViewModel
-                                    ) { id, scrollToComments ->
-                                        navController.navigate(
-                                            Screens.Post.buildRoute {
-                                                // Maybe whole json?
-                                                addArgument("id", id)
-                                                addArgument("scrollToComments", scrollToComments)
-                                            }
-                                        )
-                                    }
+                                    val searchOptions = remember { PostsSearchOptions(arguments) }
+                                    PostsScreenNavigationComposable(
+                                        searchOptions = searchOptions,
+                                        applicationViewModel = applicationViewModel,
+                                        navController = navController
+                                    )
+                                }
+                                composable(Screens.Favourites.route, Screens.Favourites.arguments) {
+                                    val arguments =
+                                        it.arguments!!
+                                    val searchOptions = remember { FavouritesSearchOptions(arguments.getString("user")) }
+                                    PostsScreenNavigationComposable(
+                                        searchOptions = searchOptions,
+                                        applicationViewModel = applicationViewModel,
+                                        navController = navController
+                                    )
                                 }
                                 composable(Screens.Post.route, Screens.Post.arguments) {
                                     val arguments =

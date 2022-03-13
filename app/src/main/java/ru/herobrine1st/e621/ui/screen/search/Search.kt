@@ -7,10 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.Button
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandMore
@@ -30,15 +27,15 @@ import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
-import ru.herobrine1st.e621.util.SearchOptions
+import ru.herobrine1st.e621.util.PostsSearchOptions
 
 @Composable
 fun Search(
-    initialSearchOptions: SearchOptions,
-    onSearch: (SearchOptions) -> Unit
+    initialPostsSearchOptions: PostsSearchOptions,
+    onSearch: (PostsSearchOptions) -> Unit
 ) {
-    val state = rememberSaveable(initialSearchOptions, saver = SearchScreenState.Saver) {
-        SearchScreenState(initialSearchOptions)
+    val state = rememberSaveable(initialPostsSearchOptions, saver = SearchScreenState.Saver) {
+        SearchScreenState(initialPostsSearchOptions)
     }
 
     if (state.openDialog) {
@@ -166,6 +163,17 @@ fun Search(
                     if (state.rating.size == Rating.values().size) state.rating.clear()
                 }
             }
+        }
+        Spacer(modifier = Modifier.height(4.dp))
+        SettingCard(title = stringResource(R.string.favourites_of)) {
+            // TODO autocomplete - накостылить через передачу fav:${state.favouritesOf} в autocomplete.json
+            OutlinedTextField(
+                value = state.favouritesOf,
+                onValueChange = { state.favouritesOf = it },
+                label = { Text(stringResource(R.string.user)) },
+                modifier = Modifier
+                    .fillMaxWidth()
+            )
         }
         Spacer(modifier = Modifier.height(4.dp))
         Button(

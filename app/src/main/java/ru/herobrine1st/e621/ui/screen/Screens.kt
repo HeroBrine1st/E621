@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.ui.screen
 
+import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,7 @@ import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
+import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -26,6 +28,8 @@ class RouteBuilder(
     private val arguments: MutableMap<String, String> = HashMap()
     fun addArgument(key: String, value: Any?, encode: Boolean = false) {
         assert(key in initialArguments) { "Invalid argument key" }
+        Log.d("RouteBuilder", "Adding argument $key=$value to route $initialRoute")
+        if (value == null) return
         if (encode)
             arguments[key] = URLEncoder.encode(value.toString(), StandardCharsets.UTF_8.toString())
         else
@@ -65,6 +69,10 @@ enum class Screens(
             type = NavType.StringType
             defaultValue = ""
         },
+        navArgument("fav") {
+            type = NavType.StringType
+            nullable = true
+        }
     ),
     Posts(
         R.string.posts,
@@ -86,6 +94,10 @@ enum class Screens(
             type = NavType.StringType
             defaultValue = ""
         },
+        navArgument("fav") {
+            type = NavType.StringType
+            nullable = true
+        },
         appBarActions = { it, _ -> PostsAppBarActions(it) }
     ),
     Post(R.string.post, Icons.Default.Feed, "post",
@@ -96,6 +108,16 @@ enum class Screens(
             type = NavType.BoolType
             defaultValue = false
         }),
+    Favourites(
+        R.string.favourites,
+        Icons.Default.Feed,
+        "favourites",
+        navArgument("user") {
+            type = NavType.StringType
+            nullable = true
+        },
+        appBarActions = { it, it1 -> FavouritesAppBarActions(it, it1) }
+    ),
     Settings(R.string.settings, Icons.Default.Settings, "settings"),
     SettingsBlacklist(
         R.string.blacklist,

@@ -71,7 +71,11 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
         }
     }
 
-    fun addSnackbarMessage(@StringRes resourceId: Int, duration: SnackbarDuration, vararg formatArgs: Any) {
+    fun addSnackbarMessage(
+        @StringRes resourceId: Int,
+        duration: SnackbarDuration,
+        vararg formatArgs: Any
+    ) {
         viewModelScope.launch {
             addSnackbarMessageInternal(resourceId, duration, *formatArgs)
         }
@@ -102,6 +106,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     //region Auth
     var authState: AuthState by mutableStateOf(AuthState.LOADING)
         private set
+    val login get() = api.login
 
     private suspend fun loadAuthDataFromDatabase() {
         val auth = database.authDao().get()
@@ -328,7 +333,11 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 if (isFavorited) api.deleteFavorite(post.id)
                 else api.favorite(post.id)
             } catch (e: IOException) {
-                Log.e(TAG, "IO Error while while trying to (un)favorite post (id=${post.id}, isFavorited=$isFavorited)", e)
+                Log.e(
+                    TAG,
+                    "IO Error while while trying to (un)favorite post (id=${post.id}, isFavorited=$isFavorited)",
+                    e
+                )
                 addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
                 if (isCached) favoritesCache[post.id] = isFavorited
                 else favoritesCache.remove(post.id)
@@ -341,9 +350,9 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     suspend fun vote(post: Post, vote: Int) {
         assert(vote in -1..1)
         val currentVote = database.voteDao().getVote(post.id) ?: 0
-        if(vote == 0) {
+        if (vote == 0) {
             val score = api.vote(post.id, currentVote, false)
-            if(score.ourScore != 0) { // API does not send user's vote with post
+            if (score.ourScore != 0) { // API does not send user's vote with post
                 assert(api.vote(post.id, score.ourScore, false).ourScore == 0)
             }
         } else {

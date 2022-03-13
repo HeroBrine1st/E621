@@ -65,4 +65,7 @@
     <string name="expand">Expand</string>
     <string name="collapse">Collapse</string>
     <string name="post">Post</string>
+    <string name="favourites_of">Favourites of</string>
+    <string name="user">User</string>
+    <string name="favourites">Favourites</string>
 </resources>

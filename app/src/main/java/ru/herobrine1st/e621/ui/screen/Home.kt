@@ -57,6 +57,17 @@ fun Home(navController: NavHostController, applicationViewModel: ApplicationView
                 ) {
                     Text("Logout")
                 }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        navController.navigate(Screens.Favourites.route)
+                    },
+                    modifier = Modifier
+                        .padding(4.dp)
+                        .fillMaxWidth()
+                ) {
+                    Text("Favourites")
+                }
             }
             else -> {
                 when (authState) {

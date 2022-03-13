@@ -27,6 +27,7 @@ import com.google.accompanist.flowlayout.FlowRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
@@ -93,6 +94,7 @@ fun PostsAppBarActions(navController: NavHostController) {
                 addArgument("order", arguments.getString("order"))
                 addArgument("ascending", arguments.getBoolean("ascending"))
                 addArgument("rating", arguments.getString("rating"))
+                addArgument("fav", arguments.getString("fav"))
             }
         )
     }) {
@@ -106,18 +108,21 @@ fun PostsAppBarActions(navController: NavHostController) {
 
 class PostsSource(
     private val applicationViewModel: ApplicationViewModel,
-    searchOptions: SearchOptions,
+    private val searchOptions: SearchOptions,
 ) : PagingSource<Int, Post>() {
-    private val query = searchOptions.compileToQuery()
+    private lateinit var preparedUrl: HttpUrl
     override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
         return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Post> {
         return try {
+            if (!::preparedUrl.isInitialized) {
+                preparedUrl = searchOptions.prepareRequestUrl(applicationViewModel.api)
+            }
             val page = params.key ?: 1
             val posts: List<Post> = withContext(Dispatchers.IO) {
-                applicationViewModel.api.getPosts(query, page = page, limit = params.loadSize)
+                applicationViewModel.api.getPosts(preparedUrl, page = page, limit = params.loadSize)
             }
             LoadResult.Page(
                 data = posts,
@@ -242,6 +247,26 @@ fun Post(
                 Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochSecond() * 1000)}") // TODO i18n; move it somewhere
             }
         }
+    }
+}
+
+@Composable
+fun PostsScreenNavigationComposable(
+    searchOptions: SearchOptions,
+    applicationViewModel: ApplicationViewModel,
+    navController: NavHostController
+) {
+    Posts(
+        searchOptions,
+        applicationViewModel
+    ) { id, scrollToComments ->
+        navController.navigate(
+            Screens.Post.buildRoute {
+                // Maybe whole json?
+                addArgument("id", id)
+                addArgument("scrollToComments", scrollToComments)
+            }
+        )
     }
 }
 

@@ -29,7 +29,7 @@ fun Response.checkStatus(close: Boolean = false, noThrow: Boolean = false) {
                 Log.d(Api.TAG, it.string())
             }
         }
-        if(noThrow) return
+        if (noThrow) return
         body?.close()
         throw ApiException("Unsuccessful request: $message", code)
     }
@@ -43,7 +43,8 @@ class Api(okHttpClient: OkHttpClient? = null) {
         .addInterceptor(RateLimitInterceptor(1.5))
         .build()
     private var credentials: String? = null
-    private var login: String? = null
+    var login: String? = null
+        private set
     private val objectMapper = objectMapperFactory()
 
     private fun updateCredentialsInternal(login: String?, apiKey: String? = null) {
@@ -70,7 +71,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
             .build()
         okHttpClient.newCall(req).execute().use {
             it.checkStatus(noThrow = true)
-            if(it.isSuccessful) updateCredentialsInternal(login, apiKey)
+            if (it.isSuccessful) updateCredentialsInternal(login, apiKey)
             return it.isSuccessful
         }
     }
@@ -87,11 +88,13 @@ class Api(okHttpClient: OkHttpClient? = null) {
     }
 
     fun getPosts(tags: String, page: Int = 1, limit: Int? = null): List<Post> {
+        return getPosts(preparePostsRequestUrl(tags), page, limit)
+    }
+
+    fun getPosts(preparedUrl: HttpUrl, page: Int = 1, limit: Int? = null): List<Post> {
         val req = requestBuilder()
             .url(
-                API_BASE_URL.newBuilder().apply {
-                    addPathSegments("posts.json")
-                    addQueryParameter("tags", tags)
+                preparedUrl.newBuilder().apply {
                     limit?.let { addQueryParameter("limit", it.toString()) }
                     addQueryParameter("page", page.toString())
                 }.build().also { Log.d(TAG, it.toString()) }
@@ -117,27 +120,33 @@ class Api(okHttpClient: OkHttpClient? = null) {
         }
     }
 
-    fun getBlacklistedTags(): List<String> {
-        if (credentials == null) {
-            Log.w(TAG, "getBlacklistedTags called without credentials available")
-            return emptyList()
-        }
+    private fun getUserByName(user: String): ObjectNode {
         val req = requestBuilder()
             .url(
-                HttpUrl.Builder()
-                    .scheme("https")
-                    .host(BuildConfig.API_HOST)
-                    .addPathSegments("users/$login.json")
+                API_BASE_URL.newBuilder()
+                    .addPathSegments("users/$user.json")
                     .build()
             )
             .build()
         okHttpClient.newCall(req).execute().use {
             it.checkStatus()
-            return objectMapper.readValue<ObjectNode>(it.body!!.charStream())
-                .get("blacklisted_tags").asText()
-                .split("\n")
-
+            return objectMapper.readValue(it.body!!.charStream())
         }
+    }
+
+    fun getBlacklistedTags(): List<String> {
+        if (credentials == null) {
+            Log.w(TAG, "getBlacklistedTags called without credentials available")
+            return emptyList()
+        }
+        return getUserByName(login!!)
+            .get("blacklisted_tags").asText()
+            .split("\n")
+    }
+
+    fun getIdOfUser(user: String): Int {
+        return getUserByName(user)
+            .get("id").asInt()
     }
 
     fun getCommendsForPost(post: Post) = getCommentsForPost(id = post.id)
@@ -211,11 +220,27 @@ class Api(okHttpClient: OkHttpClient? = null) {
         }
     }
 
+
     companion object {
         const val TAG = "API"
         private val API_BASE_URL = HttpUrl.Builder()
             .scheme("https")
             .host(BuildConfig.API_HOST)
             .build()
+
+        fun preparePostsRequestUrl(tags: String): HttpUrl {
+            return API_BASE_URL.newBuilder()
+                .addPathSegments("posts.json")
+                .addQueryParameter("tags", tags)
+                .build()
+        }
+
+        fun prepareFavouritesRequestUrl(userId: Int? = null): HttpUrl {
+            return API_BASE_URL.newBuilder()
+                .addPathSegments("favorites.json")
+                .apply { userId?.let { addQueryParameter("user_id", it.toString()) } }
+                .build()
+        }
+
     }
 }
