@@ -30,6 +30,7 @@ fun Response.checkStatus(close: Boolean = false, noThrow: Boolean = false) {
             }
         }
         if(noThrow) return
+        body?.close()
         throw ApiException("Unsuccessful request: $message", code)
     }
     if (close) body?.close()
