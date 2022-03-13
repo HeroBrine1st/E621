@@ -20,7 +20,7 @@ fun objectMapperFactory(): ObjectMapper = jsonMapper {
     addModule(JavaTimeModule())
 }.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
-fun Response.checkStatus(close: Boolean = false) {
+fun Response.checkStatus(close: Boolean = false, noThrow: Boolean = false) {
     if (!this.isSuccessful) {
         if (BuildConfig.DEBUG) {
             Log.e(Api.TAG, "Unsuccessful request: $message")
@@ -29,6 +29,7 @@ fun Response.checkStatus(close: Boolean = false) {
                 Log.d(Api.TAG, it.string())
             }
         }
+        if(noThrow) return
         throw ApiException("Unsuccessful request: $message", code)
     }
     if (close) body?.close()
@@ -44,7 +45,8 @@ class Api(okHttpClient: OkHttpClient? = null) {
     private var login: String? = null
     private val objectMapper = objectMapperFactory()
 
-    private fun updateCredentialsInternal(login: String?, apiKey: String?) {
+    private fun updateCredentialsInternal(login: String?, apiKey: String? = null) {
+        assert(login != null || apiKey == null)
         this.login = login
         credentials = if (login != null && apiKey != null) Credentials.basic(login, apiKey)
         else null
@@ -59,29 +61,21 @@ class Api(okHttpClient: OkHttpClient? = null) {
     fun checkCredentials(login: String, apiKey: String): Boolean {
         val req = requestBuilder()
             .url(
-                HttpUrl.Builder()
-                    .scheme("https")
-                    .host(BuildConfig.API_HOST)
+                API_BASE_URL.newBuilder()
                     .addPathSegments("users/$login.json")
                     .build()
             )
             .header("Authorization", Credentials.basic(login, apiKey))
             .build()
         okHttpClient.newCall(req).execute().use {
-            if (it.isSuccessful) updateCredentialsInternal(login, apiKey)
-            else {
-                Log.d(
-                    TAG,
-                    "Couldn't authorize. Invalid credentials or API blocked. See response below for additional info"
-                )
-                Log.d(TAG, it.body.use { body -> body?.charStream()?.readText() } ?: "No response")
-            }
+            it.checkStatus(noThrow = true)
+            if(it.isSuccessful) updateCredentialsInternal(login, apiKey)
             return it.isSuccessful
         }
     }
 
     fun logout() {
-        updateCredentialsInternal(null, null)
+        updateCredentialsInternal(null)
     }
 
     private fun requestBuilder(): Request.Builder {
@@ -94,9 +88,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
     fun getPosts(tags: String, page: Int = 1, limit: Int? = null): List<Post> {
         val req = requestBuilder()
             .url(
-                HttpUrl.Builder().apply {
-                    scheme("https")
-                    host(BuildConfig.API_HOST)
+                API_BASE_URL.newBuilder().apply {
                     addPathSegments("posts.json")
                     addQueryParameter("tags", tags)
                     limit?.let { addQueryParameter("limit", it.toString()) }
@@ -113,11 +105,9 @@ class Api(okHttpClient: OkHttpClient? = null) {
     fun getPost(id: Int): Post {
         val req = requestBuilder()
             .url(
-                HttpUrl.Builder().apply {
-                    scheme("https")
-                    host(BuildConfig.API_HOST)
-                    addPathSegments("posts/$id.json")
-                }.build().also { Log.d(TAG, it.toString()) }
+                API_BASE_URL.newBuilder()
+                    .addPathSegments("posts/$id.json")
+                    .build().also { Log.d(TAG, it.toString()) }
             )
             .build()
         okHttpClient.newCall(req).execute().use {
@@ -159,9 +149,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
         // Посты и маппинги можно получить кодом ниже
         val req = requestBuilder()
             .url(
-                HttpUrl.Builder()
-                    .scheme("https")
-                    .host(BuildConfig.API_HOST)
+                API_BASE_URL.newBuilder()
                     .addPathSegments("posts/$id/comments.json")
                     .build()
             )
@@ -179,9 +167,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
             throw RuntimeException("No credentials available")
         }
         val request = requestBuilder()
-            .url(HttpUrl.Builder()
-                .scheme("https")
-                .host(BuildConfig.API_HOST)
+            .url(API_BASE_URL.newBuilder()
                 .addPathSegments("favorites.json")
                 .addQueryParameter("post_id", postId.toString())
                 .build().also { Log.d(TAG, it.toString()) })
@@ -197,9 +183,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
         }
         val request = requestBuilder()
             .url(
-                HttpUrl.Builder()
-                    .scheme("https")
-                    .host(BuildConfig.API_HOST)
+                API_BASE_URL.newBuilder()
                     .addPathSegments("favorites/$postId.json")
                     .build()
             )
@@ -213,9 +197,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
             throw RuntimeException("No credentials available")
         }
         val request = requestBuilder()
-            .url(HttpUrl.Builder()
-                .scheme("https")
-                .host(BuildConfig.API_HOST)
+            .url(API_BASE_URL.newBuilder()
                 .addPathSegments("posts/$postId/votes.json")
                 .addQueryParameter("score", score.toString())
                 .addQueryParameter("no_unvote", noUnvote.toString())
@@ -230,5 +212,9 @@ class Api(okHttpClient: OkHttpClient? = null) {
 
     companion object {
         const val TAG = "API"
+        private val API_BASE_URL = HttpUrl.Builder()
+            .scheme("https")
+            .host(BuildConfig.API_HOST)
+            .build()
     }
 }
