@@ -8,7 +8,7 @@ plugins {
 }
 
 val kotlinVersion = "1.6.10"
-val composeVersion = "1.1.0"
+val composeVersion = "1.1.1"
 
 
 val buildProperties = Properties().apply {
