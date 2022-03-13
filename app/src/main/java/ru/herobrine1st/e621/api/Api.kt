@@ -98,7 +98,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
                     scheme("https")
                     host(BuildConfig.API_HOST)
                     addPathSegments("posts.json")
-                    addEncodedQueryParameter("tags", tags)
+                    addQueryParameter("tags", tags)
                     limit?.let { addQueryParameter("limit", it.toString()) }
                     addQueryParameter("page", page.toString())
                 }.build().also { Log.d(TAG, it.toString()) }
