@@ -31,15 +31,6 @@ data class PostsSearchOptions(
     override val rating: List<Rating>,
     override val favouritesOf: String?,
 ) : SearchOptions, Parcelable {
-    constructor(bundle: Bundle) : this(
-        bundle.getString("tags")!!
-            .let { if (it.isBlank()) emptyList() else it.split(",") },
-        Order.valueOf(bundle.getString("order")!!),
-        bundle.getBoolean("ascending"),
-        bundle.getString("rating")!!.split(",").filter { it.isNotBlank() }
-            .map { Rating.valueOf(it) },
-        bundle.getString("fav")
-    )
 
     private fun compileToQuery(): String {
         var query = tags.joinToString(" ")
