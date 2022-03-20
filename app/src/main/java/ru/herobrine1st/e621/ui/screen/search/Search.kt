@@ -38,8 +38,8 @@ fun Search(
         SearchScreenState(initialPostsSearchOptions)
     }
 
-    if (state.openDialog) {
-        AddTagDialog(onClose = { state.openDialog = false }, onAdd = { state.tags.add(it) })
+    if (state.openAddTagDialog) {
+        AddTagDialog(onClose = { state.openAddTagDialog = false }, onAdd = { state.tags.add(it) })
     }
 
     Base {
@@ -63,7 +63,7 @@ fun Search(
                 }
             }
             TextButton(
-                onClick = { state.openDialog = true },
+                onClick = { state.openAddTagDialog = true },
                 modifier = Modifier.align(Alignment.Start)
             ) {
                 Text(stringResource(R.string.add_tag))
