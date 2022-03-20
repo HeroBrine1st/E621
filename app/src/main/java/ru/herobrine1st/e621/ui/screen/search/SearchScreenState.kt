@@ -1,10 +1,12 @@
 package ru.herobrine1st.e621.ui.screen.search
 
 import android.os.Bundle
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import ru.herobrine1st.e621.util.PostsSearchOptions
-import ru.herobrine1st.e621.util.letApply
 
 class SearchScreenState(
     initialPostsSearchOptions: PostsSearchOptions,
@@ -25,7 +27,7 @@ class SearchScreenState(
     companion object {
         val Saver: Saver<SearchScreenState, Bundle> = Saver(
             save = { state ->
-                state.letApply {
+                with(state) {
                     val bundle = Bundle()
                     bundle.putParcelable(
                         PostsSearchOptions::class.simpleName,
@@ -35,7 +37,7 @@ class SearchScreenState(
                         SearchScreenState::openAddTagDialog.name,
                         openAddTagDialog
                     )
-                    return@letApply bundle
+                    return@Saver bundle
                 }
             },
             restore = { bundle ->
