@@ -2,23 +2,14 @@ package ru.herobrine1st.e621.api
 
 import android.util.Log
 import androidx.compose.runtime.compositionLocalOf
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
-import com.fasterxml.jackson.module.kotlin.jsonMapper
-import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
 import okhttp3.*
 import okhttp3.RequestBody.Companion.toRequestBody
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.*
 import ru.herobrine1st.e621.net.RateLimitInterceptor
-
-fun objectMapperFactory(): ObjectMapper = jsonMapper {
-    addModule(kotlinModule())
-    addModule(JavaTimeModule())
-}.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+import ru.herobrine1st.e621.util.getObjectMapper
 
 fun Response.checkStatus(close: Boolean = false, noThrow: Boolean = false) {
     if (!this.isSuccessful) {
@@ -45,7 +36,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
     private var credentials: String? = null
     var login: String? = null
         private set
-    private val objectMapper = objectMapperFactory()
+    private val objectMapper = getObjectMapper()
 
     private fun updateCredentialsInternal(login: String?, apiKey: String? = null) {
         assert(login != null || apiKey == null)

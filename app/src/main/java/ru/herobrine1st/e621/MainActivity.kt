@@ -37,6 +37,7 @@ import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
+import ru.herobrine1st.e621.util.getJsonString
 import java.io.File
 
 
@@ -130,26 +131,19 @@ class MainActivity : ComponentActivity() {
                                 ) { entry ->
                                     val arguments: Bundle =
                                         entry.arguments!!
-                                    val searchOptions = remember { PostsSearchOptions(arguments) }
+
+                                    val searchOptions = arguments.getParcelable("query") ?: PostsSearchOptions.DEFAULT
                                     Search(searchOptions) {
                                         navController.popBackStack()
                                         navController.navigate(
                                             Screens.Posts.buildRoute {
-                                                addArgument("tags", it.tags.joinToString(","))
-                                                addArgument("order", it.order.name)
-                                                addArgument("ascending", it.orderAscending)
-                                                addArgument(
-                                                    "rating",
-                                                    it.rating.joinToString(",") { it.name })
-                                                addArgument("fav", it.favouritesOf)
+                                                addArgument("query", it.getJsonString(), encode = true)
                                             }
                                         )
                                     }
                                 }
                                 composable(Screens.Posts.route, Screens.Posts.arguments) {
-                                    val arguments =
-                                        it.arguments!! // Видимо если без аргументов вызвано - тогда null, ну в таком случае ошибка будет в другом месте
-                                    val searchOptions = remember { PostsSearchOptions(arguments) }
+                                    val searchOptions = it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
                                     PostsScreenNavigationComposable(
                                         searchOptions = searchOptions,
                                         applicationViewModel = applicationViewModel,

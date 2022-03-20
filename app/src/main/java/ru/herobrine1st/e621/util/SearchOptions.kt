@@ -1,28 +1,17 @@
 package ru.herobrine1st.e621.util
 
 import android.os.Bundle
+import android.os.Parcelable
 import androidx.navigation.NavType
+import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.parcelize.Parcelize
 import okhttp3.HttpUrl
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 
-// TODO move to NavType and JSON in arguments - this way Jackson will manage all the stuff
-// class PostsSearchOptionsNavType: NavType<PostsSearchOptions>(false) {
-//     override fun get(bundle: Bundle, key: String): PostsSearchOptions? {
-//         // Get from bundle
-//     }
-//
-//     override fun parseValue(value: String): PostsSearchOptions {
-//         // Parse json
-//     }
-//
-//     override fun put(bundle: Bundle, key: String, value: PostsSearchOptions) {
-//         // Build bundle
-//     }
-// }
 
 interface SearchOptions {
     val tags: List<String>
@@ -34,13 +23,14 @@ interface SearchOptions {
     suspend fun prepareRequestUrl(api: Api): HttpUrl
 }
 
+@Parcelize
 data class PostsSearchOptions(
     override val tags: List<String>,
     override val order: Order,
     override val orderAscending: Boolean,
     override val rating: List<Rating>,
     override val favouritesOf: String?,
-) : SearchOptions {
+) : SearchOptions, Parcelable {
     constructor(bundle: Bundle) : this(
         bundle.getString("tags")!!
             .let { if (it.isBlank()) emptyList() else it.split(",") },
@@ -72,6 +62,10 @@ data class PostsSearchOptions(
     override suspend fun prepareRequestUrl(api: Api): HttpUrl {
         return Api.preparePostsRequestUrl(compileToQuery())
     }
+
+    companion object {
+        val DEFAULT = PostsSearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, emptyList(), null)
+    }
 }
 
 data class FavouritesSearchOptions(override val favouritesOf: String?) : SearchOptions {
@@ -87,3 +81,21 @@ data class FavouritesSearchOptions(override val favouritesOf: String?) : SearchO
         return Api.prepareFavouritesRequestUrl(id)
     }
 }
+
+private val objectMapper = getObjectMapper()
+
+class PostsSearchOptionsNavType : NavType<PostsSearchOptions>(false) {
+    override fun get(bundle: Bundle, key: String): PostsSearchOptions? {
+        return bundle.getParcelable(key)
+    }
+
+    override fun parseValue(value: String): PostsSearchOptions {
+        return objectMapper.readValue(value)
+    }
+
+    override fun put(bundle: Bundle, key: String, value: PostsSearchOptions) {
+        bundle.putParcelable(key, value)
+    }
+}
+
+fun PostsSearchOptions.getJsonString(): String = objectMapper.writeValueAsString(this)

@@ -13,7 +13,8 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.Order
+import ru.herobrine1st.e621.util.PostsSearchOptions
+import ru.herobrine1st.e621.util.PostsSearchOptionsNavType
 import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
@@ -53,50 +54,17 @@ enum class Screens(
         R.string.search,
         Icons.Default.Search,
         "search",
-        navArgument("tags") {
-            type = NavType.StringType
-            defaultValue = ""
+        navArgument("query") {
+            type = PostsSearchOptionsNavType()
+            defaultValue = PostsSearchOptions.DEFAULT
         },
-        navArgument("order") {
-            type = NavType.StringType
-            defaultValue = Order.NEWEST_TO_OLDEST.name
-        },
-        navArgument("ascending") {
-            type = NavType.BoolType
-            defaultValue = false
-        },
-        navArgument("rating") {
-            type = NavType.StringType
-            defaultValue = ""
-        },
-        navArgument("fav") {
-            type = NavType.StringType
-            nullable = true
-        }
     ),
     Posts(
         R.string.posts,
         Icons.Default.Feed,
         "posts",
-        navArgument("tags") {
-            type = NavType.StringType
-            defaultValue = ""
-        },
-        navArgument("order") {
-            type = NavType.StringType
-            defaultValue = Order.NEWEST_TO_OLDEST.name
-        },
-        navArgument("ascending") {
-            type = NavType.BoolType
-            defaultValue = false
-        },
-        navArgument("rating") {
-            type = NavType.StringType
-            defaultValue = ""
-        },
-        navArgument("fav") {
-            type = NavType.StringType
-            nullable = true
+        navArgument("query") {
+            type = PostsSearchOptionsNavType()
         },
         appBarActions = { it, _ -> PostsAppBarActions(it) }
     ),

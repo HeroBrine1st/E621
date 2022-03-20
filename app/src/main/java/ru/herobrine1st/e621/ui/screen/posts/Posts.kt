@@ -37,7 +37,9 @@ import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.screen.Screens
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
+import ru.herobrine1st.e621.util.PostsSearchOptions
 import ru.herobrine1st.e621.util.SearchOptions
+import ru.herobrine1st.e621.util.getJsonString
 import java.io.IOException
 
 class PostsViewModel(
@@ -90,11 +92,11 @@ fun PostsAppBarActions(navController: NavHostController) {
         val arguments = navController.currentBackStackEntry!!.arguments!!
         navController.navigate(
             Screens.Search.buildRoute {
-                addArgument("tags", arguments.getString("tags"))
-                addArgument("order", arguments.getString("order"))
-                addArgument("ascending", arguments.getBoolean("ascending"))
-                addArgument("rating", arguments.getString("rating"))
-                addArgument("fav", arguments.getString("fav"))
+                addArgument(
+                    "query",
+                    arguments.getParcelable<PostsSearchOptions>("query")!!.getJsonString(),
+                    encode = true
+                )
             }
         )
     }) {
