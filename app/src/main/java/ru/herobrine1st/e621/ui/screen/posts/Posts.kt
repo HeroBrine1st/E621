@@ -212,7 +212,7 @@ fun Post(
 ) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(bottom = 8.dp)) {
-            PostImagePreview(post, openPost = openPost)
+            PostImage(post, openPost = openPost)
             FlowRow {
                 var expandTags by remember { mutableStateOf(false) }
                 post.tags.reduced

@@ -2,7 +2,6 @@ package ru.herobrine1st.e621.ui.screen.posts
 
 import android.util.Log
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.material.Text
@@ -15,7 +14,7 @@ import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.R
 
-private val TAG = "Post Screen"
+private const val TAG = "Post Screen"
 
 @Composable
 fun Post(applicationViewModel: ApplicationViewModel, id: Int, scrollToComments: Boolean) {
@@ -44,7 +43,7 @@ fun Post(applicationViewModel: ApplicationViewModel, id: Int, scrollToComments: 
             }
             return@Column
         }
-        PostImagePreview(post = post!!, null)
+        PostImage(post = post!!, null)
         Text("TODO")
         // TODO comments
         // TODO tags
