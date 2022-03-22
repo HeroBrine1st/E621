@@ -4,13 +4,13 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 
 @JsonIgnoreProperties("invalid")
 data class Tags(
-    var general: List<String>,
-    var species: List<String>,
-    var character: List<String>,
-    var copyright: List<String>,
-    var artist: List<String>,
-    var lore: List<String>,
-    var meta: List<String>
+    val general: List<String>,
+    val species: List<String>,
+    val character: List<String>,
+    val copyright: List<String>,
+    val artist: List<String>,
+    val lore: List<String>,
+    val meta: List<String>
 ) {
     val all by lazy {
         artist + copyright + character + species + general + lore + meta
