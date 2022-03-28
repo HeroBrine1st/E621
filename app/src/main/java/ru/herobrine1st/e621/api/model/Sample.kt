@@ -26,7 +26,7 @@ data class Sample(
 }
 @Parcelize
 @Immutable
-@JsonIgnoreProperties("notmalizedType")
+@JsonIgnoreProperties("normalizedType")
 data class Alternate(
     val type: AlternateType,
     val height: Int,
