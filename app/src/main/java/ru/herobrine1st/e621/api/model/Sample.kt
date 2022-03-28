@@ -26,6 +26,7 @@ data class Sample(
 }
 @Parcelize
 @Immutable
+@JsonIgnoreProperties("notmalizedType")
 data class Alternate(
     val type: AlternateType,
     val height: Int,
@@ -33,7 +34,6 @@ data class Alternate(
     val urls: List<String?> // yes it really may be nullable
 ) : Parcelable {
     @IgnoredOnParcel
-    // TODO WARNING FIELD IS NOT IGNORED BY JACKSON
     val normalizedType by lazy {
         urls.mapNotNull {
             FileType.byExtension[it?.splitToSequence(".")?.lastOrNull()]
