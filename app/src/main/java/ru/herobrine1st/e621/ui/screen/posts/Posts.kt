@@ -144,7 +144,7 @@ class PostsSource(
 fun Posts(
     searchOptions: SearchOptions,
     applicationViewModel: ApplicationViewModel,
-    openPost: (id: Int, scrollToComments: Boolean) -> Unit
+    openPost: (post: Post, scrollToComments: Boolean) -> Unit
 ) {
     val viewModel: PostsViewModel =
         viewModel(factory = PostsViewModelFactory(applicationViewModel, searchOptions))
@@ -175,7 +175,7 @@ fun Posts(
             viewModel.notifyPostState(blacklisted)
             if (blacklisted) return@items
             Post(post, applicationViewModel) {
-                openPost(post.id, it)
+                openPost(post, it)
             }
             Spacer(modifier = Modifier.height(4.dp))
         }
@@ -256,11 +256,10 @@ fun PostsScreenNavigationComposable(
     Posts(
         searchOptions,
         applicationViewModel
-    ) { id, scrollToComments ->
+    ) { post, scrollToComments ->
         navController.navigate(
             Screens.Post.buildRoute {
-                // Maybe whole json?
-                addArgument("id", id)
+                addArgument("post", post)
                 addArgument("scrollToComments", scrollToComments)
             }
         )

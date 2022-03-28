@@ -12,8 +12,6 @@ import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 
-private val objectMapper = getObjectMapper()
-
 interface SearchOptions {
     val tags: List<String>
     val order: Order?
@@ -58,8 +56,6 @@ data class PostsSearchOptions(
     companion object {
         val DEFAULT = PostsSearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, emptyList(), null)
     }
-
-    override fun serializeToJson(): String = objectMapper.writeValueAsString(this)
 }
 
 data class FavouritesSearchOptions(override val favouritesOf: String?) : SearchOptions {

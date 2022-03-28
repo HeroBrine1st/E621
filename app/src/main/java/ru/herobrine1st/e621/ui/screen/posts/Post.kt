@@ -1,13 +1,10 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import android.util.Log
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
@@ -16,9 +13,7 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
@@ -31,17 +26,22 @@ import ru.herobrine1st.e621.R
 private const val TAG = "Post Screen"
 
 @Composable
-fun Post(applicationViewModel: ApplicationViewModel, id: Int, scrollToComments: Boolean) {
+fun Post(applicationViewModel: ApplicationViewModel, initialPost: Post, scrollToComments: Boolean) {
     val api = LocalAPI.current
-    var error by remember { mutableStateOf(false) }
-    val post by produceState<Post?>(initialValue = null) {
+    var post by remember { mutableStateOf(initialPost) }
+    LaunchedEffect(Unit) {
+        // Check if post has updated
+        // TODO check without deserialization (check response code and if "Not Modified" stop this job)
+        // TODO add setting to control this behavior
         try {
-            value = withContext(Dispatchers.IO) {
-                api.getPost(id)
+            val newPost = withContext(Dispatchers.IO) {
+                api.getPost(initialPost.id)
+            }
+            if(post != newPost) {
+                post = newPost
             }
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to get post", t)
-            error = true
             applicationViewModel.addSnackbarMessage(
                 R.string.network_error,
                 SnackbarDuration.Indefinite
@@ -50,46 +50,34 @@ fun Post(applicationViewModel: ApplicationViewModel, id: Int, scrollToComments: 
     }
 
     LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
-        if (post == null) {
-            if (!error) { // => loading
-                item("loading") {
-                    CircularProgressIndicator()
-                }
-            } else {
-                item("error") {
-                    Text("Error") // TODO i18n
-                }
-            }
-            return@LazyColumn
-        }
         item("image") {
-            PostImage(post = post!!, null)
+            PostImage(post = post, null)
         }
         item("todo") {
             Text("TODO")
         }
         // TODO comments
         // TODO i18n
-        if (post!!.tags.artist.isNotEmpty())
-            tags("Artist", post!!.tags.artist)
+        if (post.tags.artist.isNotEmpty())
+            tags("Artist", post.tags.artist)
 
-        if (post!!.tags.copyright.isNotEmpty())
-            tags("Copyright", post!!.tags.copyright)
+        if (post.tags.copyright.isNotEmpty())
+            tags("Copyright", post.tags.copyright)
 
-        if (post!!.tags.character.isNotEmpty())
-            tags("Character", post!!.tags.character)
+        if (post.tags.character.isNotEmpty())
+            tags("Character", post.tags.character)
 
-        if (post!!.tags.species.isNotEmpty())
-            tags("Species", post!!.tags.species)
+        if (post.tags.species.isNotEmpty())
+            tags("Species", post.tags.species)
 
-        if (post!!.tags.general.isNotEmpty())
-            tags("General", post!!.tags.general)
+        if (post.tags.general.isNotEmpty())
+            tags("General", post.tags.general)
 
-        if (post!!.tags.lore.isNotEmpty())
-            tags("Lore", post!!.tags.lore)
+        if (post.tags.lore.isNotEmpty())
+            tags("Lore", post.tags.lore)
 
-        if (post!!.tags.meta.isNotEmpty())
-            tags("Meta", post!!.tags.meta)
+        if (post.tags.meta.isNotEmpty())
+            tags("Meta", post.tags.meta)
 
     }
 }

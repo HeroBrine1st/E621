@@ -19,6 +19,7 @@ import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
 import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
+import ru.herobrine1st.e621.ui.screen.posts.PostNavType
 import ru.herobrine1st.e621.util.JsonSerializable
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -74,8 +75,8 @@ enum class Screens(
         appBarActions = { it, _ -> PostsAppBarActions(it) }
     ),
     Post(R.string.post, Icons.Default.Feed, "post",
-        navArgument("id") {
-            type = NavType.IntType
+        navArgument("post") {
+            type = PostNavType()
         },
         navArgument("scrollToComments") {
             type = NavType.BoolType

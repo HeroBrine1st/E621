@@ -9,7 +9,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.*
 import ru.herobrine1st.e621.net.RateLimitInterceptor
-import ru.herobrine1st.e621.util.getObjectMapper
+import ru.herobrine1st.e621.util.objectMapper
 
 fun Response.checkStatus(close: Boolean = false, noThrow: Boolean = false) {
     if (!this.isSuccessful) {
@@ -36,7 +36,6 @@ class Api(okHttpClient: OkHttpClient? = null) {
     private var credentials: String? = null
     var login: String? = null
         private set
-    private val objectMapper = getObjectMapper()
 
     private fun updateCredentialsInternal(login: String?, apiKey: String? = null) {
         assert(login != null || apiKey == null)

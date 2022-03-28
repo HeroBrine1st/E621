@@ -6,11 +6,9 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 
-private val objectMapper_: ObjectMapper by lazy {
+val objectMapper: ObjectMapper by lazy {
     jsonMapper {
         addModule(kotlinModule())
         addModule(JavaTimeModule())
     }.setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 }
-
-fun getObjectMapper(): ObjectMapper = objectMapper_

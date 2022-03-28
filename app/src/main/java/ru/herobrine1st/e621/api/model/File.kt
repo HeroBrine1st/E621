@@ -1,8 +1,11 @@
 package ru.herobrine1st.e621.api.model
 
+import android.os.Parcelable
 import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.FileType
 
+@Parcelize
 data class File(
     val width: Int,
     val height: Int,
@@ -11,7 +14,7 @@ data class File(
     val size: Long,
     val md5: String,
     val url: String
-)
+) : Parcelable
 
 data class NormalizedFile(
     val name: String,

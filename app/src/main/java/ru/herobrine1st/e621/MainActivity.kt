@@ -24,6 +24,7 @@ import okhttp3.Cache
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.LocalAPI
+import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.SnackbarController
@@ -167,7 +168,7 @@ class MainActivity : ComponentActivity() {
                                         it.arguments!!
                                     Post(
                                         applicationViewModel,
-                                        arguments.getInt("id"),
+                                        arguments.getParcelable<Post>("post")!!,
                                         arguments.getBoolean("scrollToComments")
                                     )
                                 }
