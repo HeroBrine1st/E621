@@ -11,7 +11,7 @@ import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.screen.Screens
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
-import ru.herobrine1st.e621.util.FavouritesSearchOptions
+import ru.herobrine1st.e621.util.PostsSearchOptions
 
 @Composable
 fun FavouritesAppBarActions(navController: NavHostController, applicationViewModel: ApplicationViewModel) {
@@ -19,7 +19,7 @@ fun FavouritesAppBarActions(navController: NavHostController, applicationViewMod
         navController.navigate(
             Screens.Search.buildRoute {
                 // Others have default values
-                addArgument("fav", applicationViewModel.login)
+                addArgument("query", PostsSearchOptions(favouritesOf = applicationViewModel.login))
             }
         )
     }) {

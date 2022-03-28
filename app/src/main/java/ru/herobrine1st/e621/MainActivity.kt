@@ -37,7 +37,6 @@ import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
-import ru.herobrine1st.e621.util.getJsonString
 import java.io.File
 
 
@@ -132,18 +131,20 @@ class MainActivity : ComponentActivity() {
                                     val arguments: Bundle =
                                         entry.arguments!!
 
-                                    val searchOptions = arguments.getParcelable("query") ?: PostsSearchOptions.DEFAULT
+                                    val searchOptions = arguments.getParcelable("query")
+                                        ?: PostsSearchOptions.DEFAULT
                                     Search(searchOptions) {
                                         navController.popBackStack()
                                         navController.navigate(
                                             Screens.Posts.buildRoute {
-                                                addArgument("query", it.getJsonString(), encode = true)
+                                                addArgument("query", it)
                                             }
                                         )
                                     }
                                 }
                                 composable(Screens.Posts.route, Screens.Posts.arguments) {
-                                    val searchOptions = it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
+                                    val searchOptions =
+                                        it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
                                     PostsScreenNavigationComposable(
                                         searchOptions = searchOptions,
                                         applicationViewModel = applicationViewModel,
@@ -153,7 +154,8 @@ class MainActivity : ComponentActivity() {
                                 composable(Screens.Favourites.route, Screens.Favourites.arguments) {
                                     val arguments =
                                         it.arguments!!
-                                    val searchOptions = remember { FavouritesSearchOptions(arguments.getString("user")) }
+                                    val searchOptions =
+                                        remember { FavouritesSearchOptions(arguments.getString("user")) }
                                     PostsScreenNavigationComposable(
                                         searchOptions = searchOptions,
                                         applicationViewModel = applicationViewModel,

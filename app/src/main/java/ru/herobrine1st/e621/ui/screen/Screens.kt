@@ -19,6 +19,7 @@ import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
 import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
+import ru.herobrine1st.e621.util.JsonSerializable
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -35,6 +36,10 @@ class RouteBuilder(
             arguments[key] = URLEncoder.encode(value.toString(), StandardCharsets.UTF_8.toString())
         else
             arguments[key] = value.toString()
+    }
+
+    fun addArgument(key: String, value: JsonSerializable) {
+        addArgument(key, value.serializeToJson(), true)
     }
 
     fun build(): String = initialRoute + arguments.map { "${it.key}=${it.value}" }

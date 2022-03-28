@@ -12,6 +12,7 @@ import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 
+private val objectMapper = getObjectMapper()
 
 interface SearchOptions {
     val tags: List<String>
@@ -25,12 +26,12 @@ interface SearchOptions {
 
 @Parcelize
 data class PostsSearchOptions(
-    override val tags: List<String>,
-    override val order: Order,
-    override val orderAscending: Boolean,
-    override val rating: List<Rating>,
-    override val favouritesOf: String?,
-) : SearchOptions, Parcelable {
+    override val tags: List<String> = emptyList(),
+    override val order: Order = Order.NEWEST_TO_OLDEST,
+    override val orderAscending: Boolean = false,
+    override val rating: List<Rating> = emptyList(),
+    override val favouritesOf: String? = null,
+) : SearchOptions, Parcelable, JsonSerializable {
 
     private fun compileToQuery(): String {
         var query = tags.joinToString(" ")
@@ -57,6 +58,8 @@ data class PostsSearchOptions(
     companion object {
         val DEFAULT = PostsSearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, emptyList(), null)
     }
+
+    override fun serializeToJson(): String = objectMapper.writeValueAsString(this)
 }
 
 data class FavouritesSearchOptions(override val favouritesOf: String?) : SearchOptions {
@@ -73,8 +76,6 @@ data class FavouritesSearchOptions(override val favouritesOf: String?) : SearchO
     }
 }
 
-private val objectMapper = getObjectMapper()
-
 class PostsSearchOptionsNavType : NavType<PostsSearchOptions>(false) {
     override fun get(bundle: Bundle, key: String): PostsSearchOptions? {
         return bundle.getParcelable(key)
@@ -88,5 +89,3 @@ class PostsSearchOptionsNavType : NavType<PostsSearchOptions>(false) {
         bundle.putParcelable(key, value)
     }
 }
-
-fun PostsSearchOptions.getJsonString(): String = objectMapper.writeValueAsString(this)

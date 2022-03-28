@@ -21,7 +21,7 @@ class SearchScreenState(
     var openAddTagDialog by mutableStateOf(openAddTagDialog)
 
     fun makeSearchOptions(): PostsSearchOptions =
-        PostsSearchOptions(ArrayList(tags), order, orderAscending, rating, favouritesOf
+        PostsSearchOptions(tags.toList(), order, orderAscending, rating.toList(), favouritesOf
             .ifBlank { null })
 
     companion object {
@@ -31,7 +31,7 @@ class SearchScreenState(
                     val bundle = Bundle()
                     bundle.putParcelable(
                         PostsSearchOptions::class.simpleName,
-                        PostsSearchOptions(tags, order, orderAscending, rating, favouritesOf)
+                        makeSearchOptions()
                     )
                     bundle.putBoolean(
                         SearchScreenState::openAddTagDialog.name,
