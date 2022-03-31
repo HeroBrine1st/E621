@@ -19,7 +19,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import ru.herobrine1st.e621.ApplicationViewModel
-import ru.herobrine1st.e621.AuthState
+import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.component.Base
 

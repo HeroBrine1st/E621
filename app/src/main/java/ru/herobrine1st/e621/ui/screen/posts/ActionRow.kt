@@ -18,7 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.ApplicationViewModel
-import ru.herobrine1st.e621.AuthState
+import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 
@@ -76,10 +76,10 @@ fun PostActionsRow(
             Crossfade(targetState = isFavorited) {
                 if (it) Icon(
                     Icons.Filled.Favorite,
-                    contentDescription = stringResource(R.string.unfavorite)
+                    contentDescription = stringResource(R.string.remove_from_favourites)
                 ) else Icon(
                     Icons.Filled.FavoriteBorder,
-                    contentDescription = stringResource(R.string.favorite)
+                    contentDescription = stringResource(R.string.add_to_favourites)
                 )
             }
         }

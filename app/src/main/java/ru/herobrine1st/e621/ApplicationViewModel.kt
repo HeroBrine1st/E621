@@ -16,20 +16,12 @@ import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.ui.SnackbarMessage
 import ru.herobrine1st.e621.util.StatefulBlacklistEntry
 import java.io.IOException
 import java.util.function.Predicate
 
-
-enum class AuthState {
-    NO_DATA, // default if no auth info at the start of app
-    LOADING,
-    AUTHORIZED,
-    IO_ERROR,
-    SQL_ERROR,
-    UNAUTHORIZED // error when trying to authenticate
-}
 
 class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     class Factory(val database: Database, val api: Api) : ViewModelProvider.Factory {

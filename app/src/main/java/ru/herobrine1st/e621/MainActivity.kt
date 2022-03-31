@@ -3,6 +3,7 @@ package ru.herobrine1st.e621
 import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
 import android.os.StatFs
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,6 +13,7 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import androidx.room.Room
@@ -20,12 +22,15 @@ import coil.ImageLoader
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.util.CoilUtils
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.net.RateLimitInterceptor
+import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.screen.Home
@@ -38,7 +43,9 @@ import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
+import ru.herobrine1st.e621.util.debug
 import java.io.File
+import java.io.IOException
 
 
 class MainActivity : ComponentActivity() {
@@ -51,6 +58,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        lifecycleScope.launch {
+            try {
+                applicationContext.dataStore.data.first()
+            } catch (e: IOException) {
+                Log.e(TAG, "Exception reading preferences", e)
+            } catch(t: Throwable) {
+                Log.w(TAG, "Exception reading preferences", t)
+            }
+        }
+
         val db: Database = Room.databaseBuilder(
             applicationContext,
             Database::class.java, BuildConfig.DATABASE_NAME

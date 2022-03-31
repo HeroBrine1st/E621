@@ -3,34 +3,50 @@ package ru.herobrine1st.e621.ui.screen.posts
 import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Help
+import androidx.compose.material.icons.filled.Remove
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.ApplicationViewModel
+import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.preference.PRIVACY_MODE
+import ru.herobrine1st.e621.preference.getPreference
+import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "Post Screen"
 
 @Composable
 fun Post(applicationViewModel: ApplicationViewModel, initialPost: Post, scrollToComments: Boolean) {
     val api = LocalAPI.current
-    val post by produceState(initialValue = initialPost) {
+    val privacyMode = LocalContext.current.getPreference(PRIVACY_MODE, true)
+    val post by produceState(initialValue = initialPost, privacyMode) {
         // Check if post has updated
         // TODO add setting to control this behavior
+        debug { Log.d(TAG, "Privacy mode: $privacyMode") }
+        if (!initialPost.isFavorited && privacyMode) {
+            debug { Log.d(TAG, "Line 46") }
+            return@produceState
+        }
         try {
             value = withContext(Dispatchers.IO) {
                 api.fetchPostIfUpdated(initialPost)

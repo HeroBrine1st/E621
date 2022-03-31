@@ -40,7 +40,6 @@ fun ActionDialog(
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 content()
-                Spacer(modifier = Modifier.height(8.dp))
                 Row(
                     modifier = Modifier
                         .padding(bottom = 8.dp)
