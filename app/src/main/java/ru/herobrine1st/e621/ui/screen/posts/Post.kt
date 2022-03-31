@@ -28,17 +28,12 @@ private const val TAG = "Post Screen"
 @Composable
 fun Post(applicationViewModel: ApplicationViewModel, initialPost: Post, scrollToComments: Boolean) {
     val api = LocalAPI.current
-    var post by remember { mutableStateOf(initialPost) }
-    LaunchedEffect(Unit) {
+    val post by produceState(initialValue = initialPost) {
         // Check if post has updated
-        // TODO check without deserialization (check response code and if "Not Modified" stop this job)
         // TODO add setting to control this behavior
         try {
-            val newPost = withContext(Dispatchers.IO) {
-                api.getPost(initialPost.id)
-            }
-            if(post != newPost) {
-                post = newPost
+            value = withContext(Dispatchers.IO) {
+                api.fetchPostIfUpdated(initialPost)
             }
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to get post", t)
@@ -90,10 +85,14 @@ fun LazyListScope.tags(title: String, tags: List<String>) {
             modifier = Modifier
                 .padding(start = 8.dp)
                 .height(ButtonDefaults.MinHeight)
-                .background(brush = Brush.verticalGradient(listOf(
-                    MaterialTheme.colors.background,
-                    MaterialTheme.colors.background.copy(alpha = 0f)
-                )))
+                .background(
+                    brush = Brush.verticalGradient(
+                        listOf(
+                            MaterialTheme.colors.background,
+                            MaterialTheme.colors.background.copy(alpha = 0f)
+                        )
+                    )
+                )
         ) {
             Text(
                 title,

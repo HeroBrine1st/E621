@@ -21,6 +21,7 @@ import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionBu
 import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
 import ru.herobrine1st.e621.ui.screen.posts.PostNavType
 import ru.herobrine1st.e621.util.JsonSerializable
+import ru.herobrine1st.e621.util.debug
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -31,7 +32,9 @@ class RouteBuilder(
     private val arguments: MutableMap<String, String> = HashMap()
     fun addArgument(key: String, value: Any?, encode: Boolean = false) {
         assert(key in initialArguments) { "Invalid argument key" }
-        Log.d("RouteBuilder", "Adding argument $key=$value to route $initialRoute")
+        debug {
+            Log.d("RouteBuilder", "Adding argument $key=$value to route $initialRoute")
+        }
         if (value == null) return
         if (encode)
             arguments[key] = URLEncoder.encode(value.toString(), StandardCharsets.UTF_8.toString())

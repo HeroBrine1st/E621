@@ -9,6 +9,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.*
 import ru.herobrine1st.e621.net.RateLimitInterceptor
+import ru.herobrine1st.e621.util.debug
+import ru.herobrine1st.e621.util.isCacheConditional
 import ru.herobrine1st.e621.util.objectMapper
 
 fun Response.checkStatus(close: Boolean = false, noThrow: Boolean = false) {
@@ -16,8 +18,8 @@ fun Response.checkStatus(close: Boolean = false, noThrow: Boolean = false) {
         if (BuildConfig.DEBUG) {
             Log.e(Api.TAG, "Unsuccessful request: $message")
             body?.use {
-                Log.d(Api.TAG, "Response body:")
-                Log.d(Api.TAG, it.string())
+                Log.e(Api.TAG, "Response body:")
+                Log.e(Api.TAG, it.string())
             }
         }
         if (noThrow) return
@@ -87,7 +89,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
                 preparedUrl.newBuilder().apply {
                     limit?.let { addQueryParameter("limit", it.toString()) }
                     addQueryParameter("page", page.toString())
-                }.build().also { Log.d(TAG, it.toString()) }
+                }.build().debug { Log.d(TAG, toString()) }
             )
             .build()
         okHttpClient.newCall(req).execute().use {
@@ -96,17 +98,27 @@ class Api(okHttpClient: OkHttpClient? = null) {
         }
     }
 
+    private fun preparePostRequest(id: Int): Request = requestBuilder()
+        .url(
+            API_BASE_URL.newBuilder()
+                .addPathSegments("posts/$id.json")
+                .build().debug { Log.d(TAG, toString()) }
+        )
+        .build()
+
     fun getPost(id: Int): Post {
-        val req = requestBuilder()
-            .url(
-                API_BASE_URL.newBuilder()
-                    .addPathSegments("posts/$id.json")
-                    .build().also { Log.d(TAG, it.toString()) }
-            )
-            .build()
-        okHttpClient.newCall(req).execute().use {
+        okHttpClient.newCall(preparePostRequest(id)).execute().use {
             it.checkStatus()
             return objectMapper.readValue<PostEndpoint>(it.body!!.charStream()).post
+        }
+    }
+
+
+    fun fetchPostIfUpdated(post: Post): Post {
+        okHttpClient.newCall(preparePostRequest(post.id)).execute().use {
+            it.checkStatus()
+            return if(it.isCacheConditional) post
+            else objectMapper.readValue<PostEndpoint>(it.body!!.charStream()).post
         }
     }
 
@@ -170,7 +182,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
             .url(API_BASE_URL.newBuilder()
                 .addPathSegments("favorites.json")
                 .addQueryParameter("post_id", postId.toString())
-                .build().also { Log.d(TAG, it.toString()) })
+                .build().debug { Log.d(TAG, toString()) })
             .post("".toRequestBody(null))
             .build()
         okHttpClient.newCall(request).execute().checkStatus(true)
@@ -201,7 +213,7 @@ class Api(okHttpClient: OkHttpClient? = null) {
                 .addPathSegments("posts/$postId/votes.json")
                 .addQueryParameter("score", score.toString())
                 .addQueryParameter("no_unvote", noUnvote.toString())
-                .build().also { Log.d(TAG, it.toString()) })
+                .build().debug { Log.d(TAG, toString()) })
             .post("".toRequestBody(null))
             .build()
         okHttpClient.newCall(request).execute().use {
@@ -231,6 +243,5 @@ class Api(okHttpClient: OkHttpClient? = null) {
                 .apply { userId?.let { addQueryParameter("user_id", it.toString()) } }
                 .build()
         }
-
     }
 }
