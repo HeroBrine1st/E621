@@ -76,4 +76,6 @@
     <string name="resume">Продолжить</string>
     <string name="mute_sound">Отключить звук</string>
     <string name="unmute_sound">Включить звук</string>
+    <string name="invalid_post_server_error">Пост не может быть отображён: на сервере произошла ошибка.</string>
+    <string name="unsupported_post_type">Посты с типом файлов %s не поддерживаются</string>
 </resources>

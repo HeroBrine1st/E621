@@ -31,12 +31,15 @@ import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.PRIVACY_MODE
 import ru.herobrine1st.e621.preference.getPreference
-import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "Post Screen"
 
 @Composable
-fun Post(applicationViewModel: ApplicationViewModel, initialPost: Post, scrollToComments: Boolean) {
+fun Post(
+    applicationViewModel: ApplicationViewModel,
+    initialPost: Post,
+    @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean // TODO
+) {
     val api = LocalAPI.current
     val privacyMode = LocalContext.current.getPreference(PRIVACY_MODE, true)
     val post by produceState(initialValue = initialPost, privacyMode) {
@@ -57,8 +60,12 @@ fun Post(applicationViewModel: ApplicationViewModel, initialPost: Post, scrollTo
     }
 
     LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
-        item("image") {
-            PostImage(post = post, null)
+        item("media") {
+            PostMedia(post = post, null, if (post.file.type.isVideo) {
+                post.files.first { it.type.isVideo }
+            } else {
+                post.normalizedSample
+            })
         }
         item("todo") {
             Text("TODO")

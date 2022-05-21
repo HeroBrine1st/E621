@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.getPreference
@@ -80,7 +81,7 @@ class PostsViewModelFactory(
     private val searchOptions: SearchOptions // will not change
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         return PostsViewModel(applicationViewModel, searchOptions) as T
     }
 }
@@ -207,7 +208,7 @@ fun Post(
 ) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(bottom = 8.dp)) {
-            PostImage(post, openPost = openPost)
+            PostMedia(post, openPost = openPost, NormalizedFile(post.sample))
             FlowRow {
                 var expandTags by remember { mutableStateOf(false) }
                 post.tags.reduced

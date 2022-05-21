@@ -45,11 +45,18 @@ data class Post(
     val duration: Float = 0f
 ) : Parcelable, JsonSerializable {
     @IgnoredOnParcel
+    val normalizedSample = NormalizedFile(sample)
+
+    @IgnoredOnParcel
+    val normalizedFile = NormalizedFile(file)
+
+    @IgnoredOnParcel
     val files: List<NormalizedFile> = listOf(
-        NormalizedFile(file),
-        NormalizedFile(sample),
-        *sample.alternates.map { NormalizedFile(it.key, it.value) }.toTypedArray()
-    ).sortedBy { it.width }
+        normalizedFile,
+        normalizedSample,
+        *sample.alternates.filterNot { it.key == "original" }
+            .map { NormalizedFile(it.key, it.value) }.toTypedArray()
+    ).sortedWith(compareBy({ it.type.weight }, { it.width }))
 }
 
 data class PostReduced(
