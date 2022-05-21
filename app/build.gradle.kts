@@ -39,7 +39,7 @@ android {
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
         debug {
-
+            applicationIdSuffix = ".test"
         }
         forEach {
             it.buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
@@ -48,7 +48,7 @@ android {
                 "String",
                 "USER_AGENT",
                 "\"Android App/${android.defaultConfig.versionName} (${properties["E621_USERNAME"]})\""
-            ) // set in ~/.gradle/gradle.properties
+            ) // set in ~/.gradle/gradle.properties or build.properties at the project root
         }
     }
     compileOptions {
