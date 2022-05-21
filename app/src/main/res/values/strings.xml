@@ -72,4 +72,8 @@
     <string name="privacy_mode_subtitle">Don\'t let server know you opened non-favourite post</string>
     <string name="privacy_mode_longdesc">Privacy mode is not the panacea if you want total privacy and confidentiality. Searches will still be executed on server-side.</string>
     <string name="warning">Warning</string>
+    <string name="pause">Pause</string>
+    <string name="resume">Resume</string>
+    <string name="mute_sound">Mute sound</string>
+    <string name="unmute_sound">Unmute sound</string>
 </resources>

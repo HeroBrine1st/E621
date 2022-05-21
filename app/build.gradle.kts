@@ -96,7 +96,7 @@ dependencies {
     implementation("androidx.activity:activity-compose:1.4.0")
 
     // Jetpack Navigation
-    implementation("androidx.navigation:navigation-compose:2.4.1")
+    implementation("androidx.navigation:navigation-compose:2.4.2")
 
     // Jetpack Room
     val roomVersion = "2.4.1"
@@ -129,7 +129,9 @@ dependencies {
     // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.0")
     implementation("com.google.accompanist:accompanist-flowlayout:0.20.3")
+    implementation("com.google.android.exoplayer:exoplayer:2.17.1")
     implementation("org.jsoup:jsoup:1.14.3")
+
 
     // Tests
     testImplementation("junit:junit:4.13.2")

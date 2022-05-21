@@ -72,4 +72,8 @@
     <string name="privacy_mode_subtitle">Не давать серверу знать об открытии несохранённого поста</string>
     <string name="privacy_mode_longdesc">Режим приватности - не панацея для полной приватности и конфиденциальности. Поиск всё ещё будет выполняться на стороне сервера.</string>
     <string name="warning">Внимание</string>
+    <string name="pause">Пауза</string>
+    <string name="resume">Продолжить</string>
+    <string name="mute_sound">Отключить звук</string>
+    <string name="unmute_sound">Включить звук</string>
 </resources>

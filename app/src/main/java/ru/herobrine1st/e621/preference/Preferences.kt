@@ -28,3 +28,5 @@ val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "se
 val BLACKLIST_ENABLED = booleanPreferencesKey("BLACKLIST_ENABLED")
 val PRIVACY_MODE = booleanPreferencesKey("PRIVACY_MODE")
 val PRIVACY_MODE_DIALOG_SHOWN = booleanPreferencesKey("PRIVACY_MODE_DIALOG_SHOWN")
+val SHOW_REMAINING_TIME_MEDIA = booleanPreferencesKey("SHOW_REMAINING_TIME_MEDIA")
+val MUTE_SOUND_MEDIA = booleanPreferencesKey("MUTE_SOUND_MEDIA")
