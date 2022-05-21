@@ -40,11 +40,7 @@ fun Post(applicationViewModel: ApplicationViewModel, initialPost: Post, scrollTo
     val api = LocalAPI.current
     val privacyMode = LocalContext.current.getPreference(PRIVACY_MODE, true)
     val post by produceState(initialValue = initialPost, privacyMode) {
-        // Check if post has updated
-        // TODO add setting to control this behavior
-        debug { Log.d(TAG, "Privacy mode: $privacyMode") }
         if (!initialPost.isFavorited && privacyMode) {
-            debug { Log.d(TAG, "Line 46") }
             return@produceState
         }
         try {
@@ -69,32 +65,19 @@ fun Post(applicationViewModel: ApplicationViewModel, initialPost: Post, scrollTo
         }
         // TODO comments
         // TODO i18n
-        if (post.tags.artist.isNotEmpty())
-            tags("Artist", post.tags.artist)
-
-        if (post.tags.copyright.isNotEmpty())
-            tags("Copyright", post.tags.copyright)
-
-        if (post.tags.character.isNotEmpty())
-            tags("Character", post.tags.character)
-
-        if (post.tags.species.isNotEmpty())
-            tags("Species", post.tags.species)
-
-        if (post.tags.general.isNotEmpty())
-            tags("General", post.tags.general)
-
-        if (post.tags.lore.isNotEmpty())
-            tags("Lore", post.tags.lore)
-
-        if (post.tags.meta.isNotEmpty())
-            tags("Meta", post.tags.meta)
-
+        tags("Artist", post.tags.artist)
+        tags("Copyright", post.tags.copyright)
+        tags("Character", post.tags.character)
+        tags("Species", post.tags.species)
+        tags("General", post.tags.general)
+        tags("Lore", post.tags.lore)
+        tags("Meta", post.tags.meta)
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 fun LazyListScope.tags(title: String, tags: List<String>) {
+    if (tags.isEmpty()) return
     stickyHeader("$title tags") {
         Row(
             verticalAlignment = Alignment.CenterVertically,
