@@ -47,7 +47,7 @@ fun BlacklistTogglesDialog(
     }
 
     val closeCancel = {
-        blacklist.forEach { if (it.isToggled()) /*then*/ it.enabled = !it.enabled }
+        blacklist.forEach { if (it.isToggled) it.enabled = !it.enabled }
         onClose()
     }
 
@@ -150,7 +150,7 @@ private fun BlacklistTogglesDialogContent(applicationViewModel: ApplicationViewM
                     modifier = Modifier.weight(1f),
                     color = if (updating) Color.Gray else Color.Unspecified
                 )
-                if (entry.isToggled()) { // Reset
+                if (entry.isToggled) { // Reset
                     IconButton(
                         enabled = !updating,
                         onClick = { entry.enabled = !entry.enabled },

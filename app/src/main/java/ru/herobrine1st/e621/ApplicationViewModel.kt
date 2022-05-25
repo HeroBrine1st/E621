@@ -279,22 +279,22 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                     entry.query
                 )
                 blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
-                blacklistDoNotUseAsFilter.removeIf { it.isPendingInsertion() }
+                blacklistDoNotUseAsFilter.removeIf { it.isPendingInsertion }
                 break
             }
         }
-        blacklistDoNotUseAsFilter.removeIf { it.isPendingDeletion() }
+        blacklistDoNotUseAsFilter.removeIf { it.isPendingDeletion }
         updateFilteringBlacklistEntriesList()
         blacklistUpdating = false
     }
 
     fun resetBlacklistEntry(entry: StatefulBlacklistEntry) {
-        if (entry.isPendingInsertion()) blacklistDoNotUseAsFilter.remove(entry)
+        if (entry.isPendingInsertion) blacklistDoNotUseAsFilter.remove(entry)
         else entry.resetChanges()
     }
 
     fun deleteBlacklistEntry(entry: StatefulBlacklistEntry) {
-        if (entry.isPendingInsertion()) blacklistDoNotUseAsFilter.remove(entry)
+        if (entry.isPendingInsertion) blacklistDoNotUseAsFilter.remove(entry)
         else entry.markAsDeleted()
     }
 
@@ -303,7 +303,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     }
 
     fun resetBlacklistChanges() {
-        blacklistDoNotUseAsFilter.removeIf { it.isPendingInsertion() }
+        blacklistDoNotUseAsFilter.removeIf { it.isPendingInsertion }
         blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
     }
 

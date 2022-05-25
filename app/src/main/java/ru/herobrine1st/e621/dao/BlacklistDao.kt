@@ -12,8 +12,8 @@ interface BlacklistDao {
     @Query("SELECT * FROM blacklist")
     suspend fun getAll(): Array<BlacklistEntry>
 
-    @Delete
-    suspend fun delete(blacklist: BlacklistEntry)
+    @Query("DELETE FROM blacklist WHERE id=:id")
+    suspend fun delete(id: Long)
 
     @Insert
     suspend fun insert(blacklist: BlacklistEntry): Long

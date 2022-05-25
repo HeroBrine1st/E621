@@ -53,8 +53,11 @@ fun SettingsBlacklistFloatingActionButton(applicationViewModel: ApplicationViewM
 }
 
 @Composable
+fun blacklistHasChanges(applicationViewModel: ApplicationViewModel) = remember { derivedStateOf { applicationViewModel.blacklistDoNotUseAsFilter.any { it.isChanged } } }
+
+@Composable
 fun SettingsBlacklistAppBarActions(applicationViewModel: ApplicationViewModel) {
-    val hasChanges by remember { derivedStateOf { applicationViewModel.blacklistDoNotUseAsFilter.any { it.isChanged() } } }
+    val hasChanges by blacklistHasChanges(applicationViewModel)
     val coroutineScope = rememberCoroutineScope()
     if (applicationViewModel.blacklistUpdating || applicationViewModel.blacklistLoading) {
         CircularProgressIndicator(color = ActionBarIconColor)
@@ -90,7 +93,7 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
         )
     }
 
-    val hasChanges by remember { derivedStateOf { applicationViewModel.blacklistDoNotUseAsFilter.any { it.isChanged() } } }
+    val hasChanges by blacklistHasChanges(applicationViewModel)
     var openExitDialog by remember { mutableStateOf(false) }
 
     if (openExitDialog) StopThereAreUnsavedChangesDialog(onClose = { openExitDialog = false }) {
@@ -108,7 +111,7 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(width)
             ) {
-                if (entry.isPendingInsertion()) {
+                if (entry.isPendingInsertion) {
                     key("New item indicator") {
                         Icon(
                             Icons.Default.Add,
@@ -120,15 +123,15 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
                 key("Query string") {
                     Text(
                         entry.query, modifier = Modifier.weight(1f), color = when {
-                            entry.isPendingInsertion() -> Color.Unspecified
-                            entry.isPendingUpdate() -> Color.Unspecified
-                            entry.isPendingDeletion() -> Color.Red
+                            entry.isPendingInsertion -> Color.Unspecified
+                            entry.isPendingUpdate -> Color.Unspecified
+                            entry.isPendingDeletion -> Color.Red
                             else -> Color.Unspecified
                         }
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                 }
-                if (entry.isChanged()) {
+                if (entry.isChanged) {
                     key("Undo button") {
                         IconButton(
                             onClick = { applicationViewModel.resetBlacklistEntry(entry) },
@@ -143,12 +146,12 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
                 key("Delete button") {
                     IconButton(
                         onClick = {
-                            if (entry.isPendingDeletion()) entry.markAsDeleted(false)
+                            if (entry.isPendingDeletion) entry.markAsDeleted(false)
                             else applicationViewModel.deleteBlacklistEntry(entry)
                         }
                     ) {
                         Icon(
-                            if (entry.isPendingDeletion()) Icons.Default.Add else Icons.Default.Remove,
+                            if (entry.isPendingDeletion) Icons.Default.Add else Icons.Default.Remove,
                             contentDescription = stringResource(R.string.remove)
                         )
                     }

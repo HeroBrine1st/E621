@@ -2,90 +2,89 @@
 
 package ru.herobrine1st.e621.util
 
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import ru.herobrine1st.e621.Database
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.dao.BlacklistDao
 import ru.herobrine1st.e621.entity.BlacklistEntry
 
-class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistEntry) {
+@Stable
+class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean, id: Long) {
     companion object {
         fun of(blacklistEntry: BlacklistEntry): StatefulBlacklistEntry =
-            StatefulBlacklistEntry(blacklistEntry)
+            StatefulBlacklistEntry(blacklistEntry.query, blacklistEntry.enabled, blacklistEntry.id)
 
         fun create(query: String, enabled: Boolean = true): StatefulBlacklistEntry =
-            StatefulBlacklistEntry(BlacklistEntry(query = query, enabled))
+            StatefulBlacklistEntry(query, enabled, 0)
     }
 
-    var query by mutableStateOf(dbEntry.query)
-    var enabled by mutableStateOf(dbEntry.enabled)
+    var query by mutableStateOf(query)
+    var enabled by mutableStateOf(enabled)
 
-    // Make them stateful so that database update will trigger recomposition
-    private var dbEntryEnabled by mutableStateOf(dbEntry.enabled)
-    private var dbEntryQuery by mutableStateOf(dbEntry.query)
-    private var dbEntryId by mutableStateOf(dbEntry.id)
+    // Stateful to notify composition about database related events
+    private var dbEntryEnabled by mutableStateOf(enabled)
+    private var dbEntryQuery by mutableStateOf(query)
+    private var dbEntryId by mutableStateOf(id)
 
     var pendingDeletion by mutableStateOf(false)
         private set
 
-    fun isToggled() = enabled != dbEntryEnabled
-    fun isQueryChanged() = query != dbEntryQuery
-    fun isPendingDeletion() = pendingDeletion
-    fun isPendingInsertion() = dbEntryId == 0L
-    fun isPendingUpdate() = isToggled() || isQueryChanged()
-    fun isChanged() = isPendingInsertion() || isPendingUpdate() || isPendingDeletion()
+
+    val isToggled get() = enabled != dbEntryEnabled
+    val isQueryChanged get() = query != dbEntryQuery
+    val isPendingDeletion get() = pendingDeletion
+    val isPendingInsertion get() = dbEntryId == 0L
+    val isPendingUpdate get() = isToggled || isQueryChanged
+    val isChanged get() = isPendingInsertion || isPendingUpdate || isPendingDeletion
 
 
     fun resetChanges() {
-        query = dbEntry.query; dbEntryQuery = dbEntryQuery
-        enabled = dbEntry.enabled; dbEntryEnabled = dbEntryEnabled
+        query = dbEntryQuery
+        enabled = dbEntryEnabled
         pendingDeletion = false
     }
 
 
     fun markAsDeleted(deleted: Boolean = true) {
-        assert(dbEntry.id != 0L)
+        assert(dbEntryId != 0L)
         pendingDeletion = deleted
     }
 
     val predicate by derivedStateOf { createTagProcessor(query) }
 
     private suspend fun createDatabaseRecord(database: Database) {
-        assert(dbEntry.id == 0L)
-        dbEntry.query = query
-        dbEntry.enabled = enabled
-        dbEntry.id = database.blacklistDao().insert(dbEntry)
+        assert(dbEntryId == 0L)
+        dbEntryId = database.blacklistDao().insert(
+            BlacklistEntry(
+                query = query,
+                enabled = enabled
+            )
+        )
         dbEntryQuery = query
-        dbEntryEnabled = dbEntryEnabled
-        dbEntryId = dbEntry.id
+        dbEntryEnabled = enabled
     }
 
     private suspend fun updateDatabaseRecord(database: Database) {
-        val oldQuery = dbEntry.query
-        val oldEnabled = dbEntry.enabled
-        dbEntry.query = query
-        dbEntry.enabled = enabled
         try {
-            database.blacklistDao().update(dbEntry)
+            database.blacklistDao().update(
+                BlacklistEntry(
+                    id = dbEntryId,
+                    query = query,
+                    enabled = enabled
+                )
+            )
         } catch (e: Throwable) { // Undo
-            dbEntry.query = oldQuery
-            dbEntry.enabled = oldEnabled
-            query = oldQuery
-            enabled = oldEnabled
+            resetChanges()
             throw e
         }
-        dbEntryEnabled = enabled
         dbEntryQuery = query
-        dbEntryId = dbEntry.id
+        dbEntryEnabled = enabled
     }
 
     private suspend fun deleteDatabaseRecord(database: Database) {
-        assert(dbEntry.id != 0L)
+        assert(dbEntryId != 0L)
         try {
-            database.blacklistDao().delete(dbEntry)
+            database.blacklistDao().delete(dbEntryId)
         } catch (e: Exception) { // Undo
             resetChanges()
             throw e
@@ -94,11 +93,13 @@ class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistE
 
     suspend fun applyChanges(database: Database) {
         when {
-            dbEntry.id == 0L -> createDatabaseRecord(database)
+            dbEntryId == 0L -> createDatabaseRecord(database)
             pendingDeletion -> deleteDatabaseRecord(database)
             else -> updateDatabaseRecord(database)
         }
     }
 }
 
-suspend fun BlacklistDao.getAllAsStateful() = getAll().map { StatefulBlacklistEntry.of(it) }
+fun BlacklistEntry.asStateful() = StatefulBlacklistEntry.of(this)
+
+suspend fun BlacklistDao.getAllAsStateful() = getAll().map { it.asStateful() }
