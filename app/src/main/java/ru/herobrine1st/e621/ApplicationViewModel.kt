@@ -19,6 +19,7 @@ import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.ui.SnackbarMessage
 import ru.herobrine1st.e621.util.StatefulBlacklistEntry
+import ru.herobrine1st.e621.util.getAllAsStateful
 import java.io.IOException
 import java.util.function.Predicate
 
@@ -26,7 +27,7 @@ import java.util.function.Predicate
 class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     class Factory(val database: Database, val api: Api) : ViewModelProvider.Factory {
         @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             return ApplicationViewModel(database, api) as T
         }
     }
