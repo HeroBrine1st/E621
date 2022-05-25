@@ -23,6 +23,4 @@ interface BlacklistDao {
 
     @Query("DELETE FROM blacklist")
     suspend fun clear()
-
-    suspend fun getAllAsStateful() = getAll().map { StatefulBlacklistEntry.of(it) }
 }

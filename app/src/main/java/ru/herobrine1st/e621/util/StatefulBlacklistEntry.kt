@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import ru.herobrine1st.e621.Database
 import ru.herobrine1st.e621.api.createTagProcessor
+import ru.herobrine1st.e621.dao.BlacklistDao
 import ru.herobrine1st.e621.entity.BlacklistEntry
 
 class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistEntry) {
@@ -99,3 +100,5 @@ class StatefulBlacklistEntry private constructor(private val dbEntry: BlacklistE
         }
     }
 }
+
+suspend fun BlacklistDao.getAllAsStateful() = getAll().map { StatefulBlacklistEntry.of(it) }
