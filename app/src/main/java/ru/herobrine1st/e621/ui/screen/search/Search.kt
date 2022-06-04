@@ -42,7 +42,7 @@ fun Search(
         AddTagDialog(onClose = { state.openAddTagDialog = false }, onAdd = { state.tags.add(it) })
     }
 
-    Base {
+    Base(scrollable = true) {
         Spacer(modifier = Modifier.height(4.dp))
         SettingCard(title = stringResource(R.string.tags)) {
             FlowRow(modifier = Modifier.fillMaxWidth()) {

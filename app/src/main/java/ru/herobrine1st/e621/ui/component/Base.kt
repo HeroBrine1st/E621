@@ -14,7 +14,7 @@ import androidx.compose.ui.Modifier
 const val width = 0.95f
 
 @Composable
-fun Base(horizontalAlignment: Alignment.Horizontal = Alignment.Start, content: @Composable ColumnScope.() -> Unit) {
+fun Base(horizontalAlignment: Alignment.Horizontal = Alignment.Start, scrollable: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     val scrollState = rememberScrollState()
     Box(
         modifier = Modifier.fillMaxSize(),
@@ -23,7 +23,9 @@ fun Base(horizontalAlignment: Alignment.Horizontal = Alignment.Start, content: @
         Column(
             modifier = Modifier
                 .fillMaxHeight()
-                .verticalScroll(scrollState, true)
+                .apply {
+                    if(scrollable) verticalScroll(scrollState, true)
+                }
                 .fillMaxWidth(width),
             horizontalAlignment = horizontalAlignment,
             content = content
