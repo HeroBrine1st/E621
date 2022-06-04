@@ -208,7 +208,15 @@ fun Post(
 ) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(bottom = 8.dp)) {
-            PostMedia(post, openPost = openPost, NormalizedFile(post.sample))
+            when {
+                post.file.type.isSupported -> PostImage(
+                    post = post,
+                    aspectRatio = post.normalizedSample.aspectRatio,
+                    openPost = openPost,
+                    file = post.normalizedSample
+                )
+                else -> InvalidPost(text = stringResource(R.string.unsupported_post_type))
+            }
             FlowRow {
                 var expandTags by remember { mutableStateOf(false) }
                 post.tags.reduced

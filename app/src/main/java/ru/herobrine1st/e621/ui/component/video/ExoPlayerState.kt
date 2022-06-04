@@ -25,7 +25,7 @@ class ExoPlayerState(
         private set
     var isPlaying by mutableStateOf(exoPlayer.isPlaying)
         private set
-    var contentDurationMs by mutableStateOf(exoPlayer.contentDuration)
+    var contentDurationMs by mutableStateOf(exoPlayer.contentDuration.coerceAtLeast(0))
         private set
 
     @get:Player.State
@@ -47,12 +47,6 @@ class ExoPlayerState(
                 hideControlsDeadlineMs = System.currentTimeMillis() + OVERLAY_TIMEOUT_MS
         }
     var showRemaining by mutableStateOf(false)
-
-    fun mute(muted: Boolean = true) {
-        isMuted = muted
-    }
-
-    fun unmute() = mute(false)
 
     /**
      * @param userInteraction true if user defined, false if application defined
@@ -86,7 +80,7 @@ class ExoPlayerState(
 
     override fun onTimelineChanged(timeline: Timeline, reason: Int) {
         updateTimestamp()
-        contentDurationMs = exoPlayer.contentDuration
+        contentDurationMs = exoPlayer.contentDuration.coerceAtLeast(0)
     }
 
     override fun onPlaybackStateChanged(playbackState: Int) {

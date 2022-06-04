@@ -77,5 +77,5 @@
     <string name="mute_sound">Mute sound</string>
     <string name="unmute_sound">Unmute sound</string>
     <string name="invalid_post_server_error">Invalid post. Server error occurred.</string>
-    <string name="unsupported_post_type">Post with files of type %s is not supported</string>
+    <string name="unsupported_post_type">Posts with files of type %s are not supported</string>
 </resources>

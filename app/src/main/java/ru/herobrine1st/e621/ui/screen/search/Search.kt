@@ -6,7 +6,9 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
@@ -110,10 +112,12 @@ fun Search(
             } else AnimatedVisibility(
                 visible = displaySelectedSpecially,
                 enter = fadeIn(initialAlpha = 1f), // Disable
-                exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) + shrinkVertically(shrinkTowards = Alignment.Top),
+                exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) + shrinkVertically(
+                    shrinkTowards = Alignment.Top
+                ),
             ) {
                 var item by remember { mutableStateOf(state.order) }
-                if(displaySelectedSpecially) item = state.order
+                if (displaySelectedSpecially) item = state.order
                 OrderItem(item, true) {}
             }
             if (second.isNotEmpty()) OrderSelectionList(second, state.order, expanded, onSelect)

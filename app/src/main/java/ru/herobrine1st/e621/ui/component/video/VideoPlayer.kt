@@ -1,11 +1,6 @@
-/*
-    This file is full of workarounds and shitty code
-*/
-
 package ru.herobrine1st.e621.ui.component.video
 
 import android.text.format.DateUtils
-import android.util.Log
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.compose.animation.AnimatedVisibility
@@ -43,40 +38,12 @@ import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.ui.StyledPlayerView
 import com.google.android.exoplayer2.ui.StyledPlayerView.SHOW_BUFFERING_NEVER
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.preference.MUTE_SOUND_MEDIA
-import ru.herobrine1st.e621.preference.SHOW_REMAINING_TIME_MEDIA
-import ru.herobrine1st.e621.preference.getPreferenceFlow
-import ru.herobrine1st.e621.preference.setPreference
 import ru.herobrine1st.e621.ui.screen.posts.HandlePreferences
 
 private const val TAG = "VideoPlayer"
 const val OVERLAY_TIMEOUT_MS = 7500L
-
-@Composable
-fun VideoPlayer(
-    uri: String,
-    modifier: Modifier = Modifier,
-    playWhenReady: Boolean = false,
-    repeatMode: Int = ExoPlayer.REPEAT_MODE_ALL,
-) {
-    VideoPlayer(MediaItem.fromUri(uri), modifier = modifier, playWhenReady, repeatMode)
-}
-
-@Composable
-fun VideoPlayer(
-    mediaItem: MediaItem,
-    modifier: Modifier = Modifier,
-    playWhenReady: Boolean = false,
-    repeatMode: Int = ExoPlayer.REPEAT_MODE_ALL,
-) {
-    VideoPlayer(
-        exoPlayer = rememberExoPlayer(mediaItem, playWhenReady, repeatMode),
-        modifier = modifier
-    )
-}
 
 @Composable
 fun VideoPlayer(exoPlayer: Pair<ExoPlayer, ExoPlayerState>, modifier: Modifier = Modifier) {
@@ -233,7 +200,7 @@ fun VideoPlayerController(
                 }
             }
             val contentPositionSeconds = contentPositionMs / 1000
-            val contentDurationSeconds = exoPlayer.contentDuration / 1000
+            val contentDurationSeconds = state.contentDurationMs / 1000
             Text(
                 DateUtils.formatElapsedTime(contentPositionSeconds),
                 color = Color.White,
@@ -255,7 +222,7 @@ fun VideoPlayerController(
                     onValueChange = {
                         exoPlayer.seekTo(it.toLong())
                     },
-                    valueRange = 0f..(exoPlayer.contentDuration.toFloat().coerceAtLeast(0.1f)),
+                    valueRange = 0f..(state.contentDurationMs.toFloat()),
                     colors = SliderDefaults.colors(
                         activeTrackColor = Color.Red,
                         thumbColor = Color.Red,
@@ -339,7 +306,7 @@ fun rememberExoPlayer(
     )) {
         ExoPlayer.Builder(context).build().apply(builder)
     }
-    val state = ExoPlayerState(exoPlayer)
+    val state = remember(exoPlayer) { ExoPlayerState(exoPlayer) }
     DisposableEffect(exoPlayer) {
         onDispose {
             state.dispose()

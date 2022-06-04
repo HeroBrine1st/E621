@@ -31,6 +31,7 @@ import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.PRIVACY_MODE
 import ru.herobrine1st.e621.preference.getPreference
+import ru.herobrine1st.e621.ui.component.video.rememberExoPlayer
 
 private const val TAG = "Post Screen"
 
@@ -59,13 +60,26 @@ fun Post(
         }
     }
 
+    val videoFile = if (post.file.type.isVideo) post.files.first { it.type.isVideo } else null
+    val exoPlayer = if (post.file.type.isVideo) rememberExoPlayer(uri = videoFile!!.urls.first())
+    else null
+
+
     LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
         item("media") {
-            PostMedia(post = post, null, if (post.file.type.isVideo) {
-                post.files.first { it.type.isVideo }
-            } else {
-                post.normalizedSample
-            })
+            when {
+                post.file.type.isVideo -> PostVideo(
+                    videoFile!!.aspectRatio,
+                    exoPlayer = exoPlayer!!
+                )
+                post.file.type.isImage -> PostImage(
+                    post = post,
+                    aspectRatio = post.normalizedSample.aspectRatio,
+                    openPost = null,
+                    file = post.normalizedFile
+                )
+                else -> InvalidPost(text = stringResource(R.string.unsupported_post_type))
+            }
         }
         item("todo") {
             Text("TODO")
