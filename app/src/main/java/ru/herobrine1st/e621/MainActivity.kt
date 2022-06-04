@@ -132,7 +132,6 @@ class MainActivity : ComponentActivity() {
                     }
                 ) {
                     Surface(
-                        modifier = Modifier.fillMaxSize(),
                         color = MaterialTheme.colors.background
                     ) {
                         CompositionLocalProvider(LocalDatabase provides db, LocalAPI provides api) {

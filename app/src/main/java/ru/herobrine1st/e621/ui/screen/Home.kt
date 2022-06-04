@@ -29,7 +29,7 @@ fun Home(navController: NavHostController, applicationViewModel: ApplicationView
     var password by rememberSaveable { mutableStateOf("") }
     val authState = applicationViewModel.authState
 
-    Base(Alignment.CenterHorizontally) {
+    Base {
         Button(
             onClick = {
                 navController.navigate(Screens.Search.route)

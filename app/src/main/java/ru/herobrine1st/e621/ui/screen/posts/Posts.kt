@@ -158,7 +158,7 @@ fun Posts(
     val error = loadState.refresh is LoadState.Error || loadState.append is LoadState.Error
 
     if (posts.itemCount == 0 && !error) { // Do not reset lazyListState
-        Base(Alignment.CenterHorizontally) {
+        Base {
             Spacer(modifier = Modifier.height(4.dp))
             CircularProgressIndicator()
         }
@@ -184,7 +184,7 @@ fun Posts(
             when {
                 loading -> {
                     item {
-                        Base(Alignment.CenterHorizontally) {
+                        Base {
                             Spacer(modifier = Modifier.height(4.dp))
                             CircularProgressIndicator()
                         }

@@ -14,27 +14,26 @@ import androidx.compose.ui.Modifier
 const val width = 0.95f
 
 @Composable
-fun Base(horizontalAlignment: Alignment.Horizontal = Alignment.Start, scrollable: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
-    val scrollState = rememberScrollState()
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxHeight()
-                .apply {
-                    if(scrollable) verticalScroll(scrollState, true)
-                }
-                .fillMaxWidth(width),
-            horizontalAlignment = horizontalAlignment,
-            content = content
-        )
-    }
+fun Base(
+    modifier: Modifier = Modifier,
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        modifier = modifier
+            .fillMaxHeight()
+            .fillMaxWidth(width),
+        horizontalAlignment = horizontalAlignment,
+        content = content
+    )
 }
 
 @Composable
-fun LazyBase(lazyListState: LazyListState = rememberLazyListState(), horizontalAlignment: Alignment.Horizontal = Alignment.Start, content: LazyListScope.() -> Unit) {
+fun LazyBase(
+    lazyListState: LazyListState = rememberLazyListState(),
+    horizontalAlignment: Alignment.Horizontal = Alignment.Start,
+    content: LazyListScope.() -> Unit
+) {
     Box(
         modifier = Modifier.fillMaxSize(),
         contentAlignment = Alignment.TopCenter,
