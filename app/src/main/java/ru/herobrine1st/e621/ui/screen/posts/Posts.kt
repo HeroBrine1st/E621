@@ -45,7 +45,7 @@ import java.io.IOException
 class PostsViewModel(
     private val applicationViewModel: ApplicationViewModel, // will not change
     private val searchOptions: SearchOptions, // will not change
-    pageSize: Int = 100
+    pageSize: Int = 500
 ) : ViewModel() {
     private val pager = Pager(PagingConfig(pageSize = pageSize, initialLoadSize = pageSize)) {
         PostsSource(applicationViewModel, searchOptions)
