@@ -1,8 +1,6 @@
 package ru.herobrine1st.e621
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.Assert.assertEquals
 import org.junit.Before
@@ -10,6 +8,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.util.objectMapper
 
 @Suppress("SpellCheckingInspection")
 val samplePost = """{
@@ -142,8 +141,6 @@ class TagProcessorTest {
 
     @Before
     fun prepareSamplePost() {
-        val objectMapper = jacksonObjectMapper()
-            .setPropertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
         post = objectMapper.readValue(samplePost)
     }
 

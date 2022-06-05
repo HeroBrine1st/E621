@@ -1,118 +1,87 @@
 package ru.herobrine1st.e621.api
 
-import androidx.core.text.isDigitsOnly
 import ru.herobrine1st.e621.api.model.Post
 import java.util.function.Predicate
+import java.util.regex.Pattern
 
-val integerMetatags: Map<String, (Post) -> Int> = mapOf(
+
+// TODO add another for these:
+// date:month..year
+// filesize:200KB..300KB
+val integerMetaTagPattern: Pattern =
+    Pattern.compile("^([^\\s:]+):([<>]=?)?(\\d+)(?:\\.\\.)?(\\d+)?\$")
+
+val operation = { i1: Int, operator: String, i2: Int ->
+    when (operator) {
+        ">=" -> i1 >= i2
+        ">" -> i1 > i2
+        "<=" -> i1 <= i2
+        "<" -> i1 < i2
+        "==" -> i1 == i2
+        else -> false
+    }
+}
+
+@Suppress("SpellCheckingInspection")
+val metaTagToNumber = mapOf<String, (Post) -> Int>(
     "id" to { it.id },
     "score" to { it.score.total },
-    // Remaining tags are not relevant IMO
+    "favcount" to { it.favoriteCount },
+    "comment_count" to { it.commentCount }
+    // others ?
 )
 
-/**
- * Query - normal search string
- * Micro query - one tag (or metatag) with operator from query
- * Simple micro query - just one tag (or metatag) without operator
- */
-fun parseSimpleMicroQuery(microQuery: String): Predicate<Post> {
-    if (":" in microQuery) {
-        val metatag: String
-        var value: String
-        microQuery.split(":").let {
-            metatag = it[0]
-            value = it[1]
-        }
-        if ((value.isDigitsOnly() && value.isNotEmpty()) // metatag:500
-            || (value.substring(1).isDigitsOnly() && value.length > 1) // metatag:>500 metatag:<500
-            || (".." in value // metatag:123..456
-                    && value.split("..")
-                .let { it.size == 2 && it.all { it1 -> it1.isDigitsOnly() } })
-        ) {
-            val predicate: Predicate<Int>
-            if (value.startsWith("<") || value.startsWith(">")) { // metatag:>500 metatag:<500
-                val sign = value.substring(0, 1)
-                value = value.substring(1)
-                if (!value.isDigitsOnly()) {
-                    return Predicate { false } // invalid
-                }
-                val intValue = Integer.parseInt(value)
-                predicate = when (sign) {
-                    "<" -> {
-                        Predicate {
-                            it < intValue
-                        }
-                    }
-                    ">" -> {
-                        Predicate {
-                            it > intValue
-                        }
-                    }
-                    else -> return Predicate { false } // invalid
-                }
-            } else if (value.isDigitsOnly()) { // metatag:500
-                val intValue = Integer.parseInt(value)
-                predicate = Predicate {
-                    it == intValue
-                }
-            } else if (".." in value) { // metatag:123..456
-                val values = value.split("..")
-                assert(values.size == 2)
-                val min = Integer.parseInt(values[0])
-                val max = Integer.parseInt(values[1])
-                val range = min..max
-                predicate = Predicate {
-                    it in range
-                }
-            } else {
-                return Predicate { false } // invalid
+fun createPredicateFromTag(tag: String): Predicate<Post> {
+    val matcher = integerMetaTagPattern.matcher(tag)
+    if (matcher.matches() &&
+        // Regexes have condition statements, but java doesn't support it
+        // Either 2nd or 4th group, not both
+        (matcher.group(2) == null || matcher.group(4) == null)
+    ) {
+        val mappingFrom = metaTagToNumber[matcher.group(1)!!]
+            ?: return Predicate { false } // If not found then not matching anything
+        val operator = matcher.group(2) ?: "=="
+        if (matcher.group(4) == null) {
+            val value = matcher.group(3)!!.toInt()
+            return Predicate {
+                return@Predicate operation(mappingFrom(it), operator, value)
             }
-            return parseIntegerMetatag(metatag, predicate)
         } else {
-            if (metatag == "rating") {
-                val rating = Rating.byAnyName[value]
-                return Predicate {
-                    it.rating == rating
-                }
+            val range = matcher.group(3)!!.toInt().let {
+                it..(matcher.group(4)!!.toInt())
             }
+            return Predicate {
+                mappingFrom(it) in range
+            }
+        }
+    } else if (tag.startsWith("rating:") || tag.startsWith("r:")) {
+        val expectedRating = Rating.byAnyName[tag.split(":")[1]]
+        return Predicate {
+            it.rating == expectedRating
         }
     } else {
         return Predicate {
-            it.tags.all.contains(microQuery)
+            it.tags.all.contains(tag)
         }
-    }
-    return Predicate { false } // invalid or unsupported
-}
-
-private fun parseIntegerMetatag(
-    metatag: String,
-    valuePredicate: Predicate<Int>
-): Predicate<Post> {
-    return Predicate {
-        integerMetatags[metatag]?.invoke(it)
-            ?.let { it1 -> valuePredicate.test(it1) } ?: false
     }
 }
 
 fun createTagProcessor(query: String): Predicate<Post> {
-    val predicates: ArrayList<Predicate<Post>> = ArrayList()
-    val microQueries = query.split(" ").toMutableList()
-    microQueries.filter { it.startsWith("~") }.let {
-        if (it.isNotEmpty()) {
-            microQueries.removeAll(it)
-            predicates.add(
-                it.map { it1 -> parseSimpleMicroQuery(it1.substring(1)) }.reduce {a, b -> a.or(b)}
-            )
-        }
-    }
-    microQueries.filter { it.startsWith("-") }.let {
-        if (it.isNotEmpty()) {
-            microQueries.removeAll(it)
-            predicates.addAll(
-                it.map { it1 -> parseSimpleMicroQuery(it1.substring(1)).negate() }
-            )
-        }
-    }
-    predicates.addAll(microQueries.map { parseSimpleMicroQuery(it) })
-    return predicates.reduceOrNull { a, b -> a.and(b) } ?: Predicate { true }
+    val tags = query.split(" ")
+    // We should remove "-" and "~" either here or when passing to createPredicateFromTag
+    // If first, creation of allOf involves adding these prefixes
+    val anyOf = tags.filter { it.startsWith("~") }
+    val nothingOf = tags.filter { it.startsWith("-") }
+    val allOf = tags - anyOf.toSet() - nothingOf.toSet()
+
+    val first = anyOf.map {
+        createPredicateFromTag(it.removePrefix("~"))
+    }.reduceOrNull { a, b -> a.or(b) } ?: Predicate { true }
+    val second = nothingOf.map {
+        createPredicateFromTag(it.removePrefix("-"))
+    }.reduceOrNull { a, b -> a.and(b) }?.negate() ?: Predicate { true }
+    val third = allOf.map { createPredicateFromTag(it) }
+        .reduceOrNull { a, b -> a.and(b) } ?: Predicate { true }
+
+    return first.and(second).and(third)
 }
