@@ -21,18 +21,16 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
     var query by mutableStateOf(query)
     var enabled by mutableStateOf(enabled)
 
-    // Stateful to notify composition about database related events
+    // Actual database state
     private var dbEntryEnabled by mutableStateOf(enabled)
     private var dbEntryQuery by mutableStateOf(query)
     private var dbEntryId by mutableStateOf(id)
 
-    var pendingDeletion by mutableStateOf(false)
-        private set
-
 
     val isToggled get() = enabled != dbEntryEnabled
     val isQueryChanged get() = query != dbEntryQuery
-    val isPendingDeletion get() = pendingDeletion
+    var isPendingDeletion by mutableStateOf(false)
+        private set
     val isPendingInsertion get() = dbEntryId == 0L
     val isPendingUpdate get() = isToggled || isQueryChanged
     val isChanged get() = isPendingInsertion || isPendingUpdate || isPendingDeletion
@@ -41,16 +39,16 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
     fun resetChanges() {
         query = dbEntryQuery
         enabled = dbEntryEnabled
-        pendingDeletion = false
+        isPendingDeletion = false
     }
 
 
     fun markAsDeleted(deleted: Boolean = true) {
         assert(dbEntryId != 0L)
-        pendingDeletion = deleted
+        isPendingDeletion = deleted
     }
 
-    val predicate by derivedStateOf { createTagProcessor(query) }
+    val predicate by derivedStateOf { createTagProcessor(dbEntryQuery) }
 
     private suspend fun createDatabaseRecord(database: Database) {
         assert(dbEntryId == 0L)
@@ -93,8 +91,8 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
 
     suspend fun applyChanges(database: Database) {
         when {
-            dbEntryId == 0L -> createDatabaseRecord(database)
-            pendingDeletion -> deleteDatabaseRecord(database)
+            isPendingInsertion -> createDatabaseRecord(database)
+            isPendingDeletion -> deleteDatabaseRecord(database)
             else -> updateDatabaseRecord(database)
         }
     }
