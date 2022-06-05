@@ -12,6 +12,8 @@ val kotlinVersion = "1.6.10"
 val composeVersion = "1.1.1"
 
 
+
+
 val buildProperties = Properties().apply {
     load(FileInputStream(rootProject.file("build.properties")))
 }
@@ -24,8 +26,8 @@ android {
         applicationId = "ru.herobrine1st.e621"
         minSdk = 27
         targetSdk = 32
-        versionCode = 2
-        versionName = "1.0.0-alpha-1"
+        versionCode = 3
+        versionName = "1.0.0-alpha-2"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -73,12 +75,6 @@ android {
     namespace = "ru.herobrine1st.e621"
 }
 
-tasks {
-    assemble {
-        println("Test")
-    }
-}
-
 configurations.all {
     resolutionStrategy {
         force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
@@ -87,7 +83,7 @@ configurations.all {
 @Suppress("SpellCheckingInspection")
 dependencies {
     // Jetpack Compose
-    implementation("androidx.core:core-ktx:1.7.0")
+    implementation("androidx.core:core-ktx:1.8.0")
     implementation("androidx.compose.ui:ui:$composeVersion")
     implementation("androidx.compose.material:material:$composeVersion")
     implementation("androidx.compose.ui:ui-tooling-preview:$composeVersion")
@@ -112,7 +108,7 @@ dependencies {
     // Jetpack Paging
     val pagingVersion = "3.1.0"
     implementation("androidx.paging:paging-runtime:$pagingVersion")
-    implementation("androidx.paging:paging-compose:1.0.0-alpha14")
+    implementation("androidx.paging:paging-compose:1.0.0-alpha15")
 
     // Coroutine Image Loader
     val coilVersion = "1.4.0"
@@ -127,7 +123,7 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Other libraries
-    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+    implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.google.accompanist:accompanist-flowlayout:0.20.3")
     implementation("com.google.android.exoplayer:exoplayer:2.17.1")
     implementation("org.jsoup:jsoup:1.14.3")
