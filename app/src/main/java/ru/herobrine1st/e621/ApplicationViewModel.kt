@@ -197,8 +197,8 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     //endregion
     //region Blacklist
     val blacklistDoNotUseAsFilter =
-        mutableStateListOf<StatefulBlacklistEntry>() // This list doesn't change when user enables/disables entries
-    var blacklistPostPredicate by mutableStateOf<Predicate<Post>>(Predicate { true }) // This state does
+        mutableStateListOf<StatefulBlacklistEntry>()
+    var blacklistPostPredicate by mutableStateOf<Predicate<Post>>(Predicate { true })
 
     var blacklistLoading by mutableStateOf(true)
         private set
@@ -244,7 +244,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     }
 
     private suspend fun loadBlacklistLocally() {
-        if (blacklistDoNotUseAsFilter.isNotEmpty()) return // Already loaded, don't need to do it again
+        if (blacklistDoNotUseAsFilter.isNotEmpty()) return // Already loaded, don't have to do it again
         blacklistLoading = true
         try {
             val entries = database.blacklistDao().getAllAsStateful()
