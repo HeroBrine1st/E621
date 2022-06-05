@@ -6,11 +6,9 @@ import android.os.StatFs
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
@@ -29,6 +27,8 @@ import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.database.Database
+import ru.herobrine1st.e621.database.LocalDatabase
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.ui.ActionBarMenu
@@ -43,7 +43,6 @@ import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
-import ru.herobrine1st.e621.util.debug
 import java.io.File
 import java.io.IOException
 

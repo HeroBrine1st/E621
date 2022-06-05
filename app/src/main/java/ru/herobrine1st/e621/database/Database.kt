@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621
+package ru.herobrine1st.e621.database
 
 import androidx.compose.runtime.compositionLocalOf
 import androidx.room.AutoMigration
@@ -11,7 +11,7 @@ import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.entity.Vote
 
-val LocalDatabase = compositionLocalOf<ru.herobrine1st.e621.Database> { error("No database found") }
+val LocalDatabase = compositionLocalOf<ru.herobrine1st.e621.database.Database> { error("No database found") }
 private const val VERSION = 2
 
 @Database(

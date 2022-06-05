@@ -3,9 +3,9 @@
 package ru.herobrine1st.e621.util
 
 import androidx.compose.runtime.*
-import ru.herobrine1st.e621.Database
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.dao.BlacklistDao
+import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.entity.BlacklistEntry
 
 @Stable

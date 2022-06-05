@@ -14,6 +14,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.enumeration.AuthState
