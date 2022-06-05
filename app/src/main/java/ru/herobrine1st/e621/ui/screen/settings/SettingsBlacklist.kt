@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.component.width
+import ru.herobrine1st.e621.ui.component.BASE_WIDTH
 import ru.herobrine1st.e621.ui.dialog.StopThereAreUnsavedChangesDialog
 import ru.herobrine1st.e621.ui.dialog.TextInputDialog
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
@@ -109,7 +109,7 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
         itemsIndexed(applicationViewModel.blacklistDoNotUseAsFilter) { i, entry ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(width)
+                modifier = Modifier.fillMaxWidth(BASE_WIDTH)
             ) {
                 if (entry.isPendingInsertion) {
                     key("New item indicator") {

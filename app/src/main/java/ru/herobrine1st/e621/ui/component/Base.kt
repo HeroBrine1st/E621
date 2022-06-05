@@ -5,13 +5,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 
-const val width = 0.95f
+const val BASE_WIDTH = 0.95f
 
 @Composable
 fun Base(
@@ -19,13 +17,18 @@ fun Base(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxHeight()
-            .fillMaxWidth(width),
-        horizontalAlignment = horizontalAlignment,
-        content = content
-    )
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.TopCenter,
+    ) {
+        Column(
+            modifier = modifier
+                .fillMaxHeight()
+                .fillMaxWidth(BASE_WIDTH),
+            horizontalAlignment = horizontalAlignment,
+            content = content
+        )
+    }
 }
 
 @Composable
@@ -41,7 +44,7 @@ fun LazyBase(
         LazyColumn(
             modifier = Modifier
                 .fillMaxHeight()
-                .fillMaxWidth(width),
+                .fillMaxWidth(BASE_WIDTH),
             state = lazyListState,
             horizontalAlignment = horizontalAlignment,
             content = content
