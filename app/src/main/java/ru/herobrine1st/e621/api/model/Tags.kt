@@ -21,7 +21,6 @@ data class Tags(
     @IgnoredOnParcel
     val all by lazy {
         artist + copyright + character + species + general + lore + meta
-
     }
     @IgnoredOnParcel
     val reduced by lazy {

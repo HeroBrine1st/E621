@@ -1,24 +1,42 @@
 package ru.herobrine1st.e621.ui.component.video
 
+import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.Timeline
 
-class ExoPlayerState(
-    private val exoPlayer: ExoPlayer
-) : Player.Listener {
+class VideoPlayerViewModel(
+    val exoPlayer: ExoPlayer
+) : ViewModel(), Player.Listener {
+    class Factory(
+        private val context: Context,
+        private val mediaItem: MediaItem,
+    ) : ViewModelProvider.Factory {
+        @Suppress("UNCHECKED_CAST")
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+            return VideoPlayerViewModel(
+                ExoPlayer.Builder(context).build().apply {
+                    setMediaItem(mediaItem)
+                    prepare()
+                }
+            ) as T
+        }
+    }
+
     init {
         exoPlayer.addListener(this)
     }
 
-    fun dispose() {
+    override fun onCleared() {
         exoPlayer.removeListener(this)
     }
 
-    // State of exoplayer
     var timestamp by mutableStateOf(Timestamp.UNKNOWN)
         private set
     var isLoading by mutableStateOf(exoPlayer.isLoading)
@@ -32,34 +50,14 @@ class ExoPlayerState(
     var playbackState by mutableStateOf(exoPlayer.playbackState)
         private set
 
-    // Our state
-    var isMuted by mutableStateOf(false)
+    private var _playWhenReady by mutableStateOf(exoPlayer.playWhenReady)
 
-    var hideControlsDeadlineMs: Long by mutableStateOf(0)
-        private set
-
-    private var _showControls by mutableStateOf(false)
-    var showControls: Boolean
-        get() = _showControls
+    var playWhenReady: Boolean
+        get() = _playWhenReady
         set(v) {
-            _showControls = v
-            if (v)
-                hideControlsDeadlineMs = System.currentTimeMillis() + OVERLAY_TIMEOUT_MS
+            exoPlayer.playWhenReady = v
+            _playWhenReady = v
         }
-    var showRemaining by mutableStateOf(false)
-
-    /**
-     * @param userInteraction true if user defined, false if application defined
-     */
-    fun play(playing: Boolean = true, userInteraction: Boolean = false) {
-        if (playing) exoPlayer.play()
-        else exoPlayer.pause()
-        if (userInteraction) hideControlsDeadlineMs =
-            System.currentTimeMillis() + OVERLAY_TIMEOUT_MS
-    }
-
-    fun pause(userInteraction: Boolean = false) = play(false, userInteraction)
-
 
     override fun onPositionDiscontinuity(
         oldPosition: Player.PositionInfo,
@@ -87,11 +85,11 @@ class ExoPlayerState(
         this.playbackState = playbackState
     }
 
-    private fun updateTimestamp(positionMs: Long? = null) {
+    private fun updateTimestamp() {
         timestamp = Timestamp(
             System.currentTimeMillis(),
-            positionMs ?: exoPlayer.currentPosition,
-            positionMs ?: exoPlayer.contentPosition,
+            exoPlayer.currentPosition,
+            exoPlayer.contentPosition,
             exoPlayer.playbackParameters.speed
         )
     }

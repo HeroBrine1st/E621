@@ -8,7 +8,6 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
@@ -20,8 +19,6 @@ import androidx.compose.material.icons.filled.VolumeOff
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.Saver
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -31,6 +28,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
@@ -42,26 +40,40 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.screen.posts.HandlePreferences
 
+@Suppress("unused")
 private const val TAG = "VideoPlayer"
-const val OVERLAY_TIMEOUT_MS = 7500L
-
-@Composable
-fun VideoPlayer(exoPlayer: Pair<ExoPlayer, ExoPlayerState>, modifier: Modifier = Modifier) {
-    VideoPlayer(exoPlayer = exoPlayer.first, state = exoPlayer.second, modifier = modifier)
-}
+const val CONTROLS_TIMEOUT_MS = 7500L
 
 @Composable
 fun VideoPlayer(
-    exoPlayer: ExoPlayer,
-    state: ExoPlayerState,
-    modifier: Modifier = Modifier
+    mediaItem: MediaItem,
+    modifier: Modifier = Modifier,
+    playWhenReady: Boolean = false,
+    repeatMode: Int = ExoPlayer.REPEAT_MODE_ALL,
+    state: VideoPlayerState = rememberVideoPlayerState(
+        initialPlayWhenReady = playWhenReady,
+        initialRepeatMode = repeatMode
+    ),
+    controlsTimeoutMs: Long = CONTROLS_TIMEOUT_MS
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val viewModel = viewModel<VideoPlayerViewModel>(
+        factory = VideoPlayerViewModel.Factory(
+            context, mediaItem
+        )
+    )
 
-    Box(modifier = modifier.clickable(
+    fun resetHideControlsDeadline() {
+        state.hideControlsDeadlineMs = System.currentTimeMillis() + controlsTimeoutMs
+    }
+
+
+    Box(modifier = modifier.toggleable(
+        state.showControls,
         interactionSource = remember { MutableInteractionSource() },
         indication = null,
-        onClick = { state.showControls = !state.showControls }
+        onValueChange = { state.showControls = it }
     )) {
         AndroidView(
             modifier = Modifier,
@@ -76,37 +88,30 @@ fun VideoPlayer(
                 }
             },
             update = {
-                it.player = exoPlayer
+                it.player = viewModel.exoPlayer
             }
         )
         AnimatedVisibility(visible = state.showControls, enter = fadeIn(), exit = fadeOut()) {
             VideoPlayerController(
-                exoPlayer,
-                state,
+                contentDurationMs = viewModel.contentDurationMs,
+                getContentBufferedPositionMs = { viewModel.exoPlayer.contentBufferedPosition },
+                isMuted = state.isMuted,
+                isPlaying = viewModel.isPlaying,
+                isPlayingWhenReady = viewModel.playWhenReady,
+                playbackState = viewModel.playbackState,
+                showRemaining = state.showRemaining,
+                timestamp = viewModel.timestamp,
+                seekTo = { resetHideControlsDeadline(); viewModel.exoPlayer.seekTo(it) },
+                toggleMute = { resetHideControlsDeadline(); state.isMuted = it },
+                togglePlay = { resetHideControlsDeadline(); viewModel.playWhenReady = it },
+                toggleShowRemaining = { resetHideControlsDeadline(); state.showRemaining = it },
                 modifier = Modifier
                     .fillMaxSize()
                     .background(Color.Black.copy(alpha = 0.1f))
             )
-
-            /**
-             * Hide after [OVERLAY_TIMEOUT_MS] from click. Cancel if is hidden by user.
-             */
-            val scope = rememberCoroutineScope()
-            DisposableEffect(Unit) {
-                val job = scope.launch {
-                    delay(OVERLAY_TIMEOUT_MS)
-                    while (System.currentTimeMillis() < state.hideControlsDeadlineMs) {
-                        delay(state.hideControlsDeadlineMs - System.currentTimeMillis())
-                    }
-                    state.showControls = false
-                }
-                onDispose {
-                    job.cancel()
-                }
-            }
         }
         AnimatedVisibility(
-            visible = state.playbackState == Player.STATE_BUFFERING,
+            visible = viewModel.playbackState == Player.STATE_BUFFERING,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.align(
@@ -117,8 +122,37 @@ fun VideoPlayer(
         }
     }
 
+    /**
+     * Hide after [controlsTimeoutMs] from click. Cancel if is hidden by user.
+     */
+    if (state.controlsAutoHide && state.showControls) DisposableEffect(Unit) {
+        resetHideControlsDeadline()
+        val job = scope.launch {
+            delay(controlsTimeoutMs)
+            while (System.currentTimeMillis() < state.hideControlsDeadlineMs) {
+                delay(state.hideControlsDeadlineMs - System.currentTimeMillis())
+            }
+            state.showControls = false
+        }
+        onDispose {
+            job.cancel()
+        }
+    }
+
+    LaunchedEffect(state.repeatMode) {
+        viewModel.exoPlayer.repeatMode = state.repeatMode
+    }
+
+    LaunchedEffect(state.playWhenReady) {
+        viewModel.playWhenReady = state.playWhenReady
+    }
+
+    LaunchedEffect(viewModel.playWhenReady) {
+        state.playWhenReady = viewModel.playWhenReady
+    }
+
     LaunchedEffect(state.isMuted) {
-        with(exoPlayer) {
+        with(viewModel.exoPlayer) {
             if (state.isMuted) {
                 volume = 0f
                 setAudioAttributes(AudioAttributes.DEFAULT, false)
@@ -132,18 +166,26 @@ fun VideoPlayer(
 
 @Composable
 fun VideoPlayerController(
-    exoPlayer: ExoPlayer,
-    state: ExoPlayerState,
+    timestamp: VideoPlayerViewModel.Timestamp,
+    isPlaying: Boolean,
+    isPlayingWhenReady: Boolean,
+    @Player.State playbackState: Int,
+    togglePlay: (Boolean) -> Unit,
+    seekTo: (ms: Long) -> Unit,
+    getContentBufferedPositionMs: () -> Long, // there's no listener for this so workaround here
+    contentDurationMs: Long,
+    showRemaining: Boolean,
+    toggleShowRemaining: (Boolean) -> Unit,
+    isMuted: Boolean,
+    toggleMute: (Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val timestamp = state.timestamp
-    val isPlaying = state.isPlaying
 
     Box(
         modifier = modifier
     ) {
         AnimatedVisibility(
-            visible = state.playbackState != Player.STATE_BUFFERING,
+            visible = playbackState == Player.STATE_READY,
             enter = fadeIn(),
             exit = fadeOut(),
             modifier = Modifier.align(
@@ -151,9 +193,9 @@ fun VideoPlayerController(
             )
         ) {
             IconButton(
-                onClick = { state.play(!isPlaying, true) }
+                onClick = { togglePlay(!isPlayingWhenReady) }
             ) {
-                Crossfade(targetState = isPlaying) {
+                Crossfade(targetState = isPlayingWhenReady) {
                     when (it) {
                         true -> Icon(
                             Icons.Default.Pause,
@@ -200,7 +242,7 @@ fun VideoPlayerController(
                 }
             }
             val contentPositionSeconds = contentPositionMs / 1000
-            val contentDurationSeconds = state.contentDurationMs / 1000
+            val contentDurationSeconds = contentDurationMs / 1000
             Text(
                 DateUtils.formatElapsedTime(contentPositionSeconds),
                 color = Color.White,
@@ -211,7 +253,7 @@ fun VideoPlayerController(
                 contentAlignment = Alignment.Center // idk why is this line needed, but without it works like Column (???)
             ) {
                 LinearProgressIndicator(
-                    progress = exoPlayer.bufferedPosition.toFloat() / exoPlayer.contentDuration,
+                    progress = getContentBufferedPositionMs().toFloat() / contentDurationMs,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp),
@@ -220,9 +262,9 @@ fun VideoPlayerController(
                 Slider(
                     value = contentPositionMs.toFloat(),
                     onValueChange = {
-                        exoPlayer.seekTo(it.toLong())
+                        seekTo(it.toLong())
                     },
-                    valueRange = 0f..(state.contentDurationMs.toFloat()),
+                    valueRange = 0f..(contentDurationMs.toFloat()),
                     colors = SliderDefaults.colors(
                         activeTrackColor = Color.Red,
                         thumbColor = Color.Red,
@@ -233,15 +275,15 @@ fun VideoPlayerController(
             }
 
             Text(
-                DateUtils.formatElapsedTime(if (state.showRemaining) contentDurationSeconds - contentPositionSeconds else contentDurationSeconds),
+                DateUtils.formatElapsedTime(if (showRemaining) contentDurationSeconds - contentPositionSeconds else contentDurationSeconds),
                 color = Color.White,
                 modifier = Modifier
                     .toggleable(
                         interactionSource = remember { MutableInteractionSource() },
                         indication = rememberRipple(bounded = false, color = Color.White),
-                        value = state.showRemaining,
+                        value = showRemaining,
                         onValueChange = {
-                            state.showRemaining = it
+                            toggleShowRemaining(it)
                         }
                     )
                     .padding(8.dp)
@@ -250,13 +292,13 @@ fun VideoPlayerController(
 
         IconButton(
             onClick = {
-                state.isMuted = !state.isMuted
+                toggleMute(!isMuted)
             },
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .absoluteOffset((-8).dp, 8.dp)
         ) {
-            Crossfade(targetState = state.isMuted) { // Show actual state of volume
+            Crossfade(targetState = isMuted) { // Show actual state of volume
                 if (it) Icon(
                     Icons.Default.VolumeOff,
                     contentDescription = stringResource(R.string.unmute_sound),
@@ -273,55 +315,12 @@ fun VideoPlayerController(
 }
 
 @Composable
-fun rememberExoPlayer(
-    uri: String,
-    playWhenReady: Boolean = false,
-    repeatMode: Int = ExoPlayer.REPEAT_MODE_ALL
-): Pair<ExoPlayer, ExoPlayerState> =
-    rememberExoPlayer(MediaItem.fromUri(uri), playWhenReady, repeatMode)
-
-@Composable
-fun rememberExoPlayer(
-    mediaItem: MediaItem,
-    playWhenReady: Boolean = false,
-    repeatMode: Int = ExoPlayer.REPEAT_MODE_ALL
-): Pair<ExoPlayer, ExoPlayerState> = rememberExoPlayer {
-    setMediaItem(mediaItem)
-    this.repeatMode = repeatMode
-    this.playWhenReady = playWhenReady
-    prepare()
-    this.volume = 0f
-}
-
-@Composable
-fun rememberExoPlayer(
-    builder: ExoPlayer.() -> Unit = {}
-): Pair<ExoPlayer, ExoPlayerState> {
-    val context = LocalContext.current
-    val exoPlayer = rememberSaveable(saver = Saver( // Save position (at least)
-        save = { it.contentPosition },
-        restore = {
-            ExoPlayer.Builder(context).build().apply(builder).apply { seekTo(it) }
-        }
-    )) {
-        ExoPlayer.Builder(context).build().apply(builder)
-    }
-    val state = remember(exoPlayer) { ExoPlayerState(exoPlayer) }
-    DisposableEffect(exoPlayer) {
-        onDispose {
-            state.dispose()
-            exoPlayer.release()
-        }
-    }
-    return exoPlayer to state
-}
-
-@Composable
 @Preview
 fun PreviewExoPlayer() {
-    val exoPlayer =
-        rememberExoPlayer("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4")
-    val state = exoPlayer.second
-    VideoPlayer(exoPlayer)
+    val state = remember { VideoPlayerState() }
+    VideoPlayer(
+        MediaItem.fromUri("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"),
+        state = state
+    )
     HandlePreferences(state)
 }
