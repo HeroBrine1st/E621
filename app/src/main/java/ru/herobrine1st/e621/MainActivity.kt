@@ -40,7 +40,7 @@ import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.posts.Post
-import ru.herobrine1st.e621.ui.screen.posts.PostsScreenNavigationComposable
+import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
@@ -110,7 +110,7 @@ class MainActivity : ComponentActivity() {
                     applicationViewModel.loadAllFromDatabase()
                 }
 
-                SnackbarController(applicationViewModel, scaffoldState)
+                SnackbarHost(applicationViewModel, scaffoldState)
                 Scaffold(
                     topBar = {
                         TopAppBar(
@@ -186,22 +186,34 @@ class MainActivity : ComponentActivity() {
                                 composable(Screen.Posts.route, Screen.Posts.arguments) {
                                     val searchOptions =
                                         it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
-                                    PostsScreenNavigationComposable(
-                                        searchOptions = searchOptions,
-                                        applicationViewModel = applicationViewModel,
-                                        navController = navController
-                                    )
+                                    Posts(
+                                        searchOptions,
+                                        applicationViewModel
+                                    ) { post, scrollToComments ->
+                                        navController.navigate(
+                                            Screen.Post.buildRoute {
+                                                addArgument("post", post)
+                                                addArgument("scrollToComments", scrollToComments)
+                                            }
+                                        )
+                                    }
                                 }
                                 composable(Screen.Favourites.route, Screen.Favourites.arguments) {
                                     val arguments =
                                         it.arguments!!
                                     val searchOptions =
                                         remember { FavouritesSearchOptions(arguments.getString("user")) }
-                                    PostsScreenNavigationComposable(
-                                        searchOptions = searchOptions,
-                                        applicationViewModel = applicationViewModel,
-                                        navController = navController
-                                    )
+                                    Posts(
+                                        searchOptions,
+                                        applicationViewModel
+                                    ) { post, scrollToComments ->
+                                        navController.navigate(
+                                            Screen.Post.buildRoute {
+                                                addArgument("post", post)
+                                                addArgument("scrollToComments", scrollToComments)
+                                            }
+                                        )
+                                    }
                                 }
                                 composable(Screen.Post.route, Screen.Post.arguments) {
                                     val arguments =
@@ -242,7 +254,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onCancel = {
-                            applicationViewModel.blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
+                                applicationViewModel.blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
                         },
                         onClose = {
                             showBlacklistDialog = false

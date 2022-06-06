@@ -255,23 +255,3 @@ fun Post(
         }
     }
 }
-
-@Composable
-fun PostsScreenNavigationComposable(
-    searchOptions: SearchOptions,
-    applicationViewModel: ApplicationViewModel,
-    navController: NavHostController
-) {
-    Posts(
-        searchOptions,
-        applicationViewModel
-    ) { post, scrollToComments ->
-        navController.navigate(
-            Screen.Post.buildRoute {
-                addArgument("post", post)
-                addArgument("scrollToComments", scrollToComments)
-            }
-        )
-    }
-}
-
