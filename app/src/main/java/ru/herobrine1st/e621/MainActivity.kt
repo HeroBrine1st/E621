@@ -27,7 +27,6 @@ import okhttp3.Cache
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.LocalAPI
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
 import ru.herobrine1st.e621.net.RateLimitInterceptor
@@ -150,7 +149,21 @@ class MainActivity : ComponentActivity() {
                                 startDestination = Screen.Home.route
                             ) {
                                 composable(Screen.Home.route) {
-                                    Home(navController, applicationViewModel)
+                                    Home(
+                                        authState = applicationViewModel.authState,
+                                        onLogin = { u, p, cb ->
+                                            applicationViewModel.authenticate(u, p, cb)
+                                        },
+                                        onLogout = {
+                                            applicationViewModel.logout()
+                                        },
+                                        navigateToFavorites = {
+                                            navController.navigate(Screen.Favourites.route)
+                                        },
+                                        navigateToSearch = {
+                                            navController.navigate(Screen.Search.route)
+                                        }
+                                    )
                                 }
                                 composable(
                                     Screen.Search.route,
@@ -195,7 +208,7 @@ class MainActivity : ComponentActivity() {
                                         it.arguments!!
                                     Post(
                                         applicationViewModel,
-                                        arguments.getParcelable<Post>("post")!!,
+                                        arguments.getParcelable("post")!!,
                                         arguments.getBoolean("scrollToComments")
                                     )
                                 }

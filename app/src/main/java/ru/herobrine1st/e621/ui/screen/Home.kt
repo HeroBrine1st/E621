@@ -16,23 +16,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.ui.component.Base
 
 @Composable
-fun Home(navController: NavHostController, applicationViewModel: ApplicationViewModel) {
+fun Home(
+    authState: AuthState,
+    onLogout: () -> Unit,
+    onLogin: (username: String, password: String, onSuccess: () -> Unit) -> Unit,
+    navigateToSearch: () -> Unit,
+    navigateToFavorites: () -> Unit,
+) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    val authState = applicationViewModel.authState
 
     Base {
         Button(
-            onClick = {
-                navController.navigate(Screen.Search.route)
-            },
+            onClick = navigateToSearch,
             modifier = Modifier
                 .padding(4.dp)
                 .fillMaxWidth()
@@ -48,7 +49,7 @@ fun Home(navController: NavHostController, applicationViewModel: ApplicationView
             AuthState.AUTHORIZED -> {
                 Button(
                     onClick = {
-                        applicationViewModel.logout()
+                        onLogout()
                     },
                     modifier = Modifier
                         .padding(4.dp)
@@ -58,9 +59,7 @@ fun Home(navController: NavHostController, applicationViewModel: ApplicationView
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
-                    onClick = {
-                        navController.navigate(Screen.Favourites.route)
-                    },
+                    onClick = navigateToFavorites,
                     modifier = Modifier
                         .padding(4.dp)
                         .fillMaxWidth()
@@ -100,7 +99,7 @@ fun Home(navController: NavHostController, applicationViewModel: ApplicationView
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        applicationViewModel.authenticate(username, password) {
+                        onLogin(username, password) {
                             username = ""
                             password = ""
                         }
