@@ -24,13 +24,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.PRIVACY_MODE
-import ru.herobrine1st.e621.preference.getPreference
+import ru.herobrine1st.e621.preference.getPreferenceFlow
 
 private const val TAG = "Post Screen"
 
@@ -41,9 +42,9 @@ fun Post(
     @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean // TODO
 ) {
     val api = LocalAPI.current
-    val privacyMode = LocalContext.current.getPreference(PRIVACY_MODE, true)
-    val post by produceState(initialValue = initialPost, privacyMode) {
-        if (!initialPost.isFavorited && privacyMode) {
+    val context = LocalContext.current
+    val post by produceState(initialValue = initialPost) {
+        if (!initialPost.isFavorited && context.getPreferenceFlow(PRIVACY_MODE, true).first()) {
             return@produceState
         }
         try {
