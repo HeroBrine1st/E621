@@ -30,7 +30,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.getPreference
