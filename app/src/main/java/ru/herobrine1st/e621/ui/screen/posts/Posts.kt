@@ -150,12 +150,13 @@ fun Posts(
     val viewModel: PostsViewModel =
         viewModel(factory = PostsViewModelFactory(applicationViewModel, searchOptions))
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
-    val blacklistEnabled =
-        LocalContext.current.getPreference(key = BLACKLIST_ENABLED, defaultValue = true)
+    val context = LocalContext.current
+    val blacklistEnabled by context.getPreference(key = BLACKLIST_ENABLED, defaultValue = true)
 
     val loadState = posts.loadState
     val loading = loadState.refresh is LoadState.Loading || loadState.append is LoadState.Loading
     val error = loadState.refresh is LoadState.Error || loadState.append is LoadState.Error
+
 
     if (posts.itemCount == 0 && !error) { // Do not reset lazyListState
         Base {

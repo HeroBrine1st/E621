@@ -2,6 +2,7 @@ package ru.herobrine1st.e621.preference
 
 import android.content.Context
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
@@ -18,8 +19,8 @@ fun <R> Context.getPreferenceFlow(key: Preferences.Key<R>): Flow<R?> =
     this.dataStore.data.map { it[key] }
 
 @Composable
-fun <R> Context.getPreference(key: Preferences.Key<R>, defaultValue: R): R =
-    getPreferenceFlow(key, defaultValue).collectAsState(initial = defaultValue).value
+fun <R> Context.getPreference(key: Preferences.Key<R>, defaultValue: R): State<R> =
+    getPreferenceFlow(key, defaultValue).collectAsState(initial = defaultValue)
 
 suspend inline fun <R> Context.setPreference(key: Preferences.Key<R>, value: R) {
     this.dataStore.edit { it[key] = value }
