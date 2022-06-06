@@ -62,9 +62,7 @@ fun Post(
     LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
         item("media") {
             when {
-                post.file.type.isVideo -> post.files.first { it.type.isVideo }.let {
-                    PostVideo(it, it.aspectRatio)
-                }
+                post.file.type.isVideo -> PostVideo(post.files.first { it.type.isVideo })
                 post.file.type.isImage -> PostImage(
                     post = post,
                     aspectRatio = post.normalizedFile.aspectRatio,

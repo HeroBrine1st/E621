@@ -9,7 +9,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.google.android.exoplayer2.MediaItem
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
@@ -27,7 +26,7 @@ private const val TAG = "PostVideo"
 @Composable
 fun PostVideo(
     file: NormalizedFile,
-    aspectRatio: Float,
+    aspectRatio: Float = file.aspectRatio,
     videoPlayerState: VideoPlayerState = rememberVideoPlayerState()
 ) {
     if (aspectRatio <= 0) {
