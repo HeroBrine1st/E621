@@ -21,7 +21,7 @@ import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.preference.setPreference
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
-import ru.herobrine1st.e621.ui.screen.Screens
+import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 
 @Composable
@@ -88,8 +88,8 @@ fun ActionBarMenu(navController: NavController, applicationViewModel: Applicatio
         }
         MenuAction(Icons.Outlined.Settings, stringResource(R.string.settings)) {
             openMenu = false
-            if (navController.backQueue.any { it.destination.route == Screens.Settings.route }) return@MenuAction
-            navController.navigate(Screens.Settings.route) {
+            if (navController.backQueue.any { it.destination.route == Screen.Settings.route }) return@MenuAction
+            navController.navigate(Screen.Settings.route) {
                 launchSingleTop = true
             }
         }

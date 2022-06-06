@@ -13,14 +13,14 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.util.PostsSearchOptions
-import ru.herobrine1st.e621.util.PostsSearchOptionsNavType
+import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
+import ru.herobrine1st.e621.ui.screen.posts.PostNavType
 import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
-import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
-import ru.herobrine1st.e621.ui.screen.posts.PostNavType
 import ru.herobrine1st.e621.util.JsonSerializable
+import ru.herobrine1st.e621.util.PostsSearchOptions
+import ru.herobrine1st.e621.util.PostsSearchOptionsNavType
 import ru.herobrine1st.e621.util.debug
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -50,7 +50,7 @@ class RouteBuilder(
         .joinToString("&", prefix = "?")
 }
 
-enum class Screens(
+enum class Screen(
     @StringRes val title: Int,
     val icon: ImageVector,
     private val initialRoute: String,
@@ -104,7 +104,7 @@ enum class Screens(
         floatingActionButton = { SettingsBlacklistFloatingActionButton(it) });
 
     companion object {
-        val byRoute: Map<String, Screens> = HashMap<String, Screens>().apply {
+        val byRoute: Map<String, Screen> = HashMap<String, Screen>().apply {
             for (value in values()) {
                 put(value.route, value)
             }

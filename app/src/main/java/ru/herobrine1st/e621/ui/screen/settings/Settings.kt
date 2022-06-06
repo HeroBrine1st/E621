@@ -14,7 +14,7 @@ import ru.herobrine1st.e621.preference.*
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
-import ru.herobrine1st.e621.ui.screen.Screens
+import ru.herobrine1st.e621.ui.screen.Screen
 
 @Composable
 fun Settings(navController: NavController) {
@@ -42,7 +42,7 @@ fun Settings(navController: NavController) {
                 }
             }
         ) {
-            navController.navigate(Screens.SettingsBlacklist.route)
+            navController.navigate(Screen.SettingsBlacklist.route)
         }
 
         SettingSwitch(

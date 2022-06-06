@@ -35,7 +35,7 @@ import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
-import ru.herobrine1st.e621.ui.screen.Screens
+import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.PostsSearchOptions
 import ru.herobrine1st.e621.util.SearchOptions
@@ -90,7 +90,7 @@ fun PostsAppBarActions(navController: NavHostController) {
     IconButton(onClick = {
         val arguments = navController.currentBackStackEntry!!.arguments!!
         navController.navigate(
-            Screens.Search.buildRoute {
+            Screen.Search.buildRoute {
                 addArgument("query", arguments.getParcelable<PostsSearchOptions>("query")!!)
             }
         )
@@ -267,7 +267,7 @@ fun PostsScreenNavigationComposable(
         applicationViewModel
     ) { post, scrollToComments ->
         navController.navigate(
-            Screens.Post.buildRoute {
+            Screen.Post.buildRoute {
                 addArgument("post", post)
                 addArgument("scrollToComments", scrollToComments)
             }

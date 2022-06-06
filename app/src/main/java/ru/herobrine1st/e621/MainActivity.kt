@@ -34,7 +34,7 @@ import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.screen.Home
-import ru.herobrine1st.e621.ui.screen.Screens
+import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.posts.Post
 import ru.herobrine1st.e621.ui.screen.posts.PostsScreenNavigationComposable
 import ru.herobrine1st.e621.ui.screen.search.Search
@@ -93,7 +93,7 @@ class MainActivity : ComponentActivity() {
             E621Theme(window) {
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val screen by remember { derivedStateOf { Screens.byRoute[navBackStackEntry?.destination?.route] } }
+                val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
                 val applicationViewModel: ApplicationViewModel =
                     viewModel(factory = ApplicationViewModel.Factory(db, api))
                 val scaffoldState = rememberScaffoldState()
@@ -136,14 +136,14 @@ class MainActivity : ComponentActivity() {
                         CompositionLocalProvider(LocalDatabase provides db, LocalAPI provides api) {
                             NavHost(
                                 navController = navController,
-                                startDestination = Screens.Home.route
+                                startDestination = Screen.Home.route
                             ) {
-                                composable(Screens.Home.route) {
+                                composable(Screen.Home.route) {
                                     Home(navController, applicationViewModel)
                                 }
                                 composable(
-                                    Screens.Search.route,
-                                    Screens.Search.arguments
+                                    Screen.Search.route,
+                                    Screen.Search.arguments
                                 ) { entry ->
                                     val arguments: Bundle =
                                         entry.arguments!!
@@ -153,13 +153,13 @@ class MainActivity : ComponentActivity() {
                                     Search(searchOptions) {
                                         navController.popBackStack()
                                         navController.navigate(
-                                            Screens.Posts.buildRoute {
+                                            Screen.Posts.buildRoute {
                                                 addArgument("query", it)
                                             }
                                         )
                                     }
                                 }
-                                composable(Screens.Posts.route, Screens.Posts.arguments) {
+                                composable(Screen.Posts.route, Screen.Posts.arguments) {
                                     val searchOptions =
                                         it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
                                     PostsScreenNavigationComposable(
@@ -168,7 +168,7 @@ class MainActivity : ComponentActivity() {
                                         navController = navController
                                     )
                                 }
-                                composable(Screens.Favourites.route, Screens.Favourites.arguments) {
+                                composable(Screen.Favourites.route, Screen.Favourites.arguments) {
                                     val arguments =
                                         it.arguments!!
                                     val searchOptions =
@@ -179,7 +179,7 @@ class MainActivity : ComponentActivity() {
                                         navController = navController
                                     )
                                 }
-                                composable(Screens.Post.route, Screens.Post.arguments) {
+                                composable(Screen.Post.route, Screen.Post.arguments) {
                                     val arguments =
                                         it.arguments!!
                                     Post(
@@ -188,10 +188,10 @@ class MainActivity : ComponentActivity() {
                                         arguments.getBoolean("scrollToComments")
                                     )
                                 }
-                                composable(Screens.Settings.route) {
+                                composable(Screen.Settings.route) {
                                     Settings(navController)
                                 }
-                                composable(Screens.SettingsBlacklist.route) {
+                                composable(Screen.SettingsBlacklist.route) {
                                     SettingsBlacklist(applicationViewModel) {
                                         navController.popBackStack()
                                     }

@@ -12,15 +12,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import ru.herobrine1st.e621.ApplicationViewModel
-import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.ui.component.Base
 
 @Composable
@@ -32,7 +31,7 @@ fun Home(navController: NavHostController, applicationViewModel: ApplicationView
     Base {
         Button(
             onClick = {
-                navController.navigate(Screens.Search.route)
+                navController.navigate(Screen.Search.route)
             },
             modifier = Modifier
                 .padding(4.dp)
@@ -60,7 +59,7 @@ fun Home(navController: NavHostController, applicationViewModel: ApplicationView
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
                     onClick = {
-                        navController.navigate(Screens.Favourites.route)
+                        navController.navigate(Screen.Favourites.route)
                     },
                     modifier = Modifier
                         .padding(4.dp)
