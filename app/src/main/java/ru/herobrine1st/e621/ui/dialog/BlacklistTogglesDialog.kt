@@ -48,7 +48,7 @@ fun BlacklistTogglesDialog(
         title = stringResource(R.string.blacklist),
         actions = {
             if (isBlacklistUpdating) CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            BlacklistTogglesDialogActions(isBlacklistUpdating, onApply = {
+            BlacklistTogglesDialogActions(!isBlacklistUpdating, onApply = {
                 onApply()
                 onClose()
             }, onCancel = {
