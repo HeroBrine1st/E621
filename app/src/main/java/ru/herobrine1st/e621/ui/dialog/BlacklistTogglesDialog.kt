@@ -10,34 +10,32 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
-import ru.herobrine1st.e621.preference.getPreference
-import ru.herobrine1st.e621.preference.setPreference
+import ru.herobrine1st.e621.util.StatefulBlacklistEntry
 
 @Composable
 fun BlacklistTogglesDialog(
-    applicationViewModel: ApplicationViewModel,
-    onClose: () -> Unit,
+    blacklistEntries: SnapshotStateList<StatefulBlacklistEntry>,
+    isBlacklistUpdating: Boolean,
+    isBlacklistLoading: Boolean,
+    isBlacklistEnabled: Boolean,
+    toggleBlacklist: (Boolean) -> Unit,
+    onApply: () -> Unit, // applicationViewModel.applyBlacklistChanges()
+    onCancel: () -> Unit, // blacklistEntries.forEach { it.resetChanges() }
+    onClose: () -> Unit
 ) {
-    val blacklist = applicationViewModel.blacklistDoNotUseAsFilter
-    val updating = applicationViewModel.blacklistUpdating
-
-    if (applicationViewModel.blacklistLoading) {
+    if (isBlacklistLoading) {
         ActionDialog(
             title = stringResource(R.string.blacklist),
             actions = {
-                BlacklistTogglesDialogActions(false, applicationViewModel, false)
+                BlacklistTogglesDialogActions(enabled = false)
             },
             onDismissRequest = onClose
         ) {
@@ -46,55 +44,61 @@ fun BlacklistTogglesDialog(
         return
     }
 
-    val closeCancel = {
-        blacklist.forEach { if (it.isToggled) it.enabled = !it.enabled }
-        onClose()
-    }
-
     ActionDialog(
         title = stringResource(R.string.blacklist),
         actions = {
-            BlacklistTogglesDialogActions(updating, applicationViewModel) {
-                if (it) closeCancel() else onClose()
-            }
-        }, onDismissRequest = closeCancel
+            if (isBlacklistUpdating) CircularProgressIndicator(modifier = Modifier.size(24.dp))
+            BlacklistTogglesDialogActions(isBlacklistUpdating, onApply = {
+                onApply()
+                onClose()
+            }, onCancel = {
+                onCancel()
+                onClose()
+            })
+        }, onDismissRequest = {
+            onCancel()
+            onClose()
+        }
     ) {
-        if (blacklist.isEmpty()) Text(stringResource(R.string.dialog_blacklist_empty))
-        else BlacklistTogglesDialogContent(applicationViewModel)
+        if (blacklistEntries.isEmpty()) Text(stringResource(R.string.dialog_blacklist_empty))
+        else BlacklistTogglesDialogContent(
+            blacklistEntries,
+            isBlacklistUpdating,
+            isBlacklistEnabled,
+            toggleBlacklist
+        )
     }
 }
 
 @Composable
-private fun BlacklistTogglesDialogContent(applicationViewModel: ApplicationViewModel) {
-    val coroutineScope = rememberCoroutineScope()
+private fun BlacklistTogglesDialogContent(
+    blacklistEntries: SnapshotStateList<StatefulBlacklistEntry>,
+    isBlacklistUpdating: Boolean,
+    isBlacklistEnabled: Boolean,
+    toggleBlacklist: (Boolean) -> Unit,
+) {
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val blacklist = applicationViewModel.blacklistDoNotUseAsFilter
-    val updating = applicationViewModel.blacklistUpdating
 
     LazyColumn(modifier = Modifier.heightIn(max = screenHeight * 0.4f)) {
         item {
-            val context = LocalContext.current
-            val checked = context.getPreference(BLACKLIST_ENABLED, defaultValue = true)
             val onChange: (Boolean) -> Unit = {
-                coroutineScope.launch {
-                    context.setPreference(BLACKLIST_ENABLED, it)
-                }
+                toggleBlacklist(it)
             }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.toggleable(
-                    checked,
+                    isBlacklistEnabled,
                     remember { MutableInteractionSource() },
                     null,
                     onValueChange = onChange
                 )
             ) {
                 Text(
-                    stringResource(if (checked) R.string.blacklist_enabled else R.string.blacklist_disabled),
+                    stringResource(if (isBlacklistEnabled) R.string.blacklist_enabled else R.string.blacklist_disabled),
                     modifier = Modifier.weight(1f)
                 )
                 Switch(
-                    checked = checked,
+                    checked = isBlacklistEnabled,
                     onCheckedChange = onChange,
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = MaterialTheme.colors.primary,
@@ -105,35 +109,36 @@ private fun BlacklistTogglesDialogContent(applicationViewModel: ApplicationViewM
             Divider()
         }
         item {
-            val checked = blacklist.all { it.enabled }
+            val isAllEnabled = blacklistEntries.all { it.enabled }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.toggleable(
-                    checked,
+                    isAllEnabled,
                     remember { MutableInteractionSource() },
                     null,
-                    enabled = !updating,
+                    enabled = !isBlacklistUpdating,
                     onValueChange = {
-                        blacklist.replaceAll { it }
+                        // TODO wtf
+                        blacklistEntries.replaceAll { it }
                     }
                 )
             ) {
                 Text(
                     stringResource(R.string.selection_all),
                     modifier = Modifier.weight(1f),
-                    color = if (updating) Color.Gray else Color.Unspecified
+                    color = if (isBlacklistUpdating) Color.Gray else Color.Unspecified
                 )
                 Checkbox(
-                    checked = checked,
-                    onCheckedChange = { blacklist.forEach { it.enabled = !checked } },
-                    enabled = !updating,
+                    checked = isAllEnabled,
+                    onCheckedChange = { blacklistEntries.forEach { it.enabled = !isAllEnabled } },
+                    enabled = !isBlacklistUpdating,
                     colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.secondary)
                 )
             }
-            if (blacklist.isNotEmpty())
+            if (blacklistEntries.isNotEmpty())
                 Divider()
         }
-        itemsIndexed(blacklist) { i, entry ->
+        itemsIndexed(blacklistEntries) { i, entry ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.toggleable(
@@ -148,11 +153,11 @@ private fun BlacklistTogglesDialogContent(applicationViewModel: ApplicationViewM
                 Text(
                     entry.query,
                     modifier = Modifier.weight(1f),
-                    color = if (updating) Color.Gray else Color.Unspecified
+                    color = if (isBlacklistUpdating) Color.Gray else Color.Unspecified
                 )
                 if (entry.isToggled) { // Reset
                     IconButton(
-                        enabled = !updating,
+                        enabled = !isBlacklistUpdating,
                         onClick = { entry.enabled = !entry.enabled },
                         modifier = Modifier.size(24.dp)
                     ) {
@@ -166,11 +171,11 @@ private fun BlacklistTogglesDialogContent(applicationViewModel: ApplicationViewM
                 Checkbox(
                     checked = entry.enabled,
                     onCheckedChange = { entry.enabled = it },
-                    enabled = !updating,
+                    enabled = !isBlacklistUpdating,
                     colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.secondary)
                 )
             }
-            if (i < blacklist.size - 1)
+            if (i < blacklistEntries.size - 1)
                 Divider()
         }
     }
@@ -178,27 +183,19 @@ private fun BlacklistTogglesDialogContent(applicationViewModel: ApplicationViewM
 
 @Composable
 private fun BlacklistTogglesDialogActions(
-    updating: Boolean,
-    applicationViewModel: ApplicationViewModel,
-    enabled: Boolean = !updating,
-    onClose: (cancel: Boolean) -> Unit = {},
+    enabled: Boolean,
+    onApply: () -> Unit = {},
+    onCancel: () -> Unit = {},
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    if (updating) CircularProgressIndicator(modifier = Modifier.size(24.dp))
     TextButton(
-        onClick = { onClose(true) },
+        onClick = { onCancel() },
         enabled = enabled
     ) {
         Text(stringResource(R.string.cancel))
     }
     TextButton(
         enabled = enabled,
-        onClick = {
-            coroutineScope.launch {
-                applicationViewModel.applyBlacklistChanges()
-                onClose(false)
-            }
-        }
+        onClick = onApply
     ) {
         Text(stringResource(R.string.apply))
     }

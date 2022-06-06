@@ -37,6 +37,7 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
 
 
     fun resetChanges() {
+        if(!isChanged) return
         query = dbEntryQuery
         enabled = dbEntryEnabled
         isPendingDeletion = false

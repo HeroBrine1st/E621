@@ -10,11 +10,16 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
+import ru.herobrine1st.e621.preference.getPreference
+import ru.herobrine1st.e621.preference.setPreference
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Screens
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
@@ -36,13 +41,35 @@ fun MenuAction(
 
 @Composable
 fun ActionBarMenu(navController: NavController, applicationViewModel: ApplicationViewModel) {
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
     var openMenu by remember { mutableStateOf(false) }
     var showBlacklistDialog by remember { mutableStateOf(false) }
-    if (showBlacklistDialog)
-        BlacklistTogglesDialog(applicationViewModel) {
-            showBlacklistDialog = false
-        }
 
+    if (showBlacklistDialog)
+        BlacklistTogglesDialog(
+            blacklistEntries = applicationViewModel.blacklistDoNotUseAsFilter,
+            isBlacklistEnabled = context.getPreference(BLACKLIST_ENABLED, true).value,
+            isBlacklistLoading = applicationViewModel.blacklistLoading,
+            isBlacklistUpdating = applicationViewModel.blacklistUpdating,
+            toggleBlacklist = {
+                coroutineScope.launch {
+                    context.setPreference(BLACKLIST_ENABLED, it)
+                }
+            },
+            onApply = {
+                coroutineScope.launch {
+                    applicationViewModel.applyBlacklistChanges()
+                }
+            },
+            onCancel = {
+                applicationViewModel.blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
+            },
+            onClose = {
+                showBlacklistDialog = false
+            }
+        )
     IconButton(onClick = { openMenu = !openMenu }) {
         Icon(
             Icons.Default.MoreVert,
