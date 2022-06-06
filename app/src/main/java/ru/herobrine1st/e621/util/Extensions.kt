@@ -8,10 +8,6 @@ import kotlin.contracts.contract
 
 val Response.isCacheConditional get() = this.networkResponse != null && this.cacheResponse != null
 
-inline fun debug(block: () -> Unit) {
-    if(BuildConfig.DEBUG) block()
-}
-
 // Like also, but debug
 @OptIn(ExperimentalContracts::class)
 inline fun <T> T.debug(block: T.() -> Unit): T {

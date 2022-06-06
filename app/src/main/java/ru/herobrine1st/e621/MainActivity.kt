@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
@@ -30,9 +31,13 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
 import ru.herobrine1st.e621.net.RateLimitInterceptor
+import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.dataStore
+import ru.herobrine1st.e621.preference.getPreference
+import ru.herobrine1st.e621.preference.setPreference
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.SnackbarController
+import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.posts.Post
@@ -63,7 +68,7 @@ class MainActivity : ComponentActivity() {
                 applicationContext.dataStore.data.first()
             } catch (e: IOException) {
                 Log.e(TAG, "Exception reading preferences", e)
-            } catch(t: Throwable) {
+            } catch (t: Throwable) {
                 Log.w(TAG, "Exception reading preferences", t)
             }
         }
@@ -91,12 +96,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             E621Theme(window) {
+                val context = LocalContext.current
+                val coroutineScope = rememberCoroutineScope()
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
                 val applicationViewModel: ApplicationViewModel =
                     viewModel(factory = ApplicationViewModel.Factory(db, api))
                 val scaffoldState = rememberScaffoldState()
+
+                var showBlacklistDialog by remember { mutableStateOf(false) }
 
                 LaunchedEffect(true) {
                     applicationViewModel.loadAllFromDatabase()
@@ -119,7 +128,9 @@ class MainActivity : ComponentActivity() {
                                         applicationViewModel
                                     )
                                 }
-                                ActionBarMenu(navController, applicationViewModel)
+                                ActionBarMenu(navController, onOpenBlacklistDialog = {
+                                    showBlacklistDialog = true
+                                })
                             }
                         )
                     },
@@ -200,6 +211,30 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 }
+
+                if (showBlacklistDialog)
+                    BlacklistTogglesDialog(
+                        blacklistEntries = applicationViewModel.blacklistDoNotUseAsFilter,
+                        isBlacklistEnabled = context.getPreference(BLACKLIST_ENABLED, true).value,
+                        isBlacklistLoading = applicationViewModel.blacklistLoading,
+                        isBlacklistUpdating = applicationViewModel.blacklistUpdating,
+                        toggleBlacklist = {
+                            coroutineScope.launch {
+                                context.setPreference(BLACKLIST_ENABLED, it)
+                            }
+                        },
+                        onApply = {
+                            coroutineScope.launch {
+                                applicationViewModel.applyBlacklistChanges()
+                            }
+                        },
+                        onCancel = {
+                            applicationViewModel.blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
+                        },
+                        onClose = {
+                            showBlacklistDialog = false
+                        }
+                    )
             }
         }
     }
