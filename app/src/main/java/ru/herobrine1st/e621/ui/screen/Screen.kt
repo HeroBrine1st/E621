@@ -31,8 +31,8 @@ class RouteBuilder(
 ) {
     private val arguments: MutableMap<String, String> = HashMap()
     fun addArgument(key: String, value: Any?, encode: Boolean = false) {
-        assert(key in initialArguments) { "Invalid argument key" }
         debug {
+            assert(key in initialArguments) { "Invalid argument key" }
             Log.d("RouteBuilder", "Adding argument $key=$value to route $initialRoute")
         }
         if (value == null) return
