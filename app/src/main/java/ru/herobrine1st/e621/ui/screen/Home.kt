@@ -55,7 +55,7 @@ fun Home(
                         .padding(4.dp)
                         .fillMaxWidth()
                 ) {
-                    Text("Logout")
+                    Text(stringResource(R.string.login_logout))
                 }
                 Spacer(modifier = Modifier.height(8.dp))
                 Button(
@@ -64,26 +64,26 @@ fun Home(
                         .padding(4.dp)
                         .fillMaxWidth()
                 ) {
-                    Text("Favourites")
+                    Text(stringResource(R.string.favourites))
                 }
             }
             else -> {
                 when (authState) {
                     AuthState.UNAUTHORIZED -> {
-                        Text("Invalid login/apiKey")
+                        Text(stringResource(R.string.login_unauthorized))
                     }
                     AuthState.IO_ERROR -> {
-                        Text("IO Error")
+                        Text(stringResource(R.string.network_error))
                     }
                     AuthState.SQL_ERROR -> {
-                        Text("SQL Error")
+                        Text(stringResource(R.string.database_error))
                     }
                     else -> {}
                 }
                 OutlinedTextField(
                     value = username,
                     onValueChange = { username = it },
-                    label = { Text("Username") },
+                    label = { Text(stringResource(R.string.login_username)) },
                     modifier = Modifier
                         .fillMaxWidth()
                 )
@@ -92,7 +92,7 @@ fun Home(
                     value = password,
                     visualTransformation = PasswordVisualTransformation(),
                     onValueChange = { password = it },
-                    label = { Text("Password") },
+                    label = { Text(stringResource(R.string.login_password)) },
                     modifier = Modifier
                         .fillMaxWidth()
                 )
@@ -108,7 +108,7 @@ fun Home(
                         .padding(4.dp)
                         .fillMaxWidth()
                 ) {
-                    Text("Login")
+                    Text(stringResource(R.string.login_login))
                 }
             }
         }

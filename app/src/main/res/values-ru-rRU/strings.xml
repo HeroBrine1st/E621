@@ -28,7 +28,7 @@
     <string name="any">Любой</string>
     <string name="posts">Посты</string>
     <string name="database_error">Произошла ошибка базы данных</string>
-    <string name="network_error">Произошла неизвестная ошибка сети. Нет доступа в интернет?</string>
+    <string name="network_error">Произошла неизвестная ошибка сети. Нет доступа к сети интернет?</string>
     <string name="authentication_error">Неправильный логин и/или ключ API</string>
     <string name="okay">Хорошо</string>
     <string name="settings">Настройки</string>
@@ -78,4 +78,9 @@
     <string name="unmute_sound">Включить звук</string>
     <string name="invalid_post_server_error">Пост не может быть отображён: на сервере произошла ошибка.</string>
     <string name="unsupported_post_type">Посты с типом файлов %s не поддерживаются</string>
+    <string name="login_username">Имя пользователя</string>
+    <string name="login_password">Ключ API</string>
+    <string name="login_login">Войти</string>
+    <string name="login_unauthorized">Неверное имя пользователя или ключ API</string>
+    <string name="login_logout">Выйти из аккаунта</string>
 </resources>

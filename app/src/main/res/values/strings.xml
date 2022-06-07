@@ -78,4 +78,9 @@
     <string name="unmute_sound">Unmute sound</string>
     <string name="invalid_post_server_error">Invalid post. Server error occurred.</string>
     <string name="unsupported_post_type">Posts with files of type %s are not supported</string>
+    <string name="login_username">Username</string>
+    <string name="login_password">API key</string>
+    <string name="login_login">Login</string>
+    <string name="login_unauthorized">Invalid username or api key</string>
+    <string name="login_logout">Logout</string>
 </resources>
