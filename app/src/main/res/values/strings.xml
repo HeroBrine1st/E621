@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name" translatable="false">App</string>
+    <string name="app_name" translatable="false">E621</string>
     <string name="add">Add</string>
     <string name="add_tag">Add tag</string>
     <string name="remove">Remove</string>
