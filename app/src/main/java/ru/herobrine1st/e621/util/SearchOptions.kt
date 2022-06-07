@@ -54,7 +54,8 @@ data class PostsSearchOptions(
     }
 
     companion object {
-        val DEFAULT = PostsSearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, emptyList(), null)
+        val DEFAULT =
+            PostsSearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, emptyList(), null)
     }
 }
 

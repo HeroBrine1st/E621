@@ -1,8 +1,6 @@
 package ru.herobrine1st.e621
 
-import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
-import android.os.StatFs
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,22 +13,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
-import androidx.room.Room
-import coil.Coil
-import coil.ImageLoader
-import coil.decode.GifDecoder
-import coil.decode.ImageDecoderDecoder
-import coil.util.CoilUtils
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
-import okhttp3.Cache
-import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
-import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreference
@@ -47,21 +37,27 @@ import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.ui.snackbar.SnackbarController
-import ru.herobrine1st.e621.ui.snackbar.SnackbarViewModel
+import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
-import java.io.File
 import java.io.IOException
+import javax.inject.Inject
 
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    companion object {
-        val TAG = MainActivity::class.simpleName
-        const val DISK_CACHE_PERCENTAGE = 0.02
-        const val MIN_DISK_CACHE_SIZE_BYTES = 10L * 1024 * 1024
-        const val MAX_DISK_CACHE_SIZE_BYTES = 150L * 1024 * 1024
-    }
+    @Inject
+    lateinit var db: Database
+
+    @Inject
+    lateinit var api: Api
+
+    @Inject
+    lateinit var snackbarMessagesFlow: MutableSharedFlow<SnackbarMessage>
+
+    @Inject
+    lateinit var snackbarAdapter: SnackbarAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -75,27 +71,6 @@ class MainActivity : ComponentActivity() {
                 Log.w(TAG, "Exception reading preferences", t)
             }
         }
-        
-        val db: Database = Room.databaseBuilder(
-            applicationContext,
-            Database::class.java, BuildConfig.DATABASE_NAME
-        ).build()
-
-        Coil.setImageLoader {
-            ImageLoader.Builder(applicationContext)
-                .crossfade(true)
-                .okHttpClient {
-                    OkHttpClient.Builder()
-                        .cache(CoilUtils.createDefaultCache(applicationContext))
-                        .build()
-                }
-                .componentRegistry {
-                    add(if (SDK_INT >= 28) ImageDecoderDecoder(applicationContext) else GifDecoder())
-                }
-                .build()
-        }
-
-        val api = createAPI()
 
         setContent {
             E621Theme(window) {
@@ -108,12 +83,7 @@ class MainActivity : ComponentActivity() {
                 val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
 
                 // VMs
-                val applicationViewModel: ApplicationViewModel =
-                    viewModel(factory = ApplicationViewModel.Factory(db, api))
-                val snackbarViewModel = viewModel<SnackbarViewModel>()
-                val snackbarAdapter = remember(snackbarViewModel.snackbarMessagesFlow) {
-                    SnackbarAdapter(snackbarViewModel.snackbarMessagesFlow)
-                }
+                val applicationViewModel = viewModel<ApplicationViewModel>()
 
                 // State
                 val scaffoldState = rememberScaffoldState()
@@ -122,11 +92,8 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(true) {
                     applicationViewModel.loadAllFromDatabase()
                 }
-                SnackbarController( // FIXME either use one flow or keep order
-                    merge(
-                        snackbarViewModel.snackbarMessagesFlow,
-                        applicationViewModel.snackbarMessagesFlow
-                    ),
+                SnackbarController(
+                    snackbarMessagesFlow,
                     scaffoldState.snackbarHostState
                 )
                 CompositionLocalProvider(
@@ -241,7 +208,6 @@ class MainActivity : ComponentActivity() {
                                     val arguments =
                                         it.arguments!!
                                     Post(
-                                        applicationViewModel,
                                         arguments.getParcelable("post")!!,
                                         arguments.getBoolean("scrollToComments")
                                     )
@@ -286,16 +252,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun createAPI(): Api {
-        val cacheDir = File(applicationContext.cacheDir, "okhttp").apply { mkdirs() }
-        val size = (StatFs(cacheDir.absolutePath).let {
-            it.blockCountLong * it.blockSizeLong
-        } * DISK_CACHE_PERCENTAGE).toLong()
-            .coerceIn(MIN_DISK_CACHE_SIZE_BYTES, MAX_DISK_CACHE_SIZE_BYTES)
-        val okHttpClient = OkHttpClient.Builder()
-            .addNetworkInterceptor(RateLimitInterceptor(1.5))
-            .cache(Cache(cacheDir, size))
-            .build()
-        return Api(okHttpClient)
+    companion object {
+        private val TAG = MainActivity::class.simpleName
     }
 }

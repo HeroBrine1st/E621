@@ -53,6 +53,7 @@ android {
                 "USER_AGENT",
                 "\"Android App/${android.defaultConfig.versionName} (${properties["E621_USERNAME"]})\""
             ) // set in ~/.gradle/gradle.properties or build.properties at the project root
+            it.buildConfigField("int", "PAGER_PAGE_SIZE", "500")
         }
     }
     compileOptions {
@@ -126,6 +127,7 @@ dependencies {
 
     // Hilt
     implementation("com.google.dagger:hilt-android:2.38.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     kapt("com.google.dagger:hilt-android-compiler:2.38.1")
 
 

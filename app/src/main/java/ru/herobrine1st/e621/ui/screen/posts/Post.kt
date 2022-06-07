@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
@@ -38,7 +37,6 @@ private const val TAG = "Post Screen"
 
 @Composable
 fun Post(
-    applicationViewModel: ApplicationViewModel,
     initialPost: Post,
     @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean // TODO
 ) {
