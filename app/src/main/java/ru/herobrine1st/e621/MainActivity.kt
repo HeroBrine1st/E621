@@ -35,7 +35,7 @@ import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.preference.setPreference
 import ru.herobrine1st.e621.ui.ActionBarMenu
-import ru.herobrine1st.e621.ui.SnackbarController
+import ru.herobrine1st.e621.ui.SnackbarHost
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Screen

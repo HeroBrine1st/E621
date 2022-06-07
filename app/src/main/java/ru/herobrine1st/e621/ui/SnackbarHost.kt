@@ -34,7 +34,7 @@ data class SnackbarMessage(@StringRes val stringId: Int, val duration: SnackbarD
 }
 
 @Composable
-fun SnackbarController(applicationViewModel: ApplicationViewModel, scaffoldState: ScaffoldState){
+fun SnackbarHost(applicationViewModel: ApplicationViewModel, scaffoldState: ScaffoldState){
     val coroutineScope = rememberCoroutineScope()
     val snackbarMessage = applicationViewModel.snackbarMessage
     if(snackbarMessage != null && !applicationViewModel.snackbarShowing) {
