@@ -32,6 +32,7 @@ import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.PRIVACY_MODE
 import ru.herobrine1st.e621.preference.getPreferenceFlow
+import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "Post Screen"
 
@@ -91,7 +92,7 @@ fun Post(
 @OptIn(ExperimentalFoundationApi::class)
 fun LazyListScope.tags(title: String, tags: List<String>) {
     if (tags.isEmpty()) return
-    stickyHeader("$title tags") {
+    stickyHeader("$title tags") { // TODO i18n
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -127,7 +128,10 @@ fun Tag(tag: String) {
         Text(tag, modifier = Modifier.weight(1f))
         IconButton(
             onClick = {
-                TODO()
+                debug {
+                    TODO()
+                }
+
             }
         ) {
             Icon(
@@ -137,7 +141,9 @@ fun Tag(tag: String) {
         }
         IconButton(
             onClick = {
-                TODO()
+                debug {
+                    TODO()
+                }
             }
         ) {
             Icon(
@@ -147,7 +153,9 @@ fun Tag(tag: String) {
         }
         IconButton(
             onClick = {
-                TODO()
+                debug {
+                    TODO()
+                }
             }
         ) {
             Icon(
