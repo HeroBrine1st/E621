@@ -14,6 +14,6 @@ inline fun <T> T.debug(block: T.() -> Unit): T {
     contract {
         callsInPlace(block, InvocationKind.AT_MOST_ONCE)
     }
-    if(BuildConfig.DEBUG) this.block()
+    if (BuildConfig.DEBUG) this.block()
     return this
 }

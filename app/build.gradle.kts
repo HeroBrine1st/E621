@@ -6,6 +6,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("kotlin-parcelize")
+    kotlin("kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 val kotlinVersion = "1.6.10"
@@ -122,6 +124,11 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.38.1")
+    kapt("com.google.dagger:hilt-android-compiler:2.38.1")
+
+
     // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
     implementation("com.google.accompanist:accompanist-flowlayout:0.20.3")
@@ -139,4 +146,8 @@ dependencies {
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+kapt {
+    correctErrorTypes = true
 }

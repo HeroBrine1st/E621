@@ -22,6 +22,7 @@ import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.util.CoilUtils
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import okhttp3.Cache
 import okhttp3.OkHttpClient
@@ -35,7 +36,6 @@ import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.preference.setPreference
 import ru.herobrine1st.e621.ui.ActionBarMenu
-import ru.herobrine1st.e621.ui.SnackbarHost
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Screen
@@ -44,6 +44,10 @@ import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
+import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
+import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.ui.snackbar.SnackbarController
+import ru.herobrine1st.e621.ui.snackbar.SnackbarViewModel
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
@@ -71,7 +75,7 @@ class MainActivity : ComponentActivity() {
                 Log.w(TAG, "Exception reading preferences", t)
             }
         }
-
+        
         val db: Database = Room.databaseBuilder(
             applicationContext,
             Database::class.java, BuildConfig.DATABASE_NAME
@@ -97,53 +101,71 @@ class MainActivity : ComponentActivity() {
             E621Theme(window) {
                 val context = LocalContext.current
                 val coroutineScope = rememberCoroutineScope()
+
+                // Navigation
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
+
+                // VMs
                 val applicationViewModel: ApplicationViewModel =
                     viewModel(factory = ApplicationViewModel.Factory(db, api))
-                val scaffoldState = rememberScaffoldState()
+                val snackbarViewModel = viewModel<SnackbarViewModel>()
+                val snackbarAdapter = remember(snackbarViewModel.snackbarMessagesFlow) {
+                    SnackbarAdapter(snackbarViewModel.snackbarMessagesFlow)
+                }
 
+                // State
+                val scaffoldState = rememberScaffoldState()
                 var showBlacklistDialog by remember { mutableStateOf(false) }
 
                 LaunchedEffect(true) {
                     applicationViewModel.loadAllFromDatabase()
                 }
-
-                SnackbarHost(applicationViewModel.snackbarMessagesFlow, scaffoldState.snackbarHostState)
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(stringResource(screen?.title ?: R.string.app_name))
-                            },
-                            backgroundColor = MaterialTheme.colors.primarySurface,
-                            elevation = 12.dp,
-                            actions = {
-                                navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
-                                    screen?.appBarActions?.invoke(
-                                        this,
-                                        navController,
-                                        applicationViewModel
-                                    )
-                                }
-                                ActionBarMenu(navController, onOpenBlacklistDialog = {
-                                    showBlacklistDialog = true
-                                })
-                            }
-                        )
-                    },
-                    scaffoldState = scaffoldState,
-                    floatingActionButton = {
-                        navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
-                            screen?.floatingActionButton?.invoke(applicationViewModel)
-                        }
-                    }
+                SnackbarController( // FIXME either use one flow or keep order
+                    merge(
+                        snackbarViewModel.snackbarMessagesFlow,
+                        applicationViewModel.snackbarMessagesFlow
+                    ),
+                    scaffoldState.snackbarHostState
+                )
+                CompositionLocalProvider(
+                    LocalDatabase provides db,
+                    LocalAPI provides api,
+                    LocalSnackbar provides snackbarAdapter
                 ) {
-                    Surface(
-                        color = MaterialTheme.colors.background
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                title = {
+                                    Text(stringResource(screen?.title ?: R.string.app_name))
+                                },
+                                backgroundColor = MaterialTheme.colors.primarySurface,
+                                elevation = 12.dp,
+                                actions = {
+                                    navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
+                                        screen?.appBarActions?.invoke(
+                                            this,
+                                            navController,
+                                            applicationViewModel
+                                        )
+                                    }
+                                    ActionBarMenu(navController, onOpenBlacklistDialog = {
+                                        showBlacklistDialog = true
+                                    })
+                                }
+                            )
+                        },
+                        scaffoldState = scaffoldState,
+                        floatingActionButton = {
+                            navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
+                                screen?.floatingActionButton?.invoke(applicationViewModel)
+                            }
+                        }
                     ) {
-                        CompositionLocalProvider(LocalDatabase provides db, LocalAPI provides api) {
+                        Surface(
+                            color = MaterialTheme.colors.background
+                        ) {
                             NavHost(
                                 navController = navController,
                                 startDestination = Screen.Home.route
@@ -254,7 +276,7 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onCancel = {
-                                applicationViewModel.blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
+                            applicationViewModel.blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
                         },
                         onClose = {
                             showBlacklistDialog = false

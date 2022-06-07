@@ -67,10 +67,11 @@ class PostsViewModel(
         if (countBlacklistedPosts > 300 && !warnedUser) {
             warnedUser = true
             Log.i("PostsViewModel", "Detected intersection between blacklist and query")
-            applicationViewModel.addSnackbarMessage(
-                R.string.maybe_search_query_intersects_with_blacklist,
-                SnackbarDuration.Indefinite
-            )
+            TODO("Not implemented")
+//            applicationViewModel.addSnackbarMessage(
+//                R.string.maybe_search_query_intersects_with_blacklist,
+//                SnackbarDuration.Indefinite
+//            )
         }
     }
 }
@@ -127,11 +128,12 @@ class PostsSource(
                 nextKey = if (posts.isNotEmpty()) page + 1 else null
             )
         } catch (e: IOException) {
-            applicationViewModel.addSnackbarMessage(
-                R.string.network_error,
-                SnackbarDuration.Indefinite
-            )
             Log.e("Posts", "Unable to load posts", e)
+            TODO("Not implemented")
+//            applicationViewModel.addSnackbarMessage(
+//                R.string.network_error,
+//                SnackbarDuration.Indefinite
+//            )
             LoadResult.Error(e)
         } catch (e: Throwable) {
             Log.e("Posts", "Unable to load posts", e)

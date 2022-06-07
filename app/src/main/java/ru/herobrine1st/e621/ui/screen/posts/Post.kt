@@ -32,6 +32,7 @@ import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.PRIVACY_MODE
 import ru.herobrine1st.e621.preference.getPreferenceFlow
+import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 
 private const val TAG = "Post Screen"
 
@@ -43,6 +44,7 @@ fun Post(
 ) {
     val api = LocalAPI.current
     val context = LocalContext.current
+    val snackbar = LocalSnackbar.current
     val post by produceState(initialValue = initialPost) {
         if (!initialPost.isFavorited && context.getPreferenceFlow(PRIVACY_MODE, true).first()) {
             return@produceState
@@ -53,7 +55,7 @@ fun Post(
             }
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to get post", t)
-            applicationViewModel.addSnackbarMessage(
+            snackbar.enqueueMessage(
                 R.string.network_error,
                 SnackbarDuration.Indefinite
             )
