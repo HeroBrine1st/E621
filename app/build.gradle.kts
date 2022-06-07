@@ -11,8 +11,8 @@ plugins {
 val kotlinVersion = "1.6.10"
 val composeVersion = "1.1.1"
 
-
-
+val versionCode = 4
+val versionName = "1.0.0-alpha-3"
 
 val buildProperties = Properties().apply {
     load(FileInputStream(rootProject.file("build.properties")))
@@ -26,8 +26,8 @@ android {
         applicationId = "ru.herobrine1st.e621"
         minSdk = 27
         targetSdk = 32
-        versionCode = 3
-        versionName = "1.0.0-alpha-2"
+        versionCode = this@Build_gradle.versionCode
+        versionName = this@Build_gradle.versionName
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -49,7 +49,7 @@ android {
             it.buildConfigField(
                 "String",
                 "USER_AGENT",
-                "\"Android App/${android.defaultConfig.versionName} (${properties["E621_USERNAME"]})\""
+                "\"Android App/${versionName} (${properties["E621_USERNAME"]})\""
             ) // set in ~/.gradle/gradle.properties or build.properties at the project root
         }
     }
