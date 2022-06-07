@@ -1,6 +1,3 @@
-import java.io.FileInputStream
-import java.util.*
-
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -13,11 +10,6 @@ val composeVersion = "1.1.1"
 
 val versionCode = 4
 val versionName = "1.0.0-alpha-3"
-
-val buildProperties = Properties().apply {
-    load(FileInputStream(rootProject.file("build.properties")))
-}
-
 
 android {
     compileSdk = 32
@@ -49,8 +41,8 @@ android {
             it.buildConfigField(
                 "String",
                 "USER_AGENT",
-                "\"Android App/${versionName} (${properties["E621_USERNAME"]})\""
-            ) // set in ~/.gradle/gradle.properties or build.properties at the project root
+                "\"Android App/${versionName}\""
+            )
         }
     }
     compileOptions {
