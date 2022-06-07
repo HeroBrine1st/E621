@@ -9,9 +9,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.database.Database
@@ -45,25 +44,8 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
     }
 
     //region Snackbar
-    private val snackbarMutex = Mutex()
-    private val snackbarMessages = ArrayList<SnackbarMessage>()
-    var snackbarShowing by mutableStateOf(false)
-        private set
-    var snackbarMessage by mutableStateOf<SnackbarMessage?>(null)
-        private set
 
-    private suspend fun addSnackbarMessageInternal(
-        @StringRes resourceId: Int,
-        duration: SnackbarDuration,
-        vararg formatArgs: Any
-    ) {
-        snackbarMutex.withLock {
-            snackbarMessages.add(SnackbarMessage(resourceId, duration, formatArgs))
-            if (snackbarMessage == null) {
-                snackbarMessage = snackbarMessages[0]
-            }
-        }
-    }
+    val snackbarMessagesFlow = MutableSharedFlow<SnackbarMessage>()
 
     fun addSnackbarMessage(
         @StringRes resourceId: Int,
@@ -71,29 +53,8 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
         vararg formatArgs: Any
     ) {
         viewModelScope.launch {
-            addSnackbarMessageInternal(resourceId, duration, *formatArgs)
+            snackbarMessagesFlow.emit(SnackbarMessage(resourceId, duration, formatArgs))
         }
-    }
-
-    fun notifySnackbarMessageWillDisplay() {
-        if (snackbarShowing) {
-            Log.w(TAG, "Snackbar behavior may be unpredictable")
-            Log.w(TAG, "notifySnackbarMessageWillDisplay called when snackbarShowing is true")
-        }
-        snackbarShowing = true
-    }
-
-    suspend fun notifySnackbarMessageDisplayed() {
-        if (snackbarMessages.isEmpty()) {
-            Log.w(TAG, "notifySnackbarMessageDisplayed called, but no snackbar messages available")
-            return
-        }
-        snackbarMutex.withLock {
-            snackbarShowing = false
-            snackbarMessages.removeAt(0)
-            snackbarMessage = if (snackbarMessages.isNotEmpty()) snackbarMessages[0] else null
-        }
-
     }
 
     //endregion
@@ -123,7 +84,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "IO Error while trying to check credentials", e)
-                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                addSnackbarMessage(R.string.network_error, SnackbarDuration.Long)
                 AuthState.IO_ERROR
             } catch (e: Throwable) {
                 AuthState.NO_DATA
@@ -145,7 +106,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                     onSuccess()
                     AuthState.AUTHORIZED
                 } else {
-                    addSnackbarMessageInternal(
+                    addSnackbarMessage(
                         R.string.authentication_error,
                         SnackbarDuration.Long
                     )
@@ -153,11 +114,11 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "IO Error while trying to check credentials", e)
-                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                addSnackbarMessage(R.string.network_error, SnackbarDuration.Long)
                 AuthState.IO_ERROR
             } catch (e: SQLiteException) {
                 Log.e(TAG, "SQL Error while trying to save credentials", e)
-                addSnackbarMessageInternal(
+                addSnackbarMessage(
                     R.string.database_error,
                     SnackbarDuration.Long
                 )
@@ -184,7 +145,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 database.authDao().logout()
             } catch (e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to logout", e)
-                addSnackbarMessageInternal(
+                addSnackbarMessage(
                     R.string.database_error,
                     SnackbarDuration.Long
                 )
@@ -232,7 +193,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
             }
         } catch (e: SQLiteException) {
             Log.e(TAG, "SQLite Error while trying to add tag to blacklist", e)
-            addSnackbarMessageInternal(
+            addSnackbarMessage(
                 R.string.database_error,
                 SnackbarDuration.Long
             )
@@ -254,7 +215,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
             updateFilteringBlacklistEntriesList()
         } catch (e: SQLiteException) {
             Log.e(TAG, "SQLite Error while trying to load blacklist from database", e)
-            addSnackbarMessageInternal(
+            addSnackbarMessage(
                 R.string.database_error,
                 SnackbarDuration.Long
             )
@@ -274,7 +235,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 entry.applyChanges(database)
             } catch (e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to update blacklist entry", e)
-                addSnackbarMessageInternal(
+                addSnackbarMessage(
                     R.string.database_error_updating_blacklist,
                     SnackbarDuration.Long,
                     entry.query
@@ -332,7 +293,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                     "IO Error while while trying to (un)favorite post (id=${post.id}, isFavorited=$isFavorited)",
                     e
                 )
-                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                addSnackbarMessage(R.string.network_error, SnackbarDuration.Long)
                 if (isCached) favoritesCache[post.id] = isFavorited
                 else favoritesCache.remove(post.id)
             }

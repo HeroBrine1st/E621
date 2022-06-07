@@ -110,7 +110,7 @@ class MainActivity : ComponentActivity() {
                     applicationViewModel.loadAllFromDatabase()
                 }
 
-                SnackbarHost(applicationViewModel, scaffoldState)
+                SnackbarHost(applicationViewModel.snackbarMessagesFlow, scaffoldState.snackbarHostState)
                 Scaffold(
                     topBar = {
                         TopAppBar(
