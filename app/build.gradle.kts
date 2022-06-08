@@ -8,8 +8,8 @@ plugins {
 val kotlinVersion = "1.6.10"
 val composeVersion = "1.1.1"
 
-val versionCode = 4
-val versionName = "1.0.0-alpha-3"
+val versionCode = 5
+val versionName = "1.0.0-alpha-4"
 
 android {
     compileSdk = 32
