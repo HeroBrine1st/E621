@@ -65,7 +65,7 @@
     <string name="expand">Развернуть</string>
     <string name="collapse">Свернуть</string>
     <string name="post">Пост</string>
-    <string name="favourites_of">Сохранил</string>
+    <string name="favourites_of">Сохранил в избранное</string>
     <string name="user">Пользователь</string>
     <string name="favourites">Сохранённые</string>
     <string name="privacy_mode">Режим приватности</string>
