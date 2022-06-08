@@ -4,16 +4,19 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NavigateNext
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
@@ -28,9 +31,6 @@ fun Home(
     navigateToSearch: () -> Unit,
     navigateToFavorites: () -> Unit,
 ) {
-    var username by rememberSaveable { mutableStateOf("") }
-    var password by rememberSaveable { mutableStateOf("") }
-
     Base {
         Button(
             onClick = navigateToSearch,
@@ -43,9 +43,7 @@ fun Home(
         }
         Spacer(modifier = Modifier.height(8.dp))
         when (authState) {
-            AuthState.LOADING -> {
-                CircularProgressIndicator()
-            }
+            AuthState.LOADING -> CircularProgressIndicator()
             AuthState.AUTHORIZED -> {
                 Button(
                     onClick = {
@@ -67,52 +65,76 @@ fun Home(
                     Text(stringResource(R.string.favourites))
                 }
             }
-            else -> {
-                when (authState) {
-                    AuthState.UNAUTHORIZED -> {
-                        Text(stringResource(R.string.login_unauthorized))
-                    }
-                    AuthState.IO_ERROR -> {
-                        Text(stringResource(R.string.network_error))
-                    }
-                    AuthState.SQL_ERROR -> {
-                        Text(stringResource(R.string.database_error))
-                    }
-                    else -> {}
-                }
-                OutlinedTextField(
-                    value = username,
-                    onValueChange = { username = it },
-                    label = { Text(stringResource(R.string.login_username)) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = password,
-                    visualTransformation = PasswordVisualTransformation(),
-                    onValueChange = { password = it },
-                    label = { Text(stringResource(R.string.login_password)) },
-                    singleLine = true,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        onLogin(username, password) {
-                            username = ""
-                            password = ""
-                        }
-                    },
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.login_login))
-                }
-            }
+            else -> AuthorizationMenu(authState = authState, onLogin = onLogin)
         }
+    }
+}
+
+@Composable
+fun AuthorizationMenu(
+    authState: AuthState,
+    onLogin: (username: String, password: String, onSuccess: () -> Unit) -> Unit
+) {
+    var username by rememberSaveable { mutableStateOf("") }
+    var password by rememberSaveable { mutableStateOf("") }
+
+    val login = {
+        if (username.isNotEmpty() && password.isNotEmpty())
+            onLogin(username, password) {
+                username = ""
+                password = ""
+            }
+    }
+
+    val passwordFieldFocusRequester = remember { FocusRequester() }
+    OutlinedTextField(
+        value = username,
+        onValueChange = { username = it },
+        label = { Text(stringResource(R.string.login_username)) },
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth(),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions { passwordFieldFocusRequester.requestFocus() }
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    OutlinedTextField(
+        value = password,
+        visualTransformation = PasswordVisualTransformation(),
+        onValueChange = { password = it },
+        label = { Text(stringResource(R.string.login_password)) },
+        singleLine = true,
+        modifier = Modifier
+            .focusRequester(passwordFieldFocusRequester)
+            .fillMaxWidth(),
+        keyboardOptions = KeyboardOptions(
+            keyboardType = KeyboardType.Password,
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions { login() }
+    )
+    Spacer(modifier = Modifier.height(8.dp))
+    Button(
+        onClick = {
+            login()
+        },
+        modifier = Modifier
+            .padding(4.dp)
+            .fillMaxWidth()
+    ) {
+        Text(stringResource(R.string.login_login))
+    }
+    Spacer(modifier = Modifier.height(8.dp))
+    when (authState) {
+        AuthState.UNAUTHORIZED -> {
+            Text(stringResource(R.string.login_unauthorized))
+        }
+        AuthState.IO_ERROR -> {
+            Text(stringResource(R.string.network_error))
+        }
+        AuthState.SQL_ERROR -> {
+            Text(stringResource(R.string.database_error))
+        }
+        else -> {}
     }
 }
