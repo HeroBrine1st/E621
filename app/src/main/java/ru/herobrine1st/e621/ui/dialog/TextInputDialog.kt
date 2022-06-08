@@ -19,6 +19,7 @@ fun TextInputDialog(
     initialText: String = "",
     submitButtonText: String = stringResource(R.string.submit),
     textFieldLabel: String = "",
+    singleLine: Boolean = false,
     onClose: () -> Unit,
     onSubmit: (String) -> Unit
 ) {
@@ -39,6 +40,7 @@ fun TextInputDialog(
             value = text,
             onValueChange = { text = it },
             label = { Text(textFieldLabel) },
+            singleLine = singleLine,
             modifier = Modifier
                 .fillMaxWidth()
         )

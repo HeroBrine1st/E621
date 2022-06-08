@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
+// FIXME if content size is changed, dialog size is not
 @Composable
 fun ActionDialog(
     title: String,

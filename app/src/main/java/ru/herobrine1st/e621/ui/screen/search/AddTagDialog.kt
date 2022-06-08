@@ -30,6 +30,7 @@ fun AddTagDialog(onClose: () -> Unit, onAdd: (String) -> Unit) {
             value = text,
             onValueChange = { text = it },
             label = { Text(stringResource(R.string.tag)) },
+            singleLine = true,
             modifier = Modifier
                 .fillMaxWidth()
         )
