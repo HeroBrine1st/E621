@@ -10,7 +10,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -19,11 +18,8 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import com.google.accompanist.flowlayout.FlowRow
-import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
-import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.screen.Screen
@@ -52,14 +48,15 @@ fun PostsAppBarActions(navController: NavHostController) {
 @Composable
 fun Posts(
     searchOptions: SearchOptions,
-    applicationViewModel: ApplicationViewModel,
+    isFavourite: (Post) -> Boolean,
+    isHiddenByBlacklist: (Post) -> Boolean,
+    isAuthorized: Boolean,
+    onAddToFavourites: (Post) -> Unit,
     openPost: (post: Post, scrollToComments: Boolean) -> Unit
 ) {
     val viewModel: PostsViewModel = hiltViewModel()
 
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
-    val context = LocalContext.current
-    val blacklistEnabled by context.getPreference(key = BLACKLIST_ENABLED, defaultValue = true)
     val loadState = posts.loadState
 
     val loading = loadState.refresh is LoadState.Loading || loadState.append is LoadState.Loading
@@ -85,14 +82,17 @@ fun Posts(
     ) {
         items(posts, key = { it.id }) { post ->
             if (post == null) return@items
-            val blacklisted =
-                !applicationViewModel.isFavorited(post) && // Always show favorited posts
-                        blacklistEnabled && applicationViewModel.blacklistPostPredicate.test(post)
+            val blacklisted = isHiddenByBlacklist(post)
             viewModel.notifyPostState(blacklisted)
             if (blacklisted) return@items
-            Post(post, applicationViewModel) {
-                openPost(post, it)
-            }
+            Post(
+                post = post,
+                isFavourite = isFavourite(post),
+                isAuthorized = isAuthorized,
+                onAddToFavourites = {
+                    onAddToFavourites(post)
+                }
+            ) { scrollToComments -> openPost(post, scrollToComments) }
             Spacer(modifier = Modifier.height(4.dp))
         }
         posts.apply {
@@ -118,7 +118,9 @@ fun Posts(
 @Composable
 fun Post(
     post: Post,
-    applicationViewModel: ApplicationViewModel,
+    isFavourite: Boolean,
+    isAuthorized: Boolean,
+    onAddToFavourites: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit
 ) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
@@ -164,7 +166,9 @@ fun Post(
                 modifier = Modifier.padding(horizontal = 8.dp),
             ) {
                 Divider()
-                PostActionsRow(post, applicationViewModel, openPost)
+                PostActionsRow(post, isFavourite, isAuthorized, onAddToFavourites) {
+                    openPost(true)
+                }
                 Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochSecond() * 1000)}") // TODO i18n; move it somewhere
             }
         }

@@ -17,32 +17,31 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import ru.herobrine1st.e621.ApplicationViewModel
-import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 
 @Composable
 fun PostActionsRow(
     post: Post,
-    applicationViewModel: ApplicationViewModel,
-    openPost: (scrollToComments: Boolean) -> Unit
+    isFavourite: Boolean,
+    isAuthorized: Boolean,
+    onAddToFavourites: () -> Unit,
+    onOpenComments: () -> Unit,
 ) {
-    val authorized = applicationViewModel.authState == AuthState.AUTHORIZED
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { /*TODO*/ }, enabled = authorized) {
+            IconButton(onClick = { /*TODO*/ }, enabled = isAuthorized) {
                 Icon(
                     Icons.Filled.ArrowUpward,
                     contentDescription = stringResource(R.string.score_up)
                 )
             }
             Text(post.score.total.toString())
-            IconButton(onClick = { /*TODO*/ }, enabled = authorized) {
+            IconButton(onClick = { /*TODO*/ }, enabled = isAuthorized) {
                 Icon(
                     Icons.Filled.ArrowDownward,
                     contentDescription = stringResource(R.string.score_down)
@@ -54,7 +53,7 @@ fun PostActionsRow(
             modifier = Modifier.clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = rememberRipple(bounded = false, radius = 24.dp)
-            ) { openPost(true) }
+            ) { onOpenComments() }
         ) {
             Text(post.commentCount.toString())
             Icon(
@@ -65,15 +64,13 @@ fun PostActionsRow(
                     .offset(y = 2.dp)
             )
         }
-        val isFavorited =
-            applicationViewModel.isFavorited(post)
         IconButton(
             onClick = {
-                applicationViewModel.handleFavoritePost(post)
+                onAddToFavourites()
             },
-            enabled = authorized
+            enabled = isAuthorized
         ) {
-            Crossfade(targetState = isFavorited) {
+            Crossfade(targetState = isFavourite) {
                 if (it) Icon(
                     Icons.Filled.Favorite,
                     contentDescription = stringResource(R.string.remove_from_favourites)

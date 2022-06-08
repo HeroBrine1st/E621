@@ -21,6 +21,7 @@ import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
+import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreference
@@ -175,9 +176,26 @@ class MainActivity : ComponentActivity() {
                                 composable(Screen.Posts.route, Screen.Posts.arguments) {
                                     val searchOptions =
                                         it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
+                                    val isBlacklistEnabled by LocalContext.current.getPreference(
+                                        BLACKLIST_ENABLED,
+                                        defaultValue = true
+                                    )
+
                                     Posts(
                                         searchOptions,
-                                        applicationViewModel
+                                        isFavourite = { post ->
+                                            applicationViewModel.isFavorited(post)
+                                        },
+                                        isHiddenByBlacklist = { post ->
+                                            !applicationViewModel.isFavorited(post)
+                                                    && isBlacklistEnabled
+                                                    && applicationViewModel
+                                                .blacklistPostPredicate.test(post)
+                                        },
+                                        isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
+                                        onAddToFavourites = { post ->
+                                            applicationViewModel.handleFavoritePost(post)
+                                        },
                                     ) { post, scrollToComments ->
                                         navController.navigate(
                                             Screen.Post.buildRoute {
@@ -192,9 +210,26 @@ class MainActivity : ComponentActivity() {
                                         it.arguments!!
                                     val searchOptions =
                                         remember { FavouritesSearchOptions(arguments.getString("user")) }
+                                    val isBlacklistEnabled by LocalContext.current.getPreference(
+                                        BLACKLIST_ENABLED,
+                                        defaultValue = true
+                                    )
+
                                     Posts(
                                         searchOptions,
-                                        applicationViewModel
+                                        isFavourite = { post ->
+                                            applicationViewModel.isFavorited(post)
+                                        },
+                                        isHiddenByBlacklist = { post ->
+                                            !applicationViewModel.isFavorited(post)
+                                                    && isBlacklistEnabled
+                                                    && applicationViewModel
+                                                .blacklistPostPredicate.test(post)
+                                        },
+                                        isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
+                                        onAddToFavourites = { post ->
+                                            applicationViewModel.handleFavoritePost(post)
+                                        }
                                     ) { post, scrollToComments ->
                                         navController.navigate(
                                             Screen.Post.buildRoute {
