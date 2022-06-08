@@ -1,6 +1,7 @@
 package ru.herobrine1st.e621.ui.screen.search
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
@@ -32,7 +33,8 @@ fun AddTagDialog(onClose: () -> Unit, onAdd: (String) -> Unit) {
             label = { Text(stringResource(R.string.tag)) },
             singleLine = true,
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxWidth(),
+            keyboardActions = KeyboardActions { onAdd(text); onClose() }
         )
         // TODO autocomplete
     }
