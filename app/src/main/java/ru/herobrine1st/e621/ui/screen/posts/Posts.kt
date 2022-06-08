@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -152,22 +153,19 @@ fun Posts(
     val context = LocalContext.current
     val blacklistEnabled by context.getPreference(key = BLACKLIST_ENABLED, defaultValue = true)
 
-    val loadState = posts.loadState
-    val loading = loadState.refresh is LoadState.Loading || loadState.append is LoadState.Loading
-    val error = loadState.refresh is LoadState.Error || loadState.append is LoadState.Error
-
-
-    if (posts.itemCount == 0 && !error) { // Do not reset lazyListState
+    if (posts.loadState.refresh !is LoadState.NotLoading) { // Do not reset lazyListState
         Base {
             Spacer(modifier = Modifier.height(4.dp))
             CircularProgressIndicator()
         }
         return
     }
+
     LazyColumn(
         state = viewModel.lazyListState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        endOfPagePlaceholder(posts.loadState.prepend)
         items(posts, key = { it.id }) { post ->
             if (post == null) return@items
             val blacklisted =
@@ -180,23 +178,7 @@ fun Posts(
             }
             Spacer(modifier = Modifier.height(4.dp))
         }
-        posts.apply {
-            when {
-                loading -> {
-                    item {
-                        Base {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            CircularProgressIndicator()
-                        }
-                    }
-                }
-                error -> {
-                    item {
-                        Text("error")
-                    }
-                }
-            }
-        }
+        endOfPagePlaceholder(posts.loadState.append)
     }
 }
 
@@ -253,5 +235,30 @@ fun Post(
                 Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochSecond() * 1000)}") // TODO i18n; move it somewhere
             }
         }
+    }
+}
+
+// edge of page, start and end of page or anything, it just doesn't matter while the name is clear
+fun LazyListScope.endOfPagePlaceholder(loadState: LoadState) {
+    when (loadState) {
+        is LoadState.Loading -> {
+            item {
+                Base {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+        }
+        is LoadState.Error -> {
+            item {
+                Base {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("error")
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+        }
+        else -> {}
     }
 }
