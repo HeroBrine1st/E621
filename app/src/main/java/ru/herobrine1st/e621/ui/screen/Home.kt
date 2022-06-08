@@ -84,6 +84,7 @@ fun Home(
                     value = username,
                     onValueChange = { username = it },
                     label = { Text(stringResource(R.string.login_username)) },
+                    singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                 )
@@ -93,6 +94,7 @@ fun Home(
                     visualTransformation = PasswordVisualTransformation(),
                     onValueChange = { password = it },
                     label = { Text(stringResource(R.string.login_password)) },
+                    singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
                 )
