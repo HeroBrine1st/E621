@@ -5,6 +5,8 @@ Android client for e926.net and e621.net
 This project is a work in progress. It may contain bugs, slow code or even features. Use at your own
 risk.
 
+Get latest release [here](https://github.com/HeroBrine1st/E621/releases)
+
 # Features
 
 - [x] Search posts
@@ -21,8 +23,8 @@ risk.
 - [x] Authorization
 - [x] Blacklists
 - [x] Favorites
-    * [ ] Add and remove
-    * [ ] View
+    * [x] Add and remove
+    * [x] View
 - [x] Post screen
     * [ ] Comments
     * [x] Tags
