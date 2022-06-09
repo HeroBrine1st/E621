@@ -27,15 +27,15 @@ fun BlacklistTogglesDialog(
     isBlacklistLoading: Boolean,
     isBlacklistEnabled: Boolean,
     toggleBlacklist: (Boolean) -> Unit,
-    onApply: () -> Unit, // applicationViewModel.applyBlacklistChanges()
-    onCancel: () -> Unit, // blacklistEntries.forEach { it.resetChanges() }
+    onApply: () -> Unit,
+    onCancel: () -> Unit,
     onClose: () -> Unit
 ) {
     if (isBlacklistLoading) {
         ActionDialog(
             title = stringResource(R.string.blacklist),
             actions = {
-                BlacklistTogglesDialogActions(enabled = false)
+                DialogActions(enabled = false)
             },
             onDismissRequest = onClose
         ) {
@@ -48,7 +48,7 @@ fun BlacklistTogglesDialog(
         title = stringResource(R.string.blacklist),
         actions = {
             if (isBlacklistUpdating) CircularProgressIndicator(modifier = Modifier.size(24.dp))
-            BlacklistTogglesDialogActions(!isBlacklistUpdating, onApply = {
+            DialogActions(!isBlacklistUpdating, onApply = {
                 onApply()
                 onClose()
             }, onCancel = {
@@ -155,17 +155,8 @@ private fun BlacklistTogglesDialogContent(
                     modifier = Modifier.weight(1f),
                     color = if (isBlacklistUpdating) Color.Gray else Color.Unspecified
                 )
-                if (entry.isToggled) { // Reset
-                    IconButton(
-                        enabled = !isBlacklistUpdating,
-                        onClick = { entry.enabled = !entry.enabled },
-                        modifier = Modifier.size(24.dp)
-                    ) {
-                        Icon(
-                            Icons.Outlined.Undo,
-                            contentDescription = stringResource(R.string.cancel)
-                        )
-                    }
+                if (entry.isToggled) {
+                    ResetButton(isBlacklistUpdating, entry)
                     Spacer(modifier = Modifier.width(8.dp))
                 }
                 Checkbox(
@@ -181,8 +172,26 @@ private fun BlacklistTogglesDialogContent(
     }
 }
 
+
+// Extracted because of ClassCastException (idk what tf has happened but it works like this or without if statement)
 @Composable
-private fun BlacklistTogglesDialogActions(
+private fun ResetButton(isBlacklistUpdating: Boolean, entry: StatefulBlacklistEntry) {
+    IconButton(
+        enabled = !isBlacklistUpdating,
+        onClick = {
+            entry.enabled = !entry.enabled
+        },
+        modifier = Modifier.size(24.dp)
+    ) {
+        Icon(
+            Icons.Outlined.Undo,
+            contentDescription = stringResource(R.string.cancel)
+        )
+    }
+}
+
+@Composable
+private fun DialogActions(
     enabled: Boolean,
     onApply: () -> Unit = {},
     onCancel: () -> Unit = {},
