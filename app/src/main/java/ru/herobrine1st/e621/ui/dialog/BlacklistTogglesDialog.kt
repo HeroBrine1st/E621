@@ -1,6 +1,5 @@
 package ru.herobrine1st.e621.ui.dialog
 
-import android.util.Log
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,8 +29,6 @@ import ru.herobrine1st.e621.util.StatefulBlacklistEntry
 import ru.herobrine1st.e621.util.applyChanges
 import ru.herobrine1st.e621.util.asStateful
 import javax.inject.Inject
-
-private const val TAG = "BlacklistTogglesDialog"
 
 @Composable
 fun BlacklistTogglesDialog(
@@ -246,7 +243,6 @@ class BlacklistTogglesDialogViewModel @Inject constructor(private val repository
     init {
         viewModelScope.launch {
             entriesFlow = repository.getEntriesFlow().stateIn(viewModelScope)
-            Log.d(TAG, "Size: ${entriesFlow.value.size}")
             isBlacklistLoading = false
         }
     }
