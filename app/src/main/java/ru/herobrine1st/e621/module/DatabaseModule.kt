@@ -21,4 +21,8 @@ class DatabaseModule {
             applicationContext,
             Database::class.java, BuildConfig.DATABASE_NAME
         ).build()
+
+    @Provides
+    @ActivityRetainedScoped
+    fun provideBlacklistDao(database: Database) = database.blacklistDao()
 }

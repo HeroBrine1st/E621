@@ -1,8 +1,8 @@
 package ru.herobrine1st.e621.dao
 
 import androidx.room.*
+import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.entity.BlacklistEntry
-import ru.herobrine1st.e621.util.StatefulBlacklistEntry
 
 @Dao
 interface BlacklistDao {
@@ -12,8 +12,15 @@ interface BlacklistDao {
     @Query("SELECT * FROM blacklist")
     suspend fun getAll(): Array<BlacklistEntry>
 
+    // TODO rename
+    @Query("SELECT * FROM blacklist")
+    fun getFlow(): Flow<List<BlacklistEntry>>
+
     @Query("DELETE FROM blacklist WHERE id=:id")
     suspend fun delete(id: Long)
+
+    @Delete
+    suspend fun delete(entry: BlacklistEntry)
 
     @Insert
     suspend fun insert(blacklist: BlacklistEntry): Long
