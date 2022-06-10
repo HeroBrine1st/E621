@@ -5,6 +5,7 @@ package ru.herobrine1st.e621.util
 import androidx.compose.runtime.*
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.dao.BlacklistDao
+import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.entity.BlacklistEntry
 
@@ -18,26 +19,28 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
             StatefulBlacklistEntry(query, enabled, 0)
     }
 
+    var id by mutableStateOf(id)
+        private set
     var query by mutableStateOf(query)
     var enabled by mutableStateOf(enabled)
+
 
     // Actual database state
     private var dbEntryEnabled by mutableStateOf(enabled)
     private var dbEntryQuery by mutableStateOf(query)
-    private var dbEntryId by mutableStateOf(id)
 
 
     val isToggled get() = enabled != dbEntryEnabled
     val isQueryChanged get() = query != dbEntryQuery
     var isPendingDeletion by mutableStateOf(false)
         private set
-    val isPendingInsertion get() = dbEntryId == 0L
+    val isPendingInsertion get() = id == 0L
     val isPendingUpdate get() = isToggled || isQueryChanged
     val isChanged get() = isPendingInsertion || isPendingUpdate || isPendingDeletion
 
 
     fun resetChanges() {
-        if(!isChanged) return
+        if (!isChanged) return
         query = dbEntryQuery
         enabled = dbEntryEnabled
         isPendingDeletion = false
@@ -45,15 +48,15 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
 
 
     fun markAsDeleted(deleted: Boolean = true) {
-        assert(dbEntryId != 0L)
+        assert(id != 0L)
         isPendingDeletion = deleted
     }
 
     val predicate by derivedStateOf { createTagProcessor(dbEntryQuery) }
 
     private suspend fun createDatabaseRecord(database: Database) {
-        assert(dbEntryId == 0L)
-        dbEntryId = database.blacklistDao().insert(
+        assert(id == 0L)
+        id = database.blacklistDao().insert(
             BlacklistEntry(
                 query = query,
                 enabled = enabled
@@ -67,7 +70,7 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
         try {
             database.blacklistDao().update(
                 BlacklistEntry(
-                    id = dbEntryId,
+                    id = id,
                     query = query,
                     enabled = enabled
                 )
@@ -81,9 +84,9 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
     }
 
     private suspend fun deleteDatabaseRecord(database: Database) {
-        assert(dbEntryId != 0L)
+        assert(id != 0L)
         try {
-            database.blacklistDao().delete(dbEntryId)
+            database.blacklistDao().delete(id)
         } catch (e: Exception) { // Undo
             resetChanges()
             throw e
@@ -102,3 +105,23 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
 fun BlacklistEntry.asStateful() = StatefulBlacklistEntry.of(this)
 
 suspend fun BlacklistDao.getAllAsStateful() = getAll().map { it.asStateful() }
+
+suspend fun StatefulBlacklistEntry.applyChanges(repository: BlacklistRepository) {
+    when {
+        isPendingInsertion -> repository.insertEntry(
+            BlacklistEntry(
+                id = id,
+                query = query,
+                enabled = enabled
+            )
+        )
+        isPendingDeletion -> repository.deleteEntryById(id)
+        isPendingUpdate -> repository.updateEntry(
+            BlacklistEntry(
+                id = id,
+                query = query,
+                enabled = enabled
+            )
+        )
+    }
+}

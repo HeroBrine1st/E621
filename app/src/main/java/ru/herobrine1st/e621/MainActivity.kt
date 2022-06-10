@@ -262,27 +262,15 @@ class MainActivity : ComponentActivity() {
 
                 if (showBlacklistDialog)
                     BlacklistTogglesDialog(
-                        blacklistEntries = applicationViewModel.blacklistDoNotUseAsFilter,
                         isBlacklistEnabled = context.getPreference(BLACKLIST_ENABLED, true).value,
-                        isBlacklistLoading = applicationViewModel.blacklistLoading,
-                        isBlacklistUpdating = applicationViewModel.blacklistUpdating,
                         toggleBlacklist = {
                             coroutineScope.launch {
                                 context.setPreference(BLACKLIST_ENABLED, it)
                             }
-                        },
-                        onApply = {
-                            coroutineScope.launch {
-                                applicationViewModel.applyBlacklistChanges()
-                            }
-                        },
-                        onCancel = {
-                            applicationViewModel.blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
-                        },
-                        onClose = {
-                            showBlacklistDialog = false
                         }
-                    )
+                    ) {
+                        showBlacklistDialog = false
+                    }
             }
         }
     }

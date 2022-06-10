@@ -10,7 +10,7 @@ interface BlacklistDao {
     suspend fun count(): Int
 
     @Query("SELECT * FROM blacklist")
-    suspend fun getAll(): Array<BlacklistEntry>
+    suspend fun getAll(): List<BlacklistEntry>
 
     // TODO rename
     @Query("SELECT * FROM blacklist")
@@ -27,6 +27,13 @@ interface BlacklistDao {
 
     @Update
     suspend fun update(blacklist: BlacklistEntry)
+
+    @Transaction
+    suspend fun update(entries: List<BlacklistEntry>) {
+        entries.forEach {
+            update(it)
+        }
+    }
 
     @Query("DELETE FROM blacklist")
     suspend fun clear()
