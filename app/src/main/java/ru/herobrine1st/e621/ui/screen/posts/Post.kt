@@ -26,24 +26,24 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
-import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.PRIVACY_MODE
 import ru.herobrine1st.e621.preference.getPreferenceFlow
 import ru.herobrine1st.e621.util.debug
+import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 
 private const val TAG = "Post Screen"
 
 @Composable
 fun Post(
-    applicationViewModel: ApplicationViewModel,
     initialPost: Post,
     @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean // TODO
 ) {
     val api = LocalAPI.current
     val context = LocalContext.current
+    val snackbar = LocalSnackbar.current
     val post by produceState(initialValue = initialPost) {
         if (!initialPost.isFavorited && context.getPreferenceFlow(PRIVACY_MODE, true).first()) {
             return@produceState
@@ -54,7 +54,7 @@ fun Post(
             }
         } catch (t: Throwable) {
             Log.e(TAG, "Unable to get post", t)
-            applicationViewModel.addSnackbarMessage(
+            snackbar.enqueueMessage(
                 R.string.network_error,
                 SnackbarDuration.Indefinite
             )

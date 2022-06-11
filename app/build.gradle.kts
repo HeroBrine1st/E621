@@ -3,6 +3,8 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
     id("kotlin-parcelize")
+    kotlin("kapt")
+    id("dagger.hilt.android.plugin")
 }
 
 val kotlinVersion = "1.6.10"
@@ -43,6 +45,7 @@ android {
                 "USER_AGENT",
                 "\"Android App/${versionName}\""
             )
+            it.buildConfigField("int", "PAGER_PAGE_SIZE", "500")
         }
     }
     compileOptions {
@@ -114,9 +117,18 @@ dependencies {
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
+    // Hilt
+    implementation("com.google.dagger:hilt-android:2.38.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
+    kapt("com.google.dagger:hilt-android-compiler:2.38.1")
+
+    // G Accompanist
+    val accompanistVersion = "0.23.1"
+    implementation("com.google.accompanist:accompanist-flowlayout:$accompanistVersion")
+    implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
+
     // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
-    implementation("com.google.accompanist:accompanist-flowlayout:0.20.3")
     implementation("com.google.android.exoplayer:exoplayer:2.17.1")
     implementation("org.jsoup:jsoup:1.14.3")
 
@@ -131,4 +143,8 @@ dependencies {
 
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
+}
+
+kapt {
+    correctErrorTypes = true
 }

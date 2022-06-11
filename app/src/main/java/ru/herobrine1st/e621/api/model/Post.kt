@@ -2,6 +2,7 @@ package ru.herobrine1st.e621.api.model
 
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
+import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.parcelize.IgnoredOnParcel
@@ -45,12 +46,15 @@ data class Post(
     val duration: Float = 0f
 ) : Parcelable, JsonSerializable {
     @IgnoredOnParcel
+    @JsonIgnore
     val normalizedSample = NormalizedFile(sample)
 
     @IgnoredOnParcel
+    @JsonIgnore
     val normalizedFile = NormalizedFile(file)
 
     @IgnoredOnParcel
+    @JsonIgnore
     val files: List<NormalizedFile> = listOf(
         normalizedFile,
         normalizedSample,

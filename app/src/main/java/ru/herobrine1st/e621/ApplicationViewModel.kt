@@ -2,36 +2,33 @@ package ru.herobrine1st.e621
 
 import android.database.sqlite.SQLiteException
 import android.util.Log
-import androidx.annotation.StringRes
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.enumeration.AuthState
-import ru.herobrine1st.e621.ui.SnackbarMessage
+import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.StatefulBlacklistEntry
 import ru.herobrine1st.e621.util.getAllAsStateful
 import java.io.IOException
 import java.util.function.Predicate
+import javax.inject.Inject
 
 
-class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
-    class Factory(val database: Database, val api: Api) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return ApplicationViewModel(database, api) as T
-        }
-    }
+@HiltViewModel
+class ApplicationViewModel @Inject constructor(
+    private val database: Database,
+    private val api: Api,
+    private val snackbar: SnackbarAdapter
+) : ViewModel() {
 
     companion object {
         val TAG = ApplicationViewModel::class.simpleName
@@ -44,59 +41,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
         }
     }
 
-    //region Snackbar
-    private val snackbarMutex = Mutex()
-    private val snackbarMessages = ArrayList<SnackbarMessage>()
-    var snackbarShowing by mutableStateOf(false)
-        private set
-    var snackbarMessage by mutableStateOf<SnackbarMessage?>(null)
-        private set
 
-    private suspend fun addSnackbarMessageInternal(
-        @StringRes resourceId: Int,
-        duration: SnackbarDuration,
-        vararg formatArgs: Any
-    ) {
-        snackbarMutex.withLock {
-            snackbarMessages.add(SnackbarMessage(resourceId, duration, formatArgs))
-            if (snackbarMessage == null) {
-                snackbarMessage = snackbarMessages[0]
-            }
-        }
-    }
-
-    fun addSnackbarMessage(
-        @StringRes resourceId: Int,
-        duration: SnackbarDuration,
-        vararg formatArgs: Any
-    ) {
-        viewModelScope.launch {
-            addSnackbarMessageInternal(resourceId, duration, *formatArgs)
-        }
-    }
-
-    fun notifySnackbarMessageWillDisplay() {
-        if (snackbarShowing) {
-            Log.w(TAG, "Snackbar behavior may be unpredictable")
-            Log.w(TAG, "notifySnackbarMessageWillDisplay called when snackbarShowing is true")
-        }
-        snackbarShowing = true
-    }
-
-    suspend fun notifySnackbarMessageDisplayed() {
-        if (snackbarMessages.isEmpty()) {
-            Log.w(TAG, "notifySnackbarMessageDisplayed called, but no snackbar messages available")
-            return
-        }
-        snackbarMutex.withLock {
-            snackbarShowing = false
-            snackbarMessages.removeAt(0)
-            snackbarMessage = if (snackbarMessages.isNotEmpty()) snackbarMessages[0] else null
-        }
-
-    }
-
-    //endregion
     //region Auth
     var authState: AuthState by mutableStateOf(AuthState.LOADING)
         private set
@@ -123,7 +68,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "IO Error while trying to check credentials", e)
-                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
                 AuthState.IO_ERROR
             } catch (e: Throwable) {
                 AuthState.NO_DATA
@@ -145,7 +90,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                     onSuccess()
                     AuthState.AUTHORIZED
                 } else {
-                    addSnackbarMessageInternal(
+                    snackbar.enqueueMessage(
                         R.string.authentication_error,
                         SnackbarDuration.Long
                     )
@@ -153,11 +98,11 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 }
             } catch (e: IOException) {
                 Log.e(TAG, "IO Error while trying to check credentials", e)
-                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
                 AuthState.IO_ERROR
             } catch (e: SQLiteException) {
                 Log.e(TAG, "SQL Error while trying to save credentials", e)
-                addSnackbarMessageInternal(
+                snackbar.enqueueMessage(
                     R.string.database_error,
                     SnackbarDuration.Long
                 )
@@ -184,7 +129,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 database.authDao().logout()
             } catch (e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to logout", e)
-                addSnackbarMessageInternal(
+                snackbar.enqueueMessage(
                     R.string.database_error,
                     SnackbarDuration.Long
                 )
@@ -232,7 +177,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
             }
         } catch (e: SQLiteException) {
             Log.e(TAG, "SQLite Error while trying to add tag to blacklist", e)
-            addSnackbarMessageInternal(
+            snackbar.enqueueMessage(
                 R.string.database_error,
                 SnackbarDuration.Long
             )
@@ -254,7 +199,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
             updateFilteringBlacklistEntriesList()
         } catch (e: SQLiteException) {
             Log.e(TAG, "SQLite Error while trying to load blacklist from database", e)
-            addSnackbarMessageInternal(
+            snackbar.enqueueMessage(
                 R.string.database_error,
                 SnackbarDuration.Long
             )
@@ -274,7 +219,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                 entry.applyChanges(database)
             } catch (e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to update blacklist entry", e)
-                addSnackbarMessageInternal(
+                snackbar.enqueueMessage(
                     R.string.database_error_updating_blacklist,
                     SnackbarDuration.Long,
                     entry.query
@@ -332,7 +277,7 @@ class ApplicationViewModel(val database: Database, val api: Api) : ViewModel() {
                     "IO Error while while trying to (un)favorite post (id=${post.id}, isFavorited=$isFavorited)",
                     e
                 )
-                addSnackbarMessageInternal(R.string.network_error, SnackbarDuration.Long)
+                snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
                 if (isCached) favoritesCache[post.id] = isFavorited
                 else favoritesCache.remove(post.id)
             }

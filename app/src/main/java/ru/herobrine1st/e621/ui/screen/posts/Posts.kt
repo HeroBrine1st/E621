@@ -1,90 +1,32 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import android.text.format.DateUtils
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
-import androidx.paging.*
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import com.google.accompanist.flowlayout.FlowRow
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl
-import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
-import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.PostsSearchOptions
 import ru.herobrine1st.e621.util.SearchOptions
-import java.io.IOException
-
-class PostsViewModel(
-    private val applicationViewModel: ApplicationViewModel, // will not change
-    private val searchOptions: SearchOptions, // will not change
-    pageSize: Int = 500
-) : ViewModel() {
-    private val pager = Pager(PagingConfig(pageSize = pageSize, initialLoadSize = pageSize)) {
-        PostsSource(applicationViewModel, searchOptions)
-    }
-
-    val postsFlow: Flow<PagingData<Post>> = pager.flow.cachedIn(viewModelScope)
-
-    val lazyListState = LazyListState(0, 0)
-
-    private var countBlacklistedPosts = 0
-    private var warnedUser = false
-
-    /**
-     * Very primitive detection of intersection between query and blacklist. It simply warns user about it.
-     *
-     * @param blacklisted result of [ApplicationViewModel.blacklistPostPredicate] if blacklist is enabled, otherwise false
-     */
-    fun notifyPostState(blacklisted: Boolean) {
-        if (!blacklisted) countBlacklistedPosts = 0 else countBlacklistedPosts++
-        if (countBlacklistedPosts > 300 && !warnedUser) {
-            warnedUser = true
-            Log.i("PostsViewModel", "Detected intersection between blacklist and query")
-            applicationViewModel.addSnackbarMessage(
-                R.string.maybe_search_query_intersects_with_blacklist,
-                SnackbarDuration.Indefinite
-            )
-        }
-    }
-}
-
-class PostsViewModelFactory(
-    private val applicationViewModel: ApplicationViewModel, // will not change
-    private val searchOptions: SearchOptions // will not change
-) : ViewModelProvider.Factory {
-    @Suppress("UNCHECKED_CAST")
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        return PostsViewModel(applicationViewModel, searchOptions) as T
-    }
-}
 
 @Composable
 fun PostsAppBarActions(navController: NavHostController) {
@@ -104,54 +46,24 @@ fun PostsAppBarActions(navController: NavHostController) {
     }
 }
 
-class PostsSource(
-    private val applicationViewModel: ApplicationViewModel,
-    private val searchOptions: SearchOptions,
-) : PagingSource<Int, Post>() {
-    private lateinit var preparedUrl: HttpUrl
-    override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
-        return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
-    }
-
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Post> {
-        return try {
-            if (!::preparedUrl.isInitialized) {
-                preparedUrl = searchOptions.prepareRequestUrl(applicationViewModel.api)
-            }
-            val page = params.key ?: 1
-            val posts: List<Post> = withContext(Dispatchers.IO) {
-                applicationViewModel.api.getPosts(preparedUrl, page = page, limit = params.loadSize)
-            }
-            LoadResult.Page(
-                data = posts,
-                prevKey = if (page == 1) null else page - 1,
-                nextKey = if (posts.isNotEmpty()) page + 1 else null
-            )
-        } catch (e: IOException) {
-            applicationViewModel.addSnackbarMessage(
-                R.string.network_error,
-                SnackbarDuration.Indefinite
-            )
-            Log.e("Posts", "Unable to load posts", e)
-            LoadResult.Error(e)
-        } catch (e: Throwable) {
-            Log.e("Posts", "Unable to load posts", e)
-            LoadResult.Error(e)
-        }
-    }
-}
-
 @Composable
 fun Posts(
     searchOptions: SearchOptions,
-    applicationViewModel: ApplicationViewModel,
+    isFavourite: (Post) -> Boolean,
+    isHiddenByBlacklist: (Post) -> Boolean,
+    isAuthorized: Boolean,
+    onAddToFavourites: (Post) -> Unit,
     openPost: (post: Post, scrollToComments: Boolean) -> Unit
 ) {
-    val viewModel: PostsViewModel =
-        viewModel(factory = PostsViewModelFactory(applicationViewModel, searchOptions))
+    val viewModel: PostsViewModel = hiltViewModel()
+
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
-    val context = LocalContext.current
-    val blacklistEnabled by context.getPreference(key = BLACKLIST_ENABLED, defaultValue = true)
+
+    LaunchedEffect(searchOptions) {
+        viewModel.onSearchOptionsChange(searchOptions) {
+            posts.refresh()
+        }
+    }
 
     if (posts.loadState.refresh !is LoadState.NotLoading) { // Do not reset lazyListState
         Base {
@@ -167,15 +79,18 @@ fun Posts(
     ) {
         endOfPagePlaceholder(posts.loadState.prepend)
         items(posts, key = { it.id }) { post ->
-            if (post == null) return@items
-            val blacklisted =
-                !applicationViewModel.isFavorited(post) && // Always show favorited posts
-                        blacklistEnabled && applicationViewModel.blacklistPostPredicate.test(post)
+            if(post == null) return@items
+            val blacklisted = isHiddenByBlacklist(post)
             viewModel.notifyPostState(blacklisted)
             if (blacklisted) return@items
-            Post(post, applicationViewModel) {
-                openPost(post, it)
-            }
+            Post(
+                post = post,
+                isFavourite = isFavourite(post),
+                isAuthorized = isAuthorized,
+                onAddToFavourites = {
+                    onAddToFavourites(post)
+                }
+            ) { scrollToComments -> openPost(post, scrollToComments) }
             Spacer(modifier = Modifier.height(4.dp))
         }
         endOfPagePlaceholder(posts.loadState.append)
@@ -185,7 +100,9 @@ fun Posts(
 @Composable
 fun Post(
     post: Post,
-    applicationViewModel: ApplicationViewModel,
+    isFavourite: Boolean,
+    isAuthorized: Boolean,
+    onAddToFavourites: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit
 ) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
@@ -231,7 +148,9 @@ fun Post(
                 modifier = Modifier.padding(horizontal = 8.dp),
             ) {
                 Divider()
-                PostActionsRow(post, applicationViewModel, openPost)
+                PostActionsRow(post, isFavourite, isAuthorized, onAddToFavourites) {
+                    openPost(true)
+                }
                 Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochSecond() * 1000)}") // TODO i18n; move it somewhere
             }
         }

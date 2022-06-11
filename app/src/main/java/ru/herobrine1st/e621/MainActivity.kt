@@ -1,8 +1,6 @@
 package ru.herobrine1st.e621
 
-import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
-import android.os.StatFs
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,27 +13,20 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
-import androidx.room.Room
-import coil.Coil
-import coil.ImageLoader
-import coil.decode.GifDecoder
-import coil.decode.ImageDecoderDecoder
-import coil.util.CoilUtils
+import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import okhttp3.Cache
-import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
-import ru.herobrine1st.e621.net.RateLimitInterceptor
+import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.preference.setPreference
 import ru.herobrine1st.e621.ui.ActionBarMenu
-import ru.herobrine1st.e621.ui.SnackbarController
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Screen
@@ -44,20 +35,30 @@ import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
+import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
+import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.ui.snackbar.SnackbarController
+import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
-import java.io.File
 import java.io.IOException
+import javax.inject.Inject
 
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    companion object {
-        val TAG = MainActivity::class.simpleName
-        const val DISK_CACHE_PERCENTAGE = 0.02
-        const val MIN_DISK_CACHE_SIZE_BYTES = 10L * 1024 * 1024
-        const val MAX_DISK_CACHE_SIZE_BYTES = 150L * 1024 * 1024
-    }
+    @Inject
+    lateinit var db: Database
+
+    @Inject
+    lateinit var api: Api
+
+    @Inject
+    lateinit var snackbarMessagesFlow: MutableSharedFlow<SnackbarMessage>
+
+    @Inject
+    lateinit var snackbarAdapter: SnackbarAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -72,36 +73,20 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-        val db: Database = Room.databaseBuilder(
-            applicationContext,
-            Database::class.java, BuildConfig.DATABASE_NAME
-        ).build()
-
-        Coil.setImageLoader {
-            ImageLoader.Builder(applicationContext)
-                .crossfade(true)
-                .okHttpClient {
-                    OkHttpClient.Builder()
-                        .cache(CoilUtils.createDefaultCache(applicationContext))
-                        .build()
-                }
-                .componentRegistry {
-                    add(if (SDK_INT >= 28) ImageDecoderDecoder(applicationContext) else GifDecoder())
-                }
-                .build()
-        }
-
-        val api = createAPI()
-
         setContent {
             E621Theme(window) {
                 val context = LocalContext.current
                 val coroutineScope = rememberCoroutineScope()
+
+                // Navigation
                 val navController = rememberNavController()
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
-                val applicationViewModel: ApplicationViewModel =
-                    viewModel(factory = ApplicationViewModel.Factory(db, api))
+
+                // VMs
+                val applicationViewModel = viewModel<ApplicationViewModel>()
+
+                // State
                 val scaffoldState = rememberScaffoldState()
 
                 var showBlacklistDialog by remember { mutableStateOf(false) }
@@ -109,41 +94,47 @@ class MainActivity : ComponentActivity() {
                 LaunchedEffect(true) {
                     applicationViewModel.loadAllFromDatabase()
                 }
-
-                SnackbarController(applicationViewModel, scaffoldState)
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {
-                                Text(stringResource(screen?.title ?: R.string.app_name))
-                            },
-                            backgroundColor = MaterialTheme.colors.primarySurface,
-                            elevation = 12.dp,
-                            actions = {
-                                navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
-                                    screen?.appBarActions?.invoke(
-                                        this,
-                                        navController,
-                                        applicationViewModel
-                                    )
-                                }
-                                ActionBarMenu(navController, onOpenBlacklistDialog = {
-                                    showBlacklistDialog = true
-                                })
-                            }
-                        )
-                    },
-                    scaffoldState = scaffoldState,
-                    floatingActionButton = {
-                        navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
-                            screen?.floatingActionButton?.invoke(applicationViewModel)
-                        }
-                    }
+                SnackbarController(
+                    snackbarMessagesFlow,
+                    scaffoldState.snackbarHostState
+                )
+                CompositionLocalProvider(
+                    LocalDatabase provides db,
+                    LocalAPI provides api,
+                    LocalSnackbar provides snackbarAdapter
                 ) {
-                    Surface(
-                        color = MaterialTheme.colors.background
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                title = {
+                                    Text(stringResource(screen?.title ?: R.string.app_name))
+                                },
+                                backgroundColor = MaterialTheme.colors.primarySurface,
+                                elevation = 12.dp,
+                                actions = {
+                                    navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
+                                        screen?.appBarActions?.invoke(
+                                            this,
+                                            navController,
+                                            applicationViewModel
+                                        )
+                                    }
+                                    ActionBarMenu(navController, onOpenBlacklistDialog = {
+                                        showBlacklistDialog = true
+                                    })
+                                }
+                            )
+                        },
+                        scaffoldState = scaffoldState,
+                        floatingActionButton = {
+                            navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
+                                screen?.floatingActionButton?.invoke(applicationViewModel)
+                            }
+                        }
                     ) {
-                        CompositionLocalProvider(LocalDatabase provides db, LocalAPI provides api) {
+                        Surface(
+                            color = MaterialTheme.colors.background
+                        ) {
                             NavHost(
                                 navController = navController,
                                 startDestination = Screen.Home.route
@@ -186,9 +177,26 @@ class MainActivity : ComponentActivity() {
                                 composable(Screen.Posts.route, Screen.Posts.arguments) {
                                     val searchOptions =
                                         it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
+                                    val isBlacklistEnabled by LocalContext.current.getPreference(
+                                        BLACKLIST_ENABLED,
+                                        defaultValue = true
+                                    )
+
                                     Posts(
                                         searchOptions,
-                                        applicationViewModel
+                                        isFavourite = { post ->
+                                            applicationViewModel.isFavorited(post)
+                                        },
+                                        isHiddenByBlacklist = { post ->
+                                            !applicationViewModel.isFavorited(post)
+                                                    && isBlacklistEnabled
+                                                    && applicationViewModel
+                                                .blacklistPostPredicate.test(post)
+                                        },
+                                        isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
+                                        onAddToFavourites = { post ->
+                                            applicationViewModel.handleFavoritePost(post)
+                                        },
                                     ) { post, scrollToComments ->
                                         navController.navigate(
                                             Screen.Post.buildRoute {
@@ -203,9 +211,26 @@ class MainActivity : ComponentActivity() {
                                         it.arguments!!
                                     val searchOptions =
                                         remember { FavouritesSearchOptions(arguments.getString("user")) }
+                                    val isBlacklistEnabled by LocalContext.current.getPreference(
+                                        BLACKLIST_ENABLED,
+                                        defaultValue = true
+                                    )
+
                                     Posts(
                                         searchOptions,
-                                        applicationViewModel
+                                        isFavourite = { post ->
+                                            applicationViewModel.isFavorited(post)
+                                        },
+                                        isHiddenByBlacklist = { post ->
+                                            !applicationViewModel.isFavorited(post)
+                                                    && isBlacklistEnabled
+                                                    && applicationViewModel
+                                                .blacklistPostPredicate.test(post)
+                                        },
+                                        isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
+                                        onAddToFavourites = { post ->
+                                            applicationViewModel.handleFavoritePost(post)
+                                        }
                                     ) { post, scrollToComments ->
                                         navController.navigate(
                                             Screen.Post.buildRoute {
@@ -219,7 +244,6 @@ class MainActivity : ComponentActivity() {
                                     val arguments =
                                         it.arguments!!
                                     Post(
-                                        applicationViewModel,
                                         arguments.getParcelable("post")!!,
                                         arguments.getBoolean("scrollToComments")
                                     )
@@ -239,41 +263,20 @@ class MainActivity : ComponentActivity() {
 
                 if (showBlacklistDialog)
                     BlacklistTogglesDialog(
-                        blacklistEntries = applicationViewModel.blacklistDoNotUseAsFilter,
                         isBlacklistEnabled = context.getPreference(BLACKLIST_ENABLED, true).value,
-                        isBlacklistLoading = applicationViewModel.blacklistLoading,
-                        isBlacklistUpdating = applicationViewModel.blacklistUpdating,
                         toggleBlacklist = {
                             coroutineScope.launch {
                                 context.setPreference(BLACKLIST_ENABLED, it)
                             }
-                        },
-                        onApply = {
-                            coroutineScope.launch {
-                                applicationViewModel.applyBlacklistChanges()
-                            }
-                        },
-                        onCancel = {
-                                applicationViewModel.blacklistDoNotUseAsFilter.forEach { it.resetChanges() }
-                        },
-                        onClose = {
-                            showBlacklistDialog = false
                         }
-                    )
+                    ) {
+                        showBlacklistDialog = false
+                    }
             }
         }
     }
 
-    private fun createAPI(): Api {
-        val cacheDir = File(applicationContext.cacheDir, "okhttp").apply { mkdirs() }
-        val size = (StatFs(cacheDir.absolutePath).let {
-            it.blockCountLong * it.blockSizeLong
-        } * DISK_CACHE_PERCENTAGE).toLong()
-            .coerceIn(MIN_DISK_CACHE_SIZE_BYTES, MAX_DISK_CACHE_SIZE_BYTES)
-        val okHttpClient = OkHttpClient.Builder()
-            .addNetworkInterceptor(RateLimitInterceptor(1.5))
-            .cache(Cache(cacheDir, size))
-            .build()
-        return Api(okHttpClient)
+    companion object {
+        private val TAG = MainActivity::class.simpleName
     }
 }
