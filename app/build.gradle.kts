@@ -130,10 +130,13 @@ dependencies {
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     kapt("com.google.dagger:hilt-android-compiler:2.38.1")
 
+    // G Accompanist
+    val accompanistVersion = "0.23.1"
+    implementation("com.google.accompanist:accompanist-flowlayout:$accompanistVersion")
+    implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
 
     // Other libraries
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
-    implementation("com.google.accompanist:accompanist-flowlayout:0.20.3")
     implementation("com.google.android.exoplayer:exoplayer:2.17.1")
     implementation("org.jsoup:jsoup:1.14.3")
 
