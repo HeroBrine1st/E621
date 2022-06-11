@@ -15,9 +15,6 @@ import kotlinx.coroutines.flow.map
 fun <R> Context.getPreferenceFlow(key: Preferences.Key<R>, defaultValue: R): Flow<R> =
     this.dataStore.data.map { it[key] ?: defaultValue }
 
-fun <R> Context.getPreferenceFlow(key: Preferences.Key<R>): Flow<R?> =
-    this.dataStore.data.map { it[key] }
-
 @Composable
 fun <R> Context.getPreference(key: Preferences.Key<R>, defaultValue: R): State<R> =
     getPreferenceFlow(key, defaultValue).collectAsState(initial = defaultValue)

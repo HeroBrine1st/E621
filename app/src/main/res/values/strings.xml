@@ -14,11 +14,9 @@
     <string name="order_mpixels">By resolution</string>
     <string name="order_filesize">By filesize</string>
     <string name="order_landscape">Wide and short to tall and thin</string>
-    <string name="order_portrait">Tall and thin to wide and short</string>
     <string name="order_change">By last update sequence</string>
     <string name="order_duration">By video duration</string>
     <string name="order_random">Random</string>
-    <string name="order_id">Oldest to newest</string>
     <string name="order_none">Newest to oldest</string>
     <string name="order_ascending">Reverse order</string>
     <string name="rating_safe">Safe</string>
@@ -38,7 +36,6 @@
     <string name="blacklist">Blacklist</string>
     <string name="close">Close</string>
     <string name="apply">Apply</string>
-    <string name="undo">Undo</string>
     <string name="dialog_blacklist_empty">Blacklist is empty. Add entries in settings or authorize to import from account.</string>
     <string name="selection_all">All</string>
     <string name="database_error_updating_blacklist">Database error occurred while updating blacklist entry \"%s\"</string>
@@ -55,7 +52,6 @@
     <string name="blacklist_enabled">Enabled</string>
     <string name="blacklist_disabled">Disabled</string>
     <string name="maybe_search_query_intersects_with_blacklist">Detected huge consistent sequences of blacklisted posts - loading new may take too long. Maybe your search query intersects with blacklist? Try disabling blacklist entries or change your query.</string>
-    <string name="post_score">Score: %s</string>
     <string name="score_up">Like</string>
     <string name="score_down">Dislike</string>
     <string name="comments">Comments</string>

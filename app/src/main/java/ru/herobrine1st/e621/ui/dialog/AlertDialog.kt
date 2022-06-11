@@ -1,6 +1,5 @@
 package ru.herobrine1st.e621.ui.dialog
 
-import android.app.AlertDialog
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable

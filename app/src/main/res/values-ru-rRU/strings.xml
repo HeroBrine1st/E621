@@ -14,11 +14,9 @@
     <string name="order_mpixels">По разрешению</string>
     <string name="order_filesize">По размеру файла</string>
     <string name="order_landscape">Широкоформатные к узкоформатным</string>
-    <string name="order_portrait">Узкоформатные к широкоформатным</string>
     <string name="order_change">По последнему изменению</string>
     <string name="order_duration">По длительности видео</string>
     <string name="order_random">Случайная</string>
-    <string name="order_id">От старого к новому</string>
     <string name="order_none">От нового к старому</string>
     <string name="order_ascending">Обратить порядок</string>
     <string name="rating_explicit">Откровенный</string>
@@ -38,7 +36,6 @@
     <string name="blacklist">Чёрный список</string>
     <string name="close">Закрыть</string>
     <string name="apply">Применить</string>
-    <string name="undo">Отменить</string>
     <string name="dialog_blacklist_empty">Чёрный список пуст. Добавьте записи в настройках или авторизуйтесь, чтобы импортировать из аккаунта.</string>
     <string name="selection_all">Всё</string>
     <string name="database_error_updating_blacklist">Произошла ошибка при обновлении записи чёрного списка \"%s\"</string>
@@ -55,7 +52,6 @@
     <string name="blacklist_enabled">Включен</string>
     <string name="blacklist_disabled">Выключен</string>
     <string name="maybe_search_query_intersects_with_blacklist">Обнаружены большие последовательные участки заблокированных постов, загрузка новых может занять много времени. Может быть, ваш запрос пересекается с чёрным списком?</string>
-    <string name="post_score">Счёт: %s</string>
     <string name="score_up">Лайк</string>
     <string name="score_down">Дизлайк</string>
     <string name="comments">Комментарии</string>

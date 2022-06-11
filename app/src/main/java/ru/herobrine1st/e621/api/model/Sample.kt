@@ -2,7 +2,6 @@ package ru.herobrine1st.e621.api.model
 
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonValue
 import kotlinx.parcelize.IgnoredOnParcel
@@ -41,6 +40,7 @@ data class Alternate(
     }
 }
 
+@Suppress("unused")
 enum class AlternateType(@JsonValue val apiName: String) {
     VIDEO("video"),
     IMAGE("image"),

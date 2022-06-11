@@ -1,7 +1,6 @@
 package ru.herobrine1st.e621.api
 
 import androidx.annotation.StringRes
-import androidx.compose.runtime.Immutable
 import com.fasterxml.jackson.annotation.JsonValue
 import ru.herobrine1st.e621.R
 
