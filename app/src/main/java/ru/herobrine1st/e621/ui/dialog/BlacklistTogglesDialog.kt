@@ -22,15 +22,10 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.util.BlacklistCache
 import ru.herobrine1st.e621.util.StatefulBlacklistEntry
-import ru.herobrine1st.e621.util.applyChanges
-import ru.herobrine1st.e621.util.asStateful
 import javax.inject.Inject
 
 @Composable
@@ -44,8 +39,7 @@ fun BlacklistTogglesDialog(
 
     var isBlacklistUpdating by remember { mutableStateOf(false) }
     val isBlacklistLoading = viewModel.isBlacklistLoading
-    val blacklistEntries: List<StatefulBlacklistEntry> =
-        viewModel.entriesFlow?.collectAsState()?.value?.map { it.asStateful() } ?: emptyList()
+    val blacklistEntries: List<StatefulBlacklistEntry> = viewModel.entries
 
     val onCancel = {
         blacklistEntries.forEach { it.resetChanges() }
@@ -59,9 +53,7 @@ fun BlacklistTogglesDialog(
             DialogActions(!isBlacklistUpdating, onApply = {
                 isBlacklistUpdating = true
                 viewModel.viewModelScope.launch {
-                    blacklistEntries.forEach {
-                        viewModel.applyEntryChanges(it)
-                    }
+                    viewModel.applyChanges()
                     isBlacklistUpdating = false
                     onClose()
                 }
@@ -209,22 +201,14 @@ private fun DialogActions(
 }
 
 @HiltViewModel
-class BlacklistTogglesDialogViewModel @Inject constructor(private val repository: BlacklistRepository) :
-    ViewModel() {
-    var entriesFlow: StateFlow<List<BlacklistEntry>>? = null
-        private set
+class BlacklistTogglesDialogViewModel @Inject constructor(
+    private val cache: BlacklistCache
+) : ViewModel() {
+    val entries = cache.entries
 
-    var isBlacklistLoading by mutableStateOf(true)
-        private set
+    val isBlacklistLoading get() = cache.isLoading
 
-    init {
-        viewModelScope.launch {
-            entriesFlow = repository.getEntriesFlow().stateIn(viewModelScope)
-            isBlacklistLoading = false
-        }
-    }
-
-    suspend fun applyEntryChanges(entry: StatefulBlacklistEntry) {
-        entry.applyChanges(repository)
+    suspend fun applyChanges() {
+        cache.applyChanges()
     }
 }

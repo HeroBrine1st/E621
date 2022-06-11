@@ -100,8 +100,8 @@ enum class Screen(
         R.string.blacklist,
         Icons.Default.Block,
         "settings/blacklist",
-        appBarActions = { _, it -> SettingsBlacklistAppBarActions(applicationViewModel = it) },
-        floatingActionButton = { SettingsBlacklistFloatingActionButton(it) });
+        appBarActions = { _, _ -> SettingsBlacklistAppBarActions() },
+        floatingActionButton = { SettingsBlacklistFloatingActionButton() });
 
     companion object {
         val byRoute: Map<String, Screen> = HashMap<String, Screen>().apply {

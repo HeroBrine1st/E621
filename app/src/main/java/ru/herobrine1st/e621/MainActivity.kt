@@ -40,6 +40,7 @@ import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.ui.snackbar.SnackbarController
 import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
 import ru.herobrine1st.e621.ui.theme.E621Theme
+import ru.herobrine1st.e621.util.BlacklistCache
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
 import java.io.IOException
@@ -60,6 +61,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var snackbarAdapter: SnackbarAdapter
 
+    @Inject
+    lateinit var blacklistCache: BlacklistCache
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -71,6 +75,10 @@ class MainActivity : ComponentActivity() {
             } catch (t: Throwable) {
                 Log.w(TAG, "Exception reading preferences", t)
             }
+        }
+
+        lifecycleScope.launch {
+            blacklistCache.init()
         }
 
         setContent {
@@ -187,13 +195,8 @@ class MainActivity : ComponentActivity() {
                                         isFavourite = { post ->
                                             applicationViewModel.isFavorited(post)
                                         },
-                                        isHiddenByBlacklist = { post ->
-                                            !applicationViewModel.isFavorited(post)
-                                                    && isBlacklistEnabled
-                                                    && applicationViewModel
-                                                .blacklistPostPredicate.test(post)
-                                        },
                                         isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
+                                        isBlacklistEnabled = isBlacklistEnabled,
                                         onAddToFavourites = { post ->
                                             applicationViewModel.handleFavoritePost(post)
                                         },
@@ -221,13 +224,8 @@ class MainActivity : ComponentActivity() {
                                         isFavourite = { post ->
                                             applicationViewModel.isFavorited(post)
                                         },
-                                        isHiddenByBlacklist = { post ->
-                                            !applicationViewModel.isFavorited(post)
-                                                    && isBlacklistEnabled
-                                                    && applicationViewModel
-                                                .blacklistPostPredicate.test(post)
-                                        },
                                         isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
+                                        isBlacklistEnabled = isBlacklistEnabled,
                                         onAddToFavourites = { post ->
                                             applicationViewModel.handleFavoritePost(post)
                                         }
@@ -252,7 +250,7 @@ class MainActivity : ComponentActivity() {
                                     Settings(navController)
                                 }
                                 composable(Screen.SettingsBlacklist.route) {
-                                    SettingsBlacklist(applicationViewModel) {
+                                    SettingsBlacklist {
                                         navController.popBackStack()
                                     }
                                 }

@@ -21,17 +21,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.ApplicationViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.component.BASE_WIDTH
 import ru.herobrine1st.e621.ui.dialog.StopThereAreUnsavedChangesDialog
 import ru.herobrine1st.e621.ui.dialog.TextInputDialog
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
+import ru.herobrine1st.e621.util.BlacklistCache
 import ru.herobrine1st.e621.util.StatefulBlacklistEntry
+import javax.inject.Inject
 
 @Composable
-fun SettingsBlacklistFloatingActionButton(applicationViewModel: ApplicationViewModel) {
+fun SettingsBlacklistFloatingActionButton() {
+    val viewModel: SettingsBlacklistViewModel = hiltViewModel()
+
     var openDialog by rememberSaveable { mutableStateOf(false) }
 
     if (openDialog) TextInputDialog(
@@ -41,7 +47,7 @@ fun SettingsBlacklistFloatingActionButton(applicationViewModel: ApplicationViewM
         onClose = { openDialog = false },
         onSubmit = {
             if (it.isBlank()) return@TextInputDialog
-            applicationViewModel.addBlacklistEntry(it)
+            viewModel.appendEntry(it)
         }
     )
 
@@ -53,18 +59,22 @@ fun SettingsBlacklistFloatingActionButton(applicationViewModel: ApplicationViewM
 }
 
 @Composable
-fun blacklistHasChanges(applicationViewModel: ApplicationViewModel) = remember { derivedStateOf { applicationViewModel.blacklistDoNotUseAsFilter.any { it.isChanged } } }
+fun blacklistHasChanges(viewModel: SettingsBlacklistViewModel) =
+    remember { derivedStateOf { viewModel.entries.any { it.isChanged } } }
+
 
 @Composable
-fun SettingsBlacklistAppBarActions(applicationViewModel: ApplicationViewModel) {
-    val hasChanges by blacklistHasChanges(applicationViewModel)
+fun SettingsBlacklistAppBarActions() {
+    val viewModel: SettingsBlacklistViewModel = hiltViewModel()
+
+    val hasChanges by blacklistHasChanges(viewModel)
     val coroutineScope = rememberCoroutineScope()
-    if (applicationViewModel.blacklistUpdating || applicationViewModel.blacklistLoading) {
+    if (viewModel.isUpdating || viewModel.isLoading) {
         CircularProgressIndicator(color = ActionBarIconColor)
     } else if (hasChanges) {
         IconButton(onClick = {
             coroutineScope.launch {
-                applicationViewModel.applyBlacklistChanges()
+                viewModel.applyChanges()
             }
         }) {
             Icon(
@@ -77,10 +87,12 @@ fun SettingsBlacklistAppBarActions(applicationViewModel: ApplicationViewModel) {
 }
 
 @Composable
-fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> Unit) {
+fun SettingsBlacklist(exit: () -> Unit) {
+    val viewModel: SettingsBlacklistViewModel = hiltViewModel()
+
     var editQueryEntry by remember { mutableStateOf<StatefulBlacklistEntry?>(null) }
     if (editQueryEntry != null) {
-        val entry = editQueryEntry ?: throw NullPointerException()
+        val entry = editQueryEntry!!
         TextInputDialog(
             title = stringResource(R.string.edit_blacklist_entry),
             submitButtonText = stringResource(R.string.apply),
@@ -93,20 +105,23 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
         )
     }
 
-    val hasChanges by blacklistHasChanges(applicationViewModel)
+    val hasChanges by blacklistHasChanges(viewModel)
     var openExitDialog by remember { mutableStateOf(false) }
 
     if (openExitDialog) StopThereAreUnsavedChangesDialog(onClose = { openExitDialog = false }) {
-        applicationViewModel.resetBlacklistChanges()
-        onExit()
+        viewModel.resetChanges()
+        exit()
     }
 
     BackHandler(enabled = hasChanges) {
         openExitDialog = true
     }
 
-    LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
-        itemsIndexed(applicationViewModel.blacklistDoNotUseAsFilter) { i, entry ->
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        itemsIndexed(viewModel.entries) { i, entry ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(BASE_WIDTH)
@@ -134,7 +149,7 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
                 if (entry.isChanged) {
                     key("Undo button") {
                         IconButton(
-                            onClick = { applicationViewModel.resetBlacklistEntry(entry) },
+                            onClick = { viewModel.resetEntry(entry) },
                         ) {
                             Icon(
                                 Icons.Outlined.Undo,
@@ -147,7 +162,7 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
                     IconButton(
                         onClick = {
                             if (entry.isPendingDeletion) entry.markAsDeleted(false)
-                            else applicationViewModel.deleteBlacklistEntry(entry)
+                            else viewModel.markEntryAsDeleted(entry)
                         }
                     ) {
                         Icon(
@@ -169,8 +184,30 @@ fun SettingsBlacklist(applicationViewModel: ApplicationViewModel, onExit: () -> 
                     Checkbox(checked = entry.enabled, onCheckedChange = { entry.enabled = it })
                 }
             }
-            if (i < applicationViewModel.blacklistDoNotUseAsFilter.size - 1)
+            if (i < viewModel.entries.size - 1)
                 Divider()
         }
     }
+}
+
+
+@HiltViewModel
+class SettingsBlacklistViewModel @Inject constructor(
+    private val cache: BlacklistCache
+) : ViewModel() {
+
+    val entries = cache.entries
+    val isLoading get() = cache.isLoading
+    var isUpdating by mutableStateOf(false)
+
+    suspend fun applyChanges() = cache.applyChanges()
+
+    fun appendEntry(query: String) = cache.appendEntry(query)
+
+    fun resetEntry(entry: StatefulBlacklistEntry) = cache.resetEntry(entry)
+
+    fun markEntryAsDeleted(entry: StatefulBlacklistEntry, deleted: Boolean = true) =
+        cache.markEntryAsDeleted(entry, deleted)
+
+    fun resetChanges() = cache.resetChanges()
 }

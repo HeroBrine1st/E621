@@ -17,13 +17,15 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.BlacklistCache
 import ru.herobrine1st.e621.util.SearchOptions
 import javax.inject.Inject
 
 @HiltViewModel
 class PostsViewModel @Inject constructor(
     private val api: Api,
-    private val snackbar: SnackbarAdapter
+    private val snackbar: SnackbarAdapter,
+    private val blacklistCache: BlacklistCache
 ) : ViewModel() {
     private var searchOptions: SearchOptions? = null
 
@@ -34,6 +36,14 @@ class PostsViewModel @Inject constructor(
         )
     ) {
         PostsSource(api, snackbar, searchOptions)
+    }
+
+    fun isHiddenByBlacklist(post: Post): Boolean {
+        // TODO handle cache of favourites
+
+        return !post.isFavorited && blacklistCache.entries.any {
+            it.dbEnabled && it.predicate.test(post)
+        }
     }
 
     val postsFlow: Flow<PagingData<Post>> = pager.flow.cachedIn(viewModelScope)

@@ -50,8 +50,8 @@ fun PostsAppBarActions(navController: NavHostController) {
 fun Posts(
     searchOptions: SearchOptions,
     isFavourite: (Post) -> Boolean,
-    isHiddenByBlacklist: (Post) -> Boolean,
     isAuthorized: Boolean,
+    isBlacklistEnabled: Boolean,
     onAddToFavourites: (Post) -> Unit,
     openPost: (post: Post, scrollToComments: Boolean) -> Unit
 ) {
@@ -79,8 +79,8 @@ fun Posts(
     ) {
         endOfPagePlaceholder(posts.loadState.prepend)
         items(posts, key = { it.id }) { post ->
-            if(post == null) return@items
-            val blacklisted = isHiddenByBlacklist(post)
+            if (post == null) return@items
+            val blacklisted by remember(post, isBlacklistEnabled) { derivedStateOf { isBlacklistEnabled && viewModel.isHiddenByBlacklist(post) } }
             viewModel.notifyPostState(blacklisted)
             if (blacklisted) return@items
             Post(
