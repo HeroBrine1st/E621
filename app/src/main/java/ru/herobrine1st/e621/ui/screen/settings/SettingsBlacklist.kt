@@ -211,7 +211,7 @@ class SettingsBlacklistViewModel @Inject constructor(
             // navgraph but one under NavHost and two under Scaffold) so that ViewModel is the
             // most fitting pattern
             //
-            // Looks like this ViewModel is cleared when user exits the app
+            // Looks like this ViewModel is cleared when user exits the settings screen
             // so that there's no resource consuming
             //
             // Another solution: extract this block to suspend function and call from composable's
