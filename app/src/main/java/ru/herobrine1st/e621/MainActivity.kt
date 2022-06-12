@@ -112,7 +112,8 @@ class MainActivity : ComponentActivity() {
                                 backgroundColor = MaterialTheme.colors.primarySurface,
                                 elevation = 12.dp,
                                 actions = {
-                                    navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
+                                    val saveableStateHolder = rememberSaveableStateHolder()
+                                    navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
                                         screen?.appBarActions?.invoke(
                                             this,
                                             navController,
@@ -127,7 +128,8 @@ class MainActivity : ComponentActivity() {
                         },
                         scaffoldState = scaffoldState,
                         floatingActionButton = {
-                            navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = rememberSaveableStateHolder()) {
+                            val saveableStateHolder = rememberSaveableStateHolder()
+                            navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
                                 screen?.floatingActionButton?.invoke(applicationViewModel)
                             }
                         }
