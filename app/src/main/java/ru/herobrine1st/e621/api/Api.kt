@@ -1,7 +1,7 @@
 package ru.herobrine1st.e621.api
 
 import android.util.Log
-import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.readValue
 import okhttp3.*
@@ -29,7 +29,7 @@ fun Response.checkStatus(close: Boolean = false, noThrow: Boolean = false) {
     if (close) body?.close()
 }
 
-val LocalAPI = compositionLocalOf<Api> { error("No API found") }
+val LocalAPI = staticCompositionLocalOf<Api> { error("No API found") }
 
 class Api(okHttpClient: OkHttpClient? = null) {
     private val okHttpClient = okHttpClient ?: OkHttpClient.Builder()
