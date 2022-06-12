@@ -6,7 +6,6 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.flow.MutableSharedFlow
-import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
 
 @Module
@@ -15,8 +14,4 @@ class SnackbarModule {
     @Provides
     @ActivityRetainedScoped
     fun provideSnackbarMessageFlow(): MutableSharedFlow<SnackbarMessage> = MutableSharedFlow()
-
-    @Provides
-    @ActivityRetainedScoped
-    fun provideSnackbarAdapter(snackbarMessageFlow: MutableSharedFlow<SnackbarMessage>) = SnackbarAdapter(snackbarMessageFlow)
 }
