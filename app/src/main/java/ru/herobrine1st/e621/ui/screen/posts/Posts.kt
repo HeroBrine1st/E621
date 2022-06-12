@@ -65,7 +65,8 @@ fun Posts(
         }
     }
 
-    if (posts.loadState.refresh !is LoadState.NotLoading) { // Do not reset lazyListState
+    if (posts.loadState.refresh !is LoadState.NotLoading // Do not reset lazyListState
+        || viewModel.isBlacklistLoading) {
         Base {
             Spacer(modifier = Modifier.height(4.dp))
             CircularProgressIndicator()

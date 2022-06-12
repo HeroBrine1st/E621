@@ -2,9 +2,10 @@
 
 package ru.herobrine1st.e621.util
 
-import androidx.compose.runtime.*
-import ru.herobrine1st.e621.api.createTagProcessor
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import ru.herobrine1st.e621.entity.BlacklistEntry
 
 @Stable
@@ -52,19 +53,10 @@ class StatefulBlacklistEntry private constructor(query: String, enabled: Boolean
         isPendingDeletion = deleted
     }
 
-    val predicate by derivedStateOf { createTagProcessor(dbQuery) }
-
-    fun applyInternalChanges(id: Long = 0L) {
-        if (id != 0L) {
-            if (isPendingInsertion) this.id = id
-            else throw RuntimeException("ID is provided but there should be no insertion")
-        }
-        dbQuery = query
-        dbEnabled = enabled
-    }
-
+    fun toEntry() = BlacklistEntry(
+        query, enabled, id
+    )
 }
 
 fun BlacklistEntry.asStateful() = StatefulBlacklistEntry.of(this)
 
-suspend fun BlacklistRepository.getAllEntriesAsStateful() = getAllEntries().map { it.asStateful() }

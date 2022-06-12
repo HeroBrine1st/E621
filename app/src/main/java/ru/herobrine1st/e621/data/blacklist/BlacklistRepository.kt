@@ -1,9 +1,10 @@
 package ru.herobrine1st.e621.data.blacklist
 
 import kotlinx.coroutines.flow.Flow
+import ru.herobrine1st.e621.data.BaseRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
 
-interface BlacklistRepository {
+interface BlacklistRepository: BaseRepository {
     fun getEntriesFlow(): Flow<List<BlacklistEntry>>
 
     suspend fun getAllEntries(): List<BlacklistEntry>

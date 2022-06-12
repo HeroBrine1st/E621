@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.ui.dialog
 
+import android.util.Log
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -22,10 +23,13 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.util.BlacklistCache
-import ru.herobrine1st.e621.util.StatefulBlacklistEntry
+import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import ru.herobrine1st.e621.util.asStateful
 import javax.inject.Inject
 
 @Composable
@@ -38,8 +42,11 @@ fun BlacklistTogglesDialog(
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     var isBlacklistUpdating by remember { mutableStateOf(false) }
-    val isBlacklistLoading = viewModel.isBlacklistLoading
-    val blacklistEntries: List<StatefulBlacklistEntry> = viewModel.entries
+    val isBlacklistLoading: Boolean
+    val blacklistEntries = viewModel.entriesFlow
+        .collectAsState().value.also {
+            isBlacklistLoading = it == null
+        } ?: emptyList()
 
     val onCancel = {
         blacklistEntries.forEach { it.resetChanges() }
@@ -64,7 +71,7 @@ fun BlacklistTogglesDialog(
             onCancel()
         }
     ) {
-        if (blacklistEntries.isEmpty() && !isBlacklistLoading) Text(stringResource(R.string.dialog_blacklist_empty))
+        if (!isBlacklistLoading && blacklistEntries.isEmpty()) Text(stringResource(R.string.dialog_blacklist_empty))
         else LazyColumn(
             modifier = Modifier.height(screenHeight * 0.4f),
         ) {
@@ -202,13 +209,26 @@ private fun DialogActions(
 
 @HiltViewModel
 class BlacklistTogglesDialogViewModel @Inject constructor(
-    private val cache: BlacklistCache
+    private val blacklistRepository: BlacklistRepository
 ) : ViewModel() {
-    val entries = cache.entries
 
-    val isBlacklistLoading get() = cache.isLoading
+    val entriesFlow = blacklistRepository.getEntriesFlow()
+        .map { list -> list.map { it.asStateful() } }
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(),
+            null
+        )
 
     suspend fun applyChanges() {
-        cache.applyChanges()
+        val entries = entriesFlow.value ?: kotlin.run {
+            Log.e(TAG, "Illegal call to applyChanges(): data isn't even downloaded from database")
+            throw IllegalStateException()
+        }
+        blacklistRepository.updateEntries(entries.map { it.toEntry() })
+    }
+
+    companion object {
+        const val TAG = "BlacklistTogglesDialogViewModel"
     }
 }

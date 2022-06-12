@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.room.withTransaction
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -16,9 +17,9 @@ import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.entity.Auth
+import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
-import ru.herobrine1st.e621.util.BlacklistCache
 import java.io.IOException
 import javax.inject.Inject
 
@@ -27,8 +28,7 @@ import javax.inject.Inject
 class ApplicationViewModel @Inject constructor(
     private val database: Database,
     private val api: Api,
-    private val snackbar: SnackbarAdapter,
-    private val blacklistCache: BlacklistCache
+    private val snackbar: SnackbarAdapter
 ) : ViewModel() {
 
     companion object {
@@ -144,11 +144,13 @@ class ApplicationViewModel @Inject constructor(
     //region Blacklist
 
     private suspend fun updateBlacklistFromAccount() {
-        if (blacklistCache.entries.isNotEmpty()) return
-        api.getBlacklistedTags().forEach {
-            blacklistCache.appendEntry(it)
+        if (database.blacklistDao().count() != 0) return
+        val tags = api.getBlacklistedTags()
+        database.withTransaction {
+            tags.forEach {
+                database.blacklistDao().insert(BlacklistEntry(it, true))
+            }
         }
-        blacklistCache.applyChanges()
     }
 
     //endregion
