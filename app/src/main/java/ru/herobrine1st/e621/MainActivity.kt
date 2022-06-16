@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
                 val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
 
                 // VMs
-                val applicationViewModel = viewModel<ApplicationViewModel>()
+                val accountViewModel = viewModel<AccountViewModel>()
 
                 // State
                 val scaffoldState = rememberScaffoldState()
@@ -92,7 +92,7 @@ class MainActivity : ComponentActivity() {
                 var showBlacklistDialog by remember { mutableStateOf(false) }
 
                 LaunchedEffect(true) {
-                    applicationViewModel.loadAllFromDatabase()
+                    accountViewModel.loadAllFromDatabase()
                 }
                 SnackbarController(
                     snackbarMessagesFlow,
@@ -117,7 +117,7 @@ class MainActivity : ComponentActivity() {
                                         screen?.appBarActions?.invoke(
                                             this,
                                             navController,
-                                            applicationViewModel
+                                            accountViewModel
                                         )
                                     }
                                     ActionBarMenu(navController, onOpenBlacklistDialog = {
@@ -130,7 +130,7 @@ class MainActivity : ComponentActivity() {
                         floatingActionButton = {
                             val saveableStateHolder = rememberSaveableStateHolder()
                             navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
-                                screen?.floatingActionButton?.invoke(applicationViewModel)
+                                screen?.floatingActionButton?.invoke(accountViewModel)
                             }
                         }
                     ) {
@@ -143,12 +143,12 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 composable(Screen.Home.route) {
                                     Home(
-                                        authState = applicationViewModel.authState,
+                                        authState = accountViewModel.authState,
                                         onLogin = { u, p, cb ->
-                                            applicationViewModel.authenticate(u, p, cb)
+                                            accountViewModel.authenticate(u, p, cb)
                                         },
                                         onLogout = {
-                                            applicationViewModel.logout()
+                                            accountViewModel.logout()
                                         },
                                         navigateToFavorites = {
                                             navController.navigate(Screen.Favourites.route)
@@ -186,7 +186,7 @@ class MainActivity : ComponentActivity() {
 
                                     Posts(
                                         searchOptions,
-                                        isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
+                                        isAuthorized = accountViewModel.authState == AuthState.AUTHORIZED,
                                         isBlacklistEnabled = isBlacklistEnabled,
                                     ) { post, scrollToComments ->
                                         navController.navigate(
@@ -209,7 +209,7 @@ class MainActivity : ComponentActivity() {
 
                                     Posts(
                                         searchOptions,
-                                        isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
+                                        isAuthorized = accountViewModel.authState == AuthState.AUTHORIZED,
                                         isBlacklistEnabled = isBlacklistEnabled
                                     ) { post, scrollToComments ->
                                         navController.navigate(

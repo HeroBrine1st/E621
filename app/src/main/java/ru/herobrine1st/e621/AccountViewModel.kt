@@ -4,7 +4,6 @@ import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -14,7 +13,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.api.Api
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.entity.BlacklistEntry
@@ -25,14 +23,14 @@ import javax.inject.Inject
 
 
 @HiltViewModel
-class ApplicationViewModel @Inject constructor(
+class AccountViewModel @Inject constructor(
     private val database: Database,
     private val api: Api,
     private val snackbar: SnackbarAdapter
 ) : ViewModel() {
 
     companion object {
-        val TAG = ApplicationViewModel::class.simpleName
+        val TAG = AccountViewModel::class.simpleName
     }
 
     fun loadAllFromDatabase() {
@@ -41,8 +39,6 @@ class ApplicationViewModel @Inject constructor(
         }
     }
 
-
-    //region Auth
     var authState: AuthState by mutableStateOf(AuthState.LOADING)
         private set
     val login get() = api.login
@@ -139,9 +135,6 @@ class ApplicationViewModel @Inject constructor(
             authState = AuthState.NO_DATA
         }
     }
-
-    //endregion
-    //region Blacklist
 
     private suspend fun updateBlacklistFromAccount() {
         if (database.blacklistDao().count() != 0) return

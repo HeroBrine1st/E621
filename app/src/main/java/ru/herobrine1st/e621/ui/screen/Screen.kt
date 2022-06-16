@@ -11,7 +11,7 @@ import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import ru.herobrine1st.e621.ApplicationViewModel
+import ru.herobrine1st.e621.AccountViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
 import ru.herobrine1st.e621.ui.screen.posts.PostNavType
@@ -55,8 +55,8 @@ enum class Screen(
     val icon: ImageVector,
     private val initialRoute: String,
     vararg arguments: NamedNavArgument,
-    val appBarActions: @Composable RowScope.(NavHostController, ApplicationViewModel) -> Unit = { _, _ -> },
-    val floatingActionButton: @Composable (ApplicationViewModel) -> Unit = {}
+    val appBarActions: @Composable RowScope.(NavHostController, AccountViewModel) -> Unit = { _, _ -> },
+    val floatingActionButton: @Composable (AccountViewModel) -> Unit = {}
 ) {
     Home(R.string.app_name, Icons.Default.Home, "main"),
     Search(
