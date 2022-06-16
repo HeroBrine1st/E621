@@ -186,14 +186,8 @@ class MainActivity : ComponentActivity() {
 
                                     Posts(
                                         searchOptions,
-                                        isFavourite = { post ->
-                                            applicationViewModel.isFavorited(post)
-                                        },
                                         isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
                                         isBlacklistEnabled = isBlacklistEnabled,
-                                        onAddToFavourites = { post ->
-                                            applicationViewModel.handleFavoritePost(post)
-                                        },
                                     ) { post, scrollToComments ->
                                         navController.navigate(
                                             Screen.Post.buildRoute {
@@ -215,14 +209,8 @@ class MainActivity : ComponentActivity() {
 
                                     Posts(
                                         searchOptions,
-                                        isFavourite = { post ->
-                                            applicationViewModel.isFavorited(post)
-                                        },
                                         isAuthorized = applicationViewModel.authState == AuthState.AUTHORIZED,
-                                        isBlacklistEnabled = isBlacklistEnabled,
-                                        onAddToFavourites = { post ->
-                                            applicationViewModel.handleFavoritePost(post)
-                                        }
+                                        isBlacklistEnabled = isBlacklistEnabled
                                     ) { post, scrollToComments ->
                                         navController.navigate(
                                             Screen.Post.buildRoute {

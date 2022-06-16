@@ -49,10 +49,8 @@ fun PostsAppBarActions(navController: NavHostController) {
 @Composable
 fun Posts(
     searchOptions: SearchOptions,
-    isFavourite: (Post) -> Boolean,
     isAuthorized: Boolean,
     isBlacklistEnabled: Boolean,
-    onAddToFavourites: (Post) -> Unit,
     openPost: (post: Post, scrollToComments: Boolean) -> Unit
 ) {
     val viewModel: PostsViewModel = hiltViewModel()
@@ -86,10 +84,10 @@ fun Posts(
             if (blacklisted) return@items
             Post(
                 post = post,
-                isFavourite = isFavourite(post),
+                isFavourite = viewModel.isFavourite(post),
                 isAuthorized = isAuthorized,
                 onAddToFavourites = {
-                    onAddToFavourites(post)
+                    viewModel.addToFavourites(post)
                 }
             ) { scrollToComments -> openPost(post, scrollToComments) }
             Spacer(modifier = Modifier.height(4.dp))

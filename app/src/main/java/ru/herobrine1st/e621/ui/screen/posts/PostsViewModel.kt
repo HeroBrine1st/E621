@@ -3,9 +3,7 @@ package ru.herobrine1st.e621.ui.screen.posts
 import android.util.Log
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.SnackbarDuration
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
@@ -13,17 +11,22 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Api
+import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.SearchOptions
+import java.io.IOException
 import java.util.function.Predicate
 import javax.inject.Inject
 
@@ -31,7 +34,8 @@ import javax.inject.Inject
 class PostsViewModel @Inject constructor(
     private val api: Api,
     private val snackbar: SnackbarAdapter,
-    private val blacklistRepository: BlacklistRepository
+    private val blacklistRepository: BlacklistRepository,
+    private val favouritesCache: FavouritesCache
 ) : ViewModel() {
     private var searchOptions: SearchOptions? = null
 
@@ -63,12 +67,38 @@ class PostsViewModel @Inject constructor(
     }
 
     fun isHiddenByBlacklist(post: Post): Boolean {
-        // TODO handle cache of favourites
-        if(blacklistPredicate == null) return false
-        return !post.isFavorited && blacklistPredicate!!.test(post)
-//                blacklistCache.entries.any {
-//            it.dbEnabled && it.predicate.test(post)
-//        }
+        if (blacklistPredicate == null) return false
+        return !favouritesCache.flow.value.getOrDefault(post.id, post.isFavorited)
+                && blacklistPredicate!!.test(post)
+    }
+
+    @Composable
+    fun isFavourite(post: Post) =
+        favouritesCache.flow.collectAsState().value.getOrDefault(post.id, post.isFavorited)
+
+    fun addToFavourites(post: Post) {
+        viewModelScope.launch {
+            val wasFavourite = favouritesCache.flow.value.getOrDefault(post.id, post.isFavorited)
+            favouritesCache.setFavourite(post.id, !wasFavourite) // Instant UI reaction
+            try {
+                withContext(Dispatchers.IO) {
+                    if (wasFavourite) api.deleteFavorite(post.id)
+                    else api.favorite(post.id)
+                }
+            } catch (e: IOException) {
+                favouritesCache.setFavourite(post.id, wasFavourite)
+                Log.e(
+                    TAG,
+                    "IO Error while while trying to (un)favorite post (id=${post.id}, wasFavourite=$wasFavourite)",
+                    e
+                )
+                snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
+            } catch (e: ApiException) {
+                favouritesCache.setFavourite(post.id, wasFavourite)
+                Log.e(TAG, "An API exception occurred", e)
+                // TODO check authorization. This endpoint returns 403 Forbidden if no auth provided
+            }
+        }
     }
 
     val postsFlow: Flow<PagingData<Post>> = pager.flow.cachedIn(viewModelScope)
@@ -102,5 +132,9 @@ class PostsViewModel @Inject constructor(
         if (searchOptions == this.searchOptions) return
         this.searchOptions = searchOptions
         refresh()
+    }
+
+    companion object {
+        const val TAG = "PostsViewModel"
     }
 }

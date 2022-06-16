@@ -152,57 +152,25 @@ class ApplicationViewModel @Inject constructor(
             }
         }
     }
-
-    //endregion
-    //region Favorites
-
-    private val favoritesCache = mutableStateMapOf<Int, Boolean>()
-
-    fun isFavorited(post: Post): Boolean {
-        return favoritesCache.getOrDefault(post.id, post.isFavorited)
-    }
-
-
-    fun handleFavoritePost(post: Post) {
-        val isFavorited = isFavorited(post)
-        val isCached = post.id in favoritesCache
-        favoritesCache[post.id] = !isFavorited
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                if (isFavorited) api.deleteFavorite(post.id)
-                else api.favorite(post.id)
-            } catch (e: IOException) {
-                Log.e(
-                    TAG,
-                    "IO Error while while trying to (un)favorite post (id=${post.id}, isFavorited=$isFavorited)",
-                    e
-                )
-                snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
-                if (isCached) favoritesCache[post.id] = isFavorited
-                else favoritesCache.remove(post.id)
-            }
-        }
-    }
-    //endregion
-    //region Up/down votes
-
-    suspend fun vote(post: Post, vote: Int) {
-        assert(vote in -1..1)
-        val currentVote = database.voteDao().getVote(post.id) ?: 0
-        if (vote == 0) {
-            val score = api.vote(post.id, currentVote, false)
-            if (score.ourScore != 0) { // API does not send user's vote with post
-                assert(api.vote(post.id, score.ourScore, false).ourScore == 0)
-            }
-        } else {
-            assert(api.vote(post.id, vote, true).ourScore == vote)
-        }
-        database.voteDao().insertOrUpdate(post.id, vote)
-    }
-
-    suspend fun getPostVote(post: Post): Int {
-        return database.voteDao().getVote(post.id) ?: 0
-    }
-
-    //endregion
+//    //region Up/down votes
+//
+//    suspend fun vote(post: Post, vote: Int) {
+//        assert(vote in -1..1)
+//        val currentVote = database.voteDao().getVote(post.id) ?: 0
+//        if (vote == 0) {
+//            val score = api.vote(post.id, currentVote, false)
+//            if (score.ourScore != 0) { // API does not send user's vote with post
+//                assert(api.vote(post.id, score.ourScore, false).ourScore == 0)
+//            }
+//        } else {
+//            assert(api.vote(post.id, vote, true).ourScore == vote)
+//        }
+//        database.voteDao().insertOrUpdate(post.id, vote)
+//    }
+//
+//    suspend fun getPostVote(post: Post): Int {
+//        return database.voteDao().getVote(post.id) ?: 0
+//    }
+//
+//    //endregion
 }
