@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey
 // There should be only one
 @Entity
 data class Auth(
-    @ColumnInfo(name = "login") var login: String,
-    @ColumnInfo(name = "api_key") var apiKey: String,
-    @PrimaryKey(autoGenerate = true) val id: Int = 0
+    @ColumnInfo(name = "login") val login: String,
+    @ColumnInfo(name = "api_key") val apiKey: String,
+    @PrimaryKey(autoGenerate = true) val id: Long = 0
 )

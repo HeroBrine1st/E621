@@ -112,9 +112,12 @@ class AccountViewModel @Inject constructor(
         if (auth == null) {
             database.authDao().insert(Auth(login, apiKey))
         } else {
-            auth.login = login
-            auth.apiKey = apiKey
-            database.authDao().insert(auth)
+            database.authDao().insert(
+                auth.copy(
+                    login = login,
+                    apiKey = apiKey
+                )
+            )
         }
     }
 
