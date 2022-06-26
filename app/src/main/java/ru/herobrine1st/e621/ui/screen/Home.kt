@@ -132,7 +132,7 @@ fun AuthorizationMenu(
         AuthState.IO_ERROR -> {
             Text(stringResource(R.string.network_error))
         }
-        AuthState.SQL_ERROR -> {
+        AuthState.DATABASE_ERROR -> {
             Text(stringResource(R.string.database_error))
         }
         else -> {}

@@ -1,10 +1,33 @@
 package ru.herobrine1st.e621.enumeration
 
 enum class AuthState {
-    NO_DATA, // default if no auth info at the start of app
+    /**
+     * No credentials are stored
+     */
+    NO_DATA,
+
+    /**
+     * Initial state
+     */
     LOADING,
+
+    /**
+     * Credentials are stored and valid
+     */
     AUTHORIZED,
+
+    /**
+     * Couldn't perform a request to the API
+     */
     IO_ERROR,
-    SQL_ERROR,
-    UNAUTHORIZED // error when trying to authenticate
+
+    /**
+     * Internal error occurred
+     */
+    DATABASE_ERROR,
+
+    /**
+     * API error occurred while trying to authenticate
+     */
+    UNAUTHORIZED
 }

@@ -53,7 +53,7 @@ class AccountViewModel @Inject constructor(
                     AuthState.AUTHORIZED
                 } else {
                     try {
-                        database.authDao().logout()
+                        database.authDao().delete()
                     } catch (e: Throwable) {
                         Log.e(
                             TAG, "Unknown exception occurred while purging invalid auth data",
@@ -102,7 +102,7 @@ class AccountViewModel @Inject constructor(
                     R.string.database_error,
                     SnackbarDuration.Long
                 )
-                AuthState.SQL_ERROR
+                AuthState.DATABASE_ERROR
             }
         }
     }
@@ -125,7 +125,7 @@ class AccountViewModel @Inject constructor(
         assert(authState == AuthState.AUTHORIZED)
         viewModelScope.launch {
             try {
-                database.authDao().logout()
+                database.authDao().delete()
             } catch (e: SQLiteException) {
                 Log.e(TAG, "SQLite Error while trying to logout", e)
                 snackbar.enqueueMessage(

@@ -38,19 +38,20 @@ interface IAPI {
     @POST("/favorites.json")
     fun addToFavourites(
         @Query("post_id") postId: Int,
-        @Header("Authorization") credentials: String
+//        @Header("Authorization") credentials: String
     ): Call<ResponseBody>
 
     @DELETE("/favorites/{post_id}.json")
     fun removeFromFavourites(
         @Path("post_id") postId: Int,
-        @Header("Authorization") credentials: String
+//        @Header("Authorization") credentials: String
     ): Call<ResponseBody>
 
     @POST("/posts/{post_id}/votes.json")
     fun vote(
         @Path("post_id") postId: Int,
         @IntRange(from = -1, to = 1) @Query("score") score: Int,
-        @Suppress("SpellCheckingInspection") @Query("no_unvote") noRetractVote: Boolean
+        @Suppress("SpellCheckingInspection") @Query("no_unvote") noRetractVote: Boolean,
+//        @Header("Authorization") credentials: String
     ): Call<PostVoteEndpoint>
 }

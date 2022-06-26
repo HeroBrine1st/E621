@@ -15,6 +15,7 @@ import retrofit2.converter.jackson.JacksonConverterFactory
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.IAPI
+import ru.herobrine1st.e621.net.AuthorizationInterceptor
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.util.objectMapper
 import java.io.File
@@ -26,7 +27,10 @@ class APIModule {
     @Provides
     @ActivityRetainedScoped
     @APIHttpClient
-    fun provideAPIHttpClient(@ApplicationContext context: Context): OkHttpClient {
+    fun provideAPIHttpClient(
+        @ApplicationContext context: Context,
+        authorizationInterceptor: AuthorizationInterceptor
+    ): OkHttpClient {
         val cacheDir = File(context.cacheDir, "okhttp").apply { mkdirs() }
         val size = (StatFs(cacheDir.absolutePath).let {
             it.blockCountLong * it.blockSizeLong
@@ -37,6 +41,7 @@ class APIModule {
             )
         return OkHttpClient.Builder()
             .addNetworkInterceptor(RateLimitInterceptor(1.5))
+            .addInterceptor(authorizationInterceptor)
             .cache(Cache(cacheDir, size))
             .build()
     }
@@ -44,7 +49,8 @@ class APIModule {
 
     @Provides
     @ActivityRetainedScoped
-    @Deprecated("Migration to retrofit",
+    @Deprecated(
+        "Migration to retrofit",
         ReplaceWith("api: IAPI", "ru.herobrine1st.e621.api.IAPI")
     )
     fun provideAPI(@APIHttpClient okHttpClient: OkHttpClient): Api {

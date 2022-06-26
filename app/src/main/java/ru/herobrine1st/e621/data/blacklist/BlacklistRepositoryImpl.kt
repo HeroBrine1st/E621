@@ -1,17 +1,16 @@
 package ru.herobrine1st.e621.data.blacklist
 
-import androidx.room.withTransaction
 import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.dao.BlacklistDao
+import ru.herobrine1st.e621.data.BaseRepositoryImpl
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import javax.inject.Inject
 
 class BlacklistRepositoryImpl @Inject constructor(
-    val database: Database,
+    database: Database,
     val dao: BlacklistDao
-) :
-    BlacklistRepository {
+) : BaseRepositoryImpl(database), BlacklistRepository {
 
     override fun getEntriesFlow(): Flow<List<BlacklistEntry>> = dao.getFlow()
 
@@ -26,7 +25,4 @@ class BlacklistRepositoryImpl @Inject constructor(
     override suspend fun deleteEntryById(id: Long) = dao.delete(id)
 
     override suspend fun updateEntries(entries: List<BlacklistEntry>) = dao.update(entries)
-
-    override suspend fun <R> withTransaction(block: suspend () -> R) =
-        database.withTransaction(block)
 }
