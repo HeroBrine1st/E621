@@ -19,6 +19,11 @@ interface AuthDao {
     @Query("DELETE FROM auth")
     suspend fun delete(): Int
 
+    // Maybe one day there will be support for multiple accounts. Maybe.
+    // This is very unlikely (who ever will use it? and, therefore, why should I code it?), but I design
+    // this app with this feature in my mind. At least interceptor won't delete all accounts now.
+    // Another question is, how there would be 2 or more accounts, but this is trivial
+    // and left as an exercise for the reader
     @Delete
     suspend fun delete(auth: Auth)
 
