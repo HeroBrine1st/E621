@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 
+// TODO migrate to singleton dependency (I mean, with Hilt)
 val objectMapper: ObjectMapper by lazy {
     jsonMapper {
         addModule(kotlinModule())

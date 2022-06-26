@@ -39,7 +39,9 @@ android {
         }
         forEach {
             it.buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
+            // TODO config field migration
             it.buildConfigField("String", "API_HOST", "\"e621.net\"")
+            it.buildConfigField("String", "API_BASE_URL", "\"e621.net\"")
             it.buildConfigField(
                 "String",
                 "USER_AGENT",
@@ -127,8 +129,12 @@ dependencies {
     implementation("com.google.accompanist:accompanist-flowlayout:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
 
-    // Other libraries
+    // Retrofit
     implementation("com.squareup.okhttp3:okhttp:4.9.3")
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
+
+    // Other libraries
     implementation("com.google.android.exoplayer:exoplayer:2.17.1")
     implementation("org.jsoup:jsoup:1.14.3")
 
