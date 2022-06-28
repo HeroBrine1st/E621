@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.api
 
+import androidx.annotation.CheckResult
 import androidx.annotation.IntRange
 import com.fasterxml.jackson.databind.node.ObjectNode
 import okhttp3.ResponseBody
@@ -10,12 +11,14 @@ import ru.herobrine1st.e621.api.model.PostVoteEndpoint
 import ru.herobrine1st.e621.api.model.PostsEndpoint
 
 interface IAPI {
+    @CheckResult
     @GET("/users/{name}.json")
     fun getUser(
         @Path("name") name: String,
         @Header("Authorization") credentials: String? = null
     ): Call<ObjectNode>
 
+    @CheckResult
     @GET("/posts.json")
     fun getPosts(
         @Query("tags") tags: String? = null,
@@ -24,12 +27,14 @@ interface IAPI {
         // @Header("Authorization") credentials: String? = null
     ): Call<PostsEndpoint>
 
+    @CheckResult
     @GET("/posts/{id}.json")
     fun getPost(
         @Path("id") id: Int
         // @Header("Authorization") credentials: String? = null
     ): Call<PostEndpoint>
 
+    @CheckResult
     @GET("/favorites.json")
     fun getFavourites(
         @Query("user_id") userId: Int? = null,
@@ -38,18 +43,21 @@ interface IAPI {
         // @Header("Authorization") credentials: String? = null
     ): Call<PostsEndpoint>
 
+    @CheckResult
     @POST("/favorites.json")
     fun addToFavourites(
         @Query("post_id") postId: Int,
 //        @Header("Authorization") credentials: String
     ): Call<ResponseBody>
 
+    @CheckResult
     @DELETE("/favorites/{post_id}.json")
     fun removeFromFavourites(
         @Path("post_id") postId: Int,
 //        @Header("Authorization") credentials: String
-    ): Call<ResponseBody>
+    ): Call<Void>
 
+    @CheckResult
     @POST("/posts/{post_id}/votes.json")
     fun vote(
         @Path("post_id") postId: Int,

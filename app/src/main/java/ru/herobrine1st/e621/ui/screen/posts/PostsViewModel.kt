@@ -27,6 +27,7 @@ import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.SearchOptions
+import ru.herobrine1st.e621.util.awaitResponse
 import java.io.IOException
 import java.util.function.Predicate
 import javax.inject.Inject
@@ -88,8 +89,8 @@ class PostsViewModel @Inject constructor(
             favouritesCache.setFavourite(post.id, !wasFavourite) // Instant UI reaction
             try {
                 withContext(Dispatchers.IO) {
-                    if(wasFavourite) api.removeFromFavourites(post.id)
-                    else api.addToFavourites(post.id)
+                    if (wasFavourite) api.removeFromFavourites(post.id).awaitResponse()
+                    else api.addToFavourites(post.id).awaitResponse()
                 }
             } catch (e: IOException) {
                 favouritesCache.setFavourite(post.id, wasFavourite)

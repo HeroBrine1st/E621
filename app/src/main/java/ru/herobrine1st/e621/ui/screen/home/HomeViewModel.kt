@@ -16,6 +16,7 @@ import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.credentials
+import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 import javax.inject.Inject
 
@@ -76,6 +77,11 @@ class HomeViewModel @Inject constructor(
         if (res.isSuccessful) {
             state = LoginState.AUTHORIZED
         } else {
+            debug {
+                Log.d(TAG, "Invalid username or api key (${res.code()} ${res.message()})")
+                @Suppress("BlockingMethodInNonBlockingContext") // Debug
+                Log.d(TAG, res.errorBody()!!.string())
+            }
             snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
             state = LoginState.NO_AUTH
             authorizationRepository.logout()
