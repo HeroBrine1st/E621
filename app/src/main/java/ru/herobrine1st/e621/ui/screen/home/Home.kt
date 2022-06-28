@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui.screen
+package ru.herobrine1st.e621.ui.screen.home
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,17 +19,15 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.ui.component.Base
 
 @Composable
 fun Home(
-    authState: AuthState,
-    onLogout: () -> Unit,
-    onLogin: (username: String, password: String, onSuccess: () -> Unit) -> Unit,
     navigateToSearch: () -> Unit,
     navigateToFavorites: () -> Unit,
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     Base {
         Button(
@@ -42,12 +40,12 @@ fun Home(
             Icon(Icons.Rounded.NavigateNext, contentDescription = null)
         }
         Spacer(modifier = Modifier.height(8.dp))
-        when (authState) {
-            AuthState.LOADING -> CircularProgressIndicator()
-            AuthState.AUTHORIZED -> {
+        when (viewModel.state) {
+            HomeViewModel.LoginState.LOADING -> CircularProgressIndicator()
+            HomeViewModel.LoginState.AUTHORIZED -> {
                 Button(
                     onClick = {
-                        onLogout()
+                        viewModel.logout()
                     },
                     modifier = Modifier
                         .padding(4.dp)
@@ -65,14 +63,16 @@ fun Home(
                     Text(stringResource(R.string.favourites))
                 }
             }
-            else -> AuthorizationMenu(authState = authState, onLogin = onLogin)
+            else -> AuthorizationMenu(authState = viewModel.state) { u, p, cb ->
+                viewModel.login(u, p, cb)
+            }
         }
     }
 }
 
 @Composable
 fun AuthorizationMenu(
-    authState: AuthState,
+    authState: HomeViewModel.LoginState,
     onLogin: (username: String, password: String, onSuccess: () -> Unit) -> Unit
 ) {
     var username by rememberSaveable { mutableStateOf("") }
@@ -126,14 +126,8 @@ fun AuthorizationMenu(
     }
     Spacer(modifier = Modifier.height(8.dp))
     when (authState) {
-        AuthState.UNAUTHORIZED -> {
-            Text(stringResource(R.string.login_unauthorized))
-        }
-        AuthState.IO_ERROR -> {
+        HomeViewModel.LoginState.IO_ERROR -> {
             Text(stringResource(R.string.network_error))
-        }
-        AuthState.DATABASE_ERROR -> {
-            Text(stringResource(R.string.database_error))
         }
         else -> {}
     }

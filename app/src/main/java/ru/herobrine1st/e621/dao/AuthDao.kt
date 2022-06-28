@@ -1,6 +1,8 @@
 package ru.herobrine1st.e621.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
 import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.entity.Auth
 
@@ -17,16 +19,8 @@ interface AuthDao {
     suspend fun insert(auth: Auth): Long
 
     @Query("DELETE FROM auth")
-    suspend fun delete(): Int
+    suspend fun deleteAll(): Int
 
-    // Maybe one day there will be support for multiple accounts. Maybe.
-    // This is very unlikely (who ever will use it? and, therefore, why should I code it?), but I design
-    // this app with this feature in my mind. At least interceptor won't delete all accounts now.
-    // Another question is, how there would be 2 or more accounts, but this is trivial
-    // and left as an exercise for the reader
-    @Delete
-    suspend fun delete(auth: Auth)
-
-    @Update
-    suspend fun update(user: Auth)
+    @Query("SELECT COUNT(*) FROM auth")
+    suspend fun count(): Int
 }

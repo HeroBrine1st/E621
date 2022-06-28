@@ -3,7 +3,7 @@ package ru.herobrine1st.e621.net
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
-import ru.herobrine1st.e621.dao.AuthDao
+import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.util.credentials
 import javax.inject.Inject
@@ -13,13 +13,13 @@ import javax.inject.Inject
  * * Set Authorization header on every request
  * * Check if authorization is valid and revoke otherwise
  */
-class AuthorizationInterceptor @Inject constructor(val authDao: AuthDao) :
+class AuthorizationInterceptor @Inject constructor(private val authorizationRepository: AuthorizationRepository) :
     Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         var auth: Auth? = null
         val request = if (chain.request().header("Authorization") == null) {
             // If header isn't set explicitly, set it from database
-            auth = runBlocking { authDao.get() }
+            auth = runBlocking { authorizationRepository.getAccount() }
             if (auth != null) {
                 chain.request().newBuilder()
                     .addHeader("Authorization", auth.credentials)
@@ -31,8 +31,9 @@ class AuthorizationInterceptor @Inject constructor(val authDao: AuthDao) :
         if (response.code == 401 || response.code == 403) {
             if(auth != null) {
                 runBlocking {
-                    authDao.delete(auth)
+                    authorizationRepository.logout()
                 }
+                // TODO notify user (delegate to dependency)
                 // Maybe retry?
             }
         }

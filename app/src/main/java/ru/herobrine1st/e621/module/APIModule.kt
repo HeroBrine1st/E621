@@ -66,6 +66,7 @@ class APIModule {
             .client(okHttpClient)
             .build()
 
+
     @Provides
     @ActivityRetainedScoped
     fun provideIAPI(retrofit: Retrofit): IAPI = retrofit.create(IAPI::class.java)

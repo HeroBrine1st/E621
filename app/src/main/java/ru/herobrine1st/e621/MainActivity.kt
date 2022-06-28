@@ -21,15 +21,14 @@ import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
-import ru.herobrine1st.e621.enumeration.AuthState
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreference
 import ru.herobrine1st.e621.preference.setPreference
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
-import ru.herobrine1st.e621.ui.screen.Home
 import ru.herobrine1st.e621.ui.screen.Screen
+import ru.herobrine1st.e621.ui.screen.home.Home
 import ru.herobrine1st.e621.ui.screen.posts.Post
 import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
@@ -116,8 +115,7 @@ class MainActivity : ComponentActivity() {
                                     navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
                                         screen?.appBarActions?.invoke(
                                             this,
-                                            navController,
-                                            accountViewModel
+                                            navController
                                         )
                                     }
                                     ActionBarMenu(navController, onOpenBlacklistDialog = {
@@ -130,7 +128,7 @@ class MainActivity : ComponentActivity() {
                         floatingActionButton = {
                             val saveableStateHolder = rememberSaveableStateHolder()
                             navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
-                                screen?.floatingActionButton?.invoke(accountViewModel)
+                                screen?.floatingActionButton?.invoke()
                             }
                         }
                     ) {
@@ -143,13 +141,6 @@ class MainActivity : ComponentActivity() {
                             ) {
                                 composable(Screen.Home.route) {
                                     Home(
-                                        authState = accountViewModel.authState,
-                                        onLogin = { u, p, cb ->
-                                            accountViewModel.authenticate(u, p, cb)
-                                        },
-                                        onLogout = {
-                                            accountViewModel.logout()
-                                        },
                                         navigateToFavorites = {
                                             navController.navigate(Screen.Favourites.route)
                                         },
@@ -186,7 +177,6 @@ class MainActivity : ComponentActivity() {
 
                                     Posts(
                                         searchOptions,
-                                        isAuthorized = accountViewModel.authState == AuthState.AUTHORIZED,
                                         isBlacklistEnabled = isBlacklistEnabled,
                                     ) { post, scrollToComments ->
                                         navController.navigate(
@@ -209,7 +199,6 @@ class MainActivity : ComponentActivity() {
 
                                     Posts(
                                         searchOptions,
-                                        isAuthorized = accountViewModel.authState == AuthState.AUTHORIZED,
                                         isBlacklistEnabled = isBlacklistEnabled
                                     ) { post, scrollToComments ->
                                         navController.navigate(
