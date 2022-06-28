@@ -38,12 +38,12 @@ suspend fun <T> Call<T>.await(): T {
         }
         Log.e("API", "Got unsuccessful response: ${response.code()} ${response.message()}")
         if (bodyResult.isSuccess) {
-            // why only nullable getter ???
-            Log.e("API", bodyResult.getOrNull()!!)
+            Log.e("API", bodyResult.getOrThrow())
         } else {
             Log.e(
                 "API",
                 "An exception occurred while reading error response",
+                // why only nullable getter ???
                 bodyResult.exceptionOrNull()!!
             )
         }

@@ -18,10 +18,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.ApiException
+import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
@@ -32,10 +33,11 @@ import javax.inject.Inject
 
 @HiltViewModel
 class PostsViewModel @Inject constructor(
-    private val api: Api,
+    private val api: IAPI,
     private val snackbar: SnackbarAdapter,
     private val blacklistRepository: BlacklistRepository,
-    private val favouritesCache: FavouritesCache
+    private val favouritesCache: FavouritesCache,
+    authorizationRepository: AuthorizationRepository
 ) : ViewModel() {
     private var searchOptions: SearchOptions? = null
 
@@ -47,6 +49,9 @@ class PostsViewModel @Inject constructor(
     ) {
         PostsSource(api, snackbar, searchOptions)
     }
+
+    val isAuthorizedFlow = authorizationRepository.getAccountFlow().map { it != null }
+    val usernameFlow = authorizationRepository.getAccountFlow().map { it?.login }
 
     private var blacklistPredicate by mutableStateOf<Predicate<Post>?>(null)
     val isBlacklistLoading get() = blacklistPredicate == null
@@ -66,6 +71,7 @@ class PostsViewModel @Inject constructor(
         }
     }
 
+    // TODO make composable
     fun isHiddenByBlacklist(post: Post): Boolean {
         if (blacklistPredicate == null) return false
         return !favouritesCache.flow.value.getOrDefault(post.id, post.isFavorited)
@@ -76,14 +82,14 @@ class PostsViewModel @Inject constructor(
     fun isFavourite(post: Post) =
         favouritesCache.flow.collectAsState().value.getOrDefault(post.id, post.isFavorited)
 
-    fun addToFavourites(post: Post) {
+    fun handleFavouriteButtonClick(post: Post) {
         viewModelScope.launch {
             val wasFavourite = favouritesCache.flow.value.getOrDefault(post.id, post.isFavorited)
             favouritesCache.setFavourite(post.id, !wasFavourite) // Instant UI reaction
             try {
                 withContext(Dispatchers.IO) {
-                    if (wasFavourite) api.deleteFavorite(post.id)
-                    else api.favorite(post.id)
+                    if(wasFavourite) api.removeFromFavourites(post.id)
+                    else api.addToFavourites(post.id)
                 }
             } catch (e: IOException) {
                 favouritesCache.setFavourite(post.id, wasFavourite)
@@ -96,7 +102,6 @@ class PostsViewModel @Inject constructor(
             } catch (e: ApiException) {
                 favouritesCache.setFavourite(post.id, wasFavourite)
                 Log.e(TAG, "An API exception occurred", e)
-                // TODO check authorization. This endpoint returns 403 Forbidden if no auth provided
             }
         }
     }

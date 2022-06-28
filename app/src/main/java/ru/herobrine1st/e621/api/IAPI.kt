@@ -1,6 +1,7 @@
 package ru.herobrine1st.e621.api
 
 import androidx.annotation.IntRange
+import com.fasterxml.jackson.databind.node.ObjectNode
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
@@ -13,13 +14,13 @@ interface IAPI {
     fun getUser(
         @Path("name") name: String,
         @Header("Authorization") credentials: String? = null
-    ): Call<ResponseBody>
+    ): Call<ObjectNode>
 
     @GET("/posts.json")
     fun getPosts(
-        @Query("tags") tags: String,
-        @Query("page") page: Int,
-        @Query("limit") limit: Int? = null
+        @Query("tags") tags: String? = null,
+        @Query("page") page: Int? = null, // 1 by default
+        @Query("limit") limit: Int? = null, // 250 by default
         // @Header("Authorization") credentials: String? = null
     ): Call<PostsEndpoint>
 
@@ -31,7 +32,9 @@ interface IAPI {
 
     @GET("/favorites.json")
     fun getFavourites(
-        @Query("user_id") userId: String?,
+        @Query("user_id") userId: Int? = null,
+        @Query("page") page: Int? = null, // 1 by default
+        @Query("limit") limit: Int? = null, // 250 by default
         // @Header("Authorization") credentials: String? = null
     ): Call<PostsEndpoint>
 

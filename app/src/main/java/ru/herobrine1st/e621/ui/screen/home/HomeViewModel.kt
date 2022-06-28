@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import retrofit2.awaitResponse
@@ -19,6 +20,7 @@ import java.io.IOException
 import javax.inject.Inject
 
 // LoginScreenViewModel ?
+@HiltViewModel
 class HomeViewModel @Inject constructor(
     private val authorizationRepository: AuthorizationRepository,
     private val api: IAPI,

@@ -2,6 +2,7 @@ package ru.herobrine1st.e621.module
 
 import android.content.Context
 import android.os.StatFs
+import androidx.compose.runtime.staticCompositionLocalOf
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -13,13 +14,14 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
 import ru.herobrine1st.e621.BuildConfig
-import ru.herobrine1st.e621.api.Api
 import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.net.AuthorizationInterceptor
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.util.objectMapper
 import java.io.File
 import javax.inject.Qualifier
+
+val LocalAPI = staticCompositionLocalOf<IAPI> { error("No API found") }
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
@@ -44,17 +46,6 @@ class APIModule {
             .addInterceptor(authorizationInterceptor)
             .cache(Cache(cacheDir, size))
             .build()
-    }
-
-
-    @Provides
-    @ActivityRetainedScoped
-    @Deprecated(
-        "Migration to retrofit",
-        ReplaceWith("api: IAPI", "ru.herobrine1st.e621.api.IAPI")
-    )
-    fun provideAPI(@APIHttpClient okHttpClient: OkHttpClient): Api {
-        return Api(okHttpClient)
     }
 
     @Provides

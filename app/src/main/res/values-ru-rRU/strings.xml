@@ -78,5 +78,5 @@
     <string name="login_login">Войти</string>
     <string name="login_unauthorized">Неверное имя пользователя или ключ API</string>
     <string name="login_logout">Выйти из аккаунта</string>
-    <string name="auth_revoked">Ваш ключ API был отозван</string>
+    <string name="auth_revoked">Ваш ключ API был аннулирован</string>
 </resources>

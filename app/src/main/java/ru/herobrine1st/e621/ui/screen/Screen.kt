@@ -11,7 +11,6 @@ import androidx.navigation.NamedNavArgument
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.navArgument
-import ru.herobrine1st.e621.AccountViewModel
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
 import ru.herobrine1st.e621.ui.screen.posts.PostNavType
@@ -55,8 +54,8 @@ enum class Screen(
     val icon: ImageVector,
     private val initialRoute: String,
     vararg arguments: NamedNavArgument,
-    val appBarActions: @Composable RowScope.(NavHostController, AccountViewModel) -> Unit = { _, _ -> },
-    val floatingActionButton: @Composable (AccountViewModel) -> Unit = {}
+    val appBarActions: @Composable RowScope.(NavHostController) -> Unit = {},
+    val floatingActionButton: @Composable () -> Unit = {}
 ) {
     Home(R.string.app_name, Icons.Default.Home, "main"),
     Search(
@@ -75,7 +74,7 @@ enum class Screen(
         navArgument("query") {
             type = PostsSearchOptionsNavType()
         },
-        appBarActions = { it, _ -> PostsAppBarActions(it) }
+        appBarActions = { PostsAppBarActions(it) }
     ),
     Post(R.string.post, Icons.Default.Feed, "post",
         navArgument("post") {
@@ -93,14 +92,14 @@ enum class Screen(
             type = NavType.StringType
             nullable = true
         },
-        appBarActions = { it, it1 -> FavouritesAppBarActions(it, it1) }
+        appBarActions = { FavouritesAppBarActions(it) }
     ),
     Settings(R.string.settings, Icons.Default.Settings, "settings"),
     SettingsBlacklist(
         R.string.blacklist,
         Icons.Default.Block,
         "settings/blacklist",
-        appBarActions = { _, _ -> SettingsBlacklistAppBarActions() },
+        appBarActions = { SettingsBlacklistAppBarActions() },
         floatingActionButton = { SettingsBlacklistFloatingActionButton() });
 
     companion object {

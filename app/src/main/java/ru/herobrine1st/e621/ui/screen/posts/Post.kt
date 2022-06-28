@@ -23,16 +23,16 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.LocalAPI
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.module.LocalAPI
 import ru.herobrine1st.e621.preference.PRIVACY_MODE
 import ru.herobrine1st.e621.preference.getPreferenceFlow
-import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
+import ru.herobrine1st.e621.util.await
+import ru.herobrine1st.e621.util.debug
+import java.io.IOException
 
 private const val TAG = "Post Screen"
 
@@ -49,15 +49,15 @@ fun Post(
             return@produceState
         }
         try {
-            value = withContext(Dispatchers.IO) {
-                api.fetchPostIfUpdated(initialPost)
-            }
-        } catch (t: Throwable) {
-            Log.e(TAG, "Unable to get post", t)
+            value = api.getPost(initialPost.id).await().post
+        } catch (e: IOException) {
+            Log.e(TAG, "Unable to get post ${initialPost.id}", e)
             snackbar.enqueueMessage(
                 R.string.network_error,
                 SnackbarDuration.Indefinite
             )
+        } catch (t: Throwable) {
+            Log.e(TAG, "Unable to get post ${initialPost.id}", t)
         }
     }
 

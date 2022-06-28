@@ -2,35 +2,32 @@ package ru.herobrine1st.e621.util
 
 import android.os.Bundle
 import android.os.Parcelable
+import android.util.Log
 import androidx.navigation.NavType
 import com.fasterxml.jackson.module.kotlin.readValue
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import kotlinx.parcelize.Parcelize
-import okhttp3.HttpUrl
-import ru.herobrine1st.e621.api.Api
+import ru.herobrine1st.e621.api.ApiException
+import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
+import ru.herobrine1st.e621.api.model.Post
+import java.io.IOException
 
 interface SearchOptions {
-    val tags: List<String>
-    val order: Order?
-    val orderAscending: Boolean
-    val rating: List<Rating>
-    val favouritesOf: String? // "favorited_by" in api
-
-    suspend fun prepareRequestUrl(api: Api): HttpUrl
+    @Throws(ApiException::class, IOException::class)
+    suspend fun getPosts(api: IAPI, limit: Int, page: Int): List<Post>
 }
 
 @Parcelize
 data class PostsSearchOptions(
-    override val tags: List<String> = emptyList(),
-    override val order: Order = Order.NEWEST_TO_OLDEST,
-    override val orderAscending: Boolean = false,
-    override val rating: List<Rating> = emptyList(),
-    override val favouritesOf: String? = null,
+    val tags: List<String> = emptyList(),
+    val order: Order = Order.NEWEST_TO_OLDEST,
+    val orderAscending: Boolean = false,
+    val rating: List<Rating> = emptyList(),
+    val favouritesOf: String? = null, // "favorited_by" in api
 ) : SearchOptions, Parcelable, JsonSerializable {
 
+    // TODO use StringBuilder
     private fun compileToQuery(): String {
         var query = tags.joinToString(" ")
         (if (orderAscending) this.order.ascendingApiName else this.order.apiName)?.let {
@@ -46,11 +43,14 @@ data class PostsSearchOptions(
         if (favouritesOf != null) {
             query += " fav:$favouritesOf"
         }
+        debug {
+            Log.d(PostsSearchOptions::class.simpleName, "Built query: $query")
+        }
         return query
     }
 
-    override suspend fun prepareRequestUrl(api: Api): HttpUrl {
-        return Api.preparePostsRequestUrl(compileToQuery())
+    override suspend fun getPosts(api: IAPI, limit: Int, page: Int): List<Post> {
+        return api.getPosts(tags = compileToQuery(), page = page, limit = limit).await().posts
     }
 
     companion object {
@@ -59,17 +59,13 @@ data class PostsSearchOptions(
     }
 }
 
-data class FavouritesSearchOptions(override val favouritesOf: String?) : SearchOptions {
-    override val tags: List<String> = emptyList()
-    override val order: Order? = null
-    override val orderAscending: Boolean = false
-    override val rating: List<Rating> = emptyList()
-
-    override suspend fun prepareRequestUrl(api: Api): HttpUrl {
-        val id = if (favouritesOf != null) withContext(Dispatchers.IO) {
-            api.getIdOfUser(favouritesOf)
-        } else null
-        return Api.prepareFavouritesRequestUrl(id)
+data class FavouritesSearchOptions(val favouritesOf: String?) : SearchOptions {
+    private var id: Int? = null
+    override suspend fun getPosts(api: IAPI, limit: Int, page: Int): List<Post> {
+        id = id ?: favouritesOf?.let {
+            api.getUser(favouritesOf).await().get("id").asInt()
+        }
+        return api.getFavourites(userId = id, page = page, limit = limit).await().posts
     }
 }
 

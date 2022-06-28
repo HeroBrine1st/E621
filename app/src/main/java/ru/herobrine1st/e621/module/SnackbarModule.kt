@@ -3,15 +3,15 @@ package ru.herobrine1st.e621.module
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityRetainedComponent
-import dagger.hilt.android.scopes.ActivityRetainedScoped
+import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.MutableSharedFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
+import javax.inject.Singleton
 
 @Module
-@InstallIn(ActivityRetainedComponent::class)
+@InstallIn(SingletonComponent::class)
 class SnackbarModule {
     @Provides
-    @ActivityRetainedScoped
+    @Singleton
     fun provideSnackbarMessageFlow(): MutableSharedFlow<SnackbarMessage> = MutableSharedFlow()
 }

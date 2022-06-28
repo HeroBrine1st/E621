@@ -5,7 +5,9 @@ import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.staticCompositionLocalOf
 import kotlinx.coroutines.flow.MutableSharedFlow
 import javax.inject.Inject
+import javax.inject.Singleton
 
+@Singleton
 class SnackbarAdapter @Inject constructor(private val snackbarSharedFlow: MutableSharedFlow<SnackbarMessage>) {
     suspend fun enqueueMessage(
         @StringRes resourceId: Int,

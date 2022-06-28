@@ -4,22 +4,18 @@ import android.util.Log
 import androidx.compose.material.SnackbarDuration
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.Api
+import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.SearchOptions
 import java.io.IOException
 
 class PostsSource(
-    private val api: Api,
+    private val api: IAPI,
     private val snackbar: SnackbarAdapter,
     private val searchOptions: SearchOptions?,
 ) : PagingSource<Int, Post>() {
-    private lateinit var preparedUrl: HttpUrl
     override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
         return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
     }
@@ -31,13 +27,9 @@ class PostsSource(
             )
         }
         return try {
-            if (!::preparedUrl.isInitialized) {
-                preparedUrl = searchOptions.prepareRequestUrl(api)
-            }
             val page = params.key ?: 1
-            val posts: List<Post> = withContext(Dispatchers.IO) {
-                api.getPosts(preparedUrl, page = page, limit = params.loadSize)
-            }
+            @Suppress("BlockingMethodInNonBlockingContext") // False positive
+            val posts: List<Post> = searchOptions.getPosts(api, page = page, limit = params.loadSize)
             LoadResult.Page(
                 data = posts,
                 prevKey = if (page == 1) null else page - 1,

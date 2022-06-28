@@ -5,6 +5,7 @@ import okhttp3.Interceptor
 import okhttp3.Response
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.entity.Auth
+import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.credentials
 import javax.inject.Inject
 
@@ -13,7 +14,10 @@ import javax.inject.Inject
  * * Set Authorization header on every request
  * * Check if authorization is valid and revoke otherwise
  */
-class AuthorizationInterceptor @Inject constructor(private val authorizationRepository: AuthorizationRepository) :
+class AuthorizationInterceptor @Inject constructor(
+    private val authorizationRepository: AuthorizationRepository,
+    private val authorizationNotifier: AuthorizationNotifier
+) :
     Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
         var auth: Auth? = null
@@ -29,11 +33,11 @@ class AuthorizationInterceptor @Inject constructor(private val authorizationRepo
         val response = chain.proceed(request)
         // TODO check if codes are right
         if (response.code == 401 || response.code == 403) {
-            if(auth != null) {
+            if (auth != null) {
                 runBlocking {
                     authorizationRepository.logout()
                 }
-                // TODO notify user (delegate to dependency)
+                authorizationNotifier.notifyAuthorizationRevoked()
                 // Maybe retry?
             }
         }

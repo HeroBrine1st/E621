@@ -11,16 +11,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.*
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.api.Api
-import ru.herobrine1st.e621.api.LocalAPI
+import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
+import ru.herobrine1st.e621.module.LocalAPI
 import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreference
@@ -51,7 +50,7 @@ class MainActivity : ComponentActivity() {
     lateinit var db: Database
 
     @Inject
-    lateinit var api: Api
+    lateinit var api: IAPI
 
     @Inject
     lateinit var snackbarMessagesFlow: MutableSharedFlow<SnackbarMessage>
@@ -82,17 +81,10 @@ class MainActivity : ComponentActivity() {
                 val navBackStackEntry by navController.currentBackStackEntryAsState()
                 val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
 
-                // VMs
-                val accountViewModel = viewModel<AccountViewModel>()
-
                 // State
                 val scaffoldState = rememberScaffoldState()
 
                 var showBlacklistDialog by remember { mutableStateOf(false) }
-
-                LaunchedEffect(true) {
-                    accountViewModel.loadAllFromDatabase()
-                }
                 SnackbarController(
                     snackbarMessagesFlow,
                     scaffoldState.snackbarHostState
