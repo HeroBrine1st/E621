@@ -1,3 +1,7 @@
+import com.google.protobuf.gradle.generateProtoTasks
+import com.google.protobuf.gradle.protobuf
+import com.google.protobuf.gradle.protoc
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -5,10 +9,12 @@ plugins {
     id("kotlin-parcelize")
     kotlin("kapt")
     id("dagger.hilt.android.plugin")
+    id("com.google.protobuf")
 }
 
 val kotlinVersion = "1.6.10"
 val composeVersion = "1.1.1"
+val protobufVersion = "3.21.2"
 
 val versionCode = 5
 val versionName = "1.0.0-alpha-4"
@@ -101,6 +107,8 @@ dependencies {
 
     // Jetpack Datastore
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation("androidx.datastore:datastore:1.0.0")
+    implementation("com.google.protobuf:protobuf-javalite:$protobufVersion")
 
     // Jetpack Paging
     val pagingVersion = "3.1.0"
@@ -145,6 +153,21 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeVersion")
     debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
+}
+
+protobuf {
+    protoc {
+        artifact = "com.google.protobuf:protoc:$protobufVersion"
+    }
+    generateProtoTasks {
+        all().forEach { task ->
+            task.plugins{
+                create("java") {
+                    option("lite")
+                }
+            }
+        }
+    }
 }
 
 ksp {
