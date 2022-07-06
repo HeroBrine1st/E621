@@ -1,34 +1,19 @@
 package ru.herobrine1st.e621.ui.component.video
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.Timeline
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class VideoPlayerViewModel(
+@HiltViewModel
+class VideoPlayerViewModel @Inject constructor(
     val exoPlayer: ExoPlayer
 ) : ViewModel(), Player.Listener {
-    class Factory(
-        private val context: Context,
-        private val mediaItem: MediaItem,
-    ) : ViewModelProvider.Factory {
-        @Suppress("UNCHECKED_CAST")
-        override fun <T : ViewModel> create(modelClass: Class<T>): T {
-            return VideoPlayerViewModel(
-                ExoPlayer.Builder(context).build().apply {
-                    setMediaItem(mediaItem)
-                    prepare()
-                }
-            ) as T
-        }
-    }
-
     init {
         exoPlayer.addListener(this)
     }
@@ -37,7 +22,7 @@ class VideoPlayerViewModel(
         exoPlayer.removeListener(this)
     }
 
-    var timestamp by mutableStateOf(Timestamp.UNKNOWN)
+    var timestamp by mutableStateOf(getCurrentTimestamp())
         private set
     var isLoading by mutableStateOf(exoPlayer.isLoading)
         private set
@@ -86,22 +71,20 @@ class VideoPlayerViewModel(
     }
 
     private fun updateTimestamp() {
-        timestamp = Timestamp(
-            System.currentTimeMillis(),
-            exoPlayer.currentPosition,
-            exoPlayer.contentPosition,
-            exoPlayer.playbackParameters.speed
-        )
+        timestamp = getCurrentTimestamp()
     }
+
+    private fun getCurrentTimestamp() = Timestamp(
+        System.currentTimeMillis(),
+        exoPlayer.currentPosition.coerceAtLeast(0),
+        exoPlayer.contentPosition.coerceAtLeast(0),
+        exoPlayer.playbackParameters.speed
+    )
 
     data class Timestamp(
         val anchorMs: Long,
         val positionMs: Long,
         val contentPositionMs: Long,
         val speed: Float
-    ) {
-        companion object {
-            val UNKNOWN = Timestamp(-1, -1, -1, 1f)
-        }
-    }
+    )
 }

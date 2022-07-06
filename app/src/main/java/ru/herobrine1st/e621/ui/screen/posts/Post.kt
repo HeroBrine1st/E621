@@ -1,6 +1,7 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Row
@@ -14,19 +15,20 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.google.android.exoplayer2.MediaItem
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.module.LocalAPI
+import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 import ru.herobrine1st.e621.util.await
@@ -38,13 +40,16 @@ private const val TAG = "Post Screen"
 @Composable
 fun Post(
     initialPost: Post,
-    @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean // TODO
+    @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean, // TODO
+    onExit: () -> Unit,
 ) {
     val api = LocalAPI.current
     val context = LocalContext.current
     val snackbar = LocalSnackbar.current
+
     val post by produceState(initialValue = initialPost) {
-        if (!initialPost.isFavorited && context.getPreferencesFlow { it.privacyModeEnabled }.first()) {
+        if (!initialPost.isFavorited && context.getPreferencesFlow { it.privacyModeEnabled }
+                .first()) {
             return@produceState
         }
         try {
@@ -59,6 +64,8 @@ fun Post(
             Log.e(TAG, "Unable to get post ${initialPost.id}", t)
         }
     }
+
+    ExoPlayerHandler(post, onExit)
 
     LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
         item("media") {
@@ -162,5 +169,28 @@ fun Tag(tag: String) {
                 contentDescription = stringResource(R.string.remove) // TODO i18n something more suitable
             )
         }
+    }
+}
+
+
+// Set media item only on first composition in this scope (likely it is a navigation graph)
+// Clear media item on exit
+// Like DisposableEffect, but in scope of a graph
+// Cannot use RememberObserver because onForgotten is triggered on decomposition even if rememberSaveable is used
+@Composable
+fun ExoPlayerHandler(post: Post, onExit: () -> Unit) {
+    val exoPlayer = LocalExoPlayer.current
+    var mediaItemIsSet by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        if (mediaItemIsSet) return@LaunchedEffect
+        if (post.file.type.isNotVideo) return@LaunchedEffect
+        exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
+        exoPlayer.prepare()
+        mediaItemIsSet = true
+    }
+
+    BackHandler {
+        exoPlayer.clearMediaItems()
+        onExit()
     }
 }

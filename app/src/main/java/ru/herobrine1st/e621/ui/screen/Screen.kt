@@ -117,7 +117,7 @@ enum class Screen(
             separator = "&",
             prefix = "?"
         ) {
-            return@joinToString "$it={$it}"
+            "$it={$it}"
         }
 
     fun buildRoute(builder: RouteBuilder.() -> Unit): String {

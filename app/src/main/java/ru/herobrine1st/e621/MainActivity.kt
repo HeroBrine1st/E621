@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.*
+import com.google.android.exoplayer2.ExoPlayer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
@@ -20,6 +21,7 @@ import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
 import ru.herobrine1st.e621.module.LocalAPI
+import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.preference.updatePreferences
@@ -56,6 +58,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var snackbarAdapter: SnackbarAdapter
 
+    @Inject
+    lateinit var exoPlayer: ExoPlayer
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -89,7 +94,8 @@ class MainActivity : ComponentActivity() {
                 CompositionLocalProvider(
                     LocalDatabase provides db,
                     LocalAPI provides api,
-                    LocalSnackbar provides snackbarAdapter
+                    LocalSnackbar provides snackbarAdapter,
+                    LocalExoPlayer provides exoPlayer
                 ) {
                     Scaffold(
                         topBar = {
@@ -196,7 +202,9 @@ class MainActivity : ComponentActivity() {
                                     Post(
                                         arguments.getParcelable("post")!!,
                                         arguments.getBoolean("scrollToComments")
-                                    )
+                                    ) {
+                                        navController.popBackStack()
+                                    }
                                 }
                                 composable(Screen.Settings.route) {
                                     Settings(navController)

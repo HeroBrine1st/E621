@@ -8,7 +8,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.google.android.exoplayer2.MediaItem
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
@@ -33,7 +32,6 @@ fun PostVideo(
     }
 
     VideoPlayer(
-        MediaItem.fromUri(file.urls.first()),
         modifier = Modifier.aspectRatio(aspectRatio),
         state = videoPlayerState
     )

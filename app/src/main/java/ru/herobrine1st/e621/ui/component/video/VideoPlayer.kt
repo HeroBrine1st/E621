@@ -28,9 +28,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.audio.AudioAttributes
 import com.google.android.exoplayer2.ui.StyledPlayerView
@@ -46,7 +45,6 @@ const val CONTROLS_TIMEOUT_MS = 7500L
 
 @Composable
 fun VideoPlayer(
-    mediaItem: MediaItem,
     modifier: Modifier = Modifier,
     playWhenReady: Boolean = false,
     repeatMode: Int = ExoPlayer.REPEAT_MODE_ALL,
@@ -58,11 +56,7 @@ fun VideoPlayer(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val viewModel = viewModel<VideoPlayerViewModel>(
-        factory = VideoPlayerViewModel.Factory(
-            context, mediaItem
-        )
-    )
+    val viewModel = hiltViewModel<VideoPlayerViewModel>()
 
     fun resetHideControlsDeadline() {
         state.hideControlsDeadlineMs = System.currentTimeMillis() + controlsTimeoutMs
@@ -76,7 +70,7 @@ fun VideoPlayer(
         onValueChange = { state.showControls = it }
     )) {
         AndroidView(
-            modifier = Modifier,
+            modifier = Modifier.background(Color.Black),
             factory = {
                 StyledPlayerView(context).apply {
                     useController = false
@@ -319,7 +313,6 @@ fun VideoPlayerController(
 fun PreviewExoPlayer() {
     val state = remember { VideoPlayerState() }
     VideoPlayer(
-        MediaItem.fromUri("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"),
         state = state
     )
     HandlePreferences(state)

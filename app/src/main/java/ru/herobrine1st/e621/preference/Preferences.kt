@@ -21,7 +21,6 @@ suspend inline fun Context.updatePreferences(
     crossinline block: suspend Preferences.Builder.() -> Preferences.Builder
 ) = dataStore.updateData { it.toBuilder().block().build() }
 
-
 @Composable
 fun Context.getPreferencesAsState() = dataStore.data
     .collectAsState(initial = PreferencesSerializer.defaultValue)
