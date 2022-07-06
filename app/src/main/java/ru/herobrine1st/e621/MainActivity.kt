@@ -43,19 +43,12 @@ import javax.inject.Inject
 
 
 @AndroidEntryPoint
-class MainActivity : ComponentActivity() {
-    @Inject
-    lateinit var db: Database
-
-    @Inject
-    lateinit var api: IAPI
-
-    @Inject
-    lateinit var snackbarMessagesFlow: MutableSharedFlow<SnackbarMessage>
-
-    @Inject
-    lateinit var snackbarAdapter: SnackbarAdapter
-
+class MainActivity @Inject constructor(
+    private val db: Database,
+    private val api: IAPI,
+    private val snackbarMessagesFlow: MutableSharedFlow<SnackbarMessage>,
+    private val snackbarAdapter: SnackbarAdapter
+) : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
