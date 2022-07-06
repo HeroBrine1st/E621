@@ -12,10 +12,8 @@ import com.google.android.exoplayer2.MediaItem
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
-import ru.herobrine1st.e621.preference.MUTE_SOUND_MEDIA
-import ru.herobrine1st.e621.preference.SHOW_REMAINING_TIME_MEDIA
-import ru.herobrine1st.e621.preference.getPreferenceFlow
-import ru.herobrine1st.e621.preference.setPreference
+import ru.herobrine1st.e621.preference.getPreferencesFlow
+import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.component.video.VideoPlayer
 import ru.herobrine1st.e621.ui.component.video.VideoPlayerState
 import ru.herobrine1st.e621.ui.component.video.rememberVideoPlayerState
@@ -46,8 +44,9 @@ fun PostVideo(
 fun HandlePreferences(state: VideoPlayerState) {
     val context = LocalContext.current
     LaunchedEffect(state) {
-        state.isMuted = context.getPreferenceFlow(MUTE_SOUND_MEDIA, true).first()
-        state.showRemaining = context.getPreferenceFlow(SHOW_REMAINING_TIME_MEDIA, true).first()
+        val preferences = context.getPreferencesFlow().first()
+        state.isMuted = preferences.muteSoundOnMedia
+        state.showRemaining = preferences.showRemainingTimeMedia
         debug {
             Log.d(
                 TAG,
@@ -58,7 +57,7 @@ fun HandlePreferences(state: VideoPlayerState) {
 
     LaunchedEffect(state) {
         snapshotFlow { state.isMuted }.collect {
-            context.setPreference(MUTE_SOUND_MEDIA, it)
+            context.updatePreferences { setMuteSoundOnMedia(it) }
             debug {
                 Log.d(TAG, "Updating preferences: MUTE_SOUND_MEDIA=${it}")
             }
@@ -67,7 +66,7 @@ fun HandlePreferences(state: VideoPlayerState) {
 
     LaunchedEffect(state) {
         snapshotFlow { state.showRemaining }.collect {
-            context.setPreference(SHOW_REMAINING_TIME_MEDIA, it)
+            context.updatePreferences { setShowRemainingTimeMedia(it) }
             debug {
                 Log.d(TAG, "Updating preferences: SHOW_REMAINING_TIME_MEDIA=${state.showRemaining}")
             }

@@ -106,7 +106,6 @@ dependencies {
     // implementation("androidx.room:room-paging:$roomVersion") unused
 
     // Jetpack Datastore
-    implementation("androidx.datastore:datastore-preferences:1.0.0")
     implementation("androidx.datastore:datastore:1.0.0")
     implementation("com.google.protobuf:protobuf-javalite:$protobufVersion")
 

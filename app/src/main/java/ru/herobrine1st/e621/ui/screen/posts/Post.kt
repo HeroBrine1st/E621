@@ -27,8 +27,7 @@ import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.module.LocalAPI
-import ru.herobrine1st.e621.preference.PRIVACY_MODE
-import ru.herobrine1st.e621.preference.getPreferenceFlow
+import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 import ru.herobrine1st.e621.util.await
 import ru.herobrine1st.e621.util.debug
@@ -45,7 +44,7 @@ fun Post(
     val context = LocalContext.current
     val snackbar = LocalSnackbar.current
     val post by produceState(initialValue = initialPost) {
-        if (!initialPost.isFavorited && context.getPreferenceFlow(PRIVACY_MODE, true).first()) {
+        if (!initialPost.isFavorited && context.getPreferencesFlow { it.privacyModeEnabled }.first()) {
             return@produceState
         }
         try {

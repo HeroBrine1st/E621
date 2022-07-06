@@ -10,7 +10,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.preference.*
+import ru.herobrine1st.e621.preference.getPreferencesAsState
+import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
@@ -21,24 +22,23 @@ fun Settings(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    // Preferences
-    val isBlacklistEnabled by context.getPreference(BLACKLIST_ENABLED, true)
-    val isPrivacyModeEnabled by context.getPreference(PRIVACY_MODE, false)
-    val hasShownPrivacyModeDisclaimer by context.getPreference(PRIVACY_MODE_DIALOG_SHOWN, false)
+    val preferences by context.getPreferencesAsState()
 
     // State
-    var showPrivacyModeDialog by remember { mutableStateOf(false)}
+    var showPrivacyModeDialog by remember { mutableStateOf(false) }
 
     // Composition
     Column {
         SettingLinkWithSwitch(
-            checked = isBlacklistEnabled,
+            checked = preferences.blacklistEnabled,
             title = stringResource(R.string.setting_blacklist),
             subtitle = stringResource(R.string.setting_blacklist_subtitle),
             icon = Icons.Default.Block,
-            onCheckedChange = {
+            onCheckedChange = { enabled ->
                 coroutineScope.launch {
-                    context.setPreference(BLACKLIST_ENABLED, it)
+                    context.updatePreferences {
+                        setBlacklistEnabled(enabled)
+                    }
                 }
             }
         ) {
@@ -46,24 +46,28 @@ fun Settings(navController: NavController) {
         }
 
         SettingSwitch(
-            checked = isPrivacyModeEnabled,
+            checked = preferences.privacyModeEnabled,
             title = stringResource(R.string.privacy_mode),
             subtitle = stringResource(R.string.privacy_mode_subtitle),
             icon = Icons.Default.Shield,
-            onCheckedChange = {
+            onCheckedChange = { enabled: Boolean ->
                 coroutineScope.launch {
-                    context.setPreference(PRIVACY_MODE, it)
-                    if(!hasShownPrivacyModeDisclaimer && it) showPrivacyModeDialog = true
+                    context.updatePreferences {
+                        setPrivacyModeEnabled(enabled)
+                    }
+                    if (!preferences.privacyModeDialogWasShown && enabled) showPrivacyModeDialog = true
                 }
             }
         )
 
     }
-    if(showPrivacyModeDialog) {
+    if (showPrivacyModeDialog) {
         AlertDialog(stringResource(R.string.privacy_mode_longdesc)) {
             showPrivacyModeDialog = false
             coroutineScope.launch {
-                context.setPreference(PRIVACY_MODE_DIALOG_SHOWN, true)
+                context.updatePreferences {
+                    setPrivacyModeDialogWasShown(true)
+                }
             }
         }
     }

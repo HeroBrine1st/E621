@@ -20,10 +20,9 @@ import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.LocalDatabase
 import ru.herobrine1st.e621.module.LocalAPI
-import ru.herobrine1st.e621.preference.BLACKLIST_ENABLED
-import ru.herobrine1st.e621.preference.dataStore
-import ru.herobrine1st.e621.preference.getPreference
-import ru.herobrine1st.e621.preference.setPreference
+import ru.herobrine1st.e621.preference.getPreferencesAsState
+import ru.herobrine1st.e621.preference.getPreferencesFlow
+import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.ActionBarMenu
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Screen
@@ -40,7 +39,6 @@ import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
-import java.io.IOException
 import javax.inject.Inject
 
 
@@ -63,11 +61,9 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             try {
-                applicationContext.dataStore.data.first()
-            } catch (e: IOException) {
-                Log.e(TAG, "Exception reading preferences", e)
+                applicationContext.getPreferencesFlow().first()
             } catch (t: Throwable) {
-                Log.w(TAG, "Exception reading preferences", t)
+                Log.e(TAG, "An error occurred while pre-reading preferences", t)
             }
         }
 
@@ -83,6 +79,7 @@ class MainActivity : ComponentActivity() {
 
                 // State
                 val scaffoldState = rememberScaffoldState()
+                val preferences by context.getPreferencesAsState()
 
                 var showBlacklistDialog by remember { mutableStateOf(false) }
                 SnackbarController(
@@ -162,14 +159,10 @@ class MainActivity : ComponentActivity() {
                                 composable(Screen.Posts.route, Screen.Posts.arguments) {
                                     val searchOptions =
                                         it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
-                                    val isBlacklistEnabled by LocalContext.current.getPreference(
-                                        BLACKLIST_ENABLED,
-                                        defaultValue = true
-                                    )
 
                                     Posts(
                                         searchOptions,
-                                        isBlacklistEnabled = isBlacklistEnabled,
+                                        isBlacklistEnabled = preferences.blacklistEnabled,
                                     ) { post, scrollToComments ->
                                         navController.navigate(
                                             Screen.Post.buildRoute {
@@ -184,14 +177,10 @@ class MainActivity : ComponentActivity() {
                                         it.arguments!!
                                     val searchOptions =
                                         remember { FavouritesSearchOptions(arguments.getString("user")) }
-                                    val isBlacklistEnabled by LocalContext.current.getPreference(
-                                        BLACKLIST_ENABLED,
-                                        defaultValue = true
-                                    )
 
                                     Posts(
                                         searchOptions,
-                                        isBlacklistEnabled = isBlacklistEnabled
+                                        isBlacklistEnabled = preferences.blacklistEnabled
                                     ) { post, scrollToComments ->
                                         navController.navigate(
                                             Screen.Post.buildRoute {
@@ -224,15 +213,13 @@ class MainActivity : ComponentActivity() {
 
                 if (showBlacklistDialog)
                     BlacklistTogglesDialog(
-                        isBlacklistEnabled = context.getPreference(BLACKLIST_ENABLED, true).value,
-                        toggleBlacklist = {
+                        isBlacklistEnabled = preferences.blacklistEnabled,
+                        toggleBlacklist = { enabled: Boolean ->
                             coroutineScope.launch {
-                                context.setPreference(BLACKLIST_ENABLED, it)
+                                context.updatePreferences { setBlacklistEnabled(enabled) }
                             }
-                        }
-                    ) {
-                        showBlacklistDialog = false
-                    }
+                        },
+                        onClose = { showBlacklistDialog = false })
             }
         }
     }
