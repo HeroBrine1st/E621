@@ -79,4 +79,5 @@
     <string name="login_unauthorized">Invalid username or api key</string>
     <string name="login_logout">Logout</string>
     <string name="auth_revoked">Your API key was revoked</string>
+    <string name="channel_name_media_player">Media player</string>
 </resources>

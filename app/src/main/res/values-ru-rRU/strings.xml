@@ -79,4 +79,5 @@
     <string name="login_unauthorized">Неверное имя пользователя или ключ API</string>
     <string name="login_logout">Выйти из аккаунта</string>
     <string name="auth_revoked">Ваш ключ API был аннулирован</string>
+    <string name="channel_name_media_player">Медиаплеер</string>
 </resources>

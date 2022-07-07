@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
+import android.content.Intent
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -30,6 +31,7 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.module.LocalAPI
 import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.getPreferencesFlow
+import ru.herobrine1st.e621.service.PlayerService
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 import ru.herobrine1st.e621.util.await
 import ru.herobrine1st.e621.util.debug
@@ -179,17 +181,22 @@ fun Tag(tag: String) {
 // Cannot use RememberObserver because onForgotten is triggered on decomposition even if rememberSaveable is used
 @Composable
 fun ExoPlayerHandler(post: Post, onExit: () -> Unit) {
+    val context = LocalContext.current
     val exoPlayer = LocalExoPlayer.current
     var mediaItemIsSet by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (mediaItemIsSet) return@LaunchedEffect
-        if (post.file.type.isNotVideo) return@LaunchedEffect
+    if(post.file.type.isVideo && !mediaItemIsSet) LaunchedEffect(Unit) {
         exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
         exoPlayer.prepare()
+        Intent(context, PlayerService::class.java).let {
+            context.startService(it)
+        }
         mediaItemIsSet = true
     }
 
     BackHandler {
+        Intent(context, PlayerService::class.java).let {
+            context.stopService(it)
+        }
         exoPlayer.clearMediaItems()
         onExit()
     }

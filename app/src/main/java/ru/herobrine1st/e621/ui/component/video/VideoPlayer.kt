@@ -52,11 +52,11 @@ fun VideoPlayer(
         initialPlayWhenReady = playWhenReady,
         initialRepeatMode = repeatMode
     ),
-    controlsTimeoutMs: Long = CONTROLS_TIMEOUT_MS
+    controlsTimeoutMs: Long = CONTROLS_TIMEOUT_MS,
+    viewModel: VideoPlayerViewModel = hiltViewModel()
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val viewModel = hiltViewModel<VideoPlayerViewModel>()
 
     fun resetHideControlsDeadline() {
         state.hideControlsDeadlineMs = System.currentTimeMillis() + controlsTimeoutMs

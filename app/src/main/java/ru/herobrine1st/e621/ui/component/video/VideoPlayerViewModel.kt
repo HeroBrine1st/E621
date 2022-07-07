@@ -59,6 +59,7 @@ class VideoPlayerViewModel @Inject constructor(
     override fun onIsPlayingChanged(isPlaying: Boolean) {
         updateTimestamp()
         this.isPlaying = isPlaying
+        this._playWhenReady = exoPlayer.playWhenReady
     }
 
     override fun onTimelineChanged(timeline: Timeline, reason: Int) {
