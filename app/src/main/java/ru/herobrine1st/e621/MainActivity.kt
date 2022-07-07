@@ -4,14 +4,11 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material.*
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
-import androidx.navigation.compose.*
+import androidx.navigation.compose.rememberNavController
 import com.google.android.exoplayer2.ExoPlayer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,28 +16,18 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.database.Database
-import ru.herobrine1st.e621.database.LocalDatabase
 import ru.herobrine1st.e621.module.LocalAPI
 import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.preference.updatePreferences
-import ru.herobrine1st.e621.ui.ActionBarMenu
+import ru.herobrine1st.e621.ui.MainScaffold
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
-import ru.herobrine1st.e621.ui.screen.Screen
-import ru.herobrine1st.e621.ui.screen.home.Home
-import ru.herobrine1st.e621.ui.screen.posts.Post
-import ru.herobrine1st.e621.ui.screen.posts.Posts
-import ru.herobrine1st.e621.ui.screen.search.Search
-import ru.herobrine1st.e621.ui.screen.settings.Settings
-import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.ui.snackbar.SnackbarController
 import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
 import ru.herobrine1st.e621.ui.theme.E621Theme
-import ru.herobrine1st.e621.util.FavouritesSearchOptions
-import ru.herobrine1st.e621.util.PostsSearchOptions
 import javax.inject.Inject
 
 
@@ -79,144 +66,27 @@ class MainActivity : ComponentActivity() {
 
                 // Navigation
                 val navController = rememberNavController()
-                val navBackStackEntry by navController.currentBackStackEntryAsState()
-                val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
+
 
                 // State
-                val scaffoldState = rememberScaffoldState()
+
                 val preferences by context.getPreferencesAsState()
 
                 var showBlacklistDialog by remember { mutableStateOf(false) }
+                val scaffoldState = rememberScaffoldState()
                 SnackbarController(
                     snackbarMessagesFlow,
                     scaffoldState.snackbarHostState
                 )
                 CompositionLocalProvider(
-                    LocalDatabase provides db,
                     LocalAPI provides api,
                     LocalSnackbar provides snackbarAdapter,
                     LocalExoPlayer provides exoPlayer
                 ) {
-                    Scaffold(
-                        topBar = {
-                            TopAppBar(
-                                title = {
-                                    Text(stringResource(screen?.title ?: R.string.app_name))
-                                },
-                                backgroundColor = MaterialTheme.colors.primarySurface,
-                                elevation = 12.dp,
-                                actions = {
-                                    val saveableStateHolder = rememberSaveableStateHolder()
-                                    navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
-                                        screen?.appBarActions?.invoke(
-                                            this,
-                                            navController
-                                        )
-                                    }
-                                    ActionBarMenu(navController, onOpenBlacklistDialog = {
-                                        showBlacklistDialog = true
-                                    })
-                                }
-                            )
-                        },
+                    MainScaffold(
+                        navController = navController,
                         scaffoldState = scaffoldState,
-                        floatingActionButton = {
-                            val saveableStateHolder = rememberSaveableStateHolder()
-                            navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
-                                screen?.floatingActionButton?.invoke()
-                            }
-                        }
-                    ) {
-                        Surface(
-                            color = MaterialTheme.colors.background
-                        ) {
-                            NavHost(
-                                navController = navController,
-                                startDestination = Screen.Home.route
-                            ) {
-                                composable(Screen.Home.route) {
-                                    Home(
-                                        navigateToFavorites = {
-                                            navController.navigate(Screen.Favourites.route)
-                                        },
-                                        navigateToSearch = {
-                                            navController.navigate(Screen.Search.route)
-                                        }
-                                    )
-                                }
-                                composable(
-                                    Screen.Search.route,
-                                    Screen.Search.arguments
-                                ) { entry ->
-                                    val arguments: Bundle =
-                                        entry.arguments!!
-
-                                    val searchOptions = arguments.getParcelable("query")
-                                        ?: PostsSearchOptions.DEFAULT
-                                    Search(searchOptions) {
-                                        navController.popBackStack()
-                                        navController.navigate(
-                                            Screen.Posts.buildRoute {
-                                                addArgument("query", it)
-                                            }
-                                        )
-                                    }
-                                }
-                                composable(Screen.Posts.route, Screen.Posts.arguments) {
-                                    val searchOptions =
-                                        it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
-
-                                    Posts(
-                                        searchOptions,
-                                        isBlacklistEnabled = preferences.blacklistEnabled,
-                                    ) { post, scrollToComments ->
-                                        navController.navigate(
-                                            Screen.Post.buildRoute {
-                                                addArgument("post", post)
-                                                addArgument("scrollToComments", scrollToComments)
-                                            }
-                                        )
-                                    }
-                                }
-                                composable(Screen.Favourites.route, Screen.Favourites.arguments) {
-                                    val arguments =
-                                        it.arguments!!
-                                    val searchOptions =
-                                        remember { FavouritesSearchOptions(arguments.getString("user")) }
-
-                                    Posts(
-                                        searchOptions,
-                                        isBlacklistEnabled = preferences.blacklistEnabled
-                                    ) { post, scrollToComments ->
-                                        navController.navigate(
-                                            Screen.Post.buildRoute {
-                                                addArgument("post", post)
-                                                addArgument("scrollToComments", scrollToComments)
-                                            }
-                                        )
-                                    }
-                                }
-                                composable(Screen.Post.route, Screen.Post.arguments) {
-                                    val arguments =
-                                        it.arguments!!
-                                    Post(
-                                        arguments.getParcelable("post")!!,
-                                        arguments.getBoolean("scrollToComments")
-                                    ) {
-                                        navController.popBackStack()
-                                    }
-                                }
-                                composable(Screen.Settings.route) {
-                                    Settings(navController)
-                                }
-                                composable(Screen.SettingsBlacklist.route) {
-                                    SettingsBlacklist {
-                                        navController.popBackStack()
-                                    }
-                                }
-                            }
-                        }
-                    }
+                        onOpenBlacklistDialog = { showBlacklistDialog = true })
                 }
 
                 if (showBlacklistDialog)
