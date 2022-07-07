@@ -3,7 +3,9 @@ package ru.herobrine1st.e621.ui.screen.posts.logic
 import android.util.Log
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.SnackbarDuration
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -18,8 +20,7 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.BuildConfig
@@ -40,9 +41,9 @@ import java.util.function.Predicate
 class PostsViewModel @AssistedInject constructor(
     private val api: IAPI,
     private val snackbar: SnackbarAdapter,
-    private val blacklistRepository: BlacklistRepository,
     private val favouritesCache: FavouritesCache,
     @Assisted private val searchOptions: SearchOptions,
+    blacklistRepository: BlacklistRepository,
     authorizationRepository: AuthorizationRepository,
 ) : ViewModel() {
     private val pager = Pager(
@@ -57,28 +58,27 @@ class PostsViewModel @AssistedInject constructor(
     val isAuthorizedFlow = authorizationRepository.getAccountFlow().map { it != null }
     val usernameFlow = authorizationRepository.getAccountFlow().map { it?.login }
 
-    private var blacklistPredicate by mutableStateOf<Predicate<Post>?>(null)
-    val isBlacklistLoading get() = blacklistPredicate == null
+    private val blacklistPredicateFlow: StateFlow<Predicate<Post>?> =
+        blacklistRepository.getEntriesFlow().map { list ->
+            list.filter { it.enabled }
+                .map { createTagProcessor(it.query) }
+                .fold(Predicate<Post> { false }) { a, b ->
+                    a.or(b)
+                }
+        }.stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(),
+            null
+        )
+    val isBlacklistLoading
+        @Composable get() = blacklistPredicateFlow.collectAsState().value == null
 
-    init {
-        viewModelScope.launch {
-            blacklistRepository.getEntriesFlow().map { list ->
-                list.filter { it.enabled }
-                    .map { createTagProcessor(it.query) }
-                    .fold(Predicate<Post> { false }) { a, b ->
-                        a.or(b)
-                    }
-            }.collect {
-                blacklistPredicate = it
-            }
-        }
-    }
-
-    // TODO make composable
+    @Composable
     fun isHiddenByBlacklist(post: Post): Boolean {
-        if (blacklistPredicate == null) return false
-        return !favouritesCache.flow.value.getOrDefault(post.id, post.isFavorited)
-                && blacklistPredicate!!.test(post)
+        val predicate = blacklistPredicateFlow.collectAsState().value ?: return false
+        val favourites by favouritesCache.flow.collectAsState()
+        return !favourites.getOrDefault(post.id, post.isFavorited) // If not favourite
+                && predicate.test(post) // And matches blacklist
     }
 
     @Composable
@@ -132,6 +132,8 @@ class PostsViewModel @AssistedInject constructor(
             }
         }
     }
+
+    // Assisted inject stuff
 
     @AssistedFactory
     interface Factory {

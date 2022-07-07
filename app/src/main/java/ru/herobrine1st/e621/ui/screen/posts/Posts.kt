@@ -85,11 +85,8 @@ fun Posts(
         endOfPagePlaceholder(posts.loadState.prepend)
         items(posts, key = { it.id }) { post ->
             if (post == null) return@items
-            val blacklisted by remember(
-                post,
-                isBlacklistEnabled
-            ) { derivedStateOf { isBlacklistEnabled && viewModel.isHiddenByBlacklist(post) } }
-            viewModel.notifyPostState(blacklisted)
+            val blacklisted = isBlacklistEnabled && viewModel.isHiddenByBlacklist(post)
+            LaunchedEffect(blacklisted) { viewModel.notifyPostState(blacklisted) }
             if (blacklisted) return@items
             Post(
                 post = post,
