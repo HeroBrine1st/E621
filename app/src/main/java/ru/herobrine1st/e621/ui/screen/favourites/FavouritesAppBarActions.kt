@@ -12,7 +12,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.screen.Screen
-import ru.herobrine1st.e621.ui.screen.posts.PostsViewModel
+import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.PostsSearchOptions
 

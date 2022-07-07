@@ -13,14 +13,10 @@ import androidx.navigation.NavType
 import androidx.navigation.navArgument
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
-import ru.herobrine1st.e621.ui.screen.posts.PostNavType
 import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
-import ru.herobrine1st.e621.util.JsonSerializable
-import ru.herobrine1st.e621.util.PostsSearchOptions
-import ru.herobrine1st.e621.util.PostsSearchOptionsNavType
-import ru.herobrine1st.e621.util.debug
+import ru.herobrine1st.e621.util.*
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 

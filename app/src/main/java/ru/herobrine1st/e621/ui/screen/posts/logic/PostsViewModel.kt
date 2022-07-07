@@ -1,16 +1,22 @@
-package ru.herobrine1st.e621.ui.screen.posts
+package ru.herobrine1st.e621.ui.screen.posts.logic
 
 import android.util.Log
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.assisted.Assisted
+import dagger.assisted.AssistedFactory
+import dagger.assisted.AssistedInject
+import dagger.hilt.EntryPoint
+import dagger.hilt.InstallIn
+import dagger.hilt.android.components.ActivityComponent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -30,18 +36,15 @@ import ru.herobrine1st.e621.util.SearchOptions
 import ru.herobrine1st.e621.util.awaitResponse
 import java.io.IOException
 import java.util.function.Predicate
-import javax.inject.Inject
 
-@HiltViewModel
-class PostsViewModel @Inject constructor(
+class PostsViewModel @AssistedInject constructor(
     private val api: IAPI,
     private val snackbar: SnackbarAdapter,
     private val blacklistRepository: BlacklistRepository,
     private val favouritesCache: FavouritesCache,
-    authorizationRepository: AuthorizationRepository
+    @Assisted private val searchOptions: SearchOptions,
+    authorizationRepository: AuthorizationRepository,
 ) : ViewModel() {
-    private var searchOptions: SearchOptions? = null
-
     private val pager = Pager(
         PagingConfig(
             pageSize = BuildConfig.PAGER_PAGE_SIZE,
@@ -60,8 +63,7 @@ class PostsViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             blacklistRepository.getEntriesFlow().map { list ->
-                list
-                    .filter { it.enabled }
+                list.filter { it.enabled }
                     .map { createTagProcessor(it.query) }
                     .fold(Predicate<Post> { false }) { a, b ->
                         a.or(b)
@@ -131,16 +133,27 @@ class PostsViewModel @Inject constructor(
         }
     }
 
-    fun onSearchOptionsChange(
-        searchOptions: SearchOptions,
-        refresh: () -> Unit // looking for a way to do it right here
-    ) {
-        if (searchOptions == this.searchOptions) return
-        this.searchOptions = searchOptions
-        refresh()
+    @AssistedFactory
+    interface Factory {
+        fun create(searchOptions: SearchOptions): PostsViewModel
+    }
+
+    @EntryPoint
+    @InstallIn(ActivityComponent::class)
+    interface FactoryProvider {
+        fun provideFactory(): Factory
     }
 
     companion object {
         const val TAG = "PostsViewModel"
+        @Suppress("UNCHECKED_CAST")
+        fun provideFactory(
+            assistedFactory: Factory,
+            searchOptions: SearchOptions,
+        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                return assistedFactory.create(searchOptions) as T
+            }
+        }
     }
 }

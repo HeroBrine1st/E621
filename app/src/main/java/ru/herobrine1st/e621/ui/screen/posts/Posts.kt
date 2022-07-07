@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
+import android.app.Activity
 import android.text.format.DateUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -11,19 +12,22 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import com.google.accompanist.flowlayout.FlowRow
+import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.screen.Screen
+import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.PostsSearchOptions
 import ru.herobrine1st.e621.util.SearchOptions
@@ -50,21 +54,23 @@ fun PostsAppBarActions(navController: NavHostController) {
 fun Posts(
     searchOptions: SearchOptions,
     isBlacklistEnabled: Boolean,
-    openPost: (post: Post, scrollToComments: Boolean) -> Unit
+    openPost: (post: Post, scrollToComments: Boolean) -> Unit,
+    viewModel: PostsViewModel = viewModel(
+        factory = PostsViewModel.provideFactory(
+            EntryPointAccessors.fromActivity(
+                LocalContext.current as Activity,
+                PostsViewModel.FactoryProvider::class.java
+            ).provideFactory(), searchOptions
+        )
+    )
 ) {
-    val viewModel: PostsViewModel = hiltViewModel()
     val isAuthorized by viewModel.isAuthorizedFlow.collectAsState(false)
-
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
 
-    LaunchedEffect(searchOptions) {
-        viewModel.onSearchOptionsChange(searchOptions) {
-            posts.refresh()
-        }
-    }
 
     if (posts.loadState.refresh !is LoadState.NotLoading // Do not reset lazyListState
-        || viewModel.isBlacklistLoading) {
+        || viewModel.isBlacklistLoading
+    ) {
         Base {
             Spacer(modifier = Modifier.height(4.dp))
             CircularProgressIndicator()
@@ -79,7 +85,10 @@ fun Posts(
         endOfPagePlaceholder(posts.loadState.prepend)
         items(posts, key = { it.id }) { post ->
             if (post == null) return@items
-            val blacklisted by remember(post, isBlacklistEnabled) { derivedStateOf { isBlacklistEnabled && viewModel.isHiddenByBlacklist(post) } }
+            val blacklisted by remember(
+                post,
+                isBlacklistEnabled
+            ) { derivedStateOf { isBlacklistEnabled && viewModel.isHiddenByBlacklist(post) } }
             viewModel.notifyPostState(blacklisted)
             if (blacklisted) return@items
             Post(

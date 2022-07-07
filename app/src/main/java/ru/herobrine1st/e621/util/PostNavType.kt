@@ -1,10 +1,9 @@
-package ru.herobrine1st.e621.ui.screen.posts
+package ru.herobrine1st.e621.util
 
 import android.os.Bundle
 import androidx.navigation.NavType
 import com.fasterxml.jackson.module.kotlin.readValue
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.util.objectMapper
 
 class PostNavType : NavType<Post>(false) {
     override fun get(bundle: Bundle, key: String): Post? {
