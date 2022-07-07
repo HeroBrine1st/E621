@@ -12,9 +12,8 @@ interface BlacklistDao {
     @Query("SELECT * FROM blacklist")
     suspend fun getAll(): List<BlacklistEntry>
 
-    // TODO rename
     @Query("SELECT * FROM blacklist")
-    fun getFlow(): Flow<List<BlacklistEntry>>
+    fun getFlowOfAll(): Flow<List<BlacklistEntry>>
 
     @Query("DELETE FROM blacklist WHERE id=:id")
     suspend fun delete(id: Long)

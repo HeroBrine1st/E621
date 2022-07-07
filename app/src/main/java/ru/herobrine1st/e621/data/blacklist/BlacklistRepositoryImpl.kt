@@ -12,7 +12,7 @@ class BlacklistRepositoryImpl @Inject constructor(
     val dao: BlacklistDao
 ) : BaseRepositoryImpl(database), BlacklistRepository {
 
-    override fun getEntriesFlow(): Flow<List<BlacklistEntry>> = dao.getFlow()
+    override fun getEntriesFlow(): Flow<List<BlacklistEntry>> = dao.getFlowOfAll()
 
     override suspend fun getAllEntries(): List<BlacklistEntry> = dao.getAll()
 
