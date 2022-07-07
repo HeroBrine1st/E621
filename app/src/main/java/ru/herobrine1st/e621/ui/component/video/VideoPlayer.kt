@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.ui.component.video
 
+import android.os.Build
 import android.text.format.DateUtils
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -38,6 +39,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.screen.posts.HandlePreferences
+import kotlin.math.roundToLong
 
 @Suppress("unused")
 private const val TAG = "VideoPlayer"
@@ -222,13 +224,17 @@ fun VideoPlayerController(
                 )
                 .padding(horizontal = 4.dp)
         ) {
+            val context = LocalContext.current
             val contentPositionMs by produceState(
                 initialValue = timestamp.contentPositionMs,
                 timestamp, isPlaying
             ) {
                 value = timestamp.contentPositionMs
+                // Use device frame rate if possible, else assume 60 Hz display
+                val frameTimeMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
+                        (context.display?.refreshRate?.let { 1000/it })?.roundToLong() ?: 16 else 16
                 while (isPlaying) {
-                    delay(100)
+                    delay(frameTimeMs)
                     with(timestamp) {
                         value =
                             contentPositionMs + ((System.currentTimeMillis() - anchorMs) * speed).toLong()
