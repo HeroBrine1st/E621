@@ -1,12 +1,10 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
-import android.util.Log
+import android.app.Activity
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
@@ -20,20 +18,25 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.material.placeholder
+import com.google.accompanist.placeholder.material.shimmer
 import com.google.android.exoplayer2.MediaItem
-import kotlinx.coroutines.flow.first
+import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.module.LocalAPI
 import ru.herobrine1st.e621.module.LocalExoPlayer
-import ru.herobrine1st.e621.preference.getPreferencesFlow
-import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
+import ru.herobrine1st.e621.ui.dialog.ContentDialog
+import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
+import ru.herobrine1st.e621.ui.screen.posts.logic.WikiResult
+import ru.herobrine1st.e621.util.PostsSearchOptions
 import ru.herobrine1st.e621.util.SearchOptions
-import ru.herobrine1st.e621.util.await
-import java.io.IOException
+import java.util.*
 
 private const val TAG = "Post Screen"
 
@@ -42,33 +45,53 @@ fun Post(
     initialPost: Post,
     @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean, // TODO
     searchOptions: SearchOptions,
-    onModificationClick: (SearchOptions) -> Unit,
+    onModificationClick: (PostsSearchOptions) -> Unit,
     onExit: () -> Unit,
+    viewModel: PostViewModel = viewModel(
+        factory = PostViewModel.provideFactory(
+            EntryPointAccessors.fromActivity(
+                LocalContext.current as Activity,
+                PostViewModel.FactoryProvider::class.java
+            ).provideFactory(), initialPost
+        )
+    )
 ) {
-    val api = LocalAPI.current
-    val context = LocalContext.current
-    val snackbar = LocalSnackbar.current
-
-    val post by produceState(initialValue = initialPost) {
-        if (!initialPost.isFavorited && context.getPreferencesFlow { it.privacyModeEnabled }
-                .first()) {
-            return@produceState
-        }
-        try {
-            value = api.getPost(initialPost.id).await().post
-        } catch (e: IOException) {
-            Log.e(TAG, "Unable to get post ${initialPost.id}", e)
-            snackbar.enqueueMessage(
-                R.string.network_error,
-                SnackbarDuration.Indefinite
-            )
-        } catch (t: Throwable) {
-            Log.e(TAG, "Unable to get post ${initialPost.id}", t)
+    val post = viewModel.post
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val wikiState = viewModel.wikiState
+    if (wikiState != null) {
+        ContentDialog(
+            title = wikiState.title.replaceFirstChar { // Capitalize
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+            },
+            onDismissRequest = { viewModel.closeWikiPage() }) {
+            LazyColumn(
+                modifier = Modifier.height(screenHeight * 0.4f)
+            ) {
+                when (wikiState) {
+                    is WikiResult.Loading -> items(50) {
+                        Text(
+                            "", modifier = Modifier
+                                .fillMaxWidth()
+                                .placeholder(true, highlight = PlaceholderHighlight.shimmer())
+                        )
+                        Spacer(Modifier.height(4.dp))
+                    }
+                    is WikiResult.Failure -> item {
+                        Text(stringResource(R.string.wiki_load_failed))
+                    }
+                    is WikiResult.NotFound -> item {
+                        Text(stringResource(R.string.not_found))
+                    }
+                    is WikiResult.Success -> item {
+                        Text(wikiState.result.body)
+                    }
+                }
+            }
         }
     }
 
     ExoPlayerHandler(post, onExit)
-
     LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
         item("media") {
             when {
@@ -88,7 +111,7 @@ fun Post(
         // TODO comments
         // TODO i18n
         tags(post, searchOptions, onModificationClick, onWikiClick = {
-
+            viewModel.handleWikiClick(it)
         })
     }
 }
@@ -96,7 +119,7 @@ fun Post(
 fun LazyListScope.tags(
     post: Post,
     searchOptions: SearchOptions,
-    onModificationClick: (SearchOptions) -> Unit,
+    onModificationClick: (PostsSearchOptions) -> Unit,
     onWikiClick: (String) -> Unit
 ) {
     tags("Artist", post.tags.artist, searchOptions, onModificationClick, onWikiClick)
@@ -113,7 +136,7 @@ fun LazyListScope.tags(
     title: String,
     tags: List<String>,
     searchOptions: SearchOptions,
-    onModificationClick: (SearchOptions) -> Unit,
+    onModificationClick: (PostsSearchOptions) -> Unit,
     onWikiClick: (String) -> Unit
 ) {
     if (tags.isEmpty()) return
@@ -148,7 +171,7 @@ fun LazyListScope.tags(
 fun Tag(
     tag: String,
     searchOptions: SearchOptions,
-    onModificationClick: (SearchOptions) -> Unit,
+    onModificationClick: (PostsSearchOptions) -> Unit,
     onWikiClick: (String) -> Unit
 ) {
     Row(
@@ -168,7 +191,7 @@ fun Tag(
         }
         IconButton(
             onClick = {
-                onModificationClick(searchOptions.toBuilder { tags -= tag })
+                onModificationClick(searchOptions.toBuilder { tags += "-$tag" })
             }
         ) {
             Icon(

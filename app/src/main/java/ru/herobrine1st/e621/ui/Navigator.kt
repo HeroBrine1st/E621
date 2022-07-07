@@ -90,6 +90,7 @@ fun Navigator(navController: NavHostController) {
                         Screen.Post.buildRoute {
                             addArgument("post", post)
                             addArgument("scrollToComments", scrollToComments)
+                            addArgument("query", searchOptions)
                         }
                     )
                 }
@@ -102,7 +103,13 @@ fun Navigator(navController: NavHostController) {
                 arguments.getParcelable("post")!!,
                 arguments.getBoolean("scrollToComments"),
                 arguments.getParcelable("query")!!,
-                onModificationClick = { TODO() },
+                onModificationClick = {
+                    navController.navigate(
+                        Screen.Search.buildRoute {
+                            addArgument("query", it)
+                        }
+                    )
+                },
                 onExit = { navController.popBackStack() }
             )
         }

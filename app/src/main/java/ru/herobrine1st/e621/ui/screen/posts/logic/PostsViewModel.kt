@@ -25,8 +25,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
@@ -39,7 +39,7 @@ import java.io.IOException
 import java.util.function.Predicate
 
 class PostsViewModel @AssistedInject constructor(
-    private val api: IAPI,
+    private val api: API,
     private val snackbar: SnackbarAdapter,
     private val favouritesCache: FavouritesCache,
     @Assisted private val searchOptions: SearchOptions,
@@ -143,6 +143,8 @@ class PostsViewModel @AssistedInject constructor(
     @EntryPoint
     @InstallIn(ActivityComponent::class)
     interface FactoryProvider {
+        @Suppress("INAPPLICABLE_JVM_NAME")
+        @JvmName("providePostsViewModelFactory")
         fun provideFactory(): Factory
     }
 

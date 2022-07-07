@@ -82,4 +82,7 @@
     <string name="add_tag_to_search">Add tag to search</string>
     <string name="exclude_tag_from_search">Exclude tag from search</string>
     <string name="tag_view_wiki">Find in wiki</string>
+    <string name="loading">Loading..</string>
+    <string name="not_found">Not found</string>
+    <string name="wiki_load_failed">Failed to load wiki page</string>
 </resources>

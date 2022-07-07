@@ -14,7 +14,7 @@ import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.jackson.JacksonConverterFactory
 import ru.herobrine1st.e621.BuildConfig
-import ru.herobrine1st.e621.api.IAPI
+import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.net.AuthorizationInterceptor
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.net.UserAgentInterceptor
@@ -22,7 +22,7 @@ import ru.herobrine1st.e621.util.objectMapper
 import java.io.File
 import javax.inject.Qualifier
 
-val LocalAPI = staticCompositionLocalOf<IAPI> { error("No API found") }
+val LocalAPI = staticCompositionLocalOf<API> { error("No API found") }
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
@@ -47,6 +47,7 @@ class APIModule {
             .addNetworkInterceptor(UserAgentInterceptor())
             .addInterceptor(authorizationInterceptor)
             .cache(Cache(cacheDir, size))
+            .followRedirects(false)
             .build()
     }
 
@@ -62,7 +63,7 @@ class APIModule {
 
     @Provides
     @ActivityRetainedScoped
-    fun provideIAPI(retrofit: Retrofit): IAPI = retrofit.create(IAPI::class.java)
+    fun provideIAPI(retrofit: Retrofit): API = retrofit.create(API::class.java)
 
     companion object {
         const val DISK_CACHE_PERCENTAGE = 0.02

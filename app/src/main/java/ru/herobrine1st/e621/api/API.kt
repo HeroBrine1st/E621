@@ -9,8 +9,9 @@ import retrofit2.http.*
 import ru.herobrine1st.e621.api.model.PostEndpoint
 import ru.herobrine1st.e621.api.model.PostVoteEndpoint
 import ru.herobrine1st.e621.api.model.PostsEndpoint
+import ru.herobrine1st.e621.api.model.WikiPage
 
-interface IAPI {
+interface API {
     @CheckResult
     @GET("/users/{name}.json")
     fun getUser(
@@ -65,4 +66,15 @@ interface IAPI {
         @Suppress("SpellCheckingInspection") @Query("no_unvote") noRetractVote: Boolean,
 //        @Header("Authorization") credentials: String
     ): Call<PostVoteEndpoint>
+
+    /**
+     * Redirects to another page `/wiki_pages/(\d+)` if found, else no redirect and code 200
+     */
+    @CheckResult
+    @GET("/wiki_pages/show_or_new")
+    fun getWikiPageId(@Query("title") title: String): Call<ResponseBody>
+
+    @CheckResult
+    @GET("/wiki_pages/{id}.json")
+    fun getWikiPage(@Path("id") id: Int): Call<WikiPage>
 }

@@ -1,7 +1,6 @@
 package ru.herobrine1st.e621.ui.dialog
 
 import androidx.compose.material.Text
-import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import ru.herobrine1st.e621.R
@@ -14,17 +13,7 @@ fun AlertDialog(
     title: String = stringResource(R.string.warning),
     onDismissRequest: () -> Unit
 ) {
-    ActionDialog(
-        title = title,
-        actions = {
-            TextButton(
-                onClick = onDismissRequest
-            ) {
-                Text(stringResource(R.string.close))
-            }
-        },
-        onDismissRequest = onDismissRequest
-    ) {
+    ContentDialog(onDismissRequest = onDismissRequest, title = title) {
         Text(text)
     }
 }

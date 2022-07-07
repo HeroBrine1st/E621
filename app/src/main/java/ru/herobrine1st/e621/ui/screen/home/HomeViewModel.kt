@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import retrofit2.awaitResponse
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.IAPI
+import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.entity.Auth
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
@@ -24,7 +24,7 @@ import javax.inject.Inject
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val authorizationRepository: AuthorizationRepository,
-    private val api: IAPI,
+    private val api: API,
     private val snackbarAdapter: SnackbarAdapter
 ) : ViewModel() {
     var state by mutableStateOf(LoginState.LOADING)

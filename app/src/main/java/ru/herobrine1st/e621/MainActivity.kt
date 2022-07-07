@@ -14,7 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.api.IAPI
+import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.module.LocalAPI
 import ru.herobrine1st.e621.module.LocalExoPlayer
@@ -37,7 +37,7 @@ class MainActivity : ComponentActivity() {
     lateinit var db: Database
 
     @Inject
-    lateinit var api: IAPI
+    lateinit var api: API
 
     @Inject
     lateinit var snackbarMessagesFlow: MutableSharedFlow<SnackbarMessage>

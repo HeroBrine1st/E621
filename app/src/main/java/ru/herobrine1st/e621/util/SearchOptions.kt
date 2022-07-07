@@ -6,8 +6,8 @@ import android.util.Log
 import androidx.navigation.NavType
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.parcelize.Parcelize
+import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.api.IAPI
 import ru.herobrine1st.e621.api.Order
 import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.api.model.Post
@@ -15,7 +15,7 @@ import java.io.IOException
 
 interface SearchOptions {
     @Throws(ApiException::class, IOException::class)
-    suspend fun getPosts(api: IAPI, limit: Int, page: Int): List<Post>
+    suspend fun getPosts(api: API, limit: Int, page: Int): List<Post>
 
     fun toBuilder(builder: PostsSearchOptions.Builder.() -> Unit) = PostsSearchOptions.builder(this, builder)
 }
@@ -53,7 +53,7 @@ data class PostsSearchOptions(
         }
     }
 
-    override suspend fun getPosts(api: IAPI, limit: Int, page: Int): List<Post> {
+    override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         return api.getPosts(tags = compileToQuery(), page = page, limit = limit).await().posts
     }
 
@@ -95,7 +95,7 @@ data class PostsSearchOptions(
 
 data class FavouritesSearchOptions(val favouritesOf: String?) : SearchOptions {
     private var id: Int? = null
-    override suspend fun getPosts(api: IAPI, limit: Int, page: Int): List<Post> {
+    override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         id = id ?: favouritesOf?.let {
             api.getUser(favouritesOf).await().get("id").asInt()
         }

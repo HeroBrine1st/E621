@@ -30,7 +30,7 @@ val Auth.credentials get() = Credentials.basic(login, apiKey)
 
 private suspend fun <T> Call<T>.awaitResponseInternal(): retrofit2.Response<T> {
     val response = this.awaitResponse()
-    if (!response.isSuccessful) {
+    if (response.code() !in 200..399) { // Include redirects
         val body = withContext(Dispatchers.IO) {
             objectMapper.readValue<ObjectNode>(response.errorBody()!!.charStream())
         }
