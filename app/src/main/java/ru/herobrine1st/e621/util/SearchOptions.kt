@@ -16,6 +16,8 @@ import java.io.IOException
 interface SearchOptions {
     @Throws(ApiException::class, IOException::class)
     suspend fun getPosts(api: IAPI, limit: Int, page: Int): List<Post>
+
+    fun toBuilder(builder: PostsSearchOptions.Builder.() -> Unit) = PostsSearchOptions.builder(this, builder)
 }
 
 @Parcelize
@@ -58,6 +60,36 @@ data class PostsSearchOptions(
     companion object {
         val DEFAULT =
             PostsSearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, emptyList(), null)
+
+        fun builder(
+            options: SearchOptions? = null,
+            builder: Builder.() -> Unit
+        ): PostsSearchOptions {
+            return when (options) {
+                null -> Builder().apply(builder).build()
+                else -> Builder.from(options).apply(builder).build()
+            }
+        }
+    }
+
+    class Builder(
+        var tags: List<String> = mutableListOf(),
+        var order: Order = Order.NEWEST_TO_OLDEST,
+        var orderAscending: Boolean = false,
+        var rating: List<Rating> = mutableListOf(),
+        var favouritesOf: String? = null,
+    ) {
+        fun build() = PostsSearchOptions(tags, order, orderAscending, rating, favouritesOf)
+
+        companion object {
+            fun from(options: SearchOptions) = when (options) {
+                is PostsSearchOptions -> with(options) {
+                    Builder(tags, order, orderAscending, rating, favouritesOf)
+                }
+                is FavouritesSearchOptions -> Builder(favouritesOf = options.favouritesOf)
+                else -> throw NotImplementedError()
+            }
+        }
     }
 }
 

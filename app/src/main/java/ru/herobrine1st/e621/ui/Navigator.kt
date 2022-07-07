@@ -58,8 +58,9 @@ fun Navigator(navController: NavHostController) {
             }
         }
         composable(Screen.Posts.route, Screen.Posts.arguments) {
-            val searchOptions =
+            val searchOptions = remember {
                 it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
+            }
 
             Posts(
                 searchOptions,
@@ -69,6 +70,7 @@ fun Navigator(navController: NavHostController) {
                         Screen.Post.buildRoute {
                             addArgument("post", post)
                             addArgument("scrollToComments", scrollToComments)
+                            addArgument("query", searchOptions)
                         }
                     )
                 }
@@ -98,10 +100,11 @@ fun Navigator(navController: NavHostController) {
                 it.arguments!!
             Post(
                 arguments.getParcelable("post")!!,
-                arguments.getBoolean("scrollToComments")
-            ) {
-                navController.popBackStack()
-            }
+                arguments.getBoolean("scrollToComments"),
+                arguments.getParcelable("query")!!,
+                onModificationClick = { TODO() },
+                onExit = { navController.popBackStack() }
+            )
         }
         composable(Screen.Settings.route) {
             Settings(navController)

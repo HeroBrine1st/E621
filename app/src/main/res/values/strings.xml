@@ -79,4 +79,7 @@
     <string name="login_unauthorized">Invalid username or api key</string>
     <string name="login_logout">Logout</string>
     <string name="auth_revoked">Your API key was revoked</string>
+    <string name="add_tag_to_search">Add tag to search</string>
+    <string name="exclude_tag_from_search">Exclude tag from search</string>
+    <string name="tag_view_wiki">Find in wiki</string>
 </resources>

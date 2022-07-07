@@ -79,4 +79,7 @@
     <string name="login_unauthorized">Неверное имя пользователя или ключ API</string>
     <string name="login_logout">Выйти из аккаунта</string>
     <string name="auth_revoked">Ваш ключ API был аннулирован</string>
+    <string name="add_tag_to_search">Добавить тег в поиск</string>
+    <string name="exclude_tag_from_search">Убрать тег из поиска</string>
+    <string name="tag_view_wiki">Посмотреть в вики</string>
 </resources>

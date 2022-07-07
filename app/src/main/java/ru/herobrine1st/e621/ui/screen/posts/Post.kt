@@ -31,8 +31,8 @@ import ru.herobrine1st.e621.module.LocalAPI
 import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
+import ru.herobrine1st.e621.util.SearchOptions
 import ru.herobrine1st.e621.util.await
-import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
 private const val TAG = "Post Screen"
@@ -41,6 +41,8 @@ private const val TAG = "Post Screen"
 fun Post(
     initialPost: Post,
     @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean, // TODO
+    searchOptions: SearchOptions,
+    onModificationClick: (SearchOptions) -> Unit,
     onExit: () -> Unit,
 ) {
     val api = LocalAPI.current
@@ -85,18 +87,35 @@ fun Post(
         }
         // TODO comments
         // TODO i18n
-        tags("Artist", post.tags.artist)
-        tags("Copyright", post.tags.copyright)
-        tags("Character", post.tags.character)
-        tags("Species", post.tags.species)
-        tags("General", post.tags.general)
-        tags("Lore", post.tags.lore)
-        tags("Meta", post.tags.meta)
+        tags(post, searchOptions, onModificationClick, onWikiClick = {
+
+        })
     }
 }
 
+fun LazyListScope.tags(
+    post: Post,
+    searchOptions: SearchOptions,
+    onModificationClick: (SearchOptions) -> Unit,
+    onWikiClick: (String) -> Unit
+) {
+    tags("Artist", post.tags.artist, searchOptions, onModificationClick, onWikiClick)
+    tags("Copyright", post.tags.copyright, searchOptions, onModificationClick, onWikiClick)
+    tags("Character", post.tags.character, searchOptions, onModificationClick, onWikiClick)
+    tags("Species", post.tags.species, searchOptions, onModificationClick, onWikiClick)
+    tags("General", post.tags.general, searchOptions, onModificationClick, onWikiClick)
+    tags("Lore", post.tags.lore, searchOptions, onModificationClick, onWikiClick)
+    tags("Meta", post.tags.meta, searchOptions, onModificationClick, onWikiClick)
+}
+
 @OptIn(ExperimentalFoundationApi::class)
-fun LazyListScope.tags(title: String, tags: List<String>) {
+fun LazyListScope.tags(
+    title: String,
+    tags: List<String>,
+    searchOptions: SearchOptions,
+    onModificationClick: (SearchOptions) -> Unit,
+    onWikiClick: (String) -> Unit
+) {
     if (tags.isEmpty()) return
     stickyHeader("$title tags") { // TODO i18n
         Row(
@@ -121,52 +140,50 @@ fun LazyListScope.tags(title: String, tags: List<String>) {
         }
     }
     items(tags, key = { it }) {
-        Tag(it)
+        Tag(it, searchOptions, onModificationClick, onWikiClick)
     }
 }
 
 @Composable
-fun Tag(tag: String) {
+fun Tag(
+    tag: String,
+    searchOptions: SearchOptions,
+    onModificationClick: (SearchOptions) -> Unit,
+    onWikiClick: (String) -> Unit
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(start = 8.dp)
     ) {
         Text(tag, modifier = Modifier.weight(1f))
-        IconButton(
+        IconButton( // Add
             onClick = {
-                debug {
-                    TODO()
-                }
-
+                onModificationClick(searchOptions.toBuilder { tags += tag })
             }
         ) {
             Icon(
                 Icons.Default.Add,
-                contentDescription = stringResource(R.string.add) // TODO i18n something more suitable
+                contentDescription = stringResource(R.string.add_tag_to_search)
             )
         }
         IconButton(
             onClick = {
-                debug {
-                    TODO()
-                }
+                onModificationClick(searchOptions.toBuilder { tags -= tag })
             }
         ) {
             Icon(
                 Icons.Default.Remove,
-                contentDescription = stringResource(R.string.remove) // TODO i18n something more suitable
+                contentDescription = stringResource(R.string.exclude_tag_from_search)
             )
         }
         IconButton(
             onClick = {
-                debug {
-                    TODO()
-                }
+                onWikiClick(tag)
             }
         ) {
             Icon(
                 Icons.Default.Help,
-                contentDescription = stringResource(R.string.remove) // TODO i18n something more suitable
+                contentDescription = stringResource(R.string.tag_view_wiki)
             )
         }
     }

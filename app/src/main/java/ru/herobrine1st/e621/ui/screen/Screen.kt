@@ -72,14 +72,19 @@ enum class Screen(
         },
         appBarActions = { PostsAppBarActions(it) }
     ),
-    Post(R.string.post, Icons.Default.Feed, "post",
+    Post(
+        R.string.post, Icons.Default.Feed, "post",
         navArgument("post") {
             type = PostNavType()
         },
         navArgument("scrollToComments") {
             type = NavType.BoolType
             defaultValue = false
-        }),
+        },
+        navArgument("query") {
+            type = PostsSearchOptionsNavType()
+        }
+    ),
     Favourites(
         R.string.favourites,
         Icons.Default.Feed,
