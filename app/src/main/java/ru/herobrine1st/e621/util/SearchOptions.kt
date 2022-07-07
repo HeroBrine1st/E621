@@ -27,26 +27,28 @@ data class PostsSearchOptions(
     val favouritesOf: String? = null, // "favorited_by" in api
 ) : SearchOptions, Parcelable, JsonSerializable {
 
-    // TODO use StringBuilder
     private fun compileToQuery(): String {
-        var query = tags.joinToString(" ")
+        val queryBuilder = StringBuilder()
+        queryBuilder.append(tags.joinToString(" "))
+        val cache = mutableListOf(tags.joinToString(" "))
+
         (if (orderAscending) this.order.ascendingApiName else this.order.apiName)?.let {
-            query += " order:$it"
+            cache.add("order:$it")
         }
         if (rating.size < Rating.values().size && rating.isNotEmpty()) {
-            query += " " + if (rating.size == 1) {
-                "rating:${rating[0].apiName}"
+            if (rating.size == 1) {
+                cache.add("rating:${rating[0].apiName}")
             } else {
-                rating.joinToString(" ") { "~rating:${it.apiName}" }
+                cache.addAll(rating.map { "~rating:${it.apiName}" })
             }
         }
         if (favouritesOf != null) {
-            query += " fav:$favouritesOf"
+            cache.add("fav:$favouritesOf")
         }
-        debug {
-            Log.d(PostsSearchOptions::class.simpleName, "Built query: $query")
+
+        return cache.joinToString(" ").debug {
+            Log.d(PostsSearchOptions::class.simpleName, "Built query: $this")
         }
-        return query
     }
 
     override suspend fun getPosts(api: IAPI, limit: Int, page: Int): List<Post> {
