@@ -98,7 +98,7 @@ fun Post(
                 post.file.type.isVideo -> PostVideo(post.files.first { it.type.isVideo })
                 post.file.type.isImage -> PostImage(
                     post = post,
-                    aspectRatio = post.normalizedFile.aspectRatio,
+                    aspectRatio = post.normalizedSample.aspectRatio,
                     openPost = null,
                     file = post.normalizedSample
                 )
