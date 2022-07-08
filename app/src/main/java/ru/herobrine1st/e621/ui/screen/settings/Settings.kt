@@ -37,7 +37,7 @@ fun Settings(navController: NavController) {
             onCheckedChange = { enabled ->
                 coroutineScope.launch {
                     context.updatePreferences {
-                        setBlacklistEnabled(enabled)
+                        blacklistEnabled = enabled
                     }
                 }
             }
@@ -53,7 +53,7 @@ fun Settings(navController: NavController) {
             onCheckedChange = { enabled: Boolean ->
                 coroutineScope.launch {
                     context.updatePreferences {
-                        setPrivacyModeEnabled(enabled)
+                        privacyModeEnabled = enabled
                     }
                     if (!preferences.privacyModeDialogWasShown && enabled) showPrivacyModeDialog = true
                 }
@@ -66,7 +66,7 @@ fun Settings(navController: NavController) {
             showPrivacyModeDialog = false
             coroutineScope.launch {
                 context.updatePreferences {
-                    setPrivacyModeDialogWasShown(true)
+                    privacyModeDialogWasShown = true
                 }
             }
         }
