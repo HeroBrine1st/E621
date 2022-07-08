@@ -119,7 +119,7 @@ fun Post(
                     openPost = openPost,
                     file = post.normalizedSample
                 )
-                else -> InvalidPost(text = stringResource(R.string.unsupported_post_type))
+                else -> InvalidPost(text = stringResource(R.string.unsupported_post_type, post.file.type.extension))
             }
             FlowRow {
                 var expandTags by remember { mutableStateOf(false) }

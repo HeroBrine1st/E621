@@ -102,7 +102,7 @@ fun Post(
                     openPost = null,
                     file = post.normalizedSample
                 )
-                else -> InvalidPost(text = stringResource(R.string.unsupported_post_type))
+                else -> InvalidPost(text = stringResource(R.string.unsupported_post_type, post.file.type.extension))
             }
         }
         item("todo") {
