@@ -3,6 +3,7 @@ package ru.herobrine1st.e621.ui.screen.posts
 import android.app.Activity
 import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
+import androidx.annotation.StringRes
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -136,25 +137,25 @@ fun LazyListScope.tags(
     onModificationClick: (PostsSearchOptions) -> Unit,
     onWikiClick: (String) -> Unit
 ) {
-    tags("Artist", post.tags.artist, searchOptions, onModificationClick, onWikiClick)
-    tags("Copyright", post.tags.copyright, searchOptions, onModificationClick, onWikiClick)
-    tags("Character", post.tags.character, searchOptions, onModificationClick, onWikiClick)
-    tags("Species", post.tags.species, searchOptions, onModificationClick, onWikiClick)
-    tags("General", post.tags.general, searchOptions, onModificationClick, onWikiClick)
-    tags("Lore", post.tags.lore, searchOptions, onModificationClick, onWikiClick)
-    tags("Meta", post.tags.meta, searchOptions, onModificationClick, onWikiClick)
+    tags(R.string.artist_tags, post.tags.artist, searchOptions, onModificationClick, onWikiClick)
+    tags(R.string.copyright_tags, post.tags.copyright, searchOptions, onModificationClick, onWikiClick)
+    tags(R.string.character_tags, post.tags.character, searchOptions, onModificationClick, onWikiClick)
+    tags(R.string.species_tags, post.tags.species, searchOptions, onModificationClick, onWikiClick)
+    tags(R.string.general_tags, post.tags.general, searchOptions, onModificationClick, onWikiClick)
+    tags(R.string.lore_tags, post.tags.lore, searchOptions, onModificationClick, onWikiClick)
+    tags(R.string.meta_tags, post.tags.meta, searchOptions, onModificationClick, onWikiClick)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 fun LazyListScope.tags(
-    title: String,
+    @StringRes titleId: Int,
     tags: List<String>,
     searchOptions: SearchOptions,
     onModificationClick: (PostsSearchOptions) -> Unit,
     onWikiClick: (String) -> Unit
 ) {
     if (tags.isEmpty()) return
-    stickyHeader("$title tags") { // TODO i18n
+    stickyHeader("$titleId tags") {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
@@ -170,13 +171,13 @@ fun LazyListScope.tags(
                 )
         ) {
             Text(
-                title,
+                stringResource(titleId),
                 style = MaterialTheme.typography.h6,
                 modifier = Modifier.weight(1f)
             ) // TODO i18n
         }
     }
-    items(tags, key = { it }) {
+    items(tags, key = { "$it tag" }) {
         Tag(it, searchOptions, onModificationClick, onWikiClick)
     }
 }

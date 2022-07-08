@@ -86,4 +86,11 @@
     <string name="not_found">Не найдено</string>
     <string name="wiki_load_failed">Ошибка при загрузке страницы вики</string>
     <string name="uploaded_relative_date">Загружено %s</string>
+    <string name="artist_tags">Автор(ы)</string>
+    <string name="copyright_tags">Авторские права</string>
+    <string name="character_tags">Персонаж(и)</string>
+    <string name="species_tags">Виды</string>
+    <string name="general_tags">Общее</string>
+    <string name="lore_tags">Лор</string>
+    <string name="meta_tags">Метаданные</string>
 </resources>

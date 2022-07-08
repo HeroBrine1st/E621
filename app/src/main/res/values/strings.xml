@@ -86,4 +86,11 @@
     <string name="not_found">Not found</string>
     <string name="wiki_load_failed">Failed to load wiki page</string>
     <string name="uploaded_relative_date">Uploaded %s</string>
+    <string name="artist_tags">Artist(s)</string>
+    <string name="copyright_tags">Copyright</string>
+    <string name="character_tags">Character(s)</string>
+    <string name="species_tags">Species</string>
+    <string name="general_tags">General</string>
+    <string name="lore_tags">Lore</string>
+    <string name="meta_tags">Meta</string>
 </resources>
