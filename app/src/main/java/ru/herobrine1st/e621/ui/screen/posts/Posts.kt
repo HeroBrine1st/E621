@@ -23,6 +23,7 @@ import com.google.accompanist.flowlayout.FlowRow
 import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.screen.Screen
@@ -65,7 +66,7 @@ fun Posts(
         )
     )
 ) {
-    val isAuthorized by viewModel.isAuthorizedFlow.collectAsState(false)
+    val isAuthorized by LocalContext.current.getPreferencesAsState { it.hasAuth() }
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
 
 
@@ -119,20 +120,30 @@ fun Post(
                     openPost = openPost,
                     file = post.normalizedSample
                 )
-                else -> InvalidPost(text = stringResource(R.string.unsupported_post_type, post.file.type.extension))
+                else -> InvalidPost(
+                    text = stringResource(
+                        R.string.unsupported_post_type,
+                        post.file.type.extension
+                    )
+                )
             }
-            FlowRow(mainAxisSpacing = 4.dp,crossAxisSpacing = 4.dp, modifier = Modifier.padding(8.dp)) {
+            FlowRow(
+                mainAxisSpacing = 4.dp,
+                crossAxisSpacing = 4.dp,
+                modifier = Modifier.padding(8.dp)
+            ) {
                 var expandTags by remember { mutableStateOf(false) }
-                post.tags.reduced
-                    .let {
-                        if (expandTags) it
-                        else it.take(6)
-                    }
-                    .forEach {
-                        OutlinedChip {
-                            Text(it, style = MaterialTheme.typography.caption)
+                remember(post.tags, expandTags) {
+                    post.tags.reduced
+                        .let {
+                            if (expandTags) it
+                            else it.take(6)
                         }
+                }.forEach {
+                    OutlinedChip {
+                        Text(it, style = MaterialTheme.typography.caption)
                     }
+                }
                 if (!expandTags && post.tags.reduced.size > 6) {
                     OutlinedChip(modifier = Modifier
                         .clickable {

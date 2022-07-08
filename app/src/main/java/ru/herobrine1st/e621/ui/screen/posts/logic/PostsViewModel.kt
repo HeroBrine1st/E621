@@ -29,7 +29,6 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
@@ -44,7 +43,6 @@ class PostsViewModel @AssistedInject constructor(
     private val favouritesCache: FavouritesCache,
     @Assisted private val searchOptions: SearchOptions,
     blacklistRepository: BlacklistRepository,
-    authorizationRepository: AuthorizationRepository,
 ) : ViewModel() {
     private val pager = Pager(
         PagingConfig(
@@ -54,9 +52,6 @@ class PostsViewModel @AssistedInject constructor(
     ) {
         PostsSource(api, snackbar, searchOptions)
     }
-
-    val isAuthorizedFlow = authorizationRepository.getAccountFlow().map { it != null }
-    val usernameFlow = authorizationRepository.getAccountFlow().map { it?.username }
 
     private val blacklistPredicateFlow: StateFlow<Predicate<Post>?> =
         blacklistRepository.getEntriesFlow().map { list ->
