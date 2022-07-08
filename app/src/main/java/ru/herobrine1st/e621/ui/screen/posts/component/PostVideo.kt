@@ -56,7 +56,7 @@ fun HandlePreferences(state: VideoPlayerState) {
 
     LaunchedEffect(state) {
         snapshotFlow { state.isMuted }.collect {
-            context.updatePreferences { setMuteSoundOnMedia(it) }
+            context.updatePreferences { muteSoundOnMedia = it }
             debug {
                 Log.d(TAG, "Updating preferences: MUTE_SOUND_MEDIA=${it}")
             }
@@ -65,7 +65,7 @@ fun HandlePreferences(state: VideoPlayerState) {
 
     LaunchedEffect(state) {
         snapshotFlow { state.showRemaining }.collect {
-            context.updatePreferences { setShowRemainingTimeMedia(it) }
+            context.updatePreferences { showRemainingTimeMedia = it }
             debug {
                 Log.d(TAG, "Updating preferences: SHOW_REMAINING_TIME_MEDIA=${state.showRemaining}")
             }
