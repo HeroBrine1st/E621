@@ -17,7 +17,8 @@ interface SearchOptions {
     @Throws(ApiException::class, IOException::class)
     suspend fun getPosts(api: API, limit: Int, page: Int): List<Post>
 
-    fun toBuilder(builder: PostsSearchOptions.Builder.() -> Unit) = PostsSearchOptions.builder(this, builder)
+    fun toBuilder(builder: PostsSearchOptions.Builder.() -> Unit) =
+        PostsSearchOptions.builder(this, builder)
 }
 
 @Parcelize
@@ -30,9 +31,9 @@ data class PostsSearchOptions(
 ) : SearchOptions, Parcelable, JsonSerializable {
 
     private fun compileToQuery(): String {
-        val queryBuilder = StringBuilder()
-        queryBuilder.append(tags.joinToString(" "))
-        val cache = mutableListOf(tags.joinToString(" "))
+        val cache = mutableListOf<String>()
+
+        cache.addAll(tags)
 
         (if (orderAscending) this.order.ascendingApiName else this.order.apiName)?.let {
             cache.add("order:$it")
