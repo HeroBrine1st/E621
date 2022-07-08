@@ -2,18 +2,13 @@ package ru.herobrine1st.e621.ui
 
 import android.os.Bundle
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.map
-import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.home.Home
@@ -24,10 +19,9 @@ import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
-import javax.inject.Inject
 
 @Composable
-fun Navigator(navController: NavHostController, viewModel: NavigatorViewModel = hiltViewModel()) {
+fun Navigator(navController: NavHostController) {
     val context = LocalContext.current
 
     val preferences by context.getPreferencesAsState()
@@ -88,8 +82,7 @@ fun Navigator(navController: NavHostController, viewModel: NavigatorViewModel = 
                 it.arguments!!
             val searchOptions =
                 remember { FavouritesSearchOptions(arguments.getString("user")) }
-            val username by viewModel.usernameFlow.collectAsState(initial = null) // I think it is the moment when authorization data should live in DataStore..
-
+            val username by remember { derivedStateOf { if (preferences.hasAuth()) preferences.auth.username else null } }
             Posts(
                 searchOptions,
                 isBlacklistEnabled = preferences.blacklistEnabled,
@@ -134,11 +127,4 @@ fun Navigator(navController: NavHostController, viewModel: NavigatorViewModel = 
             }
         }
     }
-}
-
-@HiltViewModel
-class NavigatorViewModel @Inject constructor(
-    val authorizationRepository: AuthorizationRepository
-) : ViewModel() {
-    val usernameFlow = authorizationRepository.getAccountFlow().map { it?.username }
 }
