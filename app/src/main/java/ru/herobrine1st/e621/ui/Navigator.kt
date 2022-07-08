@@ -114,8 +114,7 @@ fun Navigator(navController: NavHostController) {
                             addArgument("query", it)
                         }
                     )
-                },
-                onExit = { navController.popBackStack() }
+                }
             )
         }
         composable(Screen.Settings.route) {

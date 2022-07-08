@@ -9,6 +9,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.MediaItem
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedFactory
 import dagger.assisted.AssistedInject
@@ -33,6 +35,7 @@ class PostViewModel @AssistedInject constructor(
     @ApplicationContext context: Context,
     val api: API,
     val snackbar: SnackbarAdapter,
+    val exoPlayer: ExoPlayer,
     @Assisted initialPost: Post
 ) : ViewModel() {
 
@@ -55,6 +58,8 @@ class PostViewModel @AssistedInject constructor(
             try {
                 post = api.getPost(initialPost.id).await().post
                 isLoadingPost = true
+                // Maybe reload ExoPlayer if old object contains invalid URL?
+                // exoPlayer.playbackState may help with that
             } catch (e: IOException) {
                 Log.e(TAG, "Unable to get post ${initialPost.id}", e)
                 snackbar.enqueueMessage(
@@ -65,6 +70,12 @@ class PostViewModel @AssistedInject constructor(
                 Log.e(TAG, "Unable to get post ${initialPost.id}", t)
             }
         }
+        exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
+        exoPlayer.prepare()
+    }
+
+    override fun onCleared() {
+        exoPlayer.clearMediaItems()
     }
 
     fun handleWikiClick(tag: String) {

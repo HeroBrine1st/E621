@@ -3,7 +3,6 @@ package ru.herobrine1st.e621.ui.screen.posts
 import android.app.Activity
 import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -15,8 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -28,11 +26,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
-import com.google.android.exoplayer2.MediaItem
 import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
 import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
@@ -49,7 +45,6 @@ fun Post(
     @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean, // TODO
     searchOptions: SearchOptions,
     onModificationClick: (PostsSearchOptions) -> Unit,
-    onExit: () -> Unit,
     viewModel: PostViewModel = viewModel(
         factory = PostViewModel.provideFactory(
             EntryPointAccessors.fromActivity(
@@ -94,7 +89,6 @@ fun Post(
         }
     }
 
-    ExoPlayerHandler(post, onExit)
     LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
         item("media") {
             when {
@@ -229,28 +223,5 @@ fun Tag(
                 contentDescription = stringResource(R.string.tag_view_wiki)
             )
         }
-    }
-}
-
-
-// Set media item only on first composition in this scope (likely it is a navigation graph)
-// Clear media item on exit
-// Like DisposableEffect, but in scope of a graph
-// Cannot use RememberObserver because onForgotten is triggered on decomposition even if rememberSaveable is used
-@Composable
-fun ExoPlayerHandler(post: Post, onExit: () -> Unit) {
-    val exoPlayer = LocalExoPlayer.current
-    var mediaItemIsSet by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        if (mediaItemIsSet) return@LaunchedEffect
-        if (post.file.type.isNotVideo) return@LaunchedEffect
-        exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
-        exoPlayer.prepare()
-        mediaItemIsSet = true
-    }
-
-    BackHandler {
-        exoPlayer.clearMediaItems()
-        onExit()
     }
 }
