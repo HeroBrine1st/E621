@@ -1,7 +1,6 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import android.app.Activity
-import android.text.format.DateUtils
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,6 +26,7 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.screen.Screen
+import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
@@ -112,7 +112,7 @@ fun Post(
     openPost: (scrollToComments: Boolean) -> Unit
 ) {
     Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.padding(bottom = 8.dp)) {
+        Column(modifier = Modifier.padding(bottom = 0.dp)) {
             when {
                 post.file.type.isSupported -> PostImage(
                     post = post,
@@ -121,7 +121,7 @@ fun Post(
                 )
                 else -> InvalidPost(text = stringResource(R.string.unsupported_post_type, post.file.type.extension))
             }
-            FlowRow {
+            FlowRow(mainAxisSpacing = 4.dp,crossAxisSpacing = 4.dp, modifier = Modifier.padding(8.dp)) {
                 var expandTags by remember { mutableStateOf(false) }
                 post.tags.reduced
                     .let {
@@ -129,18 +129,12 @@ fun Post(
                         else it.take(6)
                     }
                     .forEach {
-                        OutlinedChip(
-                            modifier = Modifier.padding(
-                                horizontal = 4.dp,
-                                vertical = 2.dp
-                            )
-                        ) {
+                        OutlinedChip {
                             Text(it, style = MaterialTheme.typography.caption)
                         }
                     }
                 if (!expandTags && post.tags.reduced.size > 6) {
                     OutlinedChip(modifier = Modifier
-                        .padding(4.dp)
                         .clickable {
                             expandTags = true
                         }) {
@@ -156,7 +150,6 @@ fun Post(
                 PostActionsRow(post, isFavourite, isAuthorized, onAddToFavourites) {
                     openPost(true)
                 }
-                Text("Created ${DateUtils.getRelativeTimeSpanString(post.createdAt.toEpochSecond() * 1000)}") // TODO i18n; move it somewhere
             }
         }
     }

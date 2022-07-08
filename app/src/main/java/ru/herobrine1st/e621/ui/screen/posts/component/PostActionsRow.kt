@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui.screen.posts
+package ru.herobrine1st.e621.ui.screen.posts.component
 
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable

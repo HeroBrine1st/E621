@@ -85,4 +85,5 @@
     <string name="loading">Загрузка..</string>
     <string name="not_found">Не найдено</string>
     <string name="wiki_load_failed">Ошибка при загрузке страницы вики</string>
+    <string name="uploaded_relative_date">Загружено %s</string>
 </resources>

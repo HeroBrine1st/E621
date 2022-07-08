@@ -1,6 +1,8 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import android.app.Activity
+import android.text.format.DateUtils
+import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -102,7 +104,12 @@ fun Post(
                     openPost = null,
                     file = post.normalizedSample
                 )
-                else -> InvalidPost(text = stringResource(R.string.unsupported_post_type, post.file.type.extension))
+                else -> InvalidPost(
+                    text = stringResource(
+                        R.string.unsupported_post_type,
+                        post.file.type.extension
+                    )
+                )
             }
         }
         item("todo") {
@@ -110,6 +117,19 @@ fun Post(
         }
         // TODO comments
         // TODO i18n
+        item("uploaded") {
+            Text(
+                stringResource(
+                    R.string.uploaded_relative_date,
+                    DateUtils.getRelativeTimeSpanString(
+                        post.createdAt.toEpochSecond() * 1000,
+                        System.currentTimeMillis(),
+                        SECOND_IN_MILLIS
+                    )
+                ),
+                modifier = Modifier.fillMaxWidth().padding(8.dp)
+            )
+        }
         tags(post, searchOptions, onModificationClick, onWikiClick = {
             viewModel.handleWikiClick(it)
         })
