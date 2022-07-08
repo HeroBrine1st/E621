@@ -14,9 +14,6 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.database.Database
-import ru.herobrine1st.e621.module.LocalAPI
 import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.preference.getPreferencesFlow
@@ -33,12 +30,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-    @Inject
-    lateinit var db: Database
-
-    @Inject
-    lateinit var api: API
-
     @Inject
     lateinit var snackbarMessagesFlow: MutableSharedFlow<SnackbarMessage>
 
@@ -79,7 +70,6 @@ class MainActivity : ComponentActivity() {
                     scaffoldState.snackbarHostState
                 )
                 CompositionLocalProvider(
-                    LocalAPI provides api,
                     LocalSnackbar provides snackbarAdapter,
                     LocalExoPlayer provides exoPlayer
                 ) {

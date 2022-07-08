@@ -2,7 +2,6 @@ package ru.herobrine1st.e621.module
 
 import android.content.Context
 import android.os.StatFs
-import androidx.compose.runtime.staticCompositionLocalOf
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -21,8 +20,6 @@ import ru.herobrine1st.e621.net.UserAgentInterceptor
 import ru.herobrine1st.e621.util.objectMapper
 import java.io.File
 import javax.inject.Qualifier
-
-val LocalAPI = staticCompositionLocalOf<API> { error("No API found") }
 
 @Module
 @InstallIn(ActivityRetainedComponent::class)
