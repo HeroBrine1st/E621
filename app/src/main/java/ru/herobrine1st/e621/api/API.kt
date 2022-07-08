@@ -2,14 +2,13 @@ package ru.herobrine1st.e621.api
 
 import androidx.annotation.CheckResult
 import androidx.annotation.IntRange
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
-import ru.herobrine1st.e621.api.model.PostEndpoint
-import ru.herobrine1st.e621.api.model.PostVoteEndpoint
-import ru.herobrine1st.e621.api.model.PostsEndpoint
-import ru.herobrine1st.e621.api.model.WikiPage
+import ru.herobrine1st.e621.api.model.*
+import ru.herobrine1st.e621.util.await
 
 interface API {
     @CheckResult
@@ -77,4 +76,46 @@ interface API {
     @CheckResult
     @GET("/wiki_pages/{id}.json")
     fun getWikiPage(@Path("id") id: Int): Call<WikiPage>
+
+    /*
+        @Suppress("MemberVisibilityCanBePrivate")
+    fun getCommentsForPost(id: Int): List<Comment> {
+        // Получить комментарии:
+        // GET /comments.json?group_by=comment&search[post_id]=$id&page=$page
+        // Не даст ни постов, ни маппинга юзер->аватарка, но даст адекватные комментарии
+        // Посты и маппинги можно получить кодом ниже
+        val req = requestBuilder()
+            .url(
+                API_BASE_URL.newBuilder()
+                    .addPathSegments("posts/$id/comments.json")
+                    .build()
+            )
+            .build()
+        val response = okHttpClient.newCall(req).execute().use {
+            it.checkStatus()
+            objectMapper.readValue<PostCommentsEndpoint>(it.body!!.charStream())
+        }
+        return parseComments(response)
+    }
+     */
+
+    @CheckResult
+    @GET("/posts/{post_id}/comments.json")
+    fun getCommentsForPostHTML(
+        @Path("post_id") id: Int
+    ): Call<PostCommentsEndpoint>
+
+    @CheckResult
+    @GET("/comments.json?group_by=comment&search[post_id]={post_id}&page={page}")
+    fun getCommentsForPostBBCode(
+        @Path("post_id") id: Int,
+        @Path("page") page: Int
+    ): Call<JsonNode>
+}
+
+suspend fun API.getCommentsForPost(id: Int): List<Comment> {
+    val response = getCommentsForPostHTML(id).await()
+    // TODO use other method to get BBCode contents
+    // TODO parse to AnnotatedString
+    return parseComments(response)
 }

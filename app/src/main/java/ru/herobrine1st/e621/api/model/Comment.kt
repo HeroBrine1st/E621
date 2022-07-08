@@ -13,7 +13,7 @@ data class Comment(
     val authorName: String, // author-info -> name-rank -> author-name -> a content
     val levelString: String, // author-info -> name-rank -> text; idk what could it be; Name from source code
     val avatarPostId: Int, // avatar -> data-id
-    val post: PostReduced?, // from the same response
+    val avatarPost: PostReduced?, // from the same response
     val postedAt: Instant, // post-time -> datetime attribute
     val content: String, // content -> body -> styled-dtext content
 )
@@ -53,7 +53,6 @@ fun parseComments(response: PostCommentsEndpoint): List<Comment> {
         val content = article.getElementsByClass("content").first()!!
             .getElementsByClass("body").first()!!
             .getElementsByClass("styled-dtext").first()!!.html()
-        val postsMap = response.posts.associateBy { it.id }
         Comment(
             id,
             score,
@@ -63,7 +62,7 @@ fun parseComments(response: PostCommentsEndpoint): List<Comment> {
             authorName,
             levelString,
             avatarPostId,
-            postsMap[avatarPostId],
+            response.posts[avatarPostId],
             postedAt,
             content
         )

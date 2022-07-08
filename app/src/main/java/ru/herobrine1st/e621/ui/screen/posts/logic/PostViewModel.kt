@@ -23,6 +23,8 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.getCommentsForPost
+import ru.herobrine1st.e621.api.model.Comment
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.preference.getPreferencesFlow
@@ -43,6 +45,10 @@ class PostViewModel @AssistedInject constructor(
         private set
     var isLoadingPost by mutableStateOf(true)
         private set
+    var comments by mutableStateOf<List<Comment>?>(null)
+        private set
+    var loadingComments by mutableStateOf(false)
+        private set
 
     var wikiState by mutableStateOf<WikiResult?>(null)
         private set
@@ -51,23 +57,25 @@ class PostViewModel @AssistedInject constructor(
 
     init {
         viewModelScope.launch {
-            if (!initialPost.isFavorited && context.getPreferencesFlow { it.privacyModeEnabled }
-                    .first()) {
-                return@launch
-            }
-            try {
-                post = api.getPost(initialPost.id).await().post
-                isLoadingPost = true
-                // Maybe reload ExoPlayer if old object contains invalid URL?
-                // exoPlayer.playbackState may help with that
-            } catch (e: IOException) {
-                Log.e(TAG, "Unable to get post ${initialPost.id}", e)
-                snackbar.enqueueMessage(
-                    R.string.network_error,
-                    SnackbarDuration.Indefinite
-                )
-            } catch (t: Throwable) {
-                Log.e(TAG, "Unable to get post ${initialPost.id}", t)
+            val isPrivacyModeEnabled = context.getPreferencesFlow { it.privacyModeEnabled }
+                .first()
+            if (initialPost.isFavorited || !isPrivacyModeEnabled) {
+                try {
+                    post = api.getPost(initialPost.id).await().post
+                    isLoadingPost = true
+                    // Maybe reload ExoPlayer if old object contains invalid URL?
+                    // exoPlayer.playbackState may help with that
+                } catch (e: IOException) {
+                    Log.e(TAG, "Unable to get post ${initialPost.id}", e)
+                    snackbar.enqueueMessage(
+                        R.string.network_error,
+                        SnackbarDuration.Indefinite
+                    )
+                } catch (t: Throwable) {
+                    Log.e(TAG, "Unable to get post ${initialPost.id}", t)
+                }
+                if (!isPrivacyModeEnabled)
+                    loadCommentInternal()
             }
         }
         if (post.file.type.isVideo) {
@@ -78,6 +86,18 @@ class PostViewModel @AssistedInject constructor(
 
     override fun onCleared() {
         exoPlayer.clearMediaItems()
+    }
+
+    private suspend fun loadCommentInternal() {
+        loadingComments = true
+        comments = api.getCommentsForPost(post.id)
+        loadingComments = false
+    }
+
+    fun loadComments() {
+        viewModelScope.launch {
+            loadCommentInternal()
+        }
     }
 
     fun handleWikiClick(tag: String) {

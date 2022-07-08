@@ -16,6 +16,7 @@ import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.component.video.VideoPlayer
 import ru.herobrine1st.e621.ui.component.video.VideoPlayerState
 import ru.herobrine1st.e621.ui.component.video.rememberVideoPlayerState
+import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
 import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "PostVideo"

@@ -31,7 +31,9 @@ import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
+import ru.herobrine1st.e621.ui.screen.posts.component.PostComment
 import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
+import ru.herobrine1st.e621.ui.screen.posts.component.PostVideo
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.posts.logic.WikiResult
 import ru.herobrine1st.e621.util.PostsSearchOptions
@@ -107,11 +109,25 @@ fun Post(
                 )
             }
         }
-        item("todo") {
-            Text("TODO")
+        // TODO move comments to another screen (without navigation)
+        if(viewModel.loadingComments) {
+            item {
+                CircularProgressIndicator()
+            }
+        } else if(viewModel.comments == null) {
+            item {
+                Button(onClick = { viewModel.loadComments() }) {
+                    Text("Load comments")
+                }
+            }
         }
-        // TODO comments
+        viewModel.comments?.let { comments ->
+            items(comments) { comment ->
+                PostComment(comment)
+            }
+        }
         item("uploaded") {
+            // TODO place more information here
             Text(
                 stringResource(
                     R.string.uploaded_relative_date,
@@ -121,9 +137,12 @@ fun Post(
                         SECOND_IN_MILLIS
                     )
                 ),
-                modifier = Modifier.fillMaxWidth().padding(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
             )
         }
+        // Move tags to another screen?
         tags(post, searchOptions, onModificationClick, onWikiClick = {
             viewModel.handleWikiClick(it)
         })

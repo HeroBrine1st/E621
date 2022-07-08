@@ -4,6 +4,6 @@ data class PostsEndpoint(val posts: List<Post>)
 
 data class PostEndpoint(val post: Post)
 
-data class PostCommentsEndpoint(val html: String, val posts: List<PostReduced>)
+data class PostCommentsEndpoint(val html: String, val posts: Map<Int, PostReduced>)
 
 data class PostVoteEndpoint(val up: Int, val down: Int, val total: Int, val ourScore: Int)

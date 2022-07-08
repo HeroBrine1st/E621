@@ -75,7 +75,7 @@ data class PostReduced(
     val previewHeight: Int,
     val width: Int,
     val height: Int,
-    val tags: List<String>,
+    val tags: String,
     val score: Int,
     val uploaderId: Int,
     val uploader: String,
