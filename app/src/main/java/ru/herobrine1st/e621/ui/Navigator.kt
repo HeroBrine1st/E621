@@ -2,12 +2,18 @@ package ru.herobrine1st.e621.ui
 
 import android.os.Bundle
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.ViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.map
+import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.home.Home
@@ -18,9 +24,10 @@ import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
+import javax.inject.Inject
 
 @Composable
-fun Navigator(navController: NavHostController) {
+fun Navigator(navController: NavHostController, viewModel: NavigatorViewModel = hiltViewModel()) {
     val context = LocalContext.current
 
     val preferences by context.getPreferencesAsState()
@@ -81,6 +88,7 @@ fun Navigator(navController: NavHostController) {
                 it.arguments!!
             val searchOptions =
                 remember { FavouritesSearchOptions(arguments.getString("user")) }
+            val username by viewModel.usernameFlow.collectAsState(initial = null) // I think it is the moment when authorization data should live in DataStore..
 
             Posts(
                 searchOptions,
@@ -90,7 +98,11 @@ fun Navigator(navController: NavHostController) {
                         Screen.Post.buildRoute {
                             addArgument("post", post)
                             addArgument("scrollToComments", scrollToComments)
-                            addArgument("query", searchOptions)
+                            addArgument(
+                                "query", PostsSearchOptions(
+                                    favouritesOf = arguments.getString("user") ?: username
+                                )
+                            )
                         }
                     )
                 }
@@ -122,4 +134,11 @@ fun Navigator(navController: NavHostController) {
             }
         }
     }
+}
+
+@HiltViewModel
+class NavigatorViewModel @Inject constructor(
+    val authorizationRepository: AuthorizationRepository
+) : ViewModel() {
+    val usernameFlow = authorizationRepository.getAccountFlow().map { it?.login }
 }
