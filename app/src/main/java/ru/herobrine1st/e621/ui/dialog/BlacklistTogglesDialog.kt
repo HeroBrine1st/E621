@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.util.asStateful
+import ru.herobrine1st.e621.util.asToggleable
 import javax.inject.Inject
 
 @Composable
@@ -213,7 +213,7 @@ class BlacklistTogglesDialogViewModel @Inject constructor(
 ) : ViewModel() {
 
     val entriesFlow = blacklistRepository.getEntriesFlow()
-        .map { list -> list.map { it.asStateful() } }
+        .map { list -> list.map { it.asToggleable() } }
         .stateIn(
             viewModelScope,
             SharingStarted.WhileSubscribed(),
