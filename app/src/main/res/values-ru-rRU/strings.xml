@@ -25,7 +25,6 @@
     <string name="rating">Рейтинг</string>
     <string name="any">Любой</string>
     <string name="posts">Посты</string>
-    <string name="database_error">Произошла ошибка базы данных</string>
     <string name="network_error">Произошла неизвестная ошибка сети. Нет доступа к сети интернет?</string>
     <string name="okay">Хорошо</string>
     <string name="settings">Настройки</string>
@@ -82,7 +81,6 @@
     <string name="add_tag_to_search">Добавить тег в поиск</string>
     <string name="exclude_tag_from_search">Убрать тег из поиска</string>
     <string name="tag_view_wiki">Посмотреть в вики</string>
-    <string name="loading">Загрузка..</string>
     <string name="not_found">Не найдено</string>
     <string name="wiki_load_failed">Ошибка при загрузке страницы вики</string>
     <string name="uploaded_relative_date">Загружено %s</string>

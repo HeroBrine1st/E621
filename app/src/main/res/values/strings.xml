@@ -25,7 +25,6 @@
     <string name="rating">Rating</string>
     <string name="any">Any</string>
     <string name="posts">Posts</string>
-    <string name="database_error">Database error occurred</string>
     <string name="network_error">Unknown network error occurred. No internet available?</string>
     <string name="okay">Okay</string>
     <string name="settings">Settings</string>
@@ -82,7 +81,6 @@
     <string name="add_tag_to_search">Add tag to search</string>
     <string name="exclude_tag_from_search">Exclude tag from search</string>
     <string name="tag_view_wiki">Find in wiki</string>
-    <string name="loading">Loading..</string>
     <string name="not_found">Not found</string>
     <string name="wiki_load_failed">Failed to load wiki page</string>
     <string name="uploaded_relative_date">Uploaded %s</string>
