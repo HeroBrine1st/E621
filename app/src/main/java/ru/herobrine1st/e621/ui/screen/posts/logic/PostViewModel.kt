@@ -70,8 +70,10 @@ class PostViewModel @AssistedInject constructor(
                 Log.e(TAG, "Unable to get post ${initialPost.id}", t)
             }
         }
-        exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
-        exoPlayer.prepare()
+        if (post.file.type.isVideo) {
+            exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
+            exoPlayer.prepare()
+        }
     }
 
     override fun onCleared() {
