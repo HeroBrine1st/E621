@@ -26,16 +26,19 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.emitAll
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.ui.component.BASE_WIDTH
 import ru.herobrine1st.e621.ui.dialog.StopThereAreUnsavedChangesDialog
 import ru.herobrine1st.e621.ui.dialog.TextInputDialog
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
-import ru.herobrine1st.e621.util.StatefulBlacklistEntry
-import ru.herobrine1st.e621.util.asStateful
 import javax.inject.Inject
 
 @Composable
@@ -63,24 +66,21 @@ fun SettingsBlacklistFloatingActionButton() {
 }
 
 @Composable
-fun blacklistHasChanges(entries: List<StatefulBlacklistEntry>) =
-    remember { derivedStateOf { entries.any { it.isChanged } } }
+fun blacklistHasChanges(entries: List<EditedBlacklistEntry>?) =
+    remember(entries) { entries?.any { it.isChanged } ?: false }
 
 
 @Composable
 fun SettingsBlacklistAppBarActions() {
     val viewModel: SettingsBlacklistViewModel = hiltViewModel()
 
-    val hasChanges by blacklistHasChanges(viewModel.entries)
-    val coroutineScope = rememberCoroutineScope()
-    if (viewModel.isUpdating || viewModel.isLoading) {
+    val entries by viewModel.entriesFlow.collectAsState()
+    val hasChanges = blacklistHasChanges(entries)
+
+    if (viewModel.isUpdating || entries == null) {
         CircularProgressIndicator(color = ActionBarIconColor)
     } else if (hasChanges) {
-        IconButton(onClick = {
-            coroutineScope.launch {
-                viewModel.applyChanges()
-            }
-        }) {
+        IconButton(onClick = { viewModel.applyChanges() }) {
             Icon(
                 imageVector = Icons.Filled.Done,
                 contentDescription = stringResource(R.string.search),
@@ -93,10 +93,11 @@ fun SettingsBlacklistAppBarActions() {
 @Composable
 fun SettingsBlacklist(exit: () -> Unit) {
     val viewModel: SettingsBlacklistViewModel = hiltViewModel()
-
-    var editQueryEntry by remember { mutableStateOf<StatefulBlacklistEntry?>(null) }
-    val hasChanges by blacklistHasChanges(viewModel.entries)
+    val entries = viewModel.entriesFlow.collectAsState().value
+    var editQueryEntry by remember { mutableStateOf<EditedBlacklistEntry?>(null) }
+    val hasChanges = blacklistHasChanges(entries)
     var openExitDialog by remember { mutableStateOf(false) }
+
 
 
     BackHandler(enabled = hasChanges) {
@@ -117,7 +118,9 @@ fun SettingsBlacklist(exit: () -> Unit) {
             initialText = entry.query,
             onClose = { editQueryEntry = null },
             onSubmit = {
-                entry.query = it
+                viewModel.editEntry(
+                    entry, query = it
+                )
             }
         )
     }
@@ -126,7 +129,7 @@ fun SettingsBlacklist(exit: () -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.fillMaxWidth()
     ) {
-        itemsIndexed(viewModel.entries) { i, entry ->
+        if (entries != null) itemsIndexed(entries) { i, entry ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth(BASE_WIDTH)
@@ -166,8 +169,7 @@ fun SettingsBlacklist(exit: () -> Unit) {
                 key("Delete button") {
                     IconButton(
                         onClick = {
-                            if (entry.isPendingDeletion) entry.markAsDeleted(false)
-                            else viewModel.markEntryAsDeleted(entry)
+                            viewModel.markEntryAsDeleted(entry, !entry.isPendingDeletion)
                         }
                     ) {
                         Icon(
@@ -186,10 +188,12 @@ fun SettingsBlacklist(exit: () -> Unit) {
                 }
 
                 key("Enable/disable checkbox") {
-                    Checkbox(checked = entry.enabled, onCheckedChange = { entry.enabled = it })
+                    Checkbox(checked = entry.enabled, onCheckedChange = {
+                        viewModel.editEntry(entry, enabled = it)
+                    })
                 }
             }
-            if (i < viewModel.entries.size - 1)
+            if (i < entries.size - 1)
                 Divider()
         }
     }
@@ -201,96 +205,148 @@ class SettingsBlacklistViewModel @Inject constructor(
     private val snackbar: SnackbarAdapter,
     private val blacklistRepository: BlacklistRepository
 ) : ViewModel() {
-    private val _entries = mutableStateListOf<StatefulBlacklistEntry>()
-
-    val entries: List<StatefulBlacklistEntry> = _entries
+    private val _entriesFlow = MutableStateFlow<List<EditedBlacklistEntry>?>(null)
+    val entriesFlow = _entriesFlow.asStateFlow()
 
     init {
         viewModelScope.launch {
-            // State of this screen should be shared between three composables (in the same
-            // navgraph but one under NavHost and two under Scaffold) so that ViewModel is the
-            // most fitting pattern
-            //
-            // Looks like this ViewModel is cleared when user exits the settings screen
-            // so that there's no resource consuming
-            //
-            // Another solution: extract this block to suspend function and call from composable's
-            // coroutine scope and this solution is obviously dirty workaround
-            //
-            // ..and another: somehow emit SnapshotStateList, reuse it across all changes in the
-            // database and use stateIn with SharingStarted.WhileSubscribed() on this flow.
-            //
-            // Best solution: use immutable entries with "our" state and database state and somehow
-            // emit either our change (that isn't committed) or database change.
-            // TODO use SharedFlow (or even StateFlow) to do ^
-            blacklistRepository.getEntriesFlow().collect { list ->
-                // Just reset all changes, couldn't write good algorithm
-                // TODO somehow save changes if entry is unchanged
-                val new = list.map { it.asStateful() }
-                _entries.clear()
-                _entries.addAll(new)
-                isLoading = false
-            }
+            _entriesFlow.emitAll(blacklistRepository.getEntriesFlow().map { list ->
+                list.map {
+                    EditedBlacklistEntry.from(it)
+                }
+            })
         }
     }
 
-    var isLoading by mutableStateOf(true)
-        private set
     var isUpdating by mutableStateOf(false)
         private set
 
-    suspend fun applyChanges() {
+    fun applyChanges() {
         isUpdating = true
         var wasError = false
-        blacklistRepository.withTransaction {
-            val iterator = _entries.listIterator()
-            while (iterator.hasNext()) {
-                val entry = iterator.next()
-                try {
-                    when {
-                        entry.isPendingInsertion -> blacklistRepository.insertEntry(entry.toEntry())
-                        entry.isPendingUpdate -> blacklistRepository.updateEntry(entry.toEntry())
-                        entry.isPendingDeletion -> blacklistRepository.deleteEntryById(entry.id)
-                    }
-                } catch (t: Throwable) {
-                    if (entry.isPendingInsertion) iterator.remove() else entry.resetChanges()
-                    Log.e(
-                        TAG,
-                        "Unknown error occurred while trying to update/insert/delete blacklist entry",
-                        t
-                    )
-                    if (!wasError) {
-                        snackbar.enqueueMessage( // Likely database in release and something else in tests
-                            R.string.database_error_updating_blacklist,
-                            SnackbarDuration.Long,
-                            entry.query
+        val oldValue = _entriesFlow.value
+        viewModelScope.launch {
+            blacklistRepository.withTransaction {
+                _entriesFlow.compareAndSet(oldValue, _entriesFlow.value?.mapNotNull { entry ->
+                    try {
+                        when {
+                            entry.isPendingInsertion -> entry.copy(
+                                backingEntry = BlacklistEntry(
+                                    query = entry.query,
+                                    enabled = entry.enabled,
+                                    id = blacklistRepository.insertEntry(entry.toEntry())
+                                )
+                            )
+                            entry.isPendingUpdate -> {
+                                blacklistRepository.updateEntry(entry.toEntry())
+                                entry.copy(
+                                    backingEntry = entry.backingEntry!!.copy(
+                                        query = entry.query,
+                                        enabled = entry.enabled
+                                    )
+                                )
+                            }
+                            entry.isPendingDeletion -> {
+                                blacklistRepository.deleteEntryById(entry.id!!)
+                                null
+                            }
+                            else -> entry
+                        }
+                    } catch (t: Throwable) {
+                        Log.e(
+                            TAG,
+                            "Unknown error occurred while trying to update/insert/delete blacklist entry",
+                            t
                         )
-                        wasError = true
+                        if (!wasError) {
+                            snackbar.enqueueMessage( // Likely database in release and something else in tests
+                                R.string.database_error_updating_blacklist,
+                                SnackbarDuration.Long,
+                                entry.query
+                            )
+                            wasError = true
+                        }
+                        entry.reset()
                     }
-                }
+                })
             }
             isUpdating = false
         }
     }
 
-    fun appendEntry(query: String) = _entries.add(StatefulBlacklistEntry.create(query))
-
-    fun resetEntry(entry: StatefulBlacklistEntry) {
-        if (entry.isPendingInsertion) _entries.remove(entry)
-        else entry.resetChanges()
+    fun appendEntry(query: String) {
+        _entriesFlow.value = _entriesFlow.value?.plus(EditedBlacklistEntry(query))
     }
 
-    fun markEntryAsDeleted(entry: StatefulBlacklistEntry, deleted: Boolean = true) {
-        if (entry.isPendingInsertion) _entries.remove(entry)
-        else entry.markAsDeleted(deleted)
+    fun resetEntry(entry: EditedBlacklistEntry) {
+        if (entry.isPendingInsertion) {
+            _entriesFlow.value = _entriesFlow.value?.minus(entry)
+        } else {
+            _entriesFlow.value = _entriesFlow.value?.mapNotNull {
+                if (it == entry) entry.reset() else it
+            }
+        }
+    }
+
+    fun markEntryAsDeleted(entry: EditedBlacklistEntry, deleted: Boolean = true) {
+        if (entry.isPendingInsertion) {
+            _entriesFlow.value = _entriesFlow.value?.minus(entry)
+        } else {
+            _entriesFlow.value = _entriesFlow.value
+                ?.map {
+                    if (it == entry) entry.copy(pendingDeletion = deleted) else it
+                }
+        }
     }
 
     fun resetChanges() {
-        _entries.removeIf { it.isPendingInsertion }
-        _entries.forEach { it.resetChanges() }
+        _entriesFlow.value =
+            _entriesFlow.value?.mapNotNull { it.reset() }
+    }
+
+    fun editEntry(
+        entry: EditedBlacklistEntry,
+        query: String = entry.query,
+        enabled: Boolean = entry.enabled
+    ) {
+        _entriesFlow.value = _entriesFlow.value?.map {
+            if (it == entry) entry.copy(query = query, enabled = enabled) else it
+        }
     }
 
     companion object {
         const val TAG = "SettingsBlacklistViewModel"
+    }
+}
+
+@Immutable
+data class EditedBlacklistEntry(
+    val query: String,
+    val enabled: Boolean = true,
+    val pendingDeletion: Boolean = false,
+    val backingEntry: BlacklistEntry? = null
+) {
+    val isPendingInsertion get() = backingEntry == null
+    val isPendingUpdate get() = backingEntry != null && (query != backingEntry.query || enabled != backingEntry.enabled)
+    val isPendingDeletion get() = backingEntry != null && pendingDeletion
+    val isChanged get() = backingEntry == null || query != backingEntry.query || enabled != backingEntry.enabled || pendingDeletion
+
+    val id get() = backingEntry?.id
+
+    fun reset() = backingEntry?.let { from(it) }
+
+    fun toEntry(): BlacklistEntry = BlacklistEntry(
+        query = query,
+        enabled = enabled,
+        id = backingEntry?.id ?: 0
+    )
+
+    companion object {
+        fun from(blacklistEntry: BlacklistEntry) = EditedBlacklistEntry(
+            blacklistEntry.query,
+            blacklistEntry.enabled,
+            false,
+            blacklistEntry
+        )
     }
 }
