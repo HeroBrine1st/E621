@@ -32,6 +32,7 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
+import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.posts.logic.WikiResult
 import ru.herobrine1st.e621.util.PostsSearchOptions
@@ -98,7 +99,6 @@ fun Post(
                 post.file.type.isVideo -> PostVideo(post.files.first { it.type.isVideo })
                 post.file.type.isImage -> PostImage(
                     post = post,
-                    aspectRatio = post.normalizedSample.aspectRatio,
                     openPost = null,
                     file = post.normalizedSample
                 )

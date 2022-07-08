@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui.screen.posts
+package ru.herobrine1st.e621.ui.screen.posts.component
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -19,14 +19,15 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.component.OutlinedChip
+import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
 
 
 @Composable
 fun PostImage(
     post: Post,
-    aspectRatio: Float,
     openPost: ((scrollToComments: Boolean) -> Unit)?,
-    file: NormalizedFile
+    file: NormalizedFile,
+    aspectRatio: Float = file.aspectRatio
 ) {
     if (aspectRatio <= 0) {
         InvalidPost(stringResource(R.string.invalid_post_server_error))
