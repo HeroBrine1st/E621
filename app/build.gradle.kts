@@ -29,7 +29,7 @@ android {
         versionCode = this@Build_gradle.versionCode
         versionName = this@Build_gradle.versionName
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "ru.herobrine1st.e621.runner.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -125,9 +125,12 @@ dependencies {
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Hilt
-    implementation("com.google.dagger:hilt-android:2.38.1")
+    val hiltVersion = "2.38.1"
+    implementation("com.google.dagger:hilt-android:$hiltVersion")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
-    kapt("com.google.dagger:hilt-android-compiler:2.38.1")
+    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
+
+
 
     // G Accompanist
     val accompanistVersion = "0.23.1"
@@ -146,10 +149,15 @@ dependencies {
 
     // Tests
     testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test:core:1.4.0")
+    androidTestImplementation("androidx.test:core-ktx:1.4.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.3")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
     androidTestImplementation("androidx.compose.ui:ui-test-junit4:$composeVersion")
     debugImplementation("androidx.compose.ui:ui-tooling:$composeVersion")
+    androidTestImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
+    kaptAndroidTest("com.google.dagger:hilt-android-compiler:$hiltVersion")
+
 }
 
 protobuf {

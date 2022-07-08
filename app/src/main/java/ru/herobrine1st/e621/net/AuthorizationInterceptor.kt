@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.net
 
+import android.util.Log
 import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -31,8 +32,7 @@ class AuthorizationInterceptor @Inject constructor(
             } else chain.request()
         } else chain.request()
         val response = chain.proceed(request)
-        // TODO check if codes are right
-        if (response.code == 401 || response.code == 403) {
+        if (response.code == 401) {
             if (auth != null) {
                 runBlocking {
                     authorizationRepository.logout()
@@ -41,6 +41,11 @@ class AuthorizationInterceptor @Inject constructor(
                 // Maybe retry?
             }
         }
+        if(response.code == 403) Log.w(TAG, "Got code 403 - maybe authorization error?")
         return response
+    }
+
+    companion object {
+        const val TAG = "AuthorizationInterceptor"
     }
 }

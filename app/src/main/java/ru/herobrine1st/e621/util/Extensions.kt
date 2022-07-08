@@ -31,10 +31,14 @@ val AuthorizationCredentials.credentials get() = Credentials.basic(username, pas
 private suspend fun <T> Call<T>.awaitResponseInternal(): retrofit2.Response<T> {
     val response = this.awaitResponse()
     if (response.code() !in 200..399) { // Include redirects
-        val body = withContext(Dispatchers.IO) {
-            objectMapper.readValue<ObjectNode>(response.errorBody()!!.charStream())
+        val message = kotlin.run {
+            if(response.code() == 404) return@run "Not found"
+            val body = withContext(Dispatchers.IO) {
+                objectMapper.readValue<ObjectNode>(response.errorBody()!!.charStream())
+            }
+            body.get("message")?.asText() ?: body.toPrettyString()
         }
-        val message = body.get("message")?.asText() ?: body.toPrettyString()
+
         Log.e("API", "Got unsuccessful response: ${response.code()} ${response.message()}")
         Log.e("API", message)
         throw ApiException(message, response.code())

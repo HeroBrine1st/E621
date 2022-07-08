@@ -60,7 +60,7 @@ class APIModule {
 
     @Provides
     @ActivityRetainedScoped
-    fun provideIAPI(retrofit: Retrofit): API = retrofit.create(API::class.java)
+    fun provideAPI(retrofit: Retrofit): API = retrofit.create(API::class.java)
 
     companion object {
         const val DISK_CACHE_PERCENTAGE = 0.02
