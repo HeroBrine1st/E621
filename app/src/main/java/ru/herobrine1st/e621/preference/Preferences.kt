@@ -18,16 +18,27 @@ val Context.dataStore: DataStore<Preferences> by dataStore(
 // Helper functions to avoid boilerplate
 
 suspend inline fun Context.updatePreferences(
-    crossinline block: suspend Preferences.Builder.() -> Preferences.Builder
-) = dataStore.updateData { it.toBuilder().block().build() }
+    crossinline block: suspend Preferences.Builder.() -> Unit
+) = dataStore.updatePreferences(block)
+
+inline fun <T> Context.getPreferencesFlow(
+    crossinline transform: suspend (Preferences) -> T
+): Flow<T> = dataStore.getPreferencesFlow(transform)
+
+fun Context.getPreferencesFlow() = dataStore.data
 
 @Composable
 fun Context.getPreferencesAsState() = dataStore.data
     .collectAsState(initial = PreferencesSerializer.defaultValue)
 
-inline fun <T> Context.getPreferencesFlow(
-    crossinline transform: suspend (Preferences) -> T
-): Flow<T> = dataStore.data.map(transform)
+// DataStore methods
 
-fun Context.getPreferencesFlow() = dataStore.data
+suspend inline fun DataStore<Preferences>.updatePreferences(
+    crossinline block: suspend Preferences.Builder.() -> Unit
+) = updateData { it.toBuilder().apply { block() }.build() }
+
+inline fun <T> DataStore<Preferences>.getPreferencesFlow(
+    crossinline transform: suspend (Preferences) -> T
+): Flow<T> = data.map(transform)
+
 

@@ -25,8 +25,4 @@ class DatabaseModule {
     @Provides
     @ActivityRetainedScoped
     fun provideBlacklistDao(database: Database) = database.blacklistDao()
-
-    @Provides
-    @ActivityRetainedScoped
-    fun provideAuthDao(database: Database) = database.authDao()
 }

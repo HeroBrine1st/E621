@@ -4,7 +4,7 @@ import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
-import ru.herobrine1st.e621.entity.Auth
+import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.credentials
 import javax.inject.Inject
@@ -20,7 +20,7 @@ class AuthorizationInterceptor @Inject constructor(
 ) :
     Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
-        var auth: Auth? = null
+        var auth: AuthorizationCredentials? = null
         val request = if (chain.request().header("Authorization") == null) {
             // If header isn't set explicitly, set it from database
             auth = runBlocking { authorizationRepository.getAccount() }

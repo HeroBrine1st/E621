@@ -1,7 +1,7 @@
 syntax = "proto2";
 package ru.herobrine1st.e621.preference.proto;
 
-option java_multiple_files = true;
+import "AuthorizationCredentials.proto";
 
 message Preferences {
   optional bool blacklist_enabled = 1 [default = true];
@@ -9,4 +9,6 @@ message Preferences {
   optional bool privacy_mode_dialog_was_shown = 3 [default = false];
   optional bool show_remaining_time_media = 4 [default = true];
   optional bool mute_sound_on_media = 5 [default = true];
+  optional AuthorizationCredentials auth = 6;
 }
+

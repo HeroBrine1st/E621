@@ -10,7 +10,7 @@ import retrofit2.Call
 import retrofit2.awaitResponse
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.entity.Auth
+import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -25,7 +25,7 @@ inline fun <T> T.debug(block: T.() -> Unit): T {
     return this
 }
 
-val Auth.credentials get() = Credentials.basic(login, apiKey)
+val AuthorizationCredentials.credentials get() = Credentials.basic(username, password)
 
 
 private suspend fun <T> Call<T>.awaitResponseInternal(): retrofit2.Response<T> {

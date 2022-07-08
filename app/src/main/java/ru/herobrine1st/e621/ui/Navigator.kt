@@ -140,5 +140,5 @@ fun Navigator(navController: NavHostController, viewModel: NavigatorViewModel = 
 class NavigatorViewModel @Inject constructor(
     val authorizationRepository: AuthorizationRepository
 ) : ViewModel() {
-    val usernameFlow = authorizationRepository.getAccountFlow().map { it?.login }
+    val usernameFlow = authorizationRepository.getAccountFlow().map { it?.username }
 }

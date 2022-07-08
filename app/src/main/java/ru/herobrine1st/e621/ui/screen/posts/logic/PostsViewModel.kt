@@ -56,7 +56,7 @@ class PostsViewModel @AssistedInject constructor(
     }
 
     val isAuthorizedFlow = authorizationRepository.getAccountFlow().map { it != null }
-    val usernameFlow = authorizationRepository.getAccountFlow().map { it?.login }
+    val usernameFlow = authorizationRepository.getAccountFlow().map { it?.username }
 
     private val blacklistPredicateFlow: StateFlow<Predicate<Post>?> =
         blacklistRepository.getEntriesFlow().map { list ->

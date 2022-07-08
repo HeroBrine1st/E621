@@ -13,7 +13,7 @@ import retrofit2.awaitResponse
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
-import ru.herobrine1st.e621.entity.Auth
+import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.credentials
 import ru.herobrine1st.e621.util.debug
@@ -55,14 +55,14 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private suspend fun checkAuthorization(auth: Auth?) {
+    private suspend fun checkAuthorization(auth: AuthorizationCredentials?) {
         if (auth == null) {
             state = LoginState.NO_AUTH
             return
         }
         val res = try {
             api.getUser(
-                auth.login, auth.credentials
+                auth.username, auth.credentials
             ).awaitResponse()
         } catch (e: IOException) {
             Log.e(
