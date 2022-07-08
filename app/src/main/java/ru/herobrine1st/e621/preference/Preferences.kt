@@ -8,7 +8,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import ru.herobrine1st.e621.preference.proto.Preferences
+import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 
 val Context.dataStore: DataStore<Preferences> by dataStore(
     fileName = "preferences.pb",

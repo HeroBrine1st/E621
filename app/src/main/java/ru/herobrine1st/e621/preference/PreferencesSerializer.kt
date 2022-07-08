@@ -3,7 +3,7 @@ package ru.herobrine1st.e621.preference
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import com.google.protobuf.InvalidProtocolBufferException
-import ru.herobrine1st.e621.preference.proto.Preferences
+import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import java.io.InputStream
 import java.io.OutputStream
 
