@@ -111,7 +111,6 @@ fun Post(
             Text("TODO")
         }
         // TODO comments
-        // TODO i18n
         item("uploaded") {
             Text(
                 stringResource(
@@ -174,7 +173,7 @@ fun LazyListScope.tags(
                 stringResource(titleId),
                 style = MaterialTheme.typography.h6,
                 modifier = Modifier.weight(1f)
-            ) // TODO i18n
+            )
         }
     }
     items(tags, key = { "$it tag" }) {
