@@ -31,9 +31,9 @@ fun PostComment(comment: Comment) {
             .fillMaxWidth()
     ) {
         Row {
-
-            if (comment.avatarPost != null) {
-                val imagePainter = rememberImagePainter(comment.avatarPost.previewUrl) {
+            val url = comment.avatarPost?.previewUrl ?: comment.avatarPost?.croppedUrl
+            if (url != null) {
+                val imagePainter = rememberImagePainter(url) {
                     crossfade(true)
                     transformations(CircleCropTransformation())
                 }

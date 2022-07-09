@@ -79,7 +79,7 @@ data class PostReduced(
     val score: Int,
     val uploaderId: Int,
     val uploader: String,
-    val md5: String, // o_O
-    val previewUrl: String,
-    val croppedUrl: String
+    val md5: String? = null, // o_O
+    val previewUrl: String? = null,
+    val croppedUrl: String? = null
 )
