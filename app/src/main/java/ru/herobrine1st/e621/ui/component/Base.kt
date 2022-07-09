@@ -4,8 +4,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 
-const val BASE_WIDTH = 0.95f
+val BASE_PADDING_HORIZONTAL = 8.dp
 
 @Composable
 fun Base(
@@ -13,17 +14,13 @@ fun Base(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter,
-    ) {
-        Column(
-            modifier = modifier
-                .fillMaxHeight()
-                .fillMaxWidth(BASE_WIDTH),
-            horizontalAlignment = horizontalAlignment,
-            content = content
-        )
-    }
+    Column(
+        modifier = modifier
+            .padding(horizontal = BASE_PADDING_HORIZONTAL)
+            .fillMaxHeight()
+            .fillMaxWidth(),
+        horizontalAlignment = horizontalAlignment,
+        content = content
+    )
 }
 

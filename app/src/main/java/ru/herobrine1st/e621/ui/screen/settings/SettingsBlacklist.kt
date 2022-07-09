@@ -2,10 +2,7 @@ package ru.herobrine1st.e621.ui.screen.settings
 
 import android.util.Log
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.*
@@ -34,7 +31,7 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
-import ru.herobrine1st.e621.ui.component.BASE_WIDTH
+import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.dialog.StopThereAreUnsavedChangesDialog
 import ru.herobrine1st.e621.ui.dialog.TextInputDialog
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
@@ -132,7 +129,9 @@ fun SettingsBlacklist(exit: () -> Unit) {
         if (entries != null) itemsIndexed(entries) { i, entry ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(BASE_WIDTH)
+                modifier = Modifier
+                    .padding(horizontal = BASE_PADDING_HORIZONTAL)
+                    .fillMaxWidth()
             ) {
                 if (entry.isPendingInsertion) {
                     key("New item indicator") {
