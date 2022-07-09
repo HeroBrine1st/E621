@@ -22,8 +22,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.*
-import ru.herobrine1st.e621.api.model.Comment
+import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.ApiException
+import ru.herobrine1st.e621.api.NotFoundException
+import ru.herobrine1st.e621.api.getWikiPage
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.preference.getPreferencesFlow
@@ -44,10 +46,6 @@ class PostViewModel @AssistedInject constructor(
         private set
     var isLoadingPost by mutableStateOf(true)
         private set
-    var comments by mutableStateOf<List<Comment>?>(null)
-        private set
-    var isLoadingComments by mutableStateOf(false)
-        private set
 
     var wikiState by mutableStateOf<WikiResult?>(null)
         private set
@@ -60,7 +58,6 @@ class PostViewModel @AssistedInject constructor(
             val isPrivacyModeEnabled = context.getPreferencesFlow { it.privacyModeEnabled }
                 .first()
             val id = initialPost?.id ?: postId
-            isLoadingComments = !isPrivacyModeEnabled
             if (initialPost?.isFavorited != false || !isPrivacyModeEnabled) {
                 try {
                     post = api.getPost(id).await().post
@@ -77,22 +74,13 @@ class PostViewModel @AssistedInject constructor(
                 } catch (t: Throwable) {
                     Log.e(TAG, "Unable to get post $id", t)
                 }
-
             }
-            if (!isPrivacyModeEnabled)
-                loadCommentInternal(id)
         }
         setMediaItem()
     }
 
     override fun onCleared() {
         exoPlayer.clearMediaItems()
-    }
-
-    private suspend fun loadCommentInternal(id: Int) {
-        isLoadingComments = true
-        comments = api.getCommentsForPost(id)
-        isLoadingComments = false
     }
 
     private fun setMediaItem() {
@@ -103,12 +91,6 @@ class PostViewModel @AssistedInject constructor(
             exoPlayer.prepare()
         }
         mediaItemIsSet = true
-    }
-
-    fun loadComments() {
-        viewModelScope.launch {
-            post?.let { loadCommentInternal(it.id) }
-        }
     }
 
     fun handleWikiClick(tag: String) {
@@ -122,7 +104,7 @@ class PostViewModel @AssistedInject constructor(
             } catch (e: ApiException) {
                 WikiResult.Failure(tag)
             } catch (t: Throwable) {
-                Log.e(TAG, "Unknown error while downloading wiki page", t)
+                Log.e(TAG, "Unknown error occurred while downloading wiki page", t)
                 WikiResult.Failure(tag)
             } finally {
                 wikiClickJob = null
