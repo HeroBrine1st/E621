@@ -5,7 +5,7 @@ import androidx.navigation.NavType
 import com.fasterxml.jackson.module.kotlin.readValue
 import ru.herobrine1st.e621.api.model.Post
 
-class PostNavType : NavType<Post>(false) {
+class PostNavType : NavType<Post?>(true) {
     override fun get(bundle: Bundle, key: String): Post? {
         return bundle.getParcelable(key)
     }
@@ -14,7 +14,7 @@ class PostNavType : NavType<Post>(false) {
         return objectMapper.readValue(value)
     }
 
-    override fun put(bundle: Bundle, key: String, value: Post) {
+    override fun put(bundle: Bundle, key: String, value: Post?) {
         bundle.putParcelable(key, value)
     }
 }

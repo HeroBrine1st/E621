@@ -7,10 +7,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.navigation.NamedNavArgument
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
-import androidx.navigation.navArgument
+import androidx.navigation.*
+import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
 import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
@@ -51,7 +49,8 @@ enum class Screen(
     private val initialRoute: String,
     vararg arguments: NamedNavArgument,
     val appBarActions: @Composable RowScope.(NavHostController) -> Unit = {},
-    val floatingActionButton: @Composable () -> Unit = {}
+    val floatingActionButton: @Composable () -> Unit = {},
+    val deepLinks: List<NavDeepLink> = listOf()
 ) {
     Home(R.string.app_name, Icons.Default.Home, "main"),
     Search(
@@ -79,6 +78,8 @@ enum class Screen(
         },
         navArgument("post") {
             type = PostNavType()
+            nullable = true
+            defaultValue = null
         },
         navArgument("scrollToComments") {
             type = NavType.BoolType
@@ -86,7 +87,14 @@ enum class Screen(
         },
         navArgument("query") {
             type = PostsSearchOptionsNavType()
-        }
+            nullable = true
+            defaultValue = null
+        },
+        deepLinks = listOf(
+            navDeepLink {
+                uriPattern = "${BuildConfig.DEEP_LINK_BASE_URL}/posts/{id}"
+            }
+        )
     ),
     Favourites(
         R.string.favourites,

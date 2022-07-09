@@ -103,7 +103,7 @@ fun Navigator(navController: NavHostController) {
                 }
             )
         }
-        composable(Screen.Post.route, Screen.Post.arguments) {
+        composable(Screen.Post.route, Screen.Post.arguments, deepLinks = Screen.Post.deepLinks) {
             val arguments =
                 it.arguments!!
             Post(

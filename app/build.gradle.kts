@@ -48,6 +48,8 @@ android {
         forEach {
             it.buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
             it.buildConfigField("String", "API_BASE_URL", "\"https://e621.net\"")
+            it.buildConfigField("String", "DEEP_LINK_BASE_URL", "\"https://e621.net\"")
+            it.resValue("string", "deep_link_host", "e621.net")
             it.buildConfigField(
                 "String",
                 "USER_AGENT",

@@ -104,7 +104,7 @@ data class FavouritesSearchOptions(val favouritesOf: String?) : SearchOptions {
     }
 }
 
-class PostsSearchOptionsNavType : NavType<PostsSearchOptions>(false) {
+class PostsSearchOptionsNavType : NavType<PostsSearchOptions?>(true) {
     override fun get(bundle: Bundle, key: String): PostsSearchOptions? {
         return bundle.getParcelable(key)
     }
@@ -113,7 +113,7 @@ class PostsSearchOptionsNavType : NavType<PostsSearchOptions>(false) {
         return objectMapper.readValue(value)
     }
 
-    override fun put(bundle: Bundle, key: String, value: PostsSearchOptions) {
+    override fun put(bundle: Bundle, key: String, value: PostsSearchOptions?) {
         bundle.putParcelable(key, value)
     }
 }
