@@ -1,5 +1,6 @@
-package ru.herobrine1st.e621.ui.screen.posts.component
+package ru.herobrine1st.e621.ui.screen.comments.component
 
+import android.text.format.DateUtils
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -19,11 +20,12 @@ import coil.transform.CircleCropTransformation
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
-import ru.herobrine1st.e621.api.model.Comment
+import ru.herobrine1st.e621.api.model.CommentBB
+import ru.herobrine1st.e621.api.model.PostReduced
 
 @Composable
 @OptIn(ExperimentalCoilApi::class)
-fun PostComment(comment: Comment) {
+fun PostComment(comment: CommentBB, avatarPost: PostReduced?) {
     // TODO
     Column(
         modifier = Modifier
@@ -31,7 +33,7 @@ fun PostComment(comment: Comment) {
             .fillMaxWidth()
     ) {
         Row {
-            val url = comment.avatarPost?.previewUrl ?: comment.avatarPost?.croppedUrl
+            val url = avatarPost?.previewUrl ?: avatarPost?.croppedUrl
             if (url != null) {
                 val imagePainter = rememberImagePainter(url) {
                     crossfade(true)
@@ -57,11 +59,19 @@ fun PostComment(comment: Comment) {
             }
             Column {
                 Text(
-                    text = comment.authorName,
+                    text = comment.creatorName,
+                    lineHeight = with(LocalDensity.current) { 24.dp.toSp() } // TODO fix it (component height is not 24.dp)
+                )
+                Text(
+                    text = DateUtils.getRelativeTimeSpanString(
+                        comment.createdAt.toEpochSecond() * 1000,
+                        System.currentTimeMillis(),
+                        DateUtils.SECOND_IN_MILLIS
+                    ).toString(),
                     lineHeight = with(LocalDensity.current) { 24.dp.toSp() }
                 )
             }
         }
-        Text(comment.content)
+        Text(comment.body) // TODO parse BBcode
     }
 }

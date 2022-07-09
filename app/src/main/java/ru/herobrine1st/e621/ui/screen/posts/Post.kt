@@ -3,7 +3,9 @@ package ru.herobrine1st.e621.ui.screen.posts
 import android.app.Activity
 import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
+import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -16,6 +18,10 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -31,7 +37,7 @@ import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
-import ru.herobrine1st.e621.ui.screen.posts.component.PostComment
+import ru.herobrine1st.e621.ui.screen.comments.PostComments
 import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
 import ru.herobrine1st.e621.ui.screen.posts.component.PostVideo
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
@@ -61,8 +67,9 @@ fun Post(
     val post = viewModel.post
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val wikiState = viewModel.wikiState
+    var openComments by rememberSaveable { mutableStateOf(false) }
 
-    if(post == null) {
+    if (post == null) {
         CircularProgressIndicator()
         return
     }
@@ -99,60 +106,63 @@ fun Post(
         }
     }
 
-    LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
-        item("media") {
-            when {
-                post.file.type.isVideo -> PostVideo(post.files.first { it.type.isVideo })
-                post.file.type.isImage -> PostImage(
-                    post = post,
-                    openPost = null,
-                    file = post.normalizedSample
-                )
-                else -> InvalidPost(
-                    text = stringResource(
-                        R.string.unsupported_post_type,
-                        post.file.type.extension
+    // Why don't use navigation:
+    // We should somehow save the state and there's a way to do it, there's no problem.
+    // Problems are on comments opening stage. If you save the state, you will restore it even in
+    // another post, so you should save somewhere that user hasn't open the comments and so on.
+    // (I haven't tested it because I'm lazy)
+    // This code is workaround too, but less dirty
+    // Also I want to show top-rated or first comment as "preview" (youtube-like)
+    // In that case with navigation there would be double-download
+    Crossfade(targetState = openComments) { open: Boolean -> // Mimic NavHost component
+        if (open) PostComments(postId = id)
+        else LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
+            item("media") {
+                when {
+                    post.file.type.isVideo -> PostVideo(post.files.first { it.type.isVideo })
+                    post.file.type.isImage -> PostImage(
+                        post = post,
+                        openPost = null,
+                        file = post.normalizedSample
                     )
-                )
-            }
-        }
-        // TODO move comments to another screen (without navigation)
-        if(viewModel.isLoadingComments) {
-            item {
-                CircularProgressIndicator()
-            }
-        } else if(viewModel.comments == null) {
-            item {
-                Button(onClick = { viewModel.loadComments() }) {
-                    Text("Load comments")
+                    else -> InvalidPost(
+                        text = stringResource(
+                            R.string.unsupported_post_type,
+                            post.file.type.extension
+                        )
+                    )
                 }
             }
-        }
-        viewModel.comments?.let { comments ->
-            items(comments) { comment ->
-                PostComment(comment)
+            item("comments button") {
+                Button(onClick = { openComments = true }) {
+                    Text("Show comments") // TODO i18n
+                }
             }
+            item("uploaded") {
+                // TODO place more information here
+                Text(
+                    stringResource(
+                        R.string.uploaded_relative_date,
+                        DateUtils.getRelativeTimeSpanString(
+                            post.createdAt.toEpochSecond() * 1000,
+                            System.currentTimeMillis(),
+                            SECOND_IN_MILLIS
+                        )
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                )
+            }
+            // Move tags to another screen?
+            tags(post, searchOptions, onModificationClick, onWikiClick = {
+                viewModel.handleWikiClick(it)
+            })
         }
-        item("uploaded") {
-            // TODO place more information here
-            Text(
-                stringResource(
-                    R.string.uploaded_relative_date,
-                    DateUtils.getRelativeTimeSpanString(
-                        post.createdAt.toEpochSecond() * 1000,
-                        System.currentTimeMillis(),
-                        SECOND_IN_MILLIS
-                    )
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-            )
-        }
-        // Move tags to another screen?
-        tags(post, searchOptions, onModificationClick, onWikiClick = {
-            viewModel.handleWikiClick(it)
-        })
+    }
+
+    BackHandler(enabled = openComments) {
+        openComments = false
     }
 }
 
@@ -163,8 +173,20 @@ fun LazyListScope.tags(
     onWikiClick: (String) -> Unit
 ) {
     tags(R.string.artist_tags, post.tags.artist, searchOptions, onModificationClick, onWikiClick)
-    tags(R.string.copyright_tags, post.tags.copyright, searchOptions, onModificationClick, onWikiClick)
-    tags(R.string.character_tags, post.tags.character, searchOptions, onModificationClick, onWikiClick)
+    tags(
+        R.string.copyright_tags,
+        post.tags.copyright,
+        searchOptions,
+        onModificationClick,
+        onWikiClick
+    )
+    tags(
+        R.string.character_tags,
+        post.tags.character,
+        searchOptions,
+        onModificationClick,
+        onWikiClick
+    )
     tags(R.string.species_tags, post.tags.species, searchOptions, onModificationClick, onWikiClick)
     tags(R.string.general_tags, post.tags.general, searchOptions, onModificationClick, onWikiClick)
     tags(R.string.lore_tags, post.tags.lore, searchOptions, onModificationClick, onWikiClick)

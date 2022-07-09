@@ -4,7 +4,6 @@ import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -26,6 +25,7 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
+import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
@@ -166,27 +166,3 @@ fun Post(
     }
 }
 
-// edge of page, start and end of page or anything, it just doesn't matter while the name is clear
-fun LazyListScope.endOfPagePlaceholder(loadState: LoadState) {
-    when (loadState) {
-        is LoadState.Loading -> {
-            item {
-                Base {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    CircularProgressIndicator()
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-            }
-        }
-        is LoadState.Error -> {
-            item {
-                Base {
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("error")
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-            }
-        }
-        else -> {}
-    }
-}

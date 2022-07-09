@@ -1,7 +1,10 @@
 package ru.herobrine1st.e621.api.model
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.jsoup.Jsoup
 import java.time.Instant
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 
 data class Comment(
@@ -16,6 +19,26 @@ data class Comment(
     val avatarPost: PostReduced?, // from the same response
     val postedAt: Instant, // post-time -> datetime attribute
     val content: String, // content -> body -> styled-dtext content
+)
+
+@JsonIgnoreProperties("warning_type", "warning_user_id")
+data class CommentBB(
+    val id: Int,
+    val createdAt: OffsetDateTime,
+    @JsonProperty("post_id")
+    val parentPostId: Int,
+    val creatorId: Int,
+    val updaterId: Int,
+    val body: String,
+    val score: Int,
+    val updatedAt: OffsetDateTime,
+    val doNotBumpPost: Boolean, // wtf
+    val isHidden: Boolean, // okay maybe I understand it
+    val isSticky: Boolean, // wtf
+    // val warningType: Unknown?,
+    // val warningUserId: Unknown?,
+    val creatorName: String,
+    val updaterName: String
 )
 
 @Suppress("SpellCheckingInspection")

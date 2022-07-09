@@ -3,7 +3,6 @@ package ru.herobrine1st.e621.api
 import android.util.Log
 import androidx.annotation.CheckResult
 import androidx.annotation.IntRange
-import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -109,11 +108,12 @@ interface API {
     ): Call<PostCommentsEndpoint>
 
     @CheckResult
-    @GET("/comments.json?group_by=comment&search[post_id]={post_id}&page={page}")
+    @GET("/comments.json?group_by=comment")
     fun getCommentsForPostBBCode(
-        @Path("post_id") id: Int,
-        @Path("page") page: Int
-    ): Call<JsonNode>
+        @Query("search[post_id]") id: Int,
+        @Query("page") page: Int,
+        @Query("limit") limit: Int // Default unknown. Maybe 75, but I doubt
+    ): Call<List<CommentBB>>
 }
 
 suspend fun API.getCommentsForPost(id: Int): List<Comment> {
