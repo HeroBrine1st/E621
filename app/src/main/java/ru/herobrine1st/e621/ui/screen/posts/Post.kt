@@ -117,7 +117,7 @@ fun Post(
             }
         }
         // TODO move comments to another screen (without navigation)
-        if(viewModel.loadingComments) {
+        if(viewModel.isLoadingComments) {
             item {
                 CircularProgressIndicator()
             }

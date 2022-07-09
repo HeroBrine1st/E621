@@ -46,7 +46,7 @@ class PostViewModel @AssistedInject constructor(
         private set
     var comments by mutableStateOf<List<Comment>?>(null)
         private set
-    var loadingComments by mutableStateOf(false)
+    var isLoadingComments by mutableStateOf(false)
         private set
 
     var wikiState by mutableStateOf<WikiResult?>(null)
@@ -60,11 +60,11 @@ class PostViewModel @AssistedInject constructor(
             val isPrivacyModeEnabled = context.getPreferencesFlow { it.privacyModeEnabled }
                 .first()
             val id = initialPost?.id ?: postId
-            loadingComments = !isPrivacyModeEnabled
+            isLoadingComments = !isPrivacyModeEnabled
             if (initialPost?.isFavorited != false || !isPrivacyModeEnabled) {
                 try {
                     post = api.getPost(id).await().post
-                    isLoadingPost = true
+                    isLoadingPost = false
                     setMediaItem()
                     // Maybe reload ExoPlayer if old object contains invalid URL?
                     // exoPlayer.playbackState may help with that
@@ -90,9 +90,9 @@ class PostViewModel @AssistedInject constructor(
     }
 
     private suspend fun loadCommentInternal(id: Int) {
-        loadingComments = true
+        isLoadingComments = true
         comments = api.getCommentsForPost(id)
-        loadingComments = false
+        isLoadingComments = false
     }
 
     private fun setMediaItem() {
