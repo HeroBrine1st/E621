@@ -7,6 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Credentials
 import retrofit2.Call
+import retrofit2.Response
 import retrofit2.awaitResponse
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.ApiException
@@ -28,7 +29,7 @@ inline fun <T> T.debug(block: T.() -> Unit): T {
 val AuthorizationCredentials.credentials get() = Credentials.basic(username, password)
 
 
-private suspend fun <T> Call<T>.awaitResponseInternal(): retrofit2.Response<T> {
+private suspend fun <T> Call<T>.awaitResponseInternal(): Response<T> {
     val response = this.awaitResponse()
     if (response.code() !in 200..399) { // Include redirects
         val message = kotlin.run {
@@ -46,7 +47,7 @@ private suspend fun <T> Call<T>.awaitResponseInternal(): retrofit2.Response<T> {
     return response
 }
 
-suspend fun <T> Call<T>.awaitResponse(): retrofit2.Response<T> = this.awaitResponseInternal()
+suspend fun <T> Call<T>.awaitResponse(): Response<T> = this.awaitResponseInternal()
 
 suspend fun <T> Call<T>.await(): T {
     val response = this.awaitResponseInternal()
