@@ -74,6 +74,9 @@ enum class Screen(
     ),
     Post(
         R.string.post, Icons.Default.Feed, "post",
+        navArgument("id") {
+            type = NavType.IntType
+        },
         navArgument("post") {
             type = PostNavType()
         },

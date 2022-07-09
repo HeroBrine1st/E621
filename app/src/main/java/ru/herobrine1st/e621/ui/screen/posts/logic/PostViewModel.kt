@@ -37,8 +37,9 @@ class PostViewModel @AssistedInject constructor(
     @ApplicationContext context: Context,
     val api: API,
     val snackbar: SnackbarAdapter,
-    val exoPlayer: ExoPlayer,
-    @Assisted initialPost: Post
+    private val exoPlayer: ExoPlayer,
+    @Assisted postId: Int,
+    @Assisted initialPost: Post?
 ) : ViewModel() {
 
     var post by mutableStateOf(initialPost)
@@ -54,49 +55,61 @@ class PostViewModel @AssistedInject constructor(
         private set
     private var wikiClickJob: Job? = null
 
+    private var mediaItemIsSet = false
 
     init {
         viewModelScope.launch {
             val isPrivacyModeEnabled = context.getPreferencesFlow { it.privacyModeEnabled }
                 .first()
-            if (initialPost.isFavorited || !isPrivacyModeEnabled) {
+            val id = initialPost?.id ?: postId
+            loadingComments = !isPrivacyModeEnabled
+            if (initialPost?.isFavorited != false || !isPrivacyModeEnabled) {
                 try {
-                    post = api.getPost(initialPost.id).await().post
+                    post = api.getPost(id).await().post
                     isLoadingPost = true
+                    setMediaItem()
                     // Maybe reload ExoPlayer if old object contains invalid URL?
                     // exoPlayer.playbackState may help with that
                 } catch (e: IOException) {
-                    Log.e(TAG, "Unable to get post ${initialPost.id}", e)
+                    Log.e(TAG, "Unable to get post $id", e)
                     snackbar.enqueueMessage(
                         R.string.network_error,
                         SnackbarDuration.Indefinite
                     )
                 } catch (t: Throwable) {
-                    Log.e(TAG, "Unable to get post ${initialPost.id}", t)
+                    Log.e(TAG, "Unable to get post $id", t)
                 }
-                if (!isPrivacyModeEnabled)
-                    loadCommentInternal()
+
             }
+            if (!isPrivacyModeEnabled)
+                loadCommentInternal(id)
         }
-        if (post.file.type.isVideo) {
-            exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
-            exoPlayer.prepare()
-        }
+        setMediaItem()
     }
 
     override fun onCleared() {
         exoPlayer.clearMediaItems()
     }
 
-    private suspend fun loadCommentInternal() {
+    private suspend fun loadCommentInternal(id: Int) {
         loadingComments = true
-        comments = api.getCommentsForPost(post.id)
+        comments = api.getCommentsForPost(id)
         loadingComments = false
+    }
+
+    private fun setMediaItem() {
+        val post = post ?: return
+        if(mediaItemIsSet) return
+        if (post.file.type.isVideo) {
+            exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
+            exoPlayer.prepare()
+        }
+        mediaItemIsSet = true
     }
 
     fun loadComments() {
         viewModelScope.launch {
-            loadCommentInternal()
+            post?.let { loadCommentInternal(it.id) }
         }
     }
 
@@ -139,7 +152,10 @@ class PostViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(initialPost: Post): PostViewModel
+        fun create(
+            postId: Int,
+            initialPost: Post?
+        ): PostViewModel
     }
 
     @EntryPoint
@@ -156,10 +172,11 @@ class PostViewModel @AssistedInject constructor(
         @Suppress("UNCHECKED_CAST")
         fun provideFactory(
             assistedFactory: Factory,
-            initialPost: Post
+            postId: Int,
+            initialPost: Post?
         ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return assistedFactory.create(initialPost) as T
+                return assistedFactory.create(postId, initialPost) as T
             }
         }
     }

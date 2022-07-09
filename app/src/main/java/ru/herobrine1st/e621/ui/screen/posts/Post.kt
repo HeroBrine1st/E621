@@ -44,7 +44,8 @@ private const val TAG = "Post Screen"
 
 @Composable
 fun Post(
-    initialPost: Post,
+    id: Int,
+    initialPost: Post?,
     @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean, // TODO
     searchOptions: SearchOptions,
     onModificationClick: (PostsSearchOptions) -> Unit,
@@ -53,13 +54,19 @@ fun Post(
             EntryPointAccessors.fromActivity(
                 LocalContext.current as Activity,
                 PostViewModel.FactoryProvider::class.java
-            ).provideFactory(), initialPost
+            ).provideFactory(), id, initialPost
         )
     )
 ) {
     val post = viewModel.post
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val wikiState = viewModel.wikiState
+
+    if(post == null) {
+        CircularProgressIndicator()
+        return
+    }
+
     if (wikiState != null) {
         ContentDialog(
             title = wikiState.title.replaceFirstChar { // Capitalize

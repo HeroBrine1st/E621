@@ -69,6 +69,7 @@ fun Navigator(navController: NavHostController) {
                 openPost = { post, scrollToComments ->
                     navController.navigate(
                         Screen.Post.buildRoute {
+                            addArgument("id", post.id)
                             addArgument("post", post)
                             addArgument("scrollToComments", scrollToComments)
                             addArgument("query", searchOptions)
@@ -89,6 +90,7 @@ fun Navigator(navController: NavHostController) {
                 openPost = { post, scrollToComments ->
                     navController.navigate(
                         Screen.Post.buildRoute {
+                            addArgument("id", post.id)
                             addArgument("post", post)
                             addArgument("scrollToComments", scrollToComments)
                             addArgument(
@@ -105,9 +107,10 @@ fun Navigator(navController: NavHostController) {
             val arguments =
                 it.arguments!!
             Post(
-                arguments.getParcelable("post")!!,
+                arguments.getInt("id"),
+                arguments.getParcelable("post"),
                 arguments.getBoolean("scrollToComments"),
-                arguments.getParcelable("query")!!,
+                arguments.getParcelable("query") ?: PostsSearchOptions.DEFAULT,
                 onModificationClick = {
                     navController.navigate(
                         Screen.Search.buildRoute {
