@@ -42,7 +42,7 @@ class HomeViewModel @Inject constructor(
     }
 
     fun login(login: String, apiKey: String, callback: () -> Unit = {}) {
-        if(state != LoginState.NO_AUTH) throw IllegalStateException()
+        if(!state.canAuthorize) throw IllegalStateException()
         viewModelScope.launch {
             authorizationRepository.insertAccount(login, apiKey)
             callback()
@@ -88,11 +88,13 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    enum class LoginState {
-        LOADING,
-        IO_ERROR,
-        NO_AUTH,
-        AUTHORIZED
+    // Can authorize is "can press login button"
+    // TODO rethink error handling logic (at now IO_ERROR doesn't mean there's no credentials, but user sees fields for credentials)
+    enum class LoginState(val canAuthorize: Boolean) {
+        LOADING(false),
+        IO_ERROR(true),
+        NO_AUTH(true),
+        AUTHORIZED(false)
     }
 
     companion object {
