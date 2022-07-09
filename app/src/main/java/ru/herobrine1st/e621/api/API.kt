@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.api
 
+import android.util.Log
 import androidx.annotation.CheckResult
 import androidx.annotation.IntRange
 import com.fasterxml.jackson.databind.JsonNode
@@ -8,7 +9,9 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
 import ru.herobrine1st.e621.api.model.*
+import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
 import ru.herobrine1st.e621.util.await
+import ru.herobrine1st.e621.util.awaitResponse
 
 interface API {
     @CheckResult
@@ -118,4 +121,22 @@ suspend fun API.getCommentsForPost(id: Int): List<Comment> {
     // TODO use other method to get BBCode contents
     // TODO parse to AnnotatedString
     return parseComments(response)
+}
+
+suspend fun API.getWikiPage(tag: String): WikiPage {
+    val firstResponse = getWikiPageId(tag).awaitResponse()
+    if (!firstResponse.raw().isRedirect) {
+        throw NotFoundException()
+    }
+    val id = firstResponse.raw().header("Location")?.let {
+        it.substring(it.lastIndexOf("/") + 1).toIntOrNull()
+    }
+    if (id == null) {
+        Log.e(PostViewModel.TAG, "Invalid redirection: Location header is not found or is not parsed")
+        Log.e(PostViewModel.TAG, firstResponse.raw().headers.joinToString("\n") {
+            it.first + ": " + it.second
+        })
+        throw ApiException("Unknown error", firstResponse.code())
+    }
+    return getWikiPage(id).await()
 }

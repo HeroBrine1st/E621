@@ -22,15 +22,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.getCommentsForPost
+import ru.herobrine1st.e621.api.*
 import ru.herobrine1st.e621.api.model.Comment
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.await
-import ru.herobrine1st.e621.util.awaitResponse
 import java.io.IOException
 
 class PostViewModel @AssistedInject constructor(
@@ -117,24 +115,18 @@ class PostViewModel @AssistedInject constructor(
         if (wikiClickJob != null) throw IllegalStateException()
         wikiState = WikiResult.Loading(tag)
         wikiClickJob = viewModelScope.launch {
-            val firstResponse = api.getWikiPageId(tag).awaitResponse()
-            if (!firstResponse.raw().isRedirect) {
-                wikiState = WikiResult.NotFound(tag)
-                return@launch
+            wikiState = try {
+                WikiResult.Success(api.getWikiPage(tag))
+            } catch (e: NotFoundException) {
+                WikiResult.NotFound(tag)
+            } catch (e: ApiException) {
+                WikiResult.Failure(tag)
+            } catch (t: Throwable) {
+                Log.e(TAG, "Unknown error while downloading wiki page", t)
+                WikiResult.Failure(tag)
+            } finally {
+                wikiClickJob = null
             }
-            val id = firstResponse.raw().header("Location")?.let {
-                it.substring(it.lastIndexOf("/") + 1).toIntOrNull()
-            }
-            if (id == null) {
-                Log.e(TAG, "Invalid redirection: Location header is not found or is not parsed")
-                Log.e(TAG, firstResponse.raw().headers.joinToString("\n") {
-                    it.first + ": " + it.second
-                })
-                wikiState = WikiResult.Failure(tag)
-                return@launch
-            }
-            wikiState = WikiResult.Success(api.getWikiPage(id).await())
-            wikiClickJob = null
         }
 
     }
