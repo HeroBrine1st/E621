@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.compose.material.SnackbarDuration
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.model.Post
@@ -28,8 +30,12 @@ class PostsSource(
         }
         return try {
             val page = params.key ?: 1
-            @Suppress("BlockingMethodInNonBlockingContext") // False positive
-            val posts: List<Post> = searchOptions.getPosts(api, page = page, limit = params.loadSize)
+
+
+            val posts: List<Post> = withContext(Dispatchers.IO) {
+                @Suppress("BlockingMethodInNonBlockingContext") // False positive
+                searchOptions.getPosts(api, page = page, limit = params.loadSize)
+            }
             LoadResult.Page(
                 data = posts,
                 prevKey = if (page == 1) null else page - 1,
