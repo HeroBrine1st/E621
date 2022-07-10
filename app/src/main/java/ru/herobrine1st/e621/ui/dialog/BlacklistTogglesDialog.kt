@@ -74,6 +74,7 @@ fun BlacklistTogglesDialog(
         if (!isBlacklistLoading && blacklistEntries.isEmpty()) Text(stringResource(R.string.dialog_blacklist_empty))
         else LazyColumn(
             modifier = Modifier.height(screenHeight * 0.4f),
+            // userScrollEnabled = !isBlacklistLoading TODO in 1.2.0 compose foundation
         ) {
             item {
                 Row(
