@@ -7,8 +7,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import retrofit2.awaitResponse
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
@@ -19,12 +21,13 @@ import ru.herobrine1st.e621.util.credentials
 import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 import javax.inject.Inject
+import javax.inject.Provider
 
 // LoginScreenViewModel ?
 @HiltViewModel
 class HomeViewModel @Inject constructor(
-    private val authorizationRepository: AuthorizationRepository,
-    private val api: API,
+    private val authorizationRepositoryProvider: Provider<AuthorizationRepository>,
+    private val apiProvider: Provider<API>,
     private val snackbarAdapter: SnackbarAdapter
 ) : ViewModel() {
     var state by mutableStateOf(LoginState.LOADING)
@@ -32,7 +35,9 @@ class HomeViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            authorizationRepository.getAccountFlow()
+            withContext(Dispatchers.Default) {
+                authorizationRepositoryProvider.get()
+            }.getAccountFlow()
                 .distinctUntilChanged()
                 .collect { entry ->
                     state = LoginState.LOADING
@@ -42,16 +47,16 @@ class HomeViewModel @Inject constructor(
     }
 
     fun login(login: String, apiKey: String, callback: () -> Unit = {}) {
-        if(!state.canAuthorize) throw IllegalStateException()
+        if (!state.canAuthorize) throw IllegalStateException()
         viewModelScope.launch {
-            authorizationRepository.insertAccount(login, apiKey)
+            authorizationRepositoryProvider.get().insertAccount(login, apiKey)
             callback()
         }
     }
 
     fun logout() {
         viewModelScope.launch {
-            authorizationRepository.logout()
+            authorizationRepositoryProvider.get().logout()
         }
     }
 
@@ -61,7 +66,9 @@ class HomeViewModel @Inject constructor(
             return
         }
         val res = try {
-            api.getUser(
+            withContext(Dispatchers.Default) {
+                apiProvider.get()
+            }.getUser(
                 auth.username, auth.credentials
             ).awaitResponse()
         } catch (e: IOException) {
@@ -84,7 +91,7 @@ class HomeViewModel @Inject constructor(
             }
             snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
             state = LoginState.NO_AUTH
-            authorizationRepository.logout()
+            authorizationRepositoryProvider.get().logout()
         }
     }
 

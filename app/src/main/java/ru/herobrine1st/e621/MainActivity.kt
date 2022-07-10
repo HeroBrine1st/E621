@@ -58,9 +58,7 @@ class MainActivity : ComponentActivity() {
                 // Navigation
                 val navController = rememberNavController()
 
-
                 // State
-
                 val preferences by context.getPreferencesAsState()
 
                 var showBlacklistDialog by remember { mutableStateOf(false) }
