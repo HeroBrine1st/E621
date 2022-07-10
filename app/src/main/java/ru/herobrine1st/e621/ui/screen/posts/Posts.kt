@@ -59,9 +59,8 @@ fun Posts(
     openPost: (post: Post, scrollToComments: Boolean) -> Unit,
     viewModel: PostsViewModel = viewModel(
         factory = PostsViewModel.provideFactory(
-            EntryPointAccessors.fromActivity(
-                LocalContext.current as Activity,
-                PostsViewModel.FactoryProvider::class.java
+            EntryPointAccessors.fromActivity<PostsViewModel.FactoryProvider>(
+                LocalContext.current as Activity
             ).provideFactory(), searchOptions
         )
     )
