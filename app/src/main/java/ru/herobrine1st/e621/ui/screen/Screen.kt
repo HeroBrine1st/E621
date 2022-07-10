@@ -14,7 +14,10 @@ import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
 import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
-import ru.herobrine1st.e621.util.*
+import ru.herobrine1st.e621.util.JsonSerializable
+import ru.herobrine1st.e621.util.PostsSearchOptions
+import ru.herobrine1st.e621.util.PostsSearchOptionsNavType
+import ru.herobrine1st.e621.util.debug
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 
@@ -76,20 +79,20 @@ enum class Screen(
         navArgument("id") {
             type = NavType.IntType
         },
-        navArgument("post") {
-            type = PostNavType()
-            nullable = true
-            defaultValue = null
-        },
+//        navArgument("post") {
+//            type = PostNavType()
+//            nullable = true
+//            defaultValue = null
+//        },
         navArgument("scrollToComments") {
             type = NavType.BoolType
             defaultValue = false
         },
-        navArgument("query") {
-            type = PostsSearchOptionsNavType()
-            nullable = true
-            defaultValue = null
-        },
+//        navArgument("query") {
+//            type = PostsSearchOptionsNavType()
+//            nullable = true
+//            defaultValue = null
+//        },
         deepLinks = listOf(
             navDeepLink {
                 uriPattern = "${BuildConfig.DEEP_LINK_BASE_URL}/posts/{id}"

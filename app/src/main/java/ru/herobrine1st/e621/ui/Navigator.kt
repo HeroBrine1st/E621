@@ -67,12 +67,14 @@ fun Navigator(navController: NavHostController) {
                 searchOptions,
                 isBlacklistEnabled = preferences.blacklistEnabled,
                 openPost = { post, scrollToComments ->
+                    navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
+                    navController.currentBackStackEntry!!.savedStateHandle["query"] = searchOptions
                     navController.navigate(
                         Screen.Post.buildRoute {
                             addArgument("id", post.id)
-                            addArgument("post", post)
+//                            addArgument("post", post)
                             addArgument("scrollToComments", scrollToComments)
-                            addArgument("query", searchOptions)
+//                            addArgument("query", searchOptions)
                         }
                     )
                 }
@@ -88,16 +90,19 @@ fun Navigator(navController: NavHostController) {
                 searchOptions,
                 isBlacklistEnabled = preferences.blacklistEnabled,
                 openPost = { post, scrollToComments ->
+                    navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
+                    navController.currentBackStackEntry!!.savedStateHandle["query"] =
+                        PostsSearchOptions(favouritesOf = arguments.getString("user") ?: username)
                     navController.navigate(
                         Screen.Post.buildRoute {
                             addArgument("id", post.id)
-                            addArgument("post", post)
+//                            addArgument("post", post)
                             addArgument("scrollToComments", scrollToComments)
-                            addArgument(
-                                "query", PostsSearchOptions(
-                                    favouritesOf = arguments.getString("user") ?: username
-                                )
-                            )
+//                            addArgument(
+//                                "query", PostsSearchOptions(
+//                                    favouritesOf = arguments.getString("user") ?: username
+//                                )
+//                            )
                         }
                     )
                 }
@@ -106,11 +111,15 @@ fun Navigator(navController: NavHostController) {
         composable(Screen.Post.route, Screen.Post.arguments, deepLinks = Screen.Post.deepLinks) {
             val arguments =
                 it.arguments!!
+
             Post(
                 arguments.getInt("id"),
-                arguments.getParcelable("post"),
+//                arguments.getParcelable("post"),
+                navController.previousBackStackEntry?.savedStateHandle?.get("clickedPost"),
                 arguments.getBoolean("scrollToComments"),
-                arguments.getParcelable("query") ?: PostsSearchOptions.DEFAULT,
+//                arguments.getParcelable("query")
+                navController.previousBackStackEntry?.savedStateHandle?.get("query")
+                    ?: PostsSearchOptions.DEFAULT,
                 onModificationClick = {
                     navController.navigate(
                         Screen.Search.buildRoute {
