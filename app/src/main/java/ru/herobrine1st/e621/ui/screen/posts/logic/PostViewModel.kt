@@ -18,9 +18,11 @@ import dagger.hilt.EntryPoint
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
@@ -60,7 +62,9 @@ class PostViewModel @AssistedInject constructor(
             val id = initialPost?.id ?: postId
             if (initialPost?.isFavorited != false || !isPrivacyModeEnabled) {
                 try {
-                    post = api.getPost(id).await().post
+                    post = withContext(Dispatchers.IO) {
+                         api.getPost(id).await().post
+                    }
                     isLoadingPost = false
                     setMediaItem()
                     // Maybe reload ExoPlayer if old object contains invalid URL?

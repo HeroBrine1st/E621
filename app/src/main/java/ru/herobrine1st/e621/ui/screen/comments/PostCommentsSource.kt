@@ -4,6 +4,8 @@ import android.util.Log
 import androidx.compose.material.SnackbarDuration
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.getCommentsForPost
@@ -32,7 +34,9 @@ class PostCommentsSource(
 
         return try {
             if (!::avatars.isInitialized) {
-                val commentsRaw = api.getCommentsForPost(postId)
+                val commentsRaw = withContext(Dispatchers.IO) {
+                    api.getCommentsForPost(postId)
+                }
                 avatars = commentsRaw.associateBy { it.authorId }.mapValues { it.value.avatarPost }
 
 
