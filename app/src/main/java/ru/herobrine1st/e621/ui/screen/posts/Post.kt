@@ -5,7 +5,6 @@ import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,10 +17,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -34,6 +30,7 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
 import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
@@ -48,6 +45,7 @@ import java.util.*
 
 private const val TAG = "Post Screen"
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Post(
     id: Int,
@@ -64,59 +62,61 @@ fun Post(
         )
     )
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val post = viewModel.post
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val wikiState = viewModel.wikiState
-    var openComments by rememberSaveable { mutableStateOf(false) }
+    val drawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
 
     if (post == null) {
         CircularProgressIndicator()
         return
     }
 
-    if (wikiState != null) {
-        ContentDialog(
-            title = wikiState.title.replaceFirstChar { // Capitalize
-                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-            },
-            onDismissRequest = { viewModel.closeWikiPage() }) {
-            LazyColumn(
-                modifier = Modifier.height(screenHeight * 0.4f)
-            ) {
-                when (wikiState) {
-                    is WikiResult.Loading -> items(50) {
-                        Text(
-                            "", modifier = Modifier
-                                .fillMaxWidth()
-                                .placeholder(true, highlight = PlaceholderHighlight.shimmer())
-                        )
-                        Spacer(Modifier.height(4.dp))
-                    }
-                    is WikiResult.Failure -> item {
-                        Text(stringResource(R.string.wiki_load_failed))
-                    }
-                    is WikiResult.NotFound -> item {
-                        Text(stringResource(R.string.not_found))
-                    }
-                    is WikiResult.Success -> item {
-                        Text(wikiState.result.body)
-                    }
+    if (wikiState != null) ContentDialog(
+        title = wikiState.title.replaceFirstChar { // Capitalize
+            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+        },
+        onDismissRequest = { viewModel.closeWikiPage() }) {
+        LazyColumn(
+            modifier = Modifier.height(screenHeight * 0.4f)
+        ) {
+            when (wikiState) {
+                is WikiResult.Loading -> items(50) {
+                    Text(
+                        "", modifier = Modifier
+                            .fillMaxWidth()
+                            .placeholder(true, highlight = PlaceholderHighlight.shimmer())
+                    )
+                    Spacer(Modifier.height(4.dp))
+                }
+                is WikiResult.Failure -> item {
+                    Text(stringResource(R.string.wiki_load_failed))
+                }
+                is WikiResult.NotFound -> item {
+                    Text(stringResource(R.string.not_found))
+                }
+                is WikiResult.Success -> item {
+                    Text(wikiState.result.body)
                 }
             }
         }
     }
 
-    // Why don't use navigation:
-    // We should somehow save the state and there's a way to do it, there's no problem.
-    // Problems are on comments opening stage. If you save the state, you will restore it even in
-    // another post, so you should save somewhere that user hasn't open the comments and so on.
-    // (I haven't tested it because I'm lazy)
-    // This code is workaround too, but less dirty
-    // Also I want to show top-rated or first comment as "preview" (youtube-like)
-    // In that case with navigation there would be double-download
-    Crossfade(targetState = openComments) { open: Boolean -> // Mimic NavHost component
-        if (open) PostComments(postId = id)
-        else LazyColumn(horizontalAlignment = Alignment.CenterHorizontally) {
+    BottomDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = !drawerState.isClosed, // Allow only close or expand, but not open
+        drawerShape = MaterialTheme.shapes.medium,
+        drawerContent = {
+            TopAppBar(backgroundColor = MaterialTheme.colors.surface, title = {
+                Text(stringResource(R.string.comments))
+            })
+            PostComments(postId = id, modifier = Modifier.fillMaxSize())
+        }
+    ) {
+        LazyColumn(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
             item("media") {
                 when {
                     post.file.type.isVideo -> PostVideo(post.files.first { it.type.isVideo })
@@ -134,7 +134,11 @@ fun Post(
                 }
             }
             item("comments button") {
-                Button(onClick = { openComments = true }) {
+                Button(onClick = {
+                    coroutineScope.launch {
+                        drawerState.open()
+                    }
+                }) {
                     Text("Show comments") // TODO i18n
                 }
             }
@@ -161,8 +165,11 @@ fun Post(
         }
     }
 
-    BackHandler(enabled = openComments) {
-        openComments = false
+
+    BackHandler(enabled = drawerState.isOpen) {
+        coroutineScope.launch {
+            drawerState.close()
+        }
     }
 }
 

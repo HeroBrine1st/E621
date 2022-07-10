@@ -1,6 +1,9 @@
 package ru.herobrine1st.e621.ui.component
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,7 +20,6 @@ fun Base(
     Column(
         modifier = modifier
             .padding(horizontal = BASE_PADDING_HORIZONTAL)
-            .fillMaxHeight()
             .fillMaxWidth(),
         horizontalAlignment = horizontalAlignment,
         content = content

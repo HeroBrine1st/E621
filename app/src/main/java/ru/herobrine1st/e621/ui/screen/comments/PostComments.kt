@@ -23,6 +23,7 @@ import ru.herobrine1st.e621.ui.screen.comments.component.PostComment
 @Composable
 fun PostComments(
     postId: Int,
+    modifier: Modifier = Modifier,
     viewModel: PostCommentsViewModel = viewModel(
         factory = PostCommentsViewModel.provideFactory(
             EntryPointAccessors.fromActivity(
@@ -36,16 +37,18 @@ fun PostComments(
     val lazyListState = rememberLazyListState()
 
     if (comments.loadState.refresh !is LoadState.NotLoading) {  // Do not reset lazyListState
-        Base {
+        Base(modifier = modifier) {
             Spacer(modifier = Modifier.height(4.dp))
             CircularProgressIndicator()
+            Spacer(modifier = Modifier.height(4.dp))
         }
         return
     }
 
     LazyColumn(
         state = lazyListState,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier,
     ) {
         endOfPagePlaceholder(comments.loadState.prepend)
         item { Spacer(Modifier.height(4.dp)) }
