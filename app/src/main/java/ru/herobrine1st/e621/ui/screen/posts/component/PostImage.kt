@@ -25,7 +25,7 @@ import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
 @Composable
 fun PostImage(
     post: Post,
-    openPost: ((scrollToComments: Boolean) -> Unit)?,
+    openPost: (() -> Unit)?,
     file: NormalizedFile,
     aspectRatio: Float = file.aspectRatio
 ) {
@@ -35,7 +35,7 @@ fun PostImage(
     }
 
     val modifier = if (openPost == null) Modifier else Modifier.clickable {
-        openPost(false)
+        openPost()
     }
     Box(contentAlignment = Alignment.TopStart) {
         Image(

@@ -116,7 +116,7 @@ fun Post(
             when {
                 post.file.type.isSupported -> PostImage(
                     post = post,
-                    openPost = openPost,
+                    openPost = { openPost(false) },
                     file = post.normalizedSample
                 )
                 else -> InvalidPost(
