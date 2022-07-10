@@ -86,6 +86,5 @@ fun PostComment(comment: CommentBB, avatarPost: PostReduced?) {
         }
         Spacer(Modifier.height(4.dp))
         Text(comment.body) // TODO parse BBcode
-        Spacer(Modifier.height(4.dp))
     }
 }
