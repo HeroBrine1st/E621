@@ -51,6 +51,7 @@ fun PostComments(
         item { Spacer(Modifier.height(4.dp)) }
         items(comments, key = { it.first.id }) {
             if (it == null) return@items
+            if (it.first.isHidden) return@items
             PostComment(it.first, it.second)
             Spacer(Modifier.height(4.dp))
         }
