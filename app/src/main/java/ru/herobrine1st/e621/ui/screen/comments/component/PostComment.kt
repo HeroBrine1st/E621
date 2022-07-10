@@ -48,12 +48,12 @@ fun PostComment(comment: CommentBB, avatarPost: PostReduced?) {
                             imagePainter.state is ImagePainter.State.Loading,
                             highlight = PlaceholderHighlight.fade()
                         ),
-                    contentDescription = "avatar" // TODO i18n
+                    contentDescription = null
                 )
             } else {
                 Icon(
                     Icons.Filled.AccountCircle,
-                    contentDescription = "avatar", // TODO i18n
+                    contentDescription = null,
                     modifier = Modifier.size(48.dp)
                 )
             }
