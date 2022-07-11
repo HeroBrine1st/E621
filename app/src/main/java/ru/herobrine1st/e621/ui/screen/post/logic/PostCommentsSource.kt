@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui.screen.posts.logic
+package ru.herobrine1st.e621.ui.screen.post.logic
 
 import android.util.Log
 import androidx.compose.material.SnackbarDuration

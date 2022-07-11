@@ -12,7 +12,7 @@ import androidx.navigation.compose.composable
 import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.home.Home
-import ru.herobrine1st.e621.ui.screen.posts.Post
+import ru.herobrine1st.e621.ui.screen.post.Post
 import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings

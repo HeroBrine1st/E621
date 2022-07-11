@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui.screen.posts
+package ru.herobrine1st.e621.ui.screen.post
 
 import android.app.Activity
 import android.text.format.DateUtils
@@ -8,6 +8,7 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -35,16 +36,22 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
 import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostReduced
+import ru.herobrine1st.e621.preference.getPreferencesFlow
+import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
+import ru.herobrine1st.e621.ui.component.post.PostImage
+import ru.herobrine1st.e621.ui.component.post.PostVideo
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
-import ru.herobrine1st.e621.ui.screen.posts.component.PostComment
-import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
-import ru.herobrine1st.e621.ui.screen.posts.component.PostVideo
-import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
-import ru.herobrine1st.e621.ui.screen.posts.logic.WikiResult
+import ru.herobrine1st.e621.ui.screen.post.component.PostComment
+import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
+import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
+import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
 import ru.herobrine1st.e621.util.PostsSearchOptions
 import ru.herobrine1st.e621.util.SearchOptions
 import java.util.*
@@ -68,23 +75,33 @@ fun Post(
         )
     )
 ) {
-    val coroutineScope = rememberCoroutineScope()
-    val post = viewModel.post
+
+    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val post = viewModel.post
     val wikiState = viewModel.wikiState
+
+    val coroutineScope = rememberCoroutineScope()
+    val commentsLazyListState = rememberLazyListState()
     val drawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
     val progress by remember(drawerState) { derivedStateOf { drawerState.progress } }
+    var loadComments by remember { mutableStateOf(false) } // Do not make excessive API calls (user preference)
+
+    val elevation by animateDpAsState(if (drawerState.isExpanded && progress.fraction == 1f) 0.dp else AppBarDefaults.TopAppBarElevation)
+    val shapeSize by animateDpAsState(if (drawerState.isExpanded && progress.fraction == 1f) 0.dp else 8.dp)
 
     if (post == null) {
         CircularProgressIndicator()
         return
     }
 
+
     if (wikiState != null) ContentDialog(
         title = wikiState.title.replaceFirstChar { // Capitalize
             if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
         },
-        onDismissRequest = { viewModel.closeWikiPage() }) {
+        onDismissRequest = { viewModel.closeWikiPage() }
+    ) {
         LazyColumn(
             modifier = Modifier.height(screenHeight * 0.4f)
         ) {
@@ -110,28 +127,32 @@ fun Post(
         }
     }
 
-    val elevation by animateDpAsState(if (drawerState.isExpanded && progress.fraction == 1f) 0.dp else AppBarDefaults.TopAppBarElevation)
-    val shapeSize by animateDpAsState(if (drawerState.isExpanded && progress.fraction == 1f) 0.dp else 8.dp)
 
-    val commentsLazyListState = rememberLazyListState()
+
+    LaunchedEffect(Unit) {
+        val isPrivacyModeEnabled = context.getPreferencesFlow { it.privacyModeEnabled }.first()
+        if (!isPrivacyModeEnabled) loadComments = true
+    }
+
 
     BottomDrawer(
         drawerState = drawerState,
-        gesturesEnabled = !drawerState.isClosed // Allow only closing or expanding, but not opening
+        gesturesEnabled = !drawerState.isClosed // Disallow opening by gesture
                 // Disallow closing when scrolled down
                 && commentsLazyListState.firstVisibleItemIndex == 0
                 && commentsLazyListState.firstVisibleItemScrollOffset == 0,
         drawerShape = RoundedCornerShape(shapeSize),
         drawerContent = {
             // Do not load comments while drawer is closed
-            if (progress.from == progress.to && progress.from == BottomDrawerValue.Closed) {
+            if (!loadComments && progress.from == progress.to && progress.from == BottomDrawerValue.Closed) {
                 // Set size so that drawer won't auto-expand when opened
                 Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-                    CircularProgressIndicator()
+                    Text("Placeholder")
                 }
                 return@BottomDrawer
             }
 
+            loadComments = true
             val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -147,16 +168,26 @@ fun Post(
                         })
                 }
                 item { Spacer(Modifier.height(8.dp)) }
-                if(comments.loadState.refresh is LoadState.Loading) {
-                    item {
-                        CircularProgressIndicator()
+                if (comments.loadState.refresh is LoadState.Loading) {
+                    items(count = 50) {
+                        PostComment(
+                            comment = CommentBB.sample,
+                            avatarPost = null,
+                            placeholder = true,
+                            modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
+                        )
+                        Spacer(Modifier.height(8.dp))
                     }
                     return@LazyColumn
                 }
                 items(comments, key = { it.first.id }) {
                     if (it == null) return@items
                     if (it.first.isHidden) return@items
-                    PostComment(it.first, it.second)
+                    PostComment(
+                        it.first,
+                        it.second,
+                        modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
+                    )
                     Spacer(Modifier.height(8.dp))
                 }
                 endOfPagePlaceholder(comments.loadState.append)
@@ -182,14 +213,54 @@ fun Post(
                     )
                 }
             }
-            item("comments button") {
-                Button(onClick = {
-                    coroutineScope.launch {
-                        drawerState.open()
+            item("comments") {
+                Divider()
+                Column(Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        coroutineScope.launch {
+                            drawerState.open()
+                        }
                     }
-                }) {
-                    Text("Show comments") // TODO i18n
+                    .padding(horizontal = BASE_PADDING_HORIZONTAL)
+                ) {
+                    Text(
+                        stringResource(R.string.comments),
+                        style = MaterialTheme.typography.h6
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    if (loadComments) {
+                        val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
+                        val loadState = comments.loadState.refresh
+                        if (loadState is LoadState.Error) {
+                            Text(stringResource(R.string.comments_load_failed))
+                        } else {
+                            val comment: CommentBB?
+                            val avatarPost: PostReduced?
+                            val placeholder: Boolean
+                            when (loadState) {
+                                is LoadState.Loading -> {
+                                    comment = CommentBB.sample
+                                    avatarPost = null
+                                    placeholder = true
+                                }
+                                is LoadState.NotLoading -> {
+                                    comment = comments.peek(0)?.first
+                                    avatarPost = comments.peek(0)?.second
+                                    placeholder = false
+                                }
+                                is LoadState.Error -> throw RuntimeException("JVM is ")
+                            }
+                            if(comment == null) {
+                                Text(stringResource(R.string.no_comments_found))
+                            } else PostComment(comment, avatarPost, placeholder =  placeholder)
+                        }
+                    } else {
+                        Text(stringResource(R.string.click_to_load))
+                    }
+                    Spacer(Modifier.height(8.dp))
                 }
+                Divider()
             }
             item("uploaded") {
                 // TODO place more information here
@@ -204,7 +275,7 @@ fun Post(
                     ),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(8.dp)
+                        .padding(horizontal = BASE_PADDING_HORIZONTAL)
                 )
             }
             // Move tags to another screen?

@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui.screen.posts.component
+package ru.herobrine1st.e621.ui.component.post
 
 import android.util.Log
 import androidx.compose.foundation.layout.aspectRatio

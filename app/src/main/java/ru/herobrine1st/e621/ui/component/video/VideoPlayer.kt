@@ -38,7 +38,7 @@ import com.google.android.exoplayer2.ui.StyledPlayerView.SHOW_BUFFERING_NEVER
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.screen.posts.component.HandlePreferences
+import ru.herobrine1st.e621.ui.component.post.HandlePreferences
 import kotlin.math.roundToLong
 
 @Suppress("unused")

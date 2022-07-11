@@ -8,7 +8,6 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
 import ru.herobrine1st.e621.api.model.*
-import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
 import ru.herobrine1st.e621.util.await
 import ru.herobrine1st.e621.util.awaitResponse
 
@@ -132,11 +131,13 @@ suspend fun API.getWikiPage(tag: String): WikiPage {
         it.substring(it.lastIndexOf("/") + 1).toIntOrNull()
     }
     if (id == null) {
-        Log.e(PostViewModel.TAG, "Invalid redirection: Location header is not found or is not parsed")
-        Log.e(PostViewModel.TAG, firstResponse.raw().headers.joinToString("\n") {
+        Log.e(TAG, "Invalid redirection: Location header is not found or is not parsed")
+        Log.e(TAG, firstResponse.raw().headers.joinToString("\n") {
             it.first + ": " + it.second
         })
         throw ApiException("Unknown error", firstResponse.code())
     }
     return getWikiPage(id).await()
 }
+
+private const val TAG = "API"
