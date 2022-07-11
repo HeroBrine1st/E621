@@ -1,7 +1,6 @@
 package ru.herobrine1st.e621.ui.component.post
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -13,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.annotation.ExperimentalCoilApi
@@ -52,12 +52,13 @@ fun PostImage(
             modifier = modifier
                 .fillMaxWidth()
                 .aspectRatio(aspectRatio)
-
                 .placeholder(
                     visible = painter.state is State.Loading,
                     highlight = PlaceholderHighlight.fade()
                 ),
             contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
+            // TODO get exact resolution and recalculate aspect ratio on load completion
+            contentScale = ContentScale.Crop // Drop 1-2 pixels (on my device)
         )
         if (post.file.type.isNotImage) OutlinedChip( // TODO
             modifier = Modifier.offset(x = 10.dp, y = 10.dp),
