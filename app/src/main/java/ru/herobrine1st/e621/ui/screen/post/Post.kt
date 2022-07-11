@@ -97,7 +97,13 @@ fun Post(
     val shapeSize by animateDpAsState(if (isExpanded) 0.dp else 8.dp)
 
     if (post == null) {
-        CircularProgressIndicator()
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            CircularProgressIndicator()
+        }
+
         return
     }
 
