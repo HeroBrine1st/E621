@@ -9,6 +9,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import dagger.assisted.Assisted
@@ -23,6 +26,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
@@ -54,6 +58,17 @@ class PostViewModel @AssistedInject constructor(
     private var wikiClickJob: Job? = null
 
     private var mediaItemIsSet = false
+
+    private val pager = Pager(
+        PagingConfig(
+            pageSize = BuildConfig.PAGER_PAGE_SIZE,
+            initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
+        )
+    ) {
+        PostCommentsSource(api, snackbar, postId)
+    }
+
+    val commentsFlow = pager.flow.cachedIn(viewModelScope)
 
     init {
         viewModelScope.launch {

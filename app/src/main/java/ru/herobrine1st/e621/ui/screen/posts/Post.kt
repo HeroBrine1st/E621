@@ -43,7 +43,6 @@ import ru.herobrine1st.e621.ui.dialog.ContentDialog
 import ru.herobrine1st.e621.ui.screen.posts.component.PostComment
 import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
 import ru.herobrine1st.e621.ui.screen.posts.component.PostVideo
-import ru.herobrine1st.e621.ui.screen.posts.logic.PostCommentsViewModel
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.posts.logic.WikiResult
 import ru.herobrine1st.e621.util.PostsSearchOptions
@@ -66,14 +65,6 @@ fun Post(
                 LocalContext.current as Activity,
                 PostViewModel.FactoryProvider::class.java
             ).provideFactory(), id, initialPost
-        )
-    ),
-    commentsViewModel: PostCommentsViewModel = viewModel(
-        factory = PostCommentsViewModel.provideFactory(
-            EntryPointAccessors.fromActivity(
-                LocalContext.current as Activity,
-                PostCommentsViewModel.FactoryProvider::class.java
-            ).provideFactory(), id
         )
     )
 ) {
@@ -141,7 +132,7 @@ fun Post(
                 return@BottomDrawer
             }
 
-            val comments = commentsViewModel.commentsFlow.collectAsLazyPagingItems()
+            val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 state = commentsLazyListState,

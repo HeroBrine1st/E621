@@ -91,4 +91,7 @@
     <string name="general_tags">General</string>
     <string name="lore_tags">Lore</string>
     <string name="meta_tags">Meta</string>
+    <string name="comments_load_failed">Failed to load comments</string>
+    <string name="no_comments_found">There\'s no comments</string>
+    <string name="click_to_load">Click to load</string>
 </resources>

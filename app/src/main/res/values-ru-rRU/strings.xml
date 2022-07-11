@@ -91,4 +91,7 @@
     <string name="general_tags">Общее</string>
     <string name="lore_tags">Лор</string>
     <string name="meta_tags">Метаданные</string>
+    <string name="comments_load_failed">Ошибка при загрузке комметариев</string>
+    <string name="no_comments_found">Нет комментариев</string>
+    <string name="click_to_load">Нажмите для загрузки</string>
 </resources>
