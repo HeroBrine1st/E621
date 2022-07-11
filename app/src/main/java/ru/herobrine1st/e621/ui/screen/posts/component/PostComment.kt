@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui.screen.comments.component
+package ru.herobrine1st.e621.ui.screen.posts.component
 
 import android.text.format.DateUtils
 import androidx.compose.foundation.Image

@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.ui.screen.comments
+package ru.herobrine1st.e621.ui.screen.posts.logic
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider

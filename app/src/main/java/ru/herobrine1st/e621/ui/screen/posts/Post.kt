@@ -5,19 +5,21 @@ import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -26,6 +28,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
@@ -33,10 +38,12 @@ import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
-import ru.herobrine1st.e621.ui.screen.comments.PostComments
+import ru.herobrine1st.e621.ui.screen.posts.component.PostComment
 import ru.herobrine1st.e621.ui.screen.posts.component.PostImage
 import ru.herobrine1st.e621.ui.screen.posts.component.PostVideo
+import ru.herobrine1st.e621.ui.screen.posts.logic.PostCommentsViewModel
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.posts.logic.WikiResult
 import ru.herobrine1st.e621.util.PostsSearchOptions
@@ -60,6 +67,14 @@ fun Post(
                 PostViewModel.FactoryProvider::class.java
             ).provideFactory(), id, initialPost
         )
+    ),
+    commentsViewModel: PostCommentsViewModel = viewModel(
+        factory = PostCommentsViewModel.provideFactory(
+            EntryPointAccessors.fromActivity(
+                LocalContext.current as Activity,
+                PostCommentsViewModel.FactoryProvider::class.java
+            ).provideFactory(), id
+        )
     )
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -67,6 +82,7 @@ fun Post(
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val wikiState = viewModel.wikiState
     val drawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
+    val progress by remember(drawerState) { derivedStateOf { drawerState.progress } }
 
     if (post == null) {
         CircularProgressIndicator()
@@ -103,15 +119,57 @@ fun Post(
         }
     }
 
+    val elevation by animateDpAsState(if (drawerState.isExpanded && progress.fraction == 1f) 0.dp else AppBarDefaults.TopAppBarElevation)
+    val shapeSize by animateDpAsState(if (drawerState.isExpanded && progress.fraction == 1f) 0.dp else 8.dp)
+
+    val commentsLazyListState = rememberLazyListState()
+
     BottomDrawer(
         drawerState = drawerState,
-        gesturesEnabled = !drawerState.isClosed, // Allow only close or expand, but not open
-        drawerShape = MaterialTheme.shapes.medium,
+        gesturesEnabled = !drawerState.isClosed // Allow only closing or expanding, but not opening
+                // Disallow closing when scrolled down
+                && commentsLazyListState.firstVisibleItemIndex == 0
+                && commentsLazyListState.firstVisibleItemScrollOffset == 0,
+        drawerShape = RoundedCornerShape(shapeSize),
         drawerContent = {
-            TopAppBar(backgroundColor = MaterialTheme.colors.surface, title = {
-                Text(stringResource(R.string.comments))
-            })
-            PostComments(postId = id, modifier = Modifier.fillMaxSize())
+            // Do not load comments while drawer is closed
+            if (progress.from == progress.to && progress.from == BottomDrawerValue.Closed) {
+                // Set size so that drawer won't auto-expand when opened
+                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+                    CircularProgressIndicator()
+                }
+                return@BottomDrawer
+            }
+
+            val comments = commentsViewModel.commentsFlow.collectAsLazyPagingItems()
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                state = commentsLazyListState,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                endOfPagePlaceholder(comments.loadState.prepend)
+                item {
+                    TopAppBar(backgroundColor = MaterialTheme.colors.surface,
+                        elevation = elevation,
+                        title = {
+                            Text(stringResource(R.string.comments))
+                        })
+                }
+                item { Spacer(Modifier.height(8.dp)) }
+                if(comments.loadState.refresh is LoadState.Loading) {
+                    item {
+                        CircularProgressIndicator()
+                    }
+                    return@LazyColumn
+                }
+                items(comments, key = { it.first.id }) {
+                    if (it == null) return@items
+                    if (it.first.isHidden) return@items
+                    PostComment(it.first, it.second)
+                    Spacer(Modifier.height(8.dp))
+                }
+                endOfPagePlaceholder(comments.loadState.append)
+            }
         }
     ) {
         LazyColumn(
