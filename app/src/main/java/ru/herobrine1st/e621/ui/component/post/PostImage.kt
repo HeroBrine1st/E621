@@ -1,6 +1,7 @@
 package ru.herobrine1st.e621.ui.component.post
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -14,7 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import coil.annotation.ExperimentalCoilApi
+import coil.compose.ImagePainter.State
 import coil.compose.rememberImagePainter
+import com.google.accompanist.placeholder.PlaceholderHighlight
+import com.google.accompanist.placeholder.material.fade
+import com.google.accompanist.placeholder.material.placeholder
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
@@ -23,6 +29,7 @@ import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
 
 
 @Composable
+@OptIn(ExperimentalCoilApi::class)
 fun PostImage(
     post: Post,
     openPost: (() -> Unit)?,
@@ -37,18 +44,20 @@ fun PostImage(
     val modifier = if (openPost == null) Modifier else Modifier.clickable {
         openPost()
     }
+    val painter = rememberImagePainter(file.urls.first(),)
+
     Box(contentAlignment = Alignment.TopStart) {
         Image(
-            painter = rememberImagePainter(
-                file.urls.first(),
-                builder = {
-                    crossfade(true)
-                }
-            ),
+            painter = painter,
             modifier = modifier
                 .fillMaxWidth()
-                .aspectRatio(aspectRatio),
-            contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
+                .aspectRatio(aspectRatio)
+
+                .placeholder(
+                    visible = painter.state is State.Loading,
+                    highlight = PlaceholderHighlight.fade()
+                ),
+            contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
         )
         if (post.file.type.isNotImage) OutlinedChip( // TODO
             modifier = Modifier.offset(x = 10.dp, y = 10.dp),
