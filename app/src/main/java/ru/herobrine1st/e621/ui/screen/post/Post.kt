@@ -87,8 +87,14 @@ fun Post(
     val progress by remember(drawerState) { derivedStateOf { drawerState.progress } }
     var loadComments by remember { mutableStateOf(false) } // Do not make excessive API calls (user preference)
 
-    val elevation by animateDpAsState(if (drawerState.isExpanded && progress.fraction == 1f) 0.dp else AppBarDefaults.TopAppBarElevation)
-    val shapeSize by animateDpAsState(if (drawerState.isExpanded && progress.fraction == 1f) 0.dp else 8.dp)
+    val isExpanded by remember(drawerState) {
+        derivedStateOf {
+            (drawerState.progress.fraction == 1f && (drawerState.progress.to == BottomDrawerValue.Expanded))
+        }
+    }
+
+    val elevation by animateDpAsState(if (isExpanded) 0.dp else AppBarDefaults.TopAppBarElevation)
+    val shapeSize by animateDpAsState(if (isExpanded) 0.dp else 8.dp)
 
     if (post == null) {
         CircularProgressIndicator()
@@ -251,9 +257,9 @@ fun Post(
                                 }
                                 is LoadState.Error -> throw RuntimeException("JVM is ")
                             }
-                            if(comment == null) {
+                            if (comment == null) {
                                 Text(stringResource(R.string.no_comments_found))
-                            } else PostComment(comment, avatarPost, placeholder =  placeholder)
+                            } else PostComment(comment, avatarPost, placeholder = placeholder)
                         }
                     } else {
                         Text(stringResource(R.string.click_to_load))
