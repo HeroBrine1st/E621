@@ -37,7 +37,15 @@ class PostCommentsSource(
                 val commentsRaw = withContext(Dispatchers.IO) {
                     api.getCommentsForPost(postId)
                 }
-                avatars = commentsRaw.associateBy { it.authorId }.mapValues { it.value.avatarPost }
+                if (commentsRaw.isEmpty())
+                    LoadResult.Page(
+                        data = emptyList(),
+                        nextKey = null,
+                        prevKey = null
+                    )
+                avatars = withContext(Dispatchers.Default) {
+                    commentsRaw.associateBy { it.authorId }.mapValues { it.value.avatarPost }
+                }
 
 
                 // Comments are reversed, doing my best to reverse it back
@@ -46,11 +54,14 @@ class PostCommentsSource(
             }
             val page = params.key ?: firstPage
             val limit = params.loadSize
-            val res = api.getCommentsForPostBBCode(postId, page, limit).await()
+
+            val res = withContext(Dispatchers.IO) {
+                api.getCommentsForPostBBCode(postId, page, limit).await()
+            }
             LoadResult.Page(
                 data = res.map { it to avatars[it.creatorId] }.asReversed(),
+                prevKey = if (page == firstPage) null else page + 1,
                 nextKey = if (page == 1) null else page - 1,
-                prevKey = if (page == firstPage) null else page + 1
             )
         } catch (e: IOException) {
             Log.e("PostCommentsSource", "Unable to load comments", e)
