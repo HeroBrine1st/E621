@@ -113,13 +113,6 @@ interface API {
     ): Call<List<CommentBB>>
 }
 
-suspend fun API.getCommentsForPost(id: Int): List<Comment> {
-    val response = getCommentsForPostHTML(id).await()
-    // TODO use other method to get BBCode contents
-    // TODO parse to AnnotatedString
-    return parseComments(response)
-}
-
 suspend fun API.getWikiPage(tag: String): WikiPage {
     val firstResponse = getWikiPageId(tag).awaitResponse()
     if (!firstResponse.raw().isRedirect) {

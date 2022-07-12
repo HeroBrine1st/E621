@@ -9,9 +9,9 @@ import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.await
-import ru.herobrine1st.e621.api.getCommentsForPost
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.PostReduced
+import ru.herobrine1st.e621.api.model.parseComments
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import java.io.IOException
 import kotlin.math.ceil
@@ -34,8 +34,10 @@ class PostCommentsSource(
 
         return try {
             if (!::avatars.isInitialized) {
-                val commentsRaw = withContext(Dispatchers.IO) {
-                    api.getCommentsForPost(postId)
+                val commentsRaw = withContext(Dispatchers.Default) {
+                    parseComments(withContext(Dispatchers.IO) {
+                        api.getCommentsForPostHTML(postId).await()
+                    })
                 }
                 if (commentsRaw.isEmpty())
                     LoadResult.Page(
