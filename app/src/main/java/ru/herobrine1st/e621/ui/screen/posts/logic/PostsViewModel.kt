@@ -27,13 +27,13 @@ import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
+import ru.herobrine1st.e621.api.awaitResponse
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.SearchOptions
-import ru.herobrine1st.e621.util.awaitResponse
 import java.io.IOException
 import java.util.function.Predicate
 

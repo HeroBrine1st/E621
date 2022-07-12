@@ -17,7 +17,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.util.awaitResponse
+import ru.herobrine1st.e621.api.awaitResponse
 
 @HiltAndroidTest
 @RunWith(AndroidJUnit4::class)

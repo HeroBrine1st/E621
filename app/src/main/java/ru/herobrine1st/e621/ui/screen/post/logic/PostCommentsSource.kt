@@ -8,11 +8,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.getCommentsForPost
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
-import ru.herobrine1st.e621.util.await
 import java.io.IOException
 import kotlin.math.ceil
 import kotlin.properties.Delegates

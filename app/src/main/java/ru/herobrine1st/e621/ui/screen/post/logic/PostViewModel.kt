@@ -28,15 +28,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.api.NotFoundException
-import ru.herobrine1st.e621.api.getWikiPage
+import ru.herobrine1st.e621.api.*
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
-import ru.herobrine1st.e621.util.await
 import java.io.IOException
 
 class PostViewModel @AssistedInject constructor(

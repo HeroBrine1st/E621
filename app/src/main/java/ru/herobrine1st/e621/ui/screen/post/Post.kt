@@ -24,6 +24,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -154,6 +155,7 @@ fun Post(
                 && commentsLazyListState.firstVisibleItemIndex == 0
                 && commentsLazyListState.firstVisibleItemScrollOffset == 0,
         drawerShape = RoundedCornerShape(shapeSize),
+        scrimColor = Color.Unspecified,
         drawerContent = {
             // Do not load comments while drawer is closed
             if (!loadComments && progress.from == progress.to && progress.from == BottomDrawerValue.Closed) {

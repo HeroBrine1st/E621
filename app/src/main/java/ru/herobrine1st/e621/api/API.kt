@@ -8,8 +8,6 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
 import ru.herobrine1st.e621.api.model.*
-import ru.herobrine1st.e621.util.await
-import ru.herobrine1st.e621.util.awaitResponse
 
 interface API {
     @CheckResult
