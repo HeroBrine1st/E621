@@ -94,4 +94,5 @@
     <string name="comments_load_failed">Failed to load comments</string>
     <string name="no_comments_found">There\'s no comments</string>
     <string name="click_to_load">Click to load</string>
+    <string name="quote">%s said:</string>
 </resources>

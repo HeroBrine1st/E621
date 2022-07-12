@@ -26,7 +26,7 @@ val pattern: Pattern = Pattern.compile(
     Pattern.MULTILINE or Pattern.DOTALL
 )
 val quotePattern: Pattern = Pattern.compile(
-    "\"([^\"]+)\":/user/show/(\\d+) said:\\n(.+)",
+    "\"([^\"]+)\":/user/show/(\\d+) said:(.+)",
     Pattern.MULTILINE or Pattern.DOTALL
 )
 
@@ -66,7 +66,9 @@ fun parseBBCode(input: String): List<MessageData> {
     fun fold() {
         res.add(
             MessageText(
-                text = builder.toAnnotatedString()
+                text = builder
+                    .toAnnotatedString()
+                    .trim('\n', '\r') as AnnotatedString
             )
         )
         builder = AnnotatedString.Builder()
@@ -87,7 +89,8 @@ fun parseBBCode(input: String): List<MessageData> {
                                 userId = match.group(2)!!.toInt(),
                                 text = parseBBCodeInternal(
                                     match.group(3)!!
-                                        .removeSuffix("\n") // [quote]author...\nQuote text\n[/quote] - remove last \n
+                                        // [quote]author...\r\nQuote text\r\n[/quote]
+                                        .trim('\n', '\r')
                                 ),
                             )
                         )

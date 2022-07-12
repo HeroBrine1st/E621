@@ -187,8 +187,8 @@ fun Post(
                         PostComment(
                             comment = CommentBB.sample,
                             avatarPost = null,
-                            placeholder = true,
-                            modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
+                            modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
+                            placeholder = true
                         )
                         Spacer(Modifier.height(8.dp))
                     }
@@ -267,7 +267,12 @@ fun Post(
                             }
                             if (comment == null) {
                                 Text(stringResource(R.string.no_comments_found))
-                            } else PostComment(comment, avatarPost, placeholder = placeholder)
+                            } else PostComment(
+                                comment,
+                                avatarPost,
+                                showAsPreview = true,
+                                placeholder = placeholder
+                            )
                         }
                     } else {
                         Text(stringResource(R.string.click_to_load))

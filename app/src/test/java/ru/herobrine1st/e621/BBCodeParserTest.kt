@@ -132,8 +132,9 @@ class BBCodeParserTest {
             Some text
             [b]Some another text[/b]
             [/quote]
+            [b]Bold text[/b] Normal text
             """.trimIndent())
-        assertEquals(2, res.size)
+        assertEquals(3, res.size)
         val text = res[0] as MessageText
         assertEquals(
             AnnotatedString.Builder()
@@ -141,7 +142,7 @@ class BBCodeParserTest {
                     withStyle(BOLD) {
                         append("Bold text")
                     }
-                    append(" Normal text\n")
+                    append(" Normal text")
                 }
                 .toAnnotatedString(),
             text.text
@@ -160,5 +161,18 @@ class BBCodeParserTest {
         )
         assertEquals("name", quote.userName)
         assertEquals(0, quote.userId)
+
+        val text2 = res[2] as MessageText
+        assertEquals(
+            AnnotatedString.Builder()
+                .apply {
+                    withStyle(BOLD) {
+                        append("Bold text")
+                    }
+                    append(" Normal text")
+                }
+                .toAnnotatedString(),
+            text2.text
+        )
     }
 }
