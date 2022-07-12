@@ -155,7 +155,7 @@ fun Post(
                 && commentsLazyListState.firstVisibleItemIndex == 0
                 && commentsLazyListState.firstVisibleItemScrollOffset == 0,
         drawerShape = RoundedCornerShape(shapeSize),
-        scrimColor = Color.Unspecified,
+        scrimColor = Color.Transparent,
         drawerContent = {
             // Do not load comments while drawer is closed
             if (!loadComments && progress.from == progress.to && progress.from == BottomDrawerValue.Closed) {
