@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.util.asToggleable
+import ru.herobrine1st.e621.entity.BlacklistEntry
 import javax.inject.Inject
 
 @Composable
@@ -233,3 +233,29 @@ class BlacklistTogglesDialogViewModel @Inject constructor(
         const val TAG = "BlacklistTogglesDialogViewModel"
     }
 }
+
+@Stable
+class ToggleableBlacklistEntry private constructor(val query: String, private val dbEnabled: Boolean, val id: Long) {
+    companion object {
+        fun of(blacklistEntry: BlacklistEntry): ToggleableBlacklistEntry =
+            ToggleableBlacklistEntry(
+                blacklistEntry.query,
+                blacklistEntry.enabled,
+                blacklistEntry.id
+            )
+    }
+
+    var enabled by mutableStateOf(dbEnabled)
+
+    val isChanged get() = enabled != dbEnabled
+
+
+    fun resetChanges() {
+        if (!isChanged) return
+        enabled = dbEnabled
+    }
+
+    fun toEntry() = BlacklistEntry(query, enabled, id)
+}
+
+fun BlacklistEntry.asToggleable() = ToggleableBlacklistEntry.of(this)
