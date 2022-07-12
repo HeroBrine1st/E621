@@ -95,7 +95,7 @@ fun parseBBCode(input: String): List<MessageData> {
                             )
                         )
                     } else { // Fallback
-                        builder.append(parseBBCodeInternal(matcher.group()))
+                        stylizeText(tag, inner, builder)
                     }
                 }
                 else -> stylizeText(tag, inner, builder)
