@@ -168,7 +168,9 @@ fun Post(
                 return@BottomDrawer
             }
 
-            loadComments = true
+            LaunchedEffect(Unit) {
+                loadComments = true
+            }
             val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
