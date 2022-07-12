@@ -97,7 +97,7 @@ fun Post(
 
     val elevation by animateDpAsState(if (isExpanded) 0.dp else AppBarDefaults.TopAppBarElevation)
     val shapeSize by animateDpAsState(if (isExpanded) 0.dp else 8.dp)
-    val drawerBackgroundColor by animateColorAsState(if(isExpanded) MaterialTheme.colors.background else MaterialTheme.colors.surface)
+    val drawerBackgroundColor by animateColorAsState(if (isExpanded) MaterialTheme.colors.background else MaterialTheme.colors.surface)
 
     if (post == null) {
         Column(
@@ -242,25 +242,20 @@ fun Post(
                     Spacer(Modifier.width(4.dp))
                     if (loadComments) {
                         val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
-                        val loadState = comments.loadState.refresh
-                        if (loadState is LoadState.Error) {
-                            Text(stringResource(R.string.comments_load_failed))
-                        } else {
-                            when (loadState) {
-                                is LoadState.Loading -> {
-                                    PostCommentPlaceholder()
-                                }
-                                is LoadState.NotLoading -> {
-                                    val comment: CommentBB? = comments.peek(0)?.first
-                                    val avatarPost: PostReduced? = comments.peek(0)?.second
-                                    if (comment != null) {
-                                        PostComment(comment, avatarPost)
-                                    } else {
-                                        Text(stringResource(R.string.no_comments_found))
-                                    }
-                                }
-                                is LoadState.Error -> throw RuntimeException("JVM is ")
+                        when (comments.loadState.refresh) {
+                            is LoadState.Loading -> {
+                                PostCommentPlaceholder()
                             }
+                            is LoadState.NotLoading -> {
+                                val comment: CommentBB? = comments.peek(0)?.first
+                                val avatarPost: PostReduced? = comments.peek(0)?.second
+                                if (comment != null) {
+                                    PostComment(comment, avatarPost)
+                                } else {
+                                    Text(stringResource(R.string.no_comments_found))
+                                }
+                            }
+                            is LoadState.Error -> Text(stringResource(R.string.comments_load_failed))
                         }
                     } else {
                         Text(stringResource(R.string.click_to_load))
