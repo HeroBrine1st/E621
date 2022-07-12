@@ -94,5 +94,7 @@
     <string name="comments_load_failed">Ошибка при загрузке комметариев</string>
     <string name="no_comments_found">Нет комментариев</string>
     <string name="click_to_load">Нажмите для загрузки</string>
-    <string name="quote">%s сказал(а):</string>
+    <string name="quote_comments">%s сказал(а):</string>
+    <string name="message_quote">Цитата</string>
+    <string name="message_text">Текст</string>
 </resources>

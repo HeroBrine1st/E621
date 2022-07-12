@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -84,10 +85,10 @@ fun PostComment(
 
         if (showAsPreview) {
             val text = remember(parsed) {
-                parsed.firstOrNull { it is MessageText }?.text ?: parsed.first().text
+                (parsed.firstOrNull { it is MessageText } as MessageText?)?.text
             }
             Text(
-                text,
+                text ?: AnnotatedString(stringResource(parsed.first().getDescription())),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier
@@ -98,7 +99,7 @@ fun PostComment(
             )
         } else parsed.forEach {
             if (it is MessageQuote) {
-                Text(stringResource(R.string.quote, it.userName))
+                Text(stringResource(R.string.quote_comments, it.userName))
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.height(IntrinsicSize.Min)) {
                     Box(
                         Modifier

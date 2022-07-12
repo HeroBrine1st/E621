@@ -1,6 +1,7 @@
 package ru.herobrine1st.e621.api
 
 import android.util.Log
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.AnnotatedString
@@ -8,6 +9,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
+import ru.herobrine1st.e621.R
 import java.util.regex.Pattern
 
 val BOLD = SpanStyle(
@@ -22,7 +24,7 @@ val ITALIC = SpanStyle(
 // Second alternative: match tag
 // Third alternative: (slow way) match any text (fallback in case of invalid tag)
 val pattern: Pattern = Pattern.compile(
-    "[^\\[]+|\\[(\\w+?)](.+?)\\[/\\1]|.+?",
+    "[^\\[]+|\\[(\\w+?)](.+?)\\[/\\1]|.",
     Pattern.MULTILINE or Pattern.DOTALL
 )
 val quotePattern: Pattern = Pattern.compile(
@@ -32,17 +34,26 @@ val quotePattern: Pattern = Pattern.compile(
 
 @Immutable
 interface MessageData {
-    val text: AnnotatedString
+    fun isEmpty(): Boolean
+
+    // For cases where full message does not fit (for example, when there's no MessageText at all but preview required)
+    // Rare case, but should implement fallback
+    @StringRes
+    fun getDescription(): Int
 }
 
 /**
  * Regular text in message
- * @param text Part of text in message
+ * @param text Part of text in message.
  */
 @Immutable
 data class MessageText(
-    override val text: AnnotatedString,
-) : MessageData
+    val text: AnnotatedString,
+) : MessageData {
+    override fun isEmpty() = text.isEmpty()
+    override fun getDescription(): Int = R.string.message_text
+
+}
 
 /**
  * Quote in message
@@ -54,8 +65,12 @@ data class MessageText(
 data class MessageQuote(
     val userName: String,
     val userId: Int,
-    override val text: AnnotatedString
-) : MessageData
+    val text: AnnotatedString
+) : MessageData {
+    override fun isEmpty(): Boolean = text.isEmpty()
+    override fun getDescription(): Int = R.string.message_quote
+
+}
 
 @Stable
 fun parseBBCode(input: String): List<MessageData> {
@@ -105,7 +120,7 @@ fun parseBBCode(input: String): List<MessageData> {
         }
     }
     fold()
-    return res.filter { it.text.isNotEmpty() }
+    return res.filterNot { it.isEmpty() }
 }
 
 private fun parseBBCodeInternal(input: String): AnnotatedString {
