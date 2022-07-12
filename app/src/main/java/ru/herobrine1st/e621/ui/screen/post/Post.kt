@@ -69,9 +69,8 @@ fun Post(
     onModificationClick: (PostsSearchOptions) -> Unit,
     viewModel: PostViewModel = viewModel(
         factory = PostViewModel.provideFactory(
-            EntryPointAccessors.fromActivity(
-                LocalContext.current as Activity,
-                PostViewModel.FactoryProvider::class.java
+            EntryPointAccessors.fromActivity<PostViewModel.FactoryProvider>(
+                LocalContext.current as Activity
             ).provideFactory(), id, initialPost
         )
     )
