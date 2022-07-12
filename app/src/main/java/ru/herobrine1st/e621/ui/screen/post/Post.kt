@@ -91,7 +91,7 @@ fun Post(
 
     val isExpanded by remember(drawerState) {
         derivedStateOf {
-            (drawerState.progress.fraction == 1f && (drawerState.progress.to == BottomDrawerValue.Expanded))
+            drawerState.progress.fraction == 1f && drawerState.progress.to == BottomDrawerValue.Expanded
         }
     }
 
