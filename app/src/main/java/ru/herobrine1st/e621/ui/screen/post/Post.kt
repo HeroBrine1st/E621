@@ -5,6 +5,7 @@ import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -96,6 +97,7 @@ fun Post(
 
     val elevation by animateDpAsState(if (isExpanded) 0.dp else AppBarDefaults.TopAppBarElevation)
     val shapeSize by animateDpAsState(if (isExpanded) 0.dp else 8.dp)
+    val drawerBackgroundColor by animateColorAsState(if(isExpanded) MaterialTheme.colors.background else MaterialTheme.colors.surface)
 
     if (post == null) {
         Column(
@@ -147,7 +149,6 @@ fun Post(
         if (!isPrivacyModeEnabled) loadComments = true
     }
 
-
     BottomDrawer(
         drawerState = drawerState,
         gesturesEnabled = !drawerState.isClosed // Disallow opening by gesture
@@ -156,6 +157,7 @@ fun Post(
                 && commentsLazyListState.firstVisibleItemScrollOffset == 0,
         drawerShape = RoundedCornerShape(shapeSize),
         scrimColor = Color.Transparent,
+        drawerBackgroundColor = drawerBackgroundColor,
         drawerContent = {
             // Do not load comments while drawer is closed
             if (!loadComments && progress.from == progress.to && progress.from == BottomDrawerValue.Closed) {
@@ -251,7 +253,7 @@ fun Post(
                                 is LoadState.NotLoading -> {
                                     val comment: CommentBB? = comments.peek(0)?.first
                                     val avatarPost: PostReduced? = comments.peek(0)?.second
-                                    if(comment != null) {
+                                    if (comment != null) {
                                         PostComment(comment, avatarPost)
                                     } else {
                                         Text(stringResource(R.string.no_comments_found))
