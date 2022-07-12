@@ -25,8 +25,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowRow
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.Order
-import ru.herobrine1st.e621.api.Rating
+import ru.herobrine1st.e621.api.model.Order
+import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.util.PostsSearchOptions

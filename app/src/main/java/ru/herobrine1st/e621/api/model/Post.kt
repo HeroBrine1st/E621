@@ -7,8 +7,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
-import ru.herobrine1st.e621.api.FileType
-import ru.herobrine1st.e621.api.Rating
 import ru.herobrine1st.e621.util.JsonSerializable
 import java.time.Instant
 import java.time.OffsetDateTime

@@ -1,6 +1,7 @@
 package ru.herobrine1st.e621.api
 
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.Rating
 import java.util.function.Predicate
 import java.util.regex.Pattern
 

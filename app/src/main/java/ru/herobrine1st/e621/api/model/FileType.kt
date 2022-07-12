@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.api
+package ru.herobrine1st.e621.api.model
 
 import com.fasterxml.jackson.annotation.JsonValue
 import okhttp3.internal.toImmutableMap

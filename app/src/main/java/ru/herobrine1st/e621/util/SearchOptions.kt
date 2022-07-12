@@ -6,8 +6,12 @@ import android.util.Log
 import androidx.navigation.NavType
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.parcelize.Parcelize
-import ru.herobrine1st.e621.api.*
+import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.ApiException
+import ru.herobrine1st.e621.api.await
+import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.Rating
 import java.io.IOException
 
 interface SearchOptions {

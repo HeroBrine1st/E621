@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.api
+package ru.herobrine1st.e621.api.model
 
 import androidx.annotation.StringRes
 import com.fasterxml.jackson.annotation.JsonValue

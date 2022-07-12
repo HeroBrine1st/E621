@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
-import ru.herobrine1st.e621.api.FileType
 
 @Parcelize
 data class File(

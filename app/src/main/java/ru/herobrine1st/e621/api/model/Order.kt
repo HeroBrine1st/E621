@@ -1,4 +1,6 @@
-package ru.herobrine1st.e621.api
+
+
+package ru.herobrine1st.e621.api.model
 
 import androidx.annotation.StringRes
 import ru.herobrine1st.e621.R
@@ -15,7 +17,7 @@ enum class Order(
     TAG_COUNT(R.string.order_tagcount, "tagcount"),
     COMMENT_COUNT(R.string.order_comment_count, "comment_count"),
     RESOLUTION(R.string.order_mpixels, "mpixels"),
-    FILESIZE(R.string.order_filesize, "filesize"),
+    FILE_SIZE(R.string.order_filesize, "filesize"),
     WIDEST_FIRST(R.string.order_landscape, "landscape", ascendingApiName = "portrait"),
     //    WIDEST_LAST(R.string.order_portrait, "portrait", supportsAscending = false),
     DURATION(R.string.order_duration, "duration"),
