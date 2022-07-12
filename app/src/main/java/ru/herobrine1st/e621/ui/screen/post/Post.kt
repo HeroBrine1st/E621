@@ -50,6 +50,7 @@ import ru.herobrine1st.e621.ui.component.post.PostImage
 import ru.herobrine1st.e621.ui.component.post.PostVideo
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
+import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
 import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
@@ -183,12 +184,7 @@ fun Post(
                 item { Spacer(Modifier.height(8.dp)) }
                 if (comments.loadState.refresh is LoadState.Loading) {
                     items(count = 50) {
-                        PostComment(
-                            comment = CommentBB.sample,
-                            avatarPost = null,
-                            modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
-                            placeholder = true
-                        )
+                        PostCommentPlaceholder(modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL))
                         Spacer(Modifier.height(8.dp))
                     }
                     return@LazyColumn
@@ -248,30 +244,21 @@ fun Post(
                         if (loadState is LoadState.Error) {
                             Text(stringResource(R.string.comments_load_failed))
                         } else {
-                            val comment: CommentBB?
-                            val avatarPost: PostReduced?
-                            val placeholder: Boolean
                             when (loadState) {
                                 is LoadState.Loading -> {
-                                    comment = CommentBB.sample
-                                    avatarPost = null
-                                    placeholder = true
+                                    PostCommentPlaceholder()
                                 }
                                 is LoadState.NotLoading -> {
-                                    comment = comments.peek(0)?.first
-                                    avatarPost = comments.peek(0)?.second
-                                    placeholder = false
+                                    val comment: CommentBB? = comments.peek(0)?.first
+                                    val avatarPost: PostReduced? = comments.peek(0)?.second
+                                    if(comment != null) {
+                                        PostComment(comment, avatarPost)
+                                    } else {
+                                        Text(stringResource(R.string.no_comments_found))
+                                    }
                                 }
                                 is LoadState.Error -> throw RuntimeException("JVM is ")
                             }
-                            if (comment == null) {
-                                Text(stringResource(R.string.no_comments_found))
-                            } else PostComment(
-                                comment,
-                                avatarPost,
-                                showAsPreview = true,
-                                placeholder = placeholder
-                            )
                         }
                     } else {
                         Text(stringResource(R.string.click_to_load))
