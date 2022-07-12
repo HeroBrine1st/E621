@@ -1,11 +1,11 @@
+@file:Suppress("SpellCheckingInspection")
+
 package ru.herobrine1st.e621
 
-import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.fasterxml.jackson.module.kotlin.readValue
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
-import org.junit.runner.RunWith
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.util.objectMapper
@@ -130,8 +130,6 @@ val samplePost = """{
       "duration": null
     }""".trimIndent()
 
-
-@RunWith(AndroidJUnit4::class)
 class TagProcessorTest {
     private lateinit var post: Post
 
