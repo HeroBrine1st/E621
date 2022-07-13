@@ -167,7 +167,6 @@ fun Post(
                 }
                 return@BottomDrawer
             }
-
             LaunchedEffect(Unit) {
                 loadComments = true
             }
@@ -177,7 +176,6 @@ fun Post(
                 state = commentsLazyListState,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                endOfPagePlaceholder(comments.loadState.prepend)
                 item {
                     TopAppBar(backgroundColor = MaterialTheme.colors.surface,
                         elevation = elevation,
@@ -193,6 +191,7 @@ fun Post(
                     }
                     return@LazyColumn
                 }
+                endOfPagePlaceholder(comments.loadState.prepend)
                 items(comments, key = { it.first.id }) {
                     if (it == null) return@items
                     if (it.first.isHidden) return@items
