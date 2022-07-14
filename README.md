@@ -28,7 +28,7 @@ Get latest release [here](https://github.com/HeroBrine1st/E621/releases)
 - [x] Post screen
     * [x] Comments
     * [x] Tags
-        * [x] Add to search (WIP)
+        * [x] Add to search
 - [ ] Up/down score
 
 ## File types supported
