@@ -60,8 +60,10 @@ class HomeViewModel @Inject constructor(
             )
             if (result == LoginState.AUTHORIZED)
                 authorizationRepositoryProvider.get().insertAccount(login, apiKey)
-            state = result
             callback(result)
+            if(state != LoginState.IO_ERROR) { // Without check it will show "retry" button
+                state = result
+            }
         }
     }
 
@@ -111,13 +113,13 @@ class HomeViewModel @Inject constructor(
         }.getAccountFlow()
             .distinctUntilChanged()
             .first()
-        state = (if (entry == null) LoginState.NO_AUTH
+        state = if (entry == null) LoginState.NO_AUTH
         else checkCredentials(entry).also {
             if (it == LoginState.NO_AUTH) {
                 snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
                 authorizationRepositoryProvider.get().logout()
             }
-        })
+        }
     }
 
     // Can authorize is "can press login button"
