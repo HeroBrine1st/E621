@@ -292,6 +292,7 @@ fun Post(
     BackHandler(enabled = drawerState.isOpen) {
         coroutineScope.launch {
             drawerState.close()
+            commentsLazyListState.scrollToItem(0)
         }
     }
 }
