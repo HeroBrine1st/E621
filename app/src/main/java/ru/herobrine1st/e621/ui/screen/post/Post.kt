@@ -144,7 +144,7 @@ fun Post(
 
 
     LaunchedEffect(Unit) {
-        if(openComments) {
+        if (openComments) {
             // To future self: open() = expand() (guess reason is position of this effect)
             drawerState.expand() // Will set loadComments to true automatically
         } else {
@@ -253,12 +253,13 @@ fun Post(
                                 PostCommentPlaceholder()
                             }
                             is LoadState.NotLoading -> {
-                                val comment: CommentBB? = comments.peek(0)?.first
-                                val avatarPost: PostReduced? = comments.peek(0)?.second
-                                if (comment != null) {
-                                    PostComment(comment, avatarPost)
-                                } else {
+                                if (comments.itemSnapshotList.isEmpty()) {
                                     Text(stringResource(R.string.no_comments_found))
+                                } else {
+                                    val comment: CommentBB? = comments.peek(0)?.first
+                                    val avatarPost: PostReduced? = comments.peek(0)?.second
+                                    if (comment != null) PostComment(comment, avatarPost)
+                                    else Text(stringResource(R.string.no_comments_found))
                                 }
                             }
                             is LoadState.Error -> Text(stringResource(R.string.comments_load_failed))

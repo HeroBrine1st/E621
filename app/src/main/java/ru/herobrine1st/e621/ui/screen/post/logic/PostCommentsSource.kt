@@ -40,7 +40,7 @@ class PostCommentsSource(
                     })
                 }
                 if (commentsRaw.isEmpty())
-                    LoadResult.Page(
+                    return LoadResult.Page(
                         data = emptyList(),
                         nextKey = null,
                         prevKey = null
