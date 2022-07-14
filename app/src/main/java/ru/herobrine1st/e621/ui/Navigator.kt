@@ -73,7 +73,7 @@ fun Navigator(navController: NavHostController) {
                         Screen.Post.buildRoute {
                             addArgument("id", post.id)
 //                            addArgument("post", post)
-                            addArgument("scrollToComments", scrollToComments)
+                            addArgument("openComments", scrollToComments)
 //                            addArgument("query", searchOptions)
                         }
                     )
@@ -97,7 +97,7 @@ fun Navigator(navController: NavHostController) {
                         Screen.Post.buildRoute {
                             addArgument("id", post.id)
 //                            addArgument("post", post)
-                            addArgument("scrollToComments", scrollToComments)
+                            addArgument("openComments", scrollToComments)
 //                            addArgument(
 //                                "query", PostsSearchOptions(
 //                                    favouritesOf = arguments.getString("user") ?: username
@@ -116,7 +116,7 @@ fun Navigator(navController: NavHostController) {
                 arguments.getInt("id"),
 //                arguments.getParcelable("post"),
                 navController.previousBackStackEntry?.savedStateHandle?.get("clickedPost"),
-                arguments.getBoolean("scrollToComments"),
+                arguments.getBoolean("openComments"),
 //                arguments.getParcelable("query")
                 navController.previousBackStackEntry?.savedStateHandle?.get("query")
                     ?: PostsSearchOptions.DEFAULT,

@@ -84,7 +84,7 @@ enum class Screen(
 //            nullable = true
 //            defaultValue = null
 //        },
-        navArgument("scrollToComments") {
+        navArgument("openComments") {
             type = NavType.BoolType
             defaultValue = false
         },

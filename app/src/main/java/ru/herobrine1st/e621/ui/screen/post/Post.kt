@@ -66,7 +66,7 @@ private const val TAG = "Post Screen"
 fun Post(
     id: Int,
     initialPost: Post?,
-    @Suppress("UNUSED_PARAMETER") scrollToComments: Boolean, // TODO
+    openComments: Boolean,
     searchOptions: SearchOptions,
     onModificationClick: (PostsSearchOptions) -> Unit,
     viewModel: PostViewModel = viewModel(
@@ -77,7 +77,6 @@ fun Post(
         )
     )
 ) {
-
     val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val post = viewModel.post
@@ -145,8 +144,13 @@ fun Post(
 
 
     LaunchedEffect(Unit) {
-        val isPrivacyModeEnabled = context.getPreferencesFlow { it.privacyModeEnabled }.first()
-        if (!isPrivacyModeEnabled) loadComments = true
+        if(openComments) {
+            // To future self: open() = expand() (guess reason is position of this effect)
+            drawerState.expand() // Will set loadComments to true automatically
+        } else {
+            val isPrivacyModeEnabled = context.getPreferencesFlow { it.privacyModeEnabled }.first()
+            if (!isPrivacyModeEnabled) loadComments = true
+        }
     }
 
     BottomDrawer(
@@ -167,6 +171,7 @@ fun Post(
                 }
                 return@BottomDrawer
             }
+            // Maybe handle in "open()" call site?
             LaunchedEffect(Unit) {
                 loadComments = true
             }
