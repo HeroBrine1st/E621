@@ -26,9 +26,9 @@ Get latest release [here](https://github.com/HeroBrine1st/E621/releases)
     * [x] Add and remove
     * [x] View
 - [x] Post screen
-    * [ ] Comments
+    * [x] Comments
     * [x] Tags
-        * [ ] Add to search
+        * [x] Add to search (WIP)
 - [ ] Up/down score
 
 ## File types supported
