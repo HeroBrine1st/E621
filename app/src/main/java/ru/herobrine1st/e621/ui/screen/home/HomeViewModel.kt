@@ -52,15 +52,16 @@ class HomeViewModel @Inject constructor(
     fun login(login: String, apiKey: String, callback: (LoginState) -> Unit = {}) {
         if (!state.canAuthorize) throw IllegalStateException()
         viewModelScope.launch {
-            val state = checkCredentials(
+            val result = checkCredentials(
                 AuthorizationCredentials.newBuilder()
                     .setUsername(login)
                     .setPassword(apiKey)
                     .build()
             )
-            if (state == LoginState.AUTHORIZED)
+            if (result == LoginState.AUTHORIZED)
                 authorizationRepositoryProvider.get().insertAccount(login, apiKey)
-            callback(state)
+            state = result
+            callback(result)
         }
     }
 
