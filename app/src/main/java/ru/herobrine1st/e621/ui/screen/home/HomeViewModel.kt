@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import retrofit2.awaitResponse
@@ -33,24 +34,33 @@ class HomeViewModel @Inject constructor(
     var state by mutableStateOf(LoginState.LOADING)
         private set
 
+
+    // Sources of authorization:
+    // This VM: login/logout
+    // AuthorizationInterceptor: logout only
+    // So we first check auth at the start of this VM and then listen to logouts
     init {
         viewModelScope.launch {
-            withContext(Dispatchers.Default) {
-                authorizationRepositoryProvider.get()
-            }.getAccountFlow()
-                .distinctUntilChanged()
-                .collect { entry ->
-                    state = LoginState.LOADING
-                    checkAuthorization(entry)
-                }
+            checkAuthorizationInternal()
+            authorizationRepositoryProvider.get().getAccountFlow().collect {
+                if (it == null) // Handle logout from AuthorizationInterceptor
+                    state = LoginState.NO_AUTH
+            }
         }
     }
 
-    fun login(login: String, apiKey: String, callback: () -> Unit = {}) {
+    fun login(login: String, apiKey: String, callback: (LoginState) -> Unit = {}) {
         if (!state.canAuthorize) throw IllegalStateException()
         viewModelScope.launch {
-            authorizationRepositoryProvider.get().insertAccount(login, apiKey)
-            callback()
+            val state = checkCredentials(
+                AuthorizationCredentials.newBuilder()
+                    .setUsername(login)
+                    .setPassword(apiKey)
+                    .build()
+            )
+            if (state == LoginState.AUTHORIZED)
+                authorizationRepositoryProvider.get().insertAccount(login, apiKey)
+            callback(state)
         }
     }
 
@@ -60,17 +70,17 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    private suspend fun checkAuthorization(auth: AuthorizationCredentials?) {
-        if (auth == null) {
-            state = LoginState.NO_AUTH
-            return
+    fun checkAuthorization() {
+        viewModelScope.launch {
+            checkAuthorizationInternal()
         }
+    }
+
+    private suspend fun checkCredentials(credentials: AuthorizationCredentials): LoginState {
         val res = try {
-            withContext(Dispatchers.Default) {
-                apiProvider.get()
-            }.getUser(
-                auth.username, auth.credentials
-            ).awaitResponse()
+            withContext(Dispatchers.IO) {
+                apiProvider.get().getUser(credentials.username, credentials.credentials).awaitResponse()
+            }
         } catch (e: IOException) {
             Log.e(
                 TAG,
@@ -78,28 +88,41 @@ class HomeViewModel @Inject constructor(
                 e
             )
             snackbarAdapter.enqueueMessage(R.string.network_error)
-            state = LoginState.IO_ERROR
-            return
+            return LoginState.IO_ERROR
         }
-        if (res.isSuccessful) {
-            state = LoginState.AUTHORIZED
+        return if (res.isSuccessful) {
+            LoginState.AUTHORIZED
         } else {
             debug {
                 Log.d(TAG, "Invalid username or api key (${res.code()} ${res.message()})")
-                @Suppress("BlockingMethodInNonBlockingContext") // Debug
-                Log.d(TAG, res.errorBody()!!.string())
+                withContext(Dispatchers.IO) {
+                    @Suppress("BlockingMethodInNonBlockingContext") // Debug
+                    Log.d(TAG, res.errorBody()!!.string())
+                }
             }
-            snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
-            state = LoginState.NO_AUTH
-            authorizationRepositoryProvider.get().logout()
+            LoginState.NO_AUTH
         }
     }
 
+    private suspend fun checkAuthorizationInternal() {
+        val entry = withContext(Dispatchers.Default) {
+            authorizationRepositoryProvider.get()
+        }.getAccountFlow()
+            .distinctUntilChanged()
+            .first()
+        state = (if (entry == null) LoginState.NO_AUTH
+        else checkCredentials(entry).also {
+            if (it == LoginState.NO_AUTH) {
+                snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
+                authorizationRepositoryProvider.get().logout()
+            }
+        })
+    }
+
     // Can authorize is "can press login button"
-    // TODO rethink error handling logic (at now IO_ERROR doesn't mean there's no credentials, but user sees fields for credentials)
     enum class LoginState(val canAuthorize: Boolean) {
         LOADING(false),
-        IO_ERROR(true),
+        IO_ERROR(false),
         NO_AUTH(true),
         AUTHORIZED(false)
     }

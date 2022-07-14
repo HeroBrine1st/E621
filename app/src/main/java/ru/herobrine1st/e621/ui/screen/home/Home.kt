@@ -20,8 +20,11 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.component.Base
+import ru.herobrine1st.e621.ui.screen.home.HomeViewModel.LoginState
+import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 
 @Composable
 fun Home(
@@ -41,8 +44,8 @@ fun Home(
         }
         Spacer(modifier = Modifier.height(8.dp))
         when (viewModel.state) {
-            HomeViewModel.LoginState.LOADING -> CircularProgressIndicator()
-            HomeViewModel.LoginState.AUTHORIZED -> {
+            LoginState.LOADING -> CircularProgressIndicator()
+            LoginState.AUTHORIZED -> {
                 Button(
                     onClick = {
                         viewModel.logout()
@@ -63,7 +66,13 @@ fun Home(
                     Text(stringResource(R.string.favourites))
                 }
             }
-            else -> AuthorizationMenu(authState = viewModel.state) { u, p, cb ->
+            LoginState.IO_ERROR -> {
+                Text(stringResource(R.string.network_error))
+                Button(onClick = { viewModel.checkAuthorization() }) {
+                    Text(stringResource(R.string.retry))
+                }
+            }
+            else -> AuthorizationMenu { u, p, cb ->
                 viewModel.login(u, p, cb)
             }
         }
@@ -72,17 +81,26 @@ fun Home(
 
 @Composable
 fun AuthorizationMenu(
-    authState: HomeViewModel.LoginState,
-    onLogin: (username: String, password: String, onSuccess: () -> Unit) -> Unit
+    onLogin: (username: String, password: String, onSuccess: (LoginState) -> Unit) -> Unit
 ) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
+    val canLogin by remember { derivedStateOf { username.isNotBlank() && password.isNotBlank() } }
+
+    val snackbar = LocalSnackbar.current
+    val coroutineScope = rememberCoroutineScope()
 
     val login = {
-        if (username.isNotEmpty() && password.isNotEmpty())
+        if (canLogin)
             onLogin(username, password) {
-                username = ""
-                password = ""
+                if (it == LoginState.AUTHORIZED) {
+                    username = ""
+                    password = ""
+                } else if (it == LoginState.NO_AUTH) {
+                    coroutineScope.launch {
+                        snackbar.enqueueMessage(R.string.login_unauthorized)
+                    }
+                }
             }
     }
 
@@ -118,6 +136,7 @@ fun AuthorizationMenu(
         onClick = {
             login()
         },
+        enabled = canLogin,
         modifier = Modifier
             .padding(4.dp)
             .fillMaxWidth()
@@ -125,10 +144,4 @@ fun AuthorizationMenu(
         Text(stringResource(R.string.login_login))
     }
     Spacer(modifier = Modifier.height(8.dp))
-    when (authState) {
-        HomeViewModel.LoginState.IO_ERROR -> {
-            Text(stringResource(R.string.network_error))
-        }
-        else -> {}
-    }
 }
