@@ -115,6 +115,7 @@ class HomeViewModel @Inject constructor(
     }
 
     private suspend fun checkAuthorizationInternal() {
+        state = LoginState.LOADING
         val entry = withContext(Dispatchers.Default) {
             authorizationRepositoryProvider.get()
         }.getAccountFlow()
