@@ -4,6 +4,7 @@ package ru.herobrine1st.e621.preference
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
@@ -15,6 +16,9 @@ val Context.dataStore: DataStore<Preferences> by dataStore(
     fileName = "preferences.pb",
     serializer = PreferencesSerializer
 )
+
+// dataStore.data is not a state flow so it causes first-frame issues
+val LocalPreferences = compositionLocalOf<Preferences> { error("No preferences in this scope") }
 
 // Helper functions to avoid boilerplate
 

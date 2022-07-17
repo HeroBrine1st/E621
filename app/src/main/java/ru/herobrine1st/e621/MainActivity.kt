@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.module.LocalExoPlayer
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.getPreferencesAsState
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.preference.updatePreferences
@@ -69,7 +70,8 @@ class MainActivity : ComponentActivity() {
                 )
                 CompositionLocalProvider(
                     LocalSnackbar provides snackbarAdapter,
-                    LocalExoPlayer provides exoPlayer
+                    LocalExoPlayer provides exoPlayer,
+                    LocalPreferences provides preferences
                 ) {
                     MainScaffold(
                         navController = navController,
