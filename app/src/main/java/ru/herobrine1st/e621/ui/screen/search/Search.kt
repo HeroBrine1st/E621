@@ -27,6 +27,7 @@ import com.google.accompanist.flowlayout.FlowRow
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.util.PostsSearchOptions
@@ -38,6 +39,17 @@ fun Search(
 ) {
     val state = rememberSaveable(initialPostsSearchOptions, saver = SearchScreenState.Saver) {
         SearchScreenState(initialPostsSearchOptions)
+    }
+
+    val preferences = LocalPreferences.current
+
+    LaunchedEffect(preferences.safeModeEnabled) {
+        if (preferences.safeModeEnabled) {
+            state.rating.apply {
+                clear()
+                add(Rating.SAFE)
+            }
+        }
     }
 
     if (state.openAddTagDialog) {
@@ -147,10 +159,14 @@ fun Search(
         }
         Spacer(modifier = Modifier.height(4.dp))
         SettingCard(title = stringResource(R.string.rating)) {
+            AnimatedVisibility(visible = preferences.safeModeEnabled) {
+                Text(stringResource(R.string.search_safe_mode))
+            }
             key(null) {
                 ItemSelectionRadioButton(
                     selected = state.rating.size == 0,
-                    text = stringResource(R.string.any)
+                    text = stringResource(R.string.any),
+                    enabled = !preferences.safeModeEnabled
                 ) {
                     state.rating.clear()
                 }
@@ -158,7 +174,8 @@ fun Search(
             for (v in Rating.values()) {
                 ItemSelectionCheckbox(
                     checked = v in state.rating,
-                    text = stringResource(v.descriptionId)
+                    text = stringResource(v.descriptionId),
+                    enabled = !preferences.safeModeEnabled
                 ) {
                     when (v) {
                         in state.rating -> state.rating.remove(v)
