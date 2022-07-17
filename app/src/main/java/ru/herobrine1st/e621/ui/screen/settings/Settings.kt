@@ -55,7 +55,7 @@ fun Settings(navController: NavController) {
                     context.updatePreferences {
                         privacyModeEnabled = enabled
                     }
-                    if (!preferences.privacyModeDialogWasShown && enabled) showPrivacyModeDialog = true
+                    if (!preferences.privacyModeDisclaimerShown && enabled) showPrivacyModeDialog = true
                 }
             }
         )
@@ -66,7 +66,7 @@ fun Settings(navController: NavController) {
             showPrivacyModeDialog = false
             coroutineScope.launch {
                 context.updatePreferences {
-                    privacyModeDialogWasShown = true
+                    privacyModeDisclaimerShown = true
                 }
             }
         }
