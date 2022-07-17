@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.ui.screen.home
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -41,37 +42,39 @@ fun Home(
             Icon(Icons.Rounded.NavigateNext, contentDescription = null)
         }
         Spacer(modifier = Modifier.height(8.dp))
-        when (viewModel.state) {
-            LoginState.LOADING -> CircularProgressIndicator()
-            LoginState.AUTHORIZED -> {
-                Button(
-                    onClick = {
-                        viewModel.logout()
-                    },
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.login_logout))
+        Crossfade(targetState = viewModel.state) { state ->
+            when (state) {
+                LoginState.LOADING -> CircularProgressIndicator()
+                LoginState.AUTHORIZED -> {
+                    Button(
+                        onClick = {
+                            viewModel.logout()
+                        },
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.login_logout))
+                    }
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = navigateToFavorites,
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.favourites))
+                    }
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = navigateToFavorites,
-                    modifier = Modifier
-                        .padding(4.dp)
-                        .fillMaxWidth()
-                ) {
-                    Text(stringResource(R.string.favourites))
+                LoginState.IO_ERROR -> {
+                    Text(stringResource(R.string.network_error))
+                    Button(onClick = { viewModel.checkAuthorization() }) {
+                        Text(stringResource(R.string.retry))
+                    }
                 }
-            }
-            LoginState.IO_ERROR -> {
-                Text(stringResource(R.string.network_error))
-                Button(onClick = { viewModel.checkAuthorization() }) {
-                    Text(stringResource(R.string.retry))
+                else -> AuthorizationMenu { u, p, cb ->
+                    viewModel.login(u, p, cb)
                 }
-            }
-            else -> AuthorizationMenu { u, p, cb ->
-                viewModel.login(u, p, cb)
             }
         }
     }
