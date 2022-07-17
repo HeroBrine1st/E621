@@ -3,6 +3,7 @@ package ru.herobrine1st.e621.ui.screen.settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Block
+import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
@@ -15,6 +16,7 @@ import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
+import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
 import ru.herobrine1st.e621.ui.screen.Screen
 
 @Composable
@@ -22,10 +24,10 @@ fun Settings(navController: NavController) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    val preferences by context.getPreferencesAsState()
-
     // State
+    val preferences by context.getPreferencesAsState()
     var showPrivacyModeDialog by remember { mutableStateOf(false) }
+    var showSafeModeDisclaimer by remember { mutableStateOf(false) }
 
     // Composition
     Column {
@@ -55,11 +57,31 @@ fun Settings(navController: NavController) {
                     context.updatePreferences {
                         privacyModeEnabled = enabled
                     }
-                    if (!preferences.privacyModeDisclaimerShown && enabled) showPrivacyModeDialog = true
+                    if (!preferences.privacyModeDisclaimerShown && enabled) showPrivacyModeDialog =
+                        true
                 }
             }
         )
 
+        SettingSwitch(
+            checked = preferences.safeModeEnabled,
+            title = stringResource(R.string.settings_safe_mode),
+            subtitle = stringResource(R.string.settings_safe_mode_shortdesc),
+            icon = Icons.Default.Explicit,
+            onCheckedChange = { enabled: Boolean ->
+                if (enabled) coroutineScope.launch {
+                    context.updatePreferences {
+                        safeModeEnabled = true
+                    }
+                }
+                else if (!preferences.safeModeDisclaimerShown) showSafeModeDisclaimer = true
+                else coroutineScope.launch {
+                    context.updatePreferences {
+                        safeModeEnabled = false
+                    }
+                }
+            }
+        )
     }
     if (showPrivacyModeDialog) {
         AlertDialog(stringResource(R.string.privacy_mode_longdesc)) {
@@ -70,5 +92,20 @@ fun Settings(navController: NavController) {
                 }
             }
         }
+    } else if (showSafeModeDisclaimer) {
+        DisclaimerDialog(
+            text = stringResource(R.string.settings_safe_mode_disclaimer),
+            onApply = {
+                showSafeModeDisclaimer = false
+                coroutineScope.launch {
+                    context.updatePreferences {
+                        safeModeEnabled = false
+                        safeModeDisclaimerShown = true
+                    }
+                }
+            }, onDismissRequest = {
+                showSafeModeDisclaimer = false
+            }
+        )
     }
 }

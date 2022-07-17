@@ -10,5 +10,7 @@ message Preferences {
   optional bool show_remaining_time_media = 4 [default = true];
   optional bool mute_sound_on_media = 5 [default = true];
   optional AuthorizationCredentials auth = 6;
+  optional bool safe_mode_enabled = 7 [default = true];
+  optional bool safe_mode_disclaimer_shown = 8 [default = false];
 }
 

@@ -99,4 +99,9 @@
     <string name="message_text">Текст</string>
     <string name="unknown_error">Произошла неизвестная ошибка</string>
     <string name="retry">Повторить</string>
+    <string name="settings_safe_mode">Безопасный режим</string>
+    <string name="settings_safe_mode_shortdesc">Скрыть откровенное содержимое</string>
+    <string name="disclaimer">Отказ от ответственности</string>
+    <string name="disclaimer_agree">Я согласен</string>
+    <string name="settings_safe_mode_disclaimer">"Отключая безопасный режим, вы соглашаетесь с тем, что достигли возраста совершеннолетия в вашей стране. Если вы согласитесь, <b>откровенный контент</b> может быть показан. "</string>
 </resources>
