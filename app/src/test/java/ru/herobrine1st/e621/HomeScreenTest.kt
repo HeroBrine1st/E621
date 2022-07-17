@@ -6,15 +6,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.text.input.ImeAction
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.mockito.junit.MockitoJUnit
 import org.mockito.junit.MockitoRule
-import org.mockito.kotlin.any
-import org.mockito.kotlin.doAnswer
-import org.mockito.kotlin.eq
-import org.mockito.kotlin.mock
+import org.mockito.kotlin.*
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import ru.herobrine1st.e621.ui.screen.home.Home
@@ -33,13 +31,13 @@ class HomeScreenTest {
     @get:Rule
     var rule2: MockitoRule = MockitoJUnit.rule()
 
-    private fun setContent(viewModel: HomeViewModel) {
+    private fun setContent(
+        viewModel: HomeViewModel,
+        navigateToSearch: () -> Unit = {},
+        navigateToFavorites: () -> Unit = {},
+    ) {
         rule.setContent {
-            Home(
-                navigateToSearch = { /*TODO*/ },
-                navigateToFavorites = { /*TODO*/ },
-                viewModel = viewModel
-            )
+            Home(navigateToSearch, navigateToFavorites, viewModel)
         }
     }
 
@@ -155,7 +153,39 @@ class HomeScreenTest {
         rule.onNodeWithText(stringResource(R.string.login_logout)).assertIsDisplayed()
     }
 
-    // TODO navigation buttons
+    @Test
+    fun testSearchButton() {
+        val vm = mock<HomeViewModel> {
+            on { this.state } doReturn LoginState.AUTHORIZED
+        }
+        var flag = false
+        setContent(vm, navigateToSearch = {
+            flag = true
+        })
+        assertEquals(false, flag)
+        rule.onNodeWithText(stringResource(R.string.search))
+            .assertIsDisplayed()
+            .assertHasClickAction()
+            .performClick()
+        assertEquals(true, flag)
+    }
+
+    @Test
+    fun testFavouritesButton() {
+        val vm = mock<HomeViewModel> {
+            on { this.state } doReturn LoginState.AUTHORIZED
+        }
+        var flag = false
+        setContent(vm, navigateToFavorites = {
+            flag = true
+        })
+        assertEquals(false, flag)
+        rule.onNodeWithText(stringResource(R.string.favourites))
+            .assertIsDisplayed()
+            .assertHasClickAction()
+            .performClick()
+        assertEquals(true, flag)
+    }
 
     private fun stringResource(@StringRes id: Int) = rule.activity.getString(id)
 }
