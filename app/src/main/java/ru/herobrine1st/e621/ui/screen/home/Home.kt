@@ -20,11 +20,9 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.screen.home.HomeViewModel.LoginState
-import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 
 @Composable
 fun Home(
@@ -87,19 +85,12 @@ fun AuthorizationMenu(
     var password by rememberSaveable { mutableStateOf("") }
     val canLogin by remember { derivedStateOf { username.isNotBlank() && password.isNotBlank() } }
 
-    val snackbar = LocalSnackbar.current
-    val coroutineScope = rememberCoroutineScope()
-
     val login = {
         if (canLogin)
             onLogin(username, password) {
                 if (it == LoginState.AUTHORIZED) {
                     username = ""
                     password = ""
-                } else if (it == LoginState.NO_AUTH) {
-                    coroutineScope.launch {
-                        snackbar.enqueueMessage(R.string.login_unauthorized)
-                    }
                 }
             }
     }

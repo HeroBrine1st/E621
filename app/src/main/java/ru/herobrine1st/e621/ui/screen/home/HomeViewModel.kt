@@ -1,6 +1,7 @@
 package ru.herobrine1st.e621.ui.screen.home
 
 import android.util.Log
+import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -49,6 +50,7 @@ class HomeViewModel @Inject constructor(
         }
     }
 
+    // Should not be used in this VM
     fun login(login: String, apiKey: String, callback: (LoginState) -> Unit = {}) {
         if (!state.canAuthorize) throw IllegalStateException()
         viewModelScope.launch {
@@ -58,11 +60,16 @@ class HomeViewModel @Inject constructor(
                     .setPassword(apiKey)
                     .build()
             )
-            if (result == LoginState.AUTHORIZED)
-                authorizationRepositoryProvider.get().insertAccount(login, apiKey)
             callback(result)
-            if(state != LoginState.IO_ERROR) { // Without check it will show "retry" button
-                state = result
+            when(result) {
+                LoginState.AUTHORIZED -> {
+                    authorizationRepositoryProvider.get().insertAccount(login, apiKey)
+                    state = LoginState.AUTHORIZED
+                }
+                LoginState.IO_ERROR ->
+                    snackbarAdapter.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
+                LoginState.NO_AUTH -> snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
+                LoginState.LOADING -> throw IllegalStateException()
             }
         }
     }
