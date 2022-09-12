@@ -211,86 +211,91 @@ fun Post(
             }
         }
     ) {
-        LazyColumn(
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            item("media") {
-                when {
-                    post.file.type.isVideo -> PostVideo(post.files.first { it.type.isVideo })
-                    post.file.type.isImage -> PostImage(
-                        post = post,
-                        openPost = null,
-                        file = post.normalizedSample
-                    )
-                    else -> InvalidPost(
-                        text = stringResource(
-                            R.string.unsupported_post_type,
-                            post.file.type.extension
+        BoxWithConstraints {
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item("media") {
+                    when {
+                        post.file.type.isVideo -> PostVideo(
+                            post.files.first { it.type.isVideo },
+                            maxHeight = maxHeight
                         )
-                    )
-                }
-            }
-            item("comments") {
-                Divider()
-                Column(Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        coroutineScope.launch {
-                            drawerState.open()
-                        }
-                    }
-                    .padding(horizontal = BASE_PADDING_HORIZONTAL)
-                ) {
-                    Text(
-                        stringResource(R.string.comments),
-                        style = MaterialTheme.typography.h6
-                    )
-                    Spacer(Modifier.width(4.dp))
-                    if (loadComments) {
-                        val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
-                        when (comments.loadState.refresh) {
-                            is LoadState.Loading -> {
-                                PostCommentPlaceholder()
-                            }
-                            is LoadState.NotLoading -> {
-                                if (comments.itemSnapshotList.isEmpty()) {
-                                    Text(stringResource(R.string.no_comments_found))
-                                } else {
-                                    val comment: CommentBB? = comments.peek(0)?.first
-                                    val avatarPost: PostReduced? = comments.peek(0)?.second
-                                    if (comment != null) PostComment(comment, avatarPost)
-                                    else Text(stringResource(R.string.no_comments_found))
-                                }
-                            }
-                            is LoadState.Error -> Text(stringResource(R.string.comments_load_failed))
-                        }
-                    } else {
-                        Text(stringResource(R.string.click_to_load))
-                    }
-                    Spacer(Modifier.height(8.dp))
-                }
-                Divider()
-            }
-            item("uploaded") {
-                // TODO place more information here
-                Text(
-                    stringResource(
-                        R.string.uploaded_relative_date,
-                        DateUtils.getRelativeTimeSpanString(
-                            post.createdAt.toEpochSecond() * 1000,
-                            System.currentTimeMillis(),
-                            SECOND_IN_MILLIS
+                        post.file.type.isImage -> PostImage(
+                            post = post,
+                            openPost = null,
+                            file = post.normalizedSample
                         )
-                    ),
-                    modifier = Modifier
+                        else -> InvalidPost(
+                            text = stringResource(
+                                R.string.unsupported_post_type,
+                                post.file.type.extension
+                            )
+                        )
+                    }
+                }
+                item("comments") {
+                    Divider()
+                    Column(Modifier
                         .fillMaxWidth()
+                        .clickable {
+                            coroutineScope.launch {
+                                drawerState.open()
+                            }
+                        }
                         .padding(horizontal = BASE_PADDING_HORIZONTAL)
-                )
+                    ) {
+                        Text(
+                            stringResource(R.string.comments),
+                            style = MaterialTheme.typography.h6
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        if (loadComments) {
+                            val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
+                            when (comments.loadState.refresh) {
+                                is LoadState.Loading -> {
+                                    PostCommentPlaceholder()
+                                }
+                                is LoadState.NotLoading -> {
+                                    if (comments.itemSnapshotList.isEmpty()) {
+                                        Text(stringResource(R.string.no_comments_found))
+                                    } else {
+                                        val comment: CommentBB? = comments.peek(0)?.first
+                                        val avatarPost: PostReduced? = comments.peek(0)?.second
+                                        if (comment != null) PostComment(comment, avatarPost)
+                                        else Text(stringResource(R.string.no_comments_found))
+                                    }
+                                }
+                                is LoadState.Error -> Text(stringResource(R.string.comments_load_failed))
+                            }
+                        } else {
+                            Text(stringResource(R.string.click_to_load))
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    Divider()
+                }
+                item("uploaded") {
+                    // TODO place more information here
+                    Text(
+                        stringResource(
+                            R.string.uploaded_relative_date,
+                            DateUtils.getRelativeTimeSpanString(
+                                post.createdAt.toEpochSecond() * 1000,
+                                System.currentTimeMillis(),
+                                SECOND_IN_MILLIS
+                            )
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = BASE_PADDING_HORIZONTAL)
+                    )
+                }
+                // Move tags to another screen?
+                tags(post, searchOptions, onModificationClick, onWikiClick = {
+                    viewModel.handleWikiClick(it)
+                })
             }
-            // Move tags to another screen?
-            tags(post, searchOptions, onModificationClick, onWikiClick = {
-                viewModel.handleWikiClick(it)
-            })
         }
     }
 

@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -54,6 +55,8 @@ fun VideoPlayer(
         initialPlayWhenReady = playWhenReady,
         initialRepeatMode = repeatMode
     ),
+    maxHeight: Dp = Dp.Unspecified,
+    aspectRatio: Float? = null,
     controlsTimeoutMs: Long = CONTROLS_TIMEOUT_MS
 ) {
     val context = LocalContext.current
@@ -65,14 +68,22 @@ fun VideoPlayer(
     }
 
 
-    Box(modifier = modifier.toggleable(
-        state.showControls,
-        interactionSource = remember { MutableInteractionSource() },
-        indication = null,
-        onValueChange = { state.showControls = it }
-    )) {
+    Box(modifier = modifier
+        .toggleable(
+            state.showControls,
+            interactionSource = remember { MutableInteractionSource() },
+            indication = null,
+            onValueChange = { state.showControls = it }
+        )
+        .heightIn(max = maxHeight),
+        contentAlignment = Alignment.Center
+    ) {
         AndroidView(
-            modifier = Modifier.background(Color.Black),
+            modifier = Modifier.background(Color.Black)
+                .run {
+                    if (aspectRatio != null) aspectRatio(aspectRatio)
+                    else this
+                },
             factory = {
                 StyledPlayerView(context).apply {
                     useController = false
@@ -109,10 +120,7 @@ fun VideoPlayer(
         AnimatedVisibility(
             visible = viewModel.playbackState == Player.STATE_BUFFERING,
             enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.align(
-                Alignment.Center
-            )
+            exit = fadeOut()
         ) {
             CircularProgressIndicator(color = Color.White)
         }
@@ -232,7 +240,7 @@ fun VideoPlayerController(
                 value = timestamp.contentPositionMs
                 // Use device frame rate if possible, else assume 60 Hz display
                 val frameTimeMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-                        (context.display?.refreshRate?.let { 1000/it })?.roundToLong() ?: 16 else 16
+                    (context.display?.refreshRate?.let { 1000 / it })?.roundToLong() ?: 16 else 16
                 while (isPlaying) {
                     delay(frameTimeMs)
                     with(timestamp) {

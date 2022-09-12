@@ -47,6 +47,7 @@ fun PostImage(
     val painter = rememberImagePainter(file.urls.first())
 
     Box(contentAlignment = Alignment.TopStart) {
+
         Image(
             painter = painter,
             modifier = modifier

@@ -1,13 +1,13 @@
 package ru.herobrine1st.e621.ui.component.post
 
 import android.util.Log
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
@@ -24,7 +24,9 @@ private const val TAG = "PostVideo"
 @Composable
 fun PostVideo(
     file: NormalizedFile,
+    modifier: Modifier = Modifier,
     aspectRatio: Float = file.aspectRatio,
+    maxHeight: Dp = Dp.Unspecified,
     videoPlayerState: VideoPlayerState = rememberVideoPlayerState()
 ) {
     if (aspectRatio <= 0) {
@@ -33,7 +35,9 @@ fun PostVideo(
     }
 
     VideoPlayer(
-        modifier = Modifier.aspectRatio(aspectRatio),
+        modifier = modifier,
+        aspectRatio = aspectRatio,
+        maxHeight = maxHeight,
         state = videoPlayerState
     )
     HandlePreferences(videoPlayerState)
