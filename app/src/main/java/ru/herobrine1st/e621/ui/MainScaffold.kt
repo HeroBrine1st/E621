@@ -1,5 +1,6 @@
 package ru.herobrine1st.e621.ui
 
+import androidx.compose.animation.Crossfade
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -23,17 +24,19 @@ fun MainScaffold(navController: NavHostController, scaffoldState: ScaffoldState,
         topBar = {
             TopAppBar(
                 title = {
-                    Text(stringResource(screen?.title ?: R.string.app_name))
+                    // Emulate NavHost over whole screen (Its animations, I mean)
+                    Crossfade(screen) {
+                        Text(stringResource(it?.title ?: R.string.app_name))
+                    }
                 },
                 backgroundColor = MaterialTheme.colors.primarySurface,
                 elevation = 12.dp,
                 actions = {
                     val saveableStateHolder = rememberSaveableStateHolder()
-                    navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
-                        screen?.appBarActions?.invoke(
-                            this,
-                            navController
-                        )
+                    Crossfade(navBackStackEntry to screen) {
+                        it.first?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
+                            it.second?.appBarActions?.invoke(this, navController)
+                        }
                     }
                     ActionBarMenu(navController, onOpenBlacklistDialog)
                 }
@@ -42,8 +45,10 @@ fun MainScaffold(navController: NavHostController, scaffoldState: ScaffoldState,
         scaffoldState = scaffoldState,
         floatingActionButton = {
             val saveableStateHolder = rememberSaveableStateHolder()
-            navBackStackEntry?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
-                screen?.floatingActionButton?.invoke()
+            Crossfade(navBackStackEntry to screen) {
+                it.first?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
+                    it.second?.floatingActionButton?.invoke()
+                }
             }
         }
     ) {
