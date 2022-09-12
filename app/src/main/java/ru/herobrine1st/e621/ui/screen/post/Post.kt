@@ -219,7 +219,8 @@ fun Post(
                     when {
                         post.file.type.isVideo -> PostVideo(
                             post.files.first { it.type.isVideo },
-                            maxHeight = maxHeight
+                            maxHeight = maxHeight,
+                            modifier = Modifier.fillMaxWidth()
                         )
                         post.file.type.isImage -> PostImage(
                             post = post,

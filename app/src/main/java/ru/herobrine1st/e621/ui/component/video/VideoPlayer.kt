@@ -98,7 +98,12 @@ fun VideoPlayer(
                 it.player = viewModel.exoPlayer
             }
         )
-        AnimatedVisibility(visible = state.showControls, enter = fadeIn(), exit = fadeOut()) {
+        AnimatedVisibility(
+            visible = state.showControls,
+            enter = fadeIn(),
+            exit = fadeOut(),
+            modifier = Modifier.matchParentSize()
+        ) {
             VideoPlayerController(
                 contentDurationMs = viewModel.contentDurationMs,
                 getContentBufferedPositionMs = { viewModel.exoPlayer.contentBufferedPosition },
@@ -113,7 +118,7 @@ fun VideoPlayer(
                 togglePlay = { resetHideControlsDeadline(); viewModel.playWhenReady = it },
                 toggleShowRemaining = { resetHideControlsDeadline(); state.showRemaining = it },
                 modifier = Modifier
-                    .fillMaxSize()
+                    .matchParentSize()
                     .background(Color.Black.copy(alpha = 0.1f))
             )
         }
