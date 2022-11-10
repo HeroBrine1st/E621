@@ -22,12 +22,12 @@ val versionCode = 5
 val versionName = "1.0.0-alpha-4"
 
 android {
-    compileSdk = 32
+    compileSdk = 33
 
     defaultConfig {
         applicationId = "ru.herobrine1st.e621"
         minSdk = 27
-        targetSdk = 32
+        targetSdk = 33
         versionCode = this@Build_gradle.versionCode
         versionName = this@Build_gradle.versionName
 
@@ -96,21 +96,21 @@ configurations.all {
 @Suppress("SpellCheckingInspection")
 dependencies {
     // Android core
-    implementation("androidx.core:core-ktx:1.8.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.0")
+    implementation("androidx.core:core-ktx:1.9.0")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
 
     // Jetpack Compose
-    implementation("androidx.compose.ui:ui:1.1.1")
-    implementation("androidx.compose.material:material:1.1.1")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.1.1")
-    implementation("androidx.compose.material:material-icons-extended:1.1.1")
-    implementation("androidx.activity:activity-compose:1.5.0")
+    implementation("androidx.compose.ui:ui:1.3.1")
+    implementation("androidx.compose.material:material:1.3.1")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.3.1")
+    implementation("androidx.compose.material:material-icons-extended:1.3.1")
+    implementation("androidx.activity:activity-compose:1.6.1")
 
     // Jetpack Navigation
-    implementation("androidx.navigation:navigation-compose:2.5.0")
+    implementation("androidx.navigation:navigation-compose:2.5.3")
 
     // Jetpack Room
-    val roomVersion = "2.4.1"
+    val roomVersion = "2.4.3"
     implementation("androidx.room:room-runtime:$roomVersion")
     implementation("androidx.room:room-ktx:$roomVersion")
     ksp("androidx.room:room-compiler:$roomVersion")
@@ -120,9 +120,9 @@ dependencies {
     implementation("com.google.protobuf:protobuf-javalite:$protobufVersion")
 
     // Jetpack Paging
-    val pagingVersion = "3.1.0"
+    val pagingVersion = "3.1.1"
     implementation("androidx.paging:paging-runtime:$pagingVersion")
-    implementation("androidx.paging:paging-compose:1.0.0-alpha15")
+    implementation("androidx.paging:paging-compose:1.0.0-alpha17")
 
     // Coroutine Image Loader
     val coilVersion = "1.4.0"
@@ -131,20 +131,20 @@ dependencies {
     implementation("io.coil-kt:coil-gif:$coilVersion")
 
     // Jackson
-    val jacksonVersion = "2.13.1"
+    val jacksonVersion = "2.14.0"
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Hilt
-    val hiltVersion = "2.42"
+    val hiltVersion = "2.44"
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
 
 
     // G Accompanist
-    val accompanistVersion = "0.23.1"
+    val accompanistVersion = "0.27.0"
     implementation("com.google.accompanist:accompanist-flowlayout:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
 
@@ -154,25 +154,25 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
 
     // Other libraries
-    implementation("com.google.android.exoplayer:exoplayer:2.18.0")
+    implementation("com.google.android.exoplayer:exoplayer:2.18.1")
     implementation("org.jsoup:jsoup:1.14.3")
 
 
     // Tests
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.8.1")
-    testImplementation("androidx.compose.ui:ui-test-junit4:1.1.1")
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.3.1")
     testImplementation("org.mockito:mockito-core:4.6.1")
     testImplementation("org.mockito:mockito-inline:4.6.1")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
-    testImplementation("androidx.test:core:1.4.0")
-    androidTestImplementation("androidx.test:core-ktx:1.4.0")
-    androidTestImplementation("androidx.test.ext:junit:1.1.3")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.4.0")
+    testImplementation("androidx.test:core:1.5.0")
+    androidTestImplementation("androidx.test:core-ktx:1.5.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.4")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
     androidTestImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
     kaptAndroidTest("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.1.1")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.1.1")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.3.1")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.3.1")
 }
 
 protobuf {

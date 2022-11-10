@@ -33,6 +33,7 @@ import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.PostsSearchOptions
 import ru.herobrine1st.e621.util.SearchOptions
+import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable
 fun PostsAppBarActions(navController: NavHostController) {
@@ -40,7 +41,7 @@ fun PostsAppBarActions(navController: NavHostController) {
         val arguments = navController.currentBackStackEntry!!.arguments!!
         navController.navigate(
             Screen.Search.buildRoute {
-                addArgument("query", arguments.getParcelable<PostsSearchOptions>("query")!!)
+                addArgument("query", arguments.getParcelableCompat<PostsSearchOptions>("query")!!)
             }
         )
     }) {

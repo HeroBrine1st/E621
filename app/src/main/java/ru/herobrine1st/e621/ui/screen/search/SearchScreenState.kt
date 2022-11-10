@@ -7,6 +7,7 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
 import ru.herobrine1st.e621.util.PostsSearchOptions
+import ru.herobrine1st.e621.util.getParcelableCompat
 
 class SearchScreenState(
     initialPostsSearchOptions: PostsSearchOptions,
@@ -42,7 +43,7 @@ class SearchScreenState(
             },
             restore = { bundle ->
                 return@Saver SearchScreenState(
-                    bundle.getParcelable(PostsSearchOptions::class.simpleName)!!,
+                    bundle.getParcelableCompat(PostsSearchOptions::class.simpleName)!!,
                     bundle.getBoolean(SearchScreenState::openAddTagDialog.name)
                 )
             }

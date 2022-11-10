@@ -107,7 +107,7 @@ data class FavouritesSearchOptions(val favouritesOf: String?) : SearchOptions {
 
 class PostsSearchOptionsNavType : NavType<PostsSearchOptions?>(true) {
     override fun get(bundle: Bundle, key: String): PostsSearchOptions? {
-        return bundle.getParcelable(key)
+        return bundle.getParcelableCompat(key)
     }
 
     override fun parseValue(value: String): PostsSearchOptions {

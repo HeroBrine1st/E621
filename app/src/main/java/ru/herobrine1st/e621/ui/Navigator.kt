@@ -19,6 +19,7 @@ import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.util.FavouritesSearchOptions
 import ru.herobrine1st.e621.util.PostsSearchOptions
+import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable
 fun Navigator(navController: NavHostController) {
@@ -47,7 +48,7 @@ fun Navigator(navController: NavHostController) {
             val arguments: Bundle =
                 entry.arguments!!
 
-            val searchOptions = arguments.getParcelable("query")
+            val searchOptions = arguments.getParcelableCompat("query")
                 ?: PostsSearchOptions.DEFAULT
             Search(searchOptions) {
                 navController.popBackStack()
@@ -60,7 +61,7 @@ fun Navigator(navController: NavHostController) {
         }
         composable(Screen.Posts.route, Screen.Posts.arguments) {
             val searchOptions = remember {
-                it.arguments!!.getParcelable<PostsSearchOptions>("query")!!
+                it.arguments!!.getParcelableCompat<PostsSearchOptions>("query")!!
             }
 
             Posts(
