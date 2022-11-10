@@ -149,19 +149,15 @@ fun Search(
             //endregion
             TextButton(onClick = { expanded = !expanded }) {
                 val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) { // To align left
-                    Icon(
-                        Icons.Default.ExpandMore, null, modifier = Modifier
-                            .padding(start = 4.dp, end = 12.dp)
-                            .rotate(rotation)
-                    )
-                    Text(
-                        stringResource(if (!expanded) R.string.expand else R.string.collapse)
-                    )
-                }
+                Icon(
+                    Icons.Default.ExpandMore, null, modifier = Modifier
+                        .padding(start = 4.dp, end = 12.dp)
+                        .rotate(rotation)
+                )
+                Text(
+                    stringResource(if (!expanded) R.string.expand else R.string.collapse),
+                    modifier = Modifier.weight(1f)
+                )
             }
         }
         Spacer(modifier = Modifier.height(4.dp))
