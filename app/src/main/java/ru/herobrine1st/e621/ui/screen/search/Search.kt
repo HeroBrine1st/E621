@@ -86,23 +86,26 @@ fun Search(
         }
         Spacer(modifier = Modifier.height(4.dp))
         SettingCard(
-            title = stringResource(R.string.order), modifier = Modifier
-                .selectableGroup()
+            title = stringResource(R.string.order), modifier = Modifier.selectableGroup()
         ) {
             var expanded by remember { mutableStateOf(false) }
             val collapsedCount = integerResource(R.integer.order_selection_collapsed_count)
+            val onSelect: (Order) -> Unit = {
+                state.order = it
+                if (!it.supportsAscending) state.orderAscending = false
+            }
+
             Order.values()
                 .take(collapsedCount)
                 .forEach {
-                    OrderItem(it, it == state.order) {
-                        state.order = it
-                        if (!it.supportsAscending) state.orderAscending = false
-                    }
+                    OrderItem(it, it == state.order) { onSelect(it) }
                 }
-            // Split list to 2 lists by selected item and display selected item even if collapsed
+            //region Split list to 2 lists by selected item and display selected item even if collapsed
+            //           ..list of remaining choices to..
             val first: List<Order>
             val second: List<Order>
             val displaySelectedSpecially: Boolean
+
             Order.values().drop(collapsedCount).let { remaining ->
                 val index = remaining.indexOf(state.order)
                 if ((index != -1).also { displaySelectedSpecially = it }) {
@@ -113,24 +116,27 @@ fun Search(
                     second = emptyList()
                 }
             }
-            val onSelect: (Order) -> Unit = {
-                state.order = it
-                if (!it.supportsAscending) state.orderAscending = false
-            }
             OrderSelectionList(first, state.order, expanded, onSelect)
             // Animate exit only if collapsed
             if (expanded) {
-                if (displaySelectedSpecially) OrderItem(state.order, true) {}
+                if (displaySelectedSpecially) OrderItem(state.order, true, onClick = {})
             } else AnimatedVisibility(
                 visible = displaySelectedSpecially,
                 enter = fadeIn(initialAlpha = 1f), // Disable
+                // Placing an if with "fadeOut(1f)" here (and adding expanded to if below) results
+                // in visual glitches, so it is lifted out
                 exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) + shrinkVertically(
                     shrinkTowards = Alignment.Top
                 ),
             ) {
+                // item holds the selected order at the time of selecting
+                // so if user wants to select other order, it will collapse as expected by user
+                // otherwise (without item) it will collapse with the new selection.
+                // Also this prevents some glitches, for example, it could replace one order with
+                // selection (or with recently selected order) (I have no reproduce steps)
                 var item by remember { mutableStateOf(state.order) }
                 if (displaySelectedSpecially) item = state.order
-                OrderItem(item, true) {}
+                OrderItem(item, true, onClick = {})
             }
             if (second.isNotEmpty()) OrderSelectionList(second, state.order, expanded, onSelect)
             ItemSelectionCheckbox(
@@ -140,6 +146,7 @@ fun Search(
             ) {
                 state.orderAscending = !state.orderAscending
             }
+            //endregion
             TextButton(onClick = { expanded = !expanded }) {
                 val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
                 Row(
