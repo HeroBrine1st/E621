@@ -105,4 +105,5 @@
     <string name="disclaimer_agree">Я согласен</string>
     <string name="settings_safe_mode_disclaimer">"Отключая безопасный режим, вы соглашаетесь с тем, что достигли возраста совершеннолетия в вашей стране. Если вы согласитесь, <b>откровенный контент</b> может быть показан. "</string>
     <string name="search_safe_mode">Включен безопасный режим. Эта опция заблокирована.</string>
+    <string name="clear">Очистить</string>
 </resources>

@@ -11,6 +11,7 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.rounded.Add
@@ -195,6 +196,12 @@ fun Search(
                 value = state.favouritesOf,
                 onValueChange = { state.favouritesOf = it },
                 label = { Text(stringResource(R.string.user)) },
+                singleLine = true,
+                trailingIcon = {
+                    IconButton(onClick = { state.favouritesOf = "" }) {
+                        Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
+                    }
+                },
                 modifier = Modifier
                     .fillMaxWidth()
             )
