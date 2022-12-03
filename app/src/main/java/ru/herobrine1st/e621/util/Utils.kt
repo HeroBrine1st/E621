@@ -7,12 +7,4 @@ import okhttp3.OkHttp
 import ru.herobrine1st.e621.BuildConfig
 import kotlin.math.roundToInt
 
-@Composable
-fun getScreenSize(): Pair<Int, Int> {
-    LocalConfiguration.current.let {
-        val magic = it.densityDpi / 160f
-        return (it.screenWidthDp.toFloat() * magic).roundToInt() to (it.screenHeightDp * magic).roundToInt()
-    }
-}
-
 val USER_AGENT = BuildConfig.USER_AGENT_TEMPLATE.format(Build.VERSION.RELEASE, OkHttp.VERSION)
