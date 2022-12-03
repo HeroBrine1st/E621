@@ -27,8 +27,8 @@ val applicationId = "ru.herobrine1st.e621"
 val versionCode = getCommitIndexNumber()
 val versionName = "1.0.0-alpha-4"
 
-val localProperties = Properties().apply {
-    load(FileInputStream(rootProject.file("local.properties")))
+val buildProperties = Properties().apply {
+    load(FileInputStream(rootProject.file("build.properties")))
 }
 
 
@@ -58,7 +58,7 @@ android {
             "String",
             "USER_AGENT_TEMPLATE",
             if ("true".equals(
-                    localProperties.getProperty("useragent.exclude_build_info"),
+                    buildProperties.getProperty("useragent.exclude_build_info"),
                     ignoreCase = true
                 )
             )
