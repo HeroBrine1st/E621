@@ -3,6 +3,9 @@
 import com.google.protobuf.gradle.generateProtoTasks
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
+import java.io.ByteArrayOutputStream
+import java.io.FileInputStream
+import java.util.*
 
 plugins {
     id("com.android.application")
@@ -17,15 +20,24 @@ plugins {
 val kotlinVersion = "1.7.0"
 val composeCompilerVersion = "1.2.0"
 val protobufVersion = "3.21.2"
+val okHttpVersion = "4.9.3"
+val retrofitVersion = "2.9.0"
 
-val versionCode = 5
+val applicationId = "ru.herobrine1st.e621"
+val versionCode = getCommitIndexNumber()
 val versionName = "1.0.0-alpha-4"
+
+val localProperties = Properties().apply {
+    load(FileInputStream(rootProject.file("local.properties")))
+}
+
+
 
 android {
     compileSdk = 33
 
     defaultConfig {
-        applicationId = "ru.herobrine1st.e621"
+        applicationId = this@Build_gradle.applicationId
         minSdk = 27
         targetSdk = 33
         versionCode = this@Build_gradle.versionCode
@@ -35,21 +47,28 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
+
+        // Application properties
+        buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
+        buildConfigField("String", "API_BASE_URL", "\"https://e621.net\"")
+        buildConfigField("String", "DEEP_LINK_BASE_URL", "\"https://e621.net\"")
+        resValue("string", "deep_link_host", "e621.net")
+        buildConfigField("int", "PAGER_PAGE_SIZE", "500")
+        buildConfigField(
+            "String",
+            "USER_AGENT_TEMPLATE",
+            if ("true".equals(
+                    localProperties.getProperty("useragent.exclude_build_info"),
+                    ignoreCase = true
+                )
+            )
+                "\"Android/%s; OkHttp/$okHttpVersion (Retrofit/$retrofitVersion)\""
+            else "\"${applicationId}/${versionName} (Android/%s; +https://github.com/HeroBrine1st/E621); " +
+                    "OkHttp/$okHttpVersion (Retrofit/$retrofitVersion)"
+        )
     }
 
     buildTypes {
-        defaultConfig {
-            buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
-            buildConfigField("String", "API_BASE_URL", "\"https://e621.net\"")
-            buildConfigField("String", "DEEP_LINK_BASE_URL", "\"https://e621.net\"")
-            resValue("string", "deep_link_host", "e621.net")
-            buildConfigField(
-                "String",
-                "USER_AGENT",
-                "\"Android App/${versionName}\""
-            )
-            buildConfigField("int", "PAGER_PAGE_SIZE", "500")
-        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
@@ -149,9 +168,9 @@ dependencies {
     implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
 
     // Retrofit
-    implementation("com.squareup.okhttp3:okhttp:4.9.3")
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-jackson:2.9.0")
+    implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
+    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
 
     // Other libraries
     implementation("com.google.android.exoplayer:exoplayer:2.18.1")
@@ -196,4 +215,14 @@ ksp {
 
 kapt {
     correctErrorTypes = true
+}
+
+fun getCommitIndexNumber(revision: String = "HEAD"): Int {
+    val byteArrayOutputStream = ByteArrayOutputStream()
+    exec {
+        commandLine = listOf("git", "rev-list", "--count", "--first-parent", revision)
+        standardOutput = byteArrayOutputStream
+        isIgnoreExitValue = false
+    }
+    return byteArrayOutputStream.toString().trim().toInt()
 }

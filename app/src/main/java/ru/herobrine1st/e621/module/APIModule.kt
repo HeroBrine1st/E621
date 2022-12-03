@@ -17,6 +17,7 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.net.AuthorizationInterceptor
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.net.UserAgentInterceptor
+import ru.herobrine1st.e621.util.USER_AGENT
 import ru.herobrine1st.e621.util.objectMapper
 import java.io.File
 import javax.inject.Qualifier
@@ -41,7 +42,7 @@ class APIModule {
             )
         return OkHttpClient.Builder()
             .addNetworkInterceptor(RateLimitInterceptor(1.5))
-            .addNetworkInterceptor(UserAgentInterceptor())
+            .addNetworkInterceptor(UserAgentInterceptor(USER_AGENT))
             .addInterceptor(authorizationInterceptor)
             .cache(Cache(cacheDir, size))
             .followRedirects(false)
