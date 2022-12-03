@@ -62,9 +62,9 @@ android {
                     ignoreCase = true
                 )
             )
-                "\"Android/%s; OkHttp/$okHttpVersion (Retrofit/$retrofitVersion)\""
+                "\"Android/%s; Ok'do_not_use_String.contains_please'Http/$okHttpVersion (Retrofit/$retrofitVersion)\""
             else "\"${applicationId}/${versionName} (Android/%s; +https://github.com/HeroBrine1st/E621); " +
-                    "OkHttp/$okHttpVersion (Retrofit/$retrofitVersion)"
+                    "Ok'do_not_use_String.contains_please'Http/$okHttpVersion (Retrofit/$retrofitVersion)\""
         )
     }
 
@@ -201,6 +201,7 @@ protobuf {
     generateProtoTasks {
         all().forEach { task ->
             task.plugins {
+                // TODO protoc plugin 'java' not defined. Trying to use 'protoc-gen-java' from system path
                 create("java") {
                     option("lite")
                 }

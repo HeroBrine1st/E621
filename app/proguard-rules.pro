@@ -22,3 +22,7 @@
 -keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
     <fields>;
 }
+
+-keep class ru.herobrine1st.e621.api.model.* {
+    *;
+}
