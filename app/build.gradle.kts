@@ -38,24 +38,24 @@ android {
     }
 
     buildTypes {
+        defaultConfig {
+            buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
+            buildConfigField("String", "API_BASE_URL", "\"https://e621.net\"")
+            buildConfigField("String", "DEEP_LINK_BASE_URL", "\"https://e621.net\"")
+            resValue("string", "deep_link_host", "e621.net")
+            buildConfigField(
+                "String",
+                "USER_AGENT",
+                "\"Android App/${versionName}\""
+            )
+            buildConfigField("int", "PAGER_PAGE_SIZE", "500")
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
         }
         debug {
             applicationIdSuffix = ".test"
-        }
-        forEach {
-            it.buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
-            it.buildConfigField("String", "API_BASE_URL", "\"https://e621.net\"")
-            it.buildConfigField("String", "DEEP_LINK_BASE_URL", "\"https://e621.net\"")
-            it.resValue("string", "deep_link_host", "e621.net")
-            it.buildConfigField(
-                "String",
-                "USER_AGENT",
-                "\"Android App/${versionName}\""
-            )
-            it.buildConfigField("int", "PAGER_PAGE_SIZE", "500")
         }
     }
     compileOptions {
