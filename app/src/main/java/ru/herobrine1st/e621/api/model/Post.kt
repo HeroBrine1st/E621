@@ -7,7 +7,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
-import ru.herobrine1st.e621.util.JsonSerializable
 import java.time.Instant
 import java.time.OffsetDateTime
 
@@ -42,7 +41,7 @@ data class Post(
     @JsonProperty(required = false)
     val hasNotes: Boolean = false,
     val duration: Float = 0f
-) : Parcelable, JsonSerializable {
+) : Parcelable {
     @IgnoredOnParcel
     @JsonIgnore
     val normalizedSample = NormalizedFile(sample)

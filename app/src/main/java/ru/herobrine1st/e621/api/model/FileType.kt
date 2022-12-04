@@ -3,7 +3,6 @@ package ru.herobrine1st.e621.api.model
 import com.fasterxml.jackson.annotation.JsonValue
 import okhttp3.internal.toImmutableMap
 
-@Suppress("unused")
 enum class FileType(
     @JsonValue val extension: String,
     val isSupported: Boolean = true,
@@ -19,7 +18,6 @@ enum class FileType(
     UNDEFINED("", isSupported = false);
 
     val isNotImage = !isImage
-    val isNotVideo = !isVideo
 
     companion object {
         val byExtension = mutableMapOf<String, FileType>().apply {
