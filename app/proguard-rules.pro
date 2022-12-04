@@ -23,6 +23,14 @@
     <fields>;
 }
 
--keep class ru.herobrine1st.e621.api.model.* {
+-keepclassmembers class ru.herobrine1st.e621.api.model.* {
+    *;
+}
+
+-keepclassmembers @kotlinx.parcelize.Parcelize class * {
+    *;
+}
+
+-keepclassmembers class * implements ru.herobrine1st.e621.util.JsonSerializable {
     *;
 }

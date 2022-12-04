@@ -71,7 +71,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro")
+            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro", "intellij-idea-does-not-like-these-proguard-rules.pro")
         }
         debug {
             applicationIdSuffix = ".test"
