@@ -263,10 +263,10 @@ fun VideoPlayerController(
             )
             Box(
                 Modifier.weight(1f),
-                contentAlignment = Alignment.Center // idk why is this line needed, but without it works like Column (???)
+                contentAlignment = Alignment.Center // idk why this line is needed, but without it works like Column (???)
             ) {
                 LinearProgressIndicator(
-                    progress = getContentBufferedPositionMs().toFloat() / contentDurationMs,
+                    progress = if(contentDurationMs != 0L) getContentBufferedPositionMs().toFloat() / contentDurationMs else 0f,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp),
