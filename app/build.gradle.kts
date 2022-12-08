@@ -1,5 +1,6 @@
 @file:Suppress("SpellCheckingInspection")
 
+import com.android.build.api.dsl.VariantDimension
 import com.google.protobuf.gradle.generateProtoTasks
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
@@ -49,22 +50,17 @@ android {
         }
 
         // Application properties
-        buildConfigField("String", "DATABASE_NAME", "\"DATABASE\"")
-        buildConfigField("String", "API_BASE_URL", "\"https://e621.net\"")
-        buildConfigField("String", "DEEP_LINK_BASE_URL", "\"https://e621.net\"")
         resValue("string", "deep_link_host", "e621.net")
         buildConfigField("int", "PAGER_PAGE_SIZE", "500")
-        buildConfigField(
-            "String",
+        stringBuildConfigField("DATABASE_NAME", "DATABASE")
+        stringBuildConfigField( "API_BASE_URL", "https://e621.net")
+        stringBuildConfigField( "DEEP_LINK_BASE_URL", "https://e621.net")
+        stringBuildConfigField(
             "USER_AGENT_TEMPLATE",
-            if ("true".equals(
-                    buildProperties.getProperty("useragent.exclude_build_info"),
-                    ignoreCase = true
-                )
-            )
-                "\"Android/%s; Ok'do_not_use_String.contains_please'Http/$okHttpVersion (Retrofit/$retrofitVersion)\""
-            else "\"${applicationId}/${versionName} (Android/%s; +https://github.com/HeroBrine1st/E621); " +
-                    "Ok'do_not_use_String.contains_please'Http/$okHttpVersion (Retrofit/$retrofitVersion)\""
+            "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) " +
+                    // That's zero. Workaround for their shitty protection (when on earth user-agent could be security header???)
+                    // Btw I think it is a cloudflare rule (did a source code review and didn't found that protection in ApplicationController)
+                    "0kHttp/$okHttpVersion Retrofit/$retrofitVersion"
         )
     }
 
@@ -227,3 +223,5 @@ fun getCommitIndexNumber(revision: String = "HEAD"): Int {
     }
     return byteArrayOutputStream.toString().trim().toInt()
 }
+
+fun VariantDimension.stringBuildConfigField(name: String, value: String) = buildConfigField("String", name, "\"${value.replace("\"", "\\\"")}\"")
