@@ -38,13 +38,12 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
 import dagger.hilt.android.EntryPointAccessors
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostReduced
-import ru.herobrine1st.e621.preference.getPreferencesFlow
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostImage
@@ -77,16 +76,18 @@ fun Post(
         )
     )
 ) {
-    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val post = viewModel.post
     val wikiState = viewModel.wikiState
+    val preferences = LocalPreferences.current
 
     val coroutineScope = rememberCoroutineScope()
     val commentsLazyListState = rememberLazyListState()
-    val drawerState = rememberBottomDrawerState(initialValue = BottomDrawerValue.Closed)
-    val progress by remember(drawerState) { derivedStateOf { drawerState.progress } }
-    var loadComments by remember { mutableStateOf(false) } // Do not make excessive API calls (user preference)
+
+    val drawerState =
+        rememberBottomDrawerState(initialValue = if (openComments) BottomDrawerValue.Expanded // Opened works here
+        else BottomDrawerValue.Closed)
+    var loadComments by remember { mutableStateOf(!preferences.privacyModeEnabled || openComments) } // Do not make excessive API calls (user preference)
 
     val isExpanded by remember(drawerState) {
         derivedStateOf {
@@ -105,10 +106,8 @@ fun Post(
         ) {
             CircularProgressIndicator()
         }
-
         return
     }
-
 
     if (wikiState != null) ContentDialog(
         title = wikiState.title.replaceFirstChar { // Capitalize
@@ -141,39 +140,26 @@ fun Post(
         }
     }
 
-
-
-    LaunchedEffect(Unit) {
-        if (openComments) {
-            // To future self: open() = expand() (guess reason is position of this effect)
-            drawerState.expand() // Will set loadComments to true automatically
-        } else {
-            val isPrivacyModeEnabled = context.getPreferencesFlow { it.privacyModeEnabled }.first()
-            if (!isPrivacyModeEnabled) loadComments = true
+    val isGesturesEnabled by remember(drawerState, commentsLazyListState) {
+        derivedStateOf {
+            !drawerState.isClosed // Disallow opening by gesture
+                    // Disallow closing when scrolled down
+                    && commentsLazyListState.firstVisibleItemIndex == 0
+                    && commentsLazyListState.firstVisibleItemScrollOffset == 0
         }
     }
 
     BottomDrawer(
         drawerState = drawerState,
-        gesturesEnabled = !drawerState.isClosed // Disallow opening by gesture
-                // Disallow closing when scrolled down
-                && commentsLazyListState.firstVisibleItemIndex == 0
-                && commentsLazyListState.firstVisibleItemScrollOffset == 0,
+        gesturesEnabled = isGesturesEnabled,
         drawerShape = RoundedCornerShape(shapeSize),
         scrimColor = Color.Transparent,
         drawerBackgroundColor = drawerBackgroundColor,
         drawerContent = {
             // Do not load comments while drawer is closed
-            if (!loadComments && progress.from == progress.to && progress.from == BottomDrawerValue.Closed) {
-                // Set size so that drawer won't auto-expand when opened
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-                    Text("Placeholder")
-                }
+            if (!loadComments) {
+                Box(Modifier.fillMaxSize()) // Set size so that drawer won't auto-expand when opened
                 return@BottomDrawer
-            }
-            // Maybe handle in "open()" call site?
-            LaunchedEffect(Unit) {
-                loadComments = true
             }
             val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
             LazyColumn(
@@ -241,6 +227,7 @@ fun Post(
                         .fillMaxWidth()
                         .clickable {
                             coroutineScope.launch {
+                                loadComments = true
                                 drawerState.open()
                             }
                         }
