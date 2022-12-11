@@ -36,7 +36,7 @@ jobs:
         gradle-version: wrapper
     - name: Build snapshot
       run: |
-        gradle test
+        # gradle test
         gradle assembleRelease
     - name: Sign APK with debug key
       run: apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --out app/build/outputs/apk/release/app-release-signed-debug-key.apk app/build/outputs/apk/release/app-release-unsigned.apk
