@@ -39,7 +39,7 @@ jobs:
         # gradle test
         gradle assembleRelease
     - name: Sign APK with debug key
-      run: apksigner sign --ks ~/.android/debug.keystore --ks-pass pass:android --out app/build/outputs/apk/release/app-release-signed-debug-key.apk app/build/outputs/apk/release/app-release-unsigned.apk
+      run: $(find ~/.android/Sdk/build-tools/*/apksigner | sort -r | grep -v rc | head -1) sign --ks ~/.android/debug.keystore --ks-pass pass:android --out app/build/outputs/apk/release/app-release-signed-debug-key.apk app/build/outputs/apk/release/app-release-unsigned.apk
     - name: Upload APK
       uses: actions/upload-artifact@v3
       with:
