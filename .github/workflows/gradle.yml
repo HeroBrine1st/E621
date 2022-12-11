@@ -9,7 +9,7 @@ name: Build snapshot
 
 on:
   push:
-    branches: [ "feature/snapshot-workflow" ]
+    branches: [ "master" ]
   pull_request:
     branches: [ "master" ]
 
