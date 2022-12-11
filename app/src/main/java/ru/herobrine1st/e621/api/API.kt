@@ -115,14 +115,10 @@ interface API {
 
 suspend fun API.getWikiPage(tag: String): WikiPage {
     val firstResponse = getWikiPageId(tag).awaitResponse()
-    if (!firstResponse.raw().isRedirect) {
-        throw NotFoundException()
-    }
-    val id = firstResponse.raw().header("Location")?.let {
-        it.substring(it.lastIndexOf("/") + 1).toIntOrNull()
-    }
+    if (firstResponse.raw().priorResponse == null) throw NotFoundException()
+    val id = firstResponse.raw().request.url.pathSegments.last().toIntOrNull()
     if (id == null) {
-        Log.e(TAG, "Invalid redirection: Location header is not found or is not parsed")
+        Log.e(TAG, "Invalid redirection: cannot extract ID from url")
         Log.e(TAG, firstResponse.raw().headers.joinToString("\n") {
             it.first + ": " + it.second
         })

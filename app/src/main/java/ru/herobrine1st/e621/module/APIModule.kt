@@ -45,7 +45,6 @@ class APIModule {
             .addNetworkInterceptor(UserAgentInterceptor(USER_AGENT))
             .addInterceptor(authorizationInterceptor)
             .cache(Cache(cacheDir, size))
-            .followRedirects(false)
             .build()
     }
 

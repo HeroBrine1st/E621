@@ -80,6 +80,18 @@ fun Home(
                             Text(stringResource(R.string.retry))
                         }
                     }
+                    LoginState.INTERNAL_SERVER_ERROR -> {
+                        Text(stringResource(R.string.internal_server_error))
+                        Button(onClick = { viewModel.checkAuthorization() }) {
+                            Text(stringResource(R.string.retry))
+                        }
+                    }
+                    LoginState.JS_CHALLENGE_OCCURRED -> {
+                        Text(stringResource(R.string.js_challenge_occurred))
+                        Button(onClick = { viewModel.checkAuthorization() }) {
+                            Text(stringResource(R.string.retry))
+                        }
+                    }
                     else -> AuthorizationMenu { u, p, cb ->
                         viewModel.login(u, p, cb)
                     }

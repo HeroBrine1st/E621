@@ -61,14 +61,20 @@ class HomeViewModel @Inject constructor(
                     .build()
             )
             callback(result)
-            when(result) {
+            when (result) {
                 LoginState.AUTHORIZED -> {
                     authorizationRepositoryProvider.get().insertAccount(login, apiKey)
                     state = LoginState.AUTHORIZED
                 }
                 LoginState.IO_ERROR ->
                     snackbarAdapter.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
-                LoginState.NO_AUTH -> snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
+                LoginState.NO_AUTH -> snackbarAdapter.enqueueMessage(R.string.login_unauthorized, SnackbarDuration.Long)
+                LoginState.INTERNAL_SERVER_ERROR -> snackbarAdapter.enqueueMessage(
+                    R.string.internal_server_error, SnackbarDuration.Long
+                )
+                LoginState.JS_CHALLENGE_OCCURRED -> snackbarAdapter.enqueueMessage(
+                    R.string.js_challenge_occurred, SnackbarDuration.Long
+                )
                 LoginState.LOADING -> throw IllegalStateException()
             }
         }
@@ -89,7 +95,8 @@ class HomeViewModel @Inject constructor(
     private suspend fun checkCredentials(credentials: AuthorizationCredentials): LoginState {
         val res = try {
             withContext(Dispatchers.IO) {
-                apiProvider.get().getUser(credentials.username, credentials.credentials).awaitResponse()
+                apiProvider.get().getUser(credentials.username, credentials.credentials)
+                    .awaitResponse()
             }
         } catch (e: IOException) {
             Log.e(
@@ -100,17 +107,32 @@ class HomeViewModel @Inject constructor(
             snackbarAdapter.enqueueMessage(R.string.network_error)
             return LoginState.IO_ERROR
         }
-        return if (res.isSuccessful) {
-            LoginState.AUTHORIZED
-        } else {
-            debug {
-                Log.d(TAG, "Invalid username or api key (${res.code()} ${res.message()})")
-                withContext(Dispatchers.IO) {
-                    @Suppress("BlockingMethodInNonBlockingContext") // Debug
-                    Log.d(TAG, res.errorBody()!!.string())
-                }
+        return when {
+            res.isSuccessful -> {
+                LoginState.AUTHORIZED
             }
-            LoginState.NO_AUTH
+            res.code() == 401 -> {
+                LoginState.NO_AUTH
+            }
+            // DDoS protection
+            res.code() == 503 -> {
+                // TODO write workaround with WebView or Selenium
+                // I found this https://github.com/zhkrb/cloudflare-scrape-Android , will check
+                LoginState.JS_CHALLENGE_OCCURRED
+            }
+            res.code() in 500..600 -> {
+                LoginState.INTERNAL_SERVER_ERROR
+            }
+            else -> {
+                debug {
+                    Log.d(TAG, "Invalid username or api key (${res.code()} ${res.message()})")
+                    withContext(Dispatchers.IO) {
+                        @Suppress("BlockingMethodInNonBlockingContext") // Debug
+                        Log.d(TAG, res.errorBody()!!.string())
+                    }
+                }
+                LoginState.NO_AUTH
+            }
         }
     }
 
@@ -121,19 +143,22 @@ class HomeViewModel @Inject constructor(
         }.getAccountFlow()
             .distinctUntilChanged()
             .first()
-        state = if (entry == null) LoginState.NO_AUTH
-        else checkCredentials(entry).also {
+        state = if (entry == null) LoginState.NO_AUTH else checkCredentials(entry).also {
             if (it == LoginState.NO_AUTH) {
                 snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
                 authorizationRepositoryProvider.get().logout()
             }
         }
+        assert(state != LoginState.LOADING)
     }
 
     // Can authorize is "can press login button"
     enum class LoginState(val canAuthorize: Boolean) {
         LOADING(false),
         IO_ERROR(false),
+        INTERNAL_SERVER_ERROR(false),
+        // @Incubating - will replace with cloudflare-scrape-android
+        JS_CHALLENGE_OCCURRED(false),
         NO_AUTH(true),
         AUTHORIZED(false)
     }

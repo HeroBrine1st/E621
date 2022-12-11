@@ -106,4 +106,6 @@
     <string name="settings_safe_mode_disclaimer">By disabling safe mode you agree you have reached the legal age in your country. If you agree, <b>explicit content</b> may be shown.</string>
     <string name="search_safe_mode">Safe mode enabled. This option is blocked.</string>
     <string name="clear">Clear</string>
+    <string name="internal_server_error">An internal server error occurred. Try again later.</string>
+    <string name="js_challenge_occurred">An unexpected bot-checking challenge encountered while executing API request. Try again later.</string>
 </resources>
