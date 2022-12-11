@@ -28,12 +28,6 @@ val applicationId = "ru.herobrine1st.e621"
 val versionCode = getCommitIndexNumber()
 val versionName = "1.0.0-alpha-4"
 
-val buildProperties = Properties().apply {
-    load(FileInputStream(rootProject.file("build.properties")))
-}
-
-
-
 android {
     compileSdk = 33
 
