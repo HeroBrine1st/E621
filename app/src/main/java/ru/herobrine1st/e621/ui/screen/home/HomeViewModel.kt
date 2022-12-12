@@ -68,12 +68,18 @@ class HomeViewModel @Inject constructor(
                 }
                 LoginState.IO_ERROR ->
                     snackbarAdapter.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
-                LoginState.NO_AUTH -> snackbarAdapter.enqueueMessage(R.string.login_unauthorized, SnackbarDuration.Long)
+                LoginState.NO_AUTH -> snackbarAdapter.enqueueMessage(
+                    R.string.login_unauthorized,
+                    SnackbarDuration.Long
+                )
                 LoginState.INTERNAL_SERVER_ERROR -> snackbarAdapter.enqueueMessage(
                     R.string.internal_server_error, SnackbarDuration.Long
                 )
-                LoginState.JS_CHALLENGE_OCCURRED -> snackbarAdapter.enqueueMessage(
-                    R.string.js_challenge_occurred, SnackbarDuration.Long
+                LoginState.API_TEMPORARILY_UNAVAILABLE -> snackbarAdapter.enqueueMessage(
+                    R.string.api_temporarily_unavailable, SnackbarDuration.Long
+                )
+                LoginState.UNKNOWN_API_ERROR -> snackbarAdapter.enqueueMessage(
+                    R.string.unknown_api_error, SnackbarDuration.Long
                 )
                 LoginState.LOADING -> throw IllegalStateException()
             }
@@ -107,34 +113,25 @@ class HomeViewModel @Inject constructor(
             snackbarAdapter.enqueueMessage(R.string.network_error)
             return LoginState.IO_ERROR
         }
-        return when {
-            res.isSuccessful -> {
-                LoginState.AUTHORIZED
-            }
-            res.code() == 401 -> {
-                LoginState.NO_AUTH
-            }
-            // DDoS protection
-            res.code() == 503 -> {
-                // TODO write workaround with WebView or Selenium
-                // I found this https://github.com/zhkrb/cloudflare-scrape-Android , will check
-                LoginState.JS_CHALLENGE_OCCURRED
-            }
-            res.code() in 500..600 -> {
-                LoginState.INTERNAL_SERVER_ERROR
-            }
-            else -> {
-                debug {
-                    Log.d(TAG, "Invalid username or api key (${res.code()} ${res.message()})")
-                    withContext(Dispatchers.IO) {
-                        @Suppress("BlockingMethodInNonBlockingContext") // Debug
-                        Log.d(TAG, res.errorBody()!!.string())
-                    }
+        debug {
+            if(!res.isSuccessful) {
+                Log.d(TAG, "An error occurred while authenticating in API (${res.code()} ${res.message()})")
+                withContext(Dispatchers.IO) {
+                    @Suppress("BlockingMethodInNonBlockingContext") // Debug
+                    Log.d(TAG, res.errorBody()!!.string())
                 }
-                LoginState.NO_AUTH
             }
         }
+        return when(res.code()) {
+            in 200..299 -> LoginState.AUTHORIZED
+            401 -> LoginState.NO_AUTH
+
+            503 -> LoginState.API_TEMPORARILY_UNAVAILABLE // Likely DDoS protection, but not always
+            in 500..599 -> LoginState.INTERNAL_SERVER_ERROR
+            else -> LoginState.UNKNOWN_API_ERROR
+        }
     }
+
 
     private suspend fun checkAuthorizationInternal() {
         state = LoginState.LOADING
@@ -157,8 +154,8 @@ class HomeViewModel @Inject constructor(
         LOADING(false),
         IO_ERROR(false),
         INTERNAL_SERVER_ERROR(false),
-        // @Incubating - will replace with cloudflare-scrape-android
-        JS_CHALLENGE_OCCURRED(false),
+        UNKNOWN_API_ERROR(true),
+        API_TEMPORARILY_UNAVAILABLE(false),
         NO_AUTH(true),
         AUTHORIZED(false)
     }

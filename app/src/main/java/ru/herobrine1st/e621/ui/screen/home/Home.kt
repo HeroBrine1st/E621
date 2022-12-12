@@ -74,6 +74,9 @@ fun Home(
                             Text(stringResource(R.string.favourites))
                         }
                     }
+                    LoginState.NO_AUTH, LoginState.UNKNOWN_API_ERROR -> AuthorizationMenu { u, p, cb ->
+                        viewModel.login(u, p, cb)
+                    }
                     LoginState.IO_ERROR -> {
                         Text(stringResource(R.string.network_error))
                         Button(onClick = { viewModel.checkAuthorization() }) {
@@ -86,14 +89,11 @@ fun Home(
                             Text(stringResource(R.string.retry))
                         }
                     }
-                    LoginState.JS_CHALLENGE_OCCURRED -> {
-                        Text(stringResource(R.string.js_challenge_occurred))
+                    LoginState.API_TEMPORARILY_UNAVAILABLE -> {
+                        Text(stringResource(R.string.api_temporarily_unavailable))
                         Button(onClick = { viewModel.checkAuthorization() }) {
                             Text(stringResource(R.string.retry))
                         }
-                    }
-                    else -> AuthorizationMenu { u, p, cb ->
-                        viewModel.login(u, p, cb)
                     }
                 }
             }
