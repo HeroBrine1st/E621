@@ -85,8 +85,10 @@ fun Post(
     val commentsLazyListState = rememberLazyListState()
 
     val drawerState =
-        rememberBottomDrawerState(initialValue = if (openComments) BottomDrawerValue.Expanded // Opened works here
-        else BottomDrawerValue.Closed)
+        rememberBottomDrawerState(
+            initialValue = if (openComments) BottomDrawerValue.Expanded // Opened works here
+            else BottomDrawerValue.Closed
+        )
     var loadComments by remember { mutableStateOf(!preferences.privacyModeEnabled || openComments) } // Do not make excessive API calls (user preference)
 
     val isExpanded by remember(drawerState) {
@@ -225,7 +227,7 @@ fun Post(
                     Divider()
                     Column(Modifier
                         .fillMaxWidth()
-                        .clickable {
+                        .clickable(enabled = post.commentCount != 0) {
                             coroutineScope.launch {
                                 loadComments = true
                                 drawerState.open()
@@ -238,7 +240,9 @@ fun Post(
                             style = MaterialTheme.typography.h6
                         )
                         Spacer(Modifier.width(4.dp))
-                        if (loadComments) {
+                        if (post.commentCount == 0) {
+                            Text(stringResource(R.string.no_comments_found))
+                        } else if (loadComments) {
                             val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
                             when (comments.loadState.refresh) {
                                 is LoadState.Loading -> {
