@@ -4,6 +4,7 @@ import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -66,10 +67,10 @@ fun Posts(
     )
 ) {
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
+    val lazyListState = rememberLazyListState()
 
-
-    if (posts.loadState.refresh !is LoadState.NotLoading // Do not reset lazyListState
-    ) {
+    // Do not reset lazyListState
+    if (posts.loadState.refresh !is LoadState.NotLoading) {
         Base {
             Spacer(modifier = Modifier.height(4.dp))
             CircularProgressIndicator()
@@ -78,7 +79,7 @@ fun Posts(
     }
 
     LazyColumn(
-        state = viewModel.lazyListState,
+        state = lazyListState,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         endOfPagePlaceholder(posts.loadState.prepend)

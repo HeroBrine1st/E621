@@ -2,7 +2,6 @@ package ru.herobrine1st.e621.ui.screen.posts.logic
 
 import android.content.Context
 import android.util.Log
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -65,7 +64,7 @@ class PostsViewModel @AssistedInject constructor(
             .flowOn(Dispatchers.Default)
 
     val postsFlow = combine(
-        pager.flow.cachedIn(viewModelScope),
+        pager.flow.cachedIn(viewModelScope), // cachedIn strictly required here (otherwise - double collect exception)
         applicationContext.getPreferencesFlow { it.blacklistEnabled },
         blacklistPredicateFlow,
         favouritesCache.flow
