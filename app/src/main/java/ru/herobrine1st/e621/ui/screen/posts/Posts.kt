@@ -22,6 +22,8 @@ import androidx.paging.compose.items
 import com.google.accompanist.flowlayout.FlowRow
 import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.PostsSearchOptions
+import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
@@ -31,8 +33,6 @@ import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
-import ru.herobrine1st.e621.util.PostsSearchOptions
-import ru.herobrine1st.e621.util.SearchOptions
 import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable

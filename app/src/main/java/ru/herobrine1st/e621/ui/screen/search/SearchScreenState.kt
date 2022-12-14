@@ -6,7 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.toMutableStateList
-import ru.herobrine1st.e621.util.PostsSearchOptions
+import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.util.getParcelableCompat
 
 class SearchScreenState(

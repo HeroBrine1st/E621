@@ -1,4 +1,4 @@
-package ru.herobrine1st.e621.util
+package ru.herobrine1st.e621.api
 
 import android.os.Bundle
 import android.os.Parcelable
@@ -6,12 +6,13 @@ import android.util.Log
 import androidx.navigation.NavType
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.parcelize.Parcelize
-import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.util.JsonSerializable
+import ru.herobrine1st.e621.util.debug
+import ru.herobrine1st.e621.util.getParcelableCompat
+import ru.herobrine1st.e621.util.objectMapper
 import java.io.IOException
 
 interface SearchOptions {
@@ -30,7 +31,7 @@ data class PostsSearchOptions(
     val rating: List<Rating> = emptyList(),
     val favouritesOf: String? = null, // "favorited_by" in api
 ) : SearchOptions, Parcelable, JsonSerializable {
-
+    // TODO randomSeed or something like that for Order.RANDOM
     private fun compileToQuery(): String {
         val cache = mutableListOf<String>()
 

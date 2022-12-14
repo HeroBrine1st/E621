@@ -40,6 +40,8 @@ import com.google.accompanist.placeholder.material.shimmer
 import dagger.hilt.android.EntryPointAccessors
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.PostsSearchOptions
+import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostReduced
@@ -54,8 +56,6 @@ import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
 import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
-import ru.herobrine1st.e621.util.PostsSearchOptions
-import ru.herobrine1st.e621.util.SearchOptions
 import java.util.*
 
 private const val TAG = "Post Screen"

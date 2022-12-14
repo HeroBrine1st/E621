@@ -11,10 +11,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
-import ru.herobrine1st.e621.util.PostsSearchOptions
 
 @Composable
 fun FavouritesAppBarActions(

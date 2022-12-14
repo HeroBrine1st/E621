@@ -10,13 +10,13 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.navigation.*
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.PostsSearchOptions
+import ru.herobrine1st.e621.api.PostsSearchOptionsNavType
 import ru.herobrine1st.e621.ui.screen.favourites.FavouritesAppBarActions
 import ru.herobrine1st.e621.ui.screen.posts.PostsAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistAppBarActions
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistFloatingActionButton
 import ru.herobrine1st.e621.util.JsonSerializable
-import ru.herobrine1st.e621.util.PostsSearchOptions
-import ru.herobrine1st.e621.util.PostsSearchOptionsNavType
 import ru.herobrine1st.e621.util.debug
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets

@@ -8,6 +8,8 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import ru.herobrine1st.e621.api.FavouritesSearchOptions
+import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.home.Home
@@ -16,8 +18,6 @@ import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
-import ru.herobrine1st.e621.util.FavouritesSearchOptions
-import ru.herobrine1st.e621.util.PostsSearchOptions
 import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable
