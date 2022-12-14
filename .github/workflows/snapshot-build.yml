@@ -30,7 +30,7 @@ jobs:
       with:
         gradle-version: wrapper
     - name: Run tests
-      run: gradle testRobolectricManifestUnitTest
+      run: gradle testDebugUnitTest
     - name: Build snapshot
       run: gradle assembleRelease
     - uses: actions/cache@v3
