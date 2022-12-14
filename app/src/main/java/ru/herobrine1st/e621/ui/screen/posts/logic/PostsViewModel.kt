@@ -104,8 +104,6 @@ class PostsViewModel @AssistedInject constructor(
         }
     }
 
-    val lazyListState = LazyListState(0, 0)
-
     // Assisted inject stuff
 
     @AssistedFactory
