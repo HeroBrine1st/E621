@@ -65,9 +65,6 @@ android {
         debug {
             applicationIdSuffix = ".test"
         }
-        create("robolectricManifest") {
-            initWith(getByName("release"))
-        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
