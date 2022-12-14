@@ -3,14 +3,16 @@ package ru.herobrine1st.e621.api
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import ru.herobrine1st.e621.R
-import java.util.regex.Pattern
+import ru.herobrine1st.e621.util.accumulate
+import ru.herobrine1st.e621.util.debug
+
+private const val TAG = "BBCodeProcessor"
 
 val BOLD = SpanStyle(
     fontWeight = FontWeight.Bold
@@ -20,26 +22,38 @@ val ITALIC = SpanStyle(
     fontStyle = FontStyle.Italic
 )
 
-// First alternative: (fast way) match any text until "[" is found
-// Second alternative: match tag
-// Third alternative: (slow way) match any text (fallback in case of invalid tag)
-val pattern: Pattern = Pattern.compile(
-    "[^\\[]+|\\[(\\w+?)](.+?)\\[/\\1]|.",
-    Pattern.MULTILINE or Pattern.DOTALL
-)
-val quotePattern: Pattern = Pattern.compile(
-    "\"([^\"]+)\":/user/show/(\\d+) said:(.+)",
-    Pattern.MULTILINE or Pattern.DOTALL
-)
+// TODO replace it with something more suitable
+// We're using functional programming, after all (I'm kidding xD, I cannot remove data classes)
+sealed class BBCodeTag(val name: String) {
+    abstract fun stylize(s: AnnotatedString): AnnotatedString
+
+    object Bold : BBCodeTag("b") {
+        override fun stylize(s: AnnotatedString) = AnnotatedString.Builder().apply {
+            withStyle(BOLD) {
+                append(s)
+            }
+        }.toAnnotatedString()
+    }
+
+    object Italic : BBCodeTag("i") {
+        override fun stylize(s: AnnotatedString) = AnnotatedString.Builder().apply {
+            withStyle(ITALIC) {
+                append(s)
+            }
+        }.toAnnotatedString()
+    }
+}
 
 @Immutable
-interface MessageData {
+sealed interface MessageData<T : MessageData<T>> {
     fun isEmpty(): Boolean
 
     // For cases where full message does not fit (for example, when there's no MessageText at all but preview required)
     // Rare case, but should implement fallback
     @StringRes
     fun getDescription(): Int
+
+    fun stylize(tag: BBCodeTag): T
 }
 
 /**
@@ -49,106 +63,151 @@ interface MessageData {
 @Immutable
 data class MessageText(
     val text: AnnotatedString,
-) : MessageData {
+) : MessageData<MessageText> {
     override fun isEmpty() = text.isEmpty()
     override fun getDescription(): Int = R.string.message_text
+    override fun stylize(tag: BBCodeTag) = MessageText(tag.stylize(text))
 
+    fun trim() = MessageText(text.trim() as AnnotatedString)
 }
 
 /**
  * Quote in message
  * @param userName user who sent referred message
  * @param userId user who sent referred message
- * @param text part of text in referred message
+ * @param data part of text in referred message
  */
 @Immutable
 data class MessageQuote(
     val userName: String,
     val userId: Int,
-    val text: AnnotatedString
-) : MessageData {
-    override fun isEmpty(): Boolean = text.isEmpty()
+    val data: List<MessageData<*>>
+) : MessageData<MessageQuote> {
+    override fun isEmpty(): Boolean = data.isEmpty()
     override fun getDescription(): Int = R.string.message_quote
+    override fun stylize(tag: BBCodeTag): MessageQuote = this
 
 }
 
-@Stable
-fun parseBBCode(input: String): List<MessageData> {
-    val matcher = pattern.matcher(input)
-    var builder = AnnotatedString.Builder()
-    val res = mutableListOf<MessageData>()
+/**
+ * Handle:
+ * 1. ``[tag]``
+ * 2. ``[/tag]``
+ * 3. ``[[link]]``
+ * 4. ``[[link|text]]``
+ */
+@Suppress("KDocUnresolvedReference")
+val pattern = Regex("""\[(?:([^\[\]/]+)|/([^\[\]/]+)|\[([^\[\]/]+)(?:\|([^\[\]/]+))?)]""")
 
-    fun fold() {
-        res.add(
-            MessageText(
-                text = builder
-                    .toAnnotatedString()
-                    .trim('\n', '\r') as AnnotatedString
-            )
+// [quote]"name":/user/show/0 said:
+val quotePattern = Regex(""""?([^"\n]+)"?:/user/show/(\d+) said:\r?\n""")
+
+fun parseBBCode(input: String): List<MessageData<*>> {
+    val (parsed, end) = parseBBCodeInternal(input, null, 0)
+    assert(end == input.length) {
+        "Parser hasn't reached end of string: expected ${input.length}, actual $end"
+    }
+    return parsed.collapseMessageTexts()
+}
+
+private fun parseBBCodeInternal(
+    input: String,
+    currentTag: String?,
+    initialStart: Int
+): Pair<List<MessageData<*>>, Int> {
+    assert(currentTag != "")
+    val output = mutableListOf<MessageData<*>>()
+    var start = initialStart
+
+    // name, id
+    val quoteData: Pair<String, Int>? = currentTag
+        ?.takeIf { it == "quote" }
+        ?.let { parseQuoteHeader(input, start) }
+        ?.let { res ->
+            start = res.third
+            res.first to res.second
+        }
+
+    fun stylize() = when {
+        currentTag == null -> output
+        currentTag == "b" -> output.map { it.stylize(BBCodeTag.Bold) }
+        currentTag == "i" -> output.map { it.stylize(BBCodeTag.Italic) }
+        currentTag == "quote" && quoteData != null -> listOf(
+            MessageQuote(quoteData.first, quoteData.second, output.collapseMessageTexts())
         )
-        builder = AnnotatedString.Builder()
-    }
-
-    while (matcher.find()) {
-        if (matcher.group(1) != null) { // Found tag
-            val tag = matcher.group(1)!!
-            val inner = matcher.group(2)!!
-            when (tag) {
-                "quote" -> {
-                    val match = quotePattern.matcher(inner)
-                    if (match.matches()) {
-                        fold()
-                        res.add(
-                            MessageQuote(
-                                userName = match.group(1)!!,
-                                userId = match.group(2)!!.toInt(),
-                                text = parseBBCodeInternal(
-                                    match.group(3)!!
-                                        // [quote]author...\r\nQuote text\r\n[/quote]
-                                        .trim('\n', '\r')
-                                ),
-                            )
-                        )
-                    } else { // Fallback
-                        stylizeText(tag, inner, builder)
-                    }
-                }
-                else -> stylizeText(tag, inner, builder)
-            }
-        } else { // No markup found
-            builder.append(matcher.group())
-        }
-    }
-    fold()
-    return res.filterNot { it.isEmpty() }
-}
-
-private fun parseBBCodeInternal(input: String): AnnotatedString {
-    val matcher = pattern.matcher(input)
-    val builder = AnnotatedString.Builder()
-    while (matcher.find()) {
-        if (matcher.group(1) != null) {
-            stylizeText(matcher.group(1)!!, matcher.group(2)!!, builder)
-        } else {
-            builder.append(matcher.group())
-        }
-    }
-    return builder.toAnnotatedString()
-}
-
-private fun stylizeText(tag: String, inner: String, builder: AnnotatedString.Builder) {
-    when (tag) {
-        "b" -> builder.withStyle(BOLD) {
-            append(parseBBCodeInternal(inner))
-        }
-        "i" -> builder.withStyle(ITALIC) {
-            append(parseBBCodeInternal(inner))
-        }
         else -> {
-            Log.w("BB Code Parser", "Tag $tag isn't supported by primitive handler")
-            builder.append("[$tag]")
-            builder.append(parseBBCodeInternal(inner))
-            builder.append("[/$tag]")
+            debug {
+                Log.w(TAG, "Unknown/invalid tag $currentTag found near index $initialStart")
+                Log.w(TAG, input)
+            }
+            buildList(output.size + 2) {
+                // Enclose in tag
+                add(MessageText(AnnotatedString("[$currentTag]")))
+                addAll(output)
+                add(MessageText(AnnotatedString("[/$currentTag]")))
+            }
         }
     }
+
+
+
+    while (true) {
+        val match: MatchResult = pattern.find(input, startIndex = start) ?: break
+        if (match.range.first > start) { // Include text ([tag] -> recurse -> include_this_text[\tag])
+            output.add(MessageText(AnnotatedString(input.substring(start, match.range.first))))
+        }
+        when (val tag = match.groupValues[2]) {
+            "" -> {}
+            // Tag closed, stylize and leave
+            currentTag -> return stylize() to match.range.last + 1
+            // Invalid closing tag
+            // Abort, stylize and leave
+            else -> {
+                debug {
+                    Log.d(TAG, "Invalid closing tag found at indexes ${match.range}")
+                    Log.d(TAG, input)
+                }
+                return stylize() + listOf(MessageText(AnnotatedString("[/$tag]"))) to match.range.last + 1
+            }
+        }
+        when (val tag = match.groupValues[1]) {
+            "" -> {}
+            else -> {
+                output += parseBBCodeInternal(input, tag, match.range.last + 1).also {
+                    start = it.second
+                }.first
+            }
+        }
+
+        if (start >= input.length) break
+    }
+    output.add(MessageText(AnnotatedString(input.substring(start))))
+    return stylize() to input.length
+}
+
+private fun parseQuoteHeader(input: String, initialStart: Int): Triple<String, Int, Int>? {
+    val match = quotePattern.matchAt(input, index = initialStart) ?: return null
+    return Triple(
+        match.groupValues[1], match.groupValues[2].toInt(),
+        match.range.last + 1
+    )
+}
+
+private fun List<MessageData<*>>.collapseMessageTexts(): List<MessageData<*>> {
+    if (this.size < 2) return this
+        .filter { (it as? MessageText)?.text?.isNotEmpty() != false }
+        .map { (it as? MessageText)?.trim() ?: it }
+    // TD;DR accumulate MessageText until another MessageData is found, then continue with another accumulator)
+    return this.asSequence()
+        .filter { (it as? MessageText)?.text?.isNotEmpty() != false }
+        .accumulate { previous, current ->
+            if (previous is MessageText && current is MessageText) {
+                MessageText(previous.text + current.text)
+            } else {
+                yield(previous)
+                current
+            }
+        }
+        .map { (it as? MessageText)?.trim() ?: it }
+        .toList()
 }

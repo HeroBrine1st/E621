@@ -99,26 +99,24 @@ class BBCodeParserTest {
     }
 
     // I assume there should be no nested quotes
+    // UPD: now they are supported 🥳
+    // Also this test.. ehh.. tests carriage return support - because e6 API uses \r\n as newlines
     @Test
     fun testQuoteSimple() {
-        val res = parseBBCode("""
-            [quote]"name":/user/show/0 said:
-            Some text
-            [b]Some another text[/b]
-            [/quote]
-            """.trimIndent())
+        val res = parseBBCode("[quote]\"name\":/user/show/0 said:\r\nSome text\r\n[b]Some another text[/b]\r\n[/quote]")
         assertEquals(1, res.size)
 
         val quote = res[0] as MessageQuote
+        assertEquals(1, quote.data.size)
         assertEquals(
             AnnotatedString.Builder()
                 .apply {
-                    append("Some text\n")
+                    append("Some text\r\n")
                     withStyle(BOLD) {
                         append("Some another text")
                     }
                 }.toAnnotatedString(),
-            quote.text
+            (quote.data.first() as MessageText).text
         )
         assertEquals("name", quote.userName)
         assertEquals(0, quote.userId)
@@ -149,6 +147,7 @@ class BBCodeParserTest {
         )
 
         val quote = res[1] as MessageQuote
+        assertEquals(1, quote.data.size)
         assertEquals(
             AnnotatedString.Builder()
                 .apply {
@@ -157,7 +156,7 @@ class BBCodeParserTest {
                         append("Some another text")
                     }
                 }.toAnnotatedString(),
-            quote.text
+            (quote.data[0] as MessageText).text
         )
         assertEquals("name", quote.userName)
         assertEquals(0, quote.userId)

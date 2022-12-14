@@ -19,6 +19,14 @@ inline fun <T> T.debug(block: T.() -> Unit): T {
     return this
 }
 
+@OptIn(ExperimentalContracts::class)
+inline fun debug(block: () -> Unit) {
+    contract {
+        callsInPlace(block, InvocationKind.AT_MOST_ONCE)
+    }
+    if (BuildConfig.DEBUG) block()
+}
+
 val AuthorizationCredentials.credentials get() = Credentials.basic(username, password)
 
 // Google are you happy now????
