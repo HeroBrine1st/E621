@@ -22,7 +22,6 @@ import com.google.accompanist.flowlayout.FlowRow
 import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
@@ -56,7 +55,7 @@ fun PostsAppBarActions(navController: NavHostController) {
 @Composable
 fun Posts(
     searchOptions: SearchOptions,
-    isBlacklistEnabled: Boolean,
+    isAuthorized: Boolean,
     openPost: (post: Post, scrollToComments: Boolean) -> Unit,
     viewModel: PostsViewModel = viewModel(
         factory = PostsViewModel.provideFactory(
@@ -66,12 +65,10 @@ fun Posts(
         )
     )
 ) {
-    val isAuthorized = LocalPreferences.current.hasAuth()
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
 
 
     if (posts.loadState.refresh !is LoadState.NotLoading // Do not reset lazyListState
-        || viewModel.isBlacklistLoading
     ) {
         Base {
             Spacer(modifier = Modifier.height(4.dp))
@@ -87,9 +84,6 @@ fun Posts(
         endOfPagePlaceholder(posts.loadState.prepend)
         items(posts, key = { it.id }) { post ->
             if (post == null) return@items
-            val blacklisted = isBlacklistEnabled && viewModel.isHiddenByBlacklist(post)
-            LaunchedEffect(blacklisted) { viewModel.notifyPostState(blacklisted) }
-            if (blacklisted) return@items
             Post(
                 post = post,
                 isFavourite = viewModel.isFavourite(post),

@@ -63,7 +63,7 @@ fun Navigator(navController: NavHostController) {
 
             Posts(
                 searchOptions,
-                isBlacklistEnabled = preferences.blacklistEnabled,
+                preferences.hasAuth(),
                 openPost = { post, scrollToComments ->
                     navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
                     navController.currentBackStackEntry!!.savedStateHandle["query"] = searchOptions
@@ -86,7 +86,7 @@ fun Navigator(navController: NavHostController) {
             val username by remember { derivedStateOf { if (preferences.hasAuth()) preferences.auth.username else null } }
             Posts(
                 searchOptions,
-                isBlacklistEnabled = preferences.blacklistEnabled,
+                preferences.hasAuth(),
                 openPost = { post, scrollToComments ->
                     navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
                     navController.currentBackStackEntry!!.savedStateHandle["query"] =
