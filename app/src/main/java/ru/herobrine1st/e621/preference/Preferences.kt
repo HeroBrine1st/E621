@@ -2,10 +2,7 @@ package ru.herobrine1st.e621.preference
 
 
 import android.content.Context
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.remember
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import kotlinx.coroutines.flow.Flow
@@ -31,16 +28,6 @@ inline fun <T> Context.getPreferencesFlow(
 ): Flow<T> = dataStore.getPreferencesFlow(transform)
 
 fun Context.getPreferencesFlow() = dataStore.data
-
-@Composable
-fun Context.getPreferencesAsState() = dataStore.data
-    .collectAsState(initial = PreferencesSerializer.defaultValue)
-
-@Composable
-fun <T> Context.getPreferencesAsState(transform: (Preferences) -> T) =
-    remember(transform) { dataStore.data.map(transform) }
-        .collectAsState(initial = transform(PreferencesSerializer.defaultValue))
-
 
 // DataStore methods
 

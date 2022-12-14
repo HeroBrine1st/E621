@@ -8,11 +8,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.preference.getPreferencesAsState
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.PostsSearchOptions
@@ -21,8 +20,7 @@ import ru.herobrine1st.e621.util.PostsSearchOptions
 fun FavouritesAppBarActions(
     navController: NavHostController
 ) {
-    val context = LocalContext.current
-    val preferences by context.getPreferencesAsState()
+    val preferences = LocalPreferences.current
     val username by remember { derivedStateOf { if (preferences.hasAuth()) preferences.auth.username else null } }
     IconButton(onClick = {
         navController.navigate(

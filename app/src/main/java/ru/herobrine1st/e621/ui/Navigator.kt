@@ -5,11 +5,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import ru.herobrine1st.e621.preference.getPreferencesAsState
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.home.Home
 import ru.herobrine1st.e621.ui.screen.post.Post
@@ -23,9 +22,7 @@ import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable
 fun Navigator(navController: NavHostController) {
-    val context = LocalContext.current
-
-    val preferences by context.getPreferencesAsState()
+    val preferences = LocalPreferences.current
 
     NavHost(
         navController = navController,

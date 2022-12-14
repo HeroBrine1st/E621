@@ -15,10 +15,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.module.LocalExoPlayer
-import ru.herobrine1st.e621.preference.LocalPreferences
-import ru.herobrine1st.e621.preference.getPreferencesAsState
-import ru.herobrine1st.e621.preference.getPreferencesFlow
-import ru.herobrine1st.e621.preference.updatePreferences
+import ru.herobrine1st.e621.preference.*
 import ru.herobrine1st.e621.ui.MainScaffold
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
@@ -60,7 +57,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 // State
-                val preferences by context.getPreferencesAsState()
+                val preferences by context.dataStore.data.collectAsState(initial = PreferencesSerializer.defaultValue)
 
                 var showBlacklistDialog by remember { mutableStateOf(false) }
                 val scaffoldState = rememberScaffoldState()

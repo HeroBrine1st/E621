@@ -11,7 +11,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.preference.getPreferencesAsState
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
@@ -25,7 +25,7 @@ fun Settings(navController: NavController) {
     val context = LocalContext.current
 
     // State
-    val preferences by context.getPreferencesAsState()
+    val preferences = LocalPreferences.current
     var showPrivacyModeDialog by remember { mutableStateOf(false) }
     var showSafeModeDisclaimer by remember { mutableStateOf(false) }
 

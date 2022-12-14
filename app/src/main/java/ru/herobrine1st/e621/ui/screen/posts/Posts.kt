@@ -22,7 +22,7 @@ import com.google.accompanist.flowlayout.FlowRow
 import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.preference.getPreferencesAsState
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
@@ -66,7 +66,7 @@ fun Posts(
         )
     )
 ) {
-    val isAuthorized by LocalContext.current.getPreferencesAsState { it.hasAuth() }
+    val isAuthorized = LocalPreferences.current.hasAuth()
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
 
 
