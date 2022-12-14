@@ -10,8 +10,6 @@ name: Snapshot build
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
 
 jobs:
   build:
@@ -31,10 +29,10 @@ jobs:
       uses: gradle/gradle-build-action@v2
       with:
         gradle-version: wrapper
+    - name: Run tests
+      run: gradle testRobolectricManifestUnitTest
     - name: Build snapshot
-      run: |
-        # gradle test
-        gradle assembleRelease
+      run: gradle assembleRelease
     - uses: actions/cache@v3
       id: debug-key-cache
       with:

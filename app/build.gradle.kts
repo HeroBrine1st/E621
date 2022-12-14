@@ -5,7 +5,6 @@ import com.google.protobuf.gradle.generateProtoTasks
 import com.google.protobuf.gradle.protobuf
 import com.google.protobuf.gradle.protoc
 import java.io.ByteArrayOutputStream
-import java.io.FileInputStream
 import java.util.*
 
 plugins {
@@ -66,6 +65,9 @@ android {
         debug {
             applicationIdSuffix = ".test"
         }
+        create("robolectricManifest") {
+            initWith(getByName("release"))
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -109,9 +111,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
 
     // Jetpack Compose
-    implementation("androidx.compose.ui:ui:1.3.1")
+    implementation("androidx.compose.ui:ui:1.3.2")
     implementation("androidx.compose.material:material:1.3.1")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.3.1")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.3.2")
     implementation("androidx.compose.material:material-icons-extended:1.3.1")
     implementation("androidx.activity:activity-compose:1.6.1")
 
@@ -169,19 +171,19 @@ dependencies {
 
     // Tests
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.8.1")
-    testImplementation("androidx.compose.ui:ui-test-junit4:1.3.1")
-    testImplementation("org.mockito:mockito-core:4.6.1")
-    testImplementation("org.mockito:mockito-inline:4.6.1")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
+    testImplementation("org.robolectric:robolectric:4.9")
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.3.2")
+    testImplementation("org.mockito:mockito-core:4.9.0")
+    testImplementation("org.mockito:mockito-inline:4.9.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("androidx.test:core:1.5.0")
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.4")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
     androidTestImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
     kaptAndroidTest("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.3.1")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.3.1")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.3.2")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.3.2")
 }
 
 protobuf {
