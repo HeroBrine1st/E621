@@ -12,73 +12,46 @@ import ru.herobrine1st.e621.util.objectMapper
 
 @Suppress("SpellCheckingInspection")
 val samplePost = """{
-      "id": 3159688,
-      "created_at": "2022-02-05T07:30:34.513Z",
-      "updated_at": "2022-02-07T16:49:28.289Z",
+      "id": 100,
+      "created_at": "2022-02-05T00:00:00.000Z",
+      "updated_at": "2022-02-07T00:00:00.000Z",
       "file": {
-        "width": 825,
-        "height": 1075,
+        "width": 1920,
+        "height": 1080,
         "ext": "png",
         "size": 577161,
-        "md5": "cc9467233d680292d4b5a211dadbb83f",
-        "url": "https://static1.e621.net/data/cc/94/cc9467233d680292d4b5a211dadbb83f.png"
+        "md5": "redacted",
+        "url": "redacted"
       },
       "preview": {
-        "width": 115,
-        "height": 150,
-        "url": "https://static1.e621.net/data/preview/cc/94/cc9467233d680292d4b5a211dadbb83f.jpg"
+        "width": 100,
+        "height": 100,
+        "url": "redacted"
       },
       "sample": {
         "has": false,
-        "height": 1075,
-        "width": 825,
-        "url": "https://static1.e621.net/data/cc/94/cc9467233d680292d4b5a211dadbb83f.png",
+        "height": 1000,
+        "width": 1000,
+        "url": "redacted",
         "alternates": {}
       },
       "score": {
-        "up": 12,
-        "down": -1,
+        "up": 11,
+        "down": 0,
         "total": 11
       },
       "tags": {
         "general": [
-          "ambiguous_gender",
-          "angry",
-          "anthro",
-          "attack",
-          "attacked",
-          "bisection",
-          "broken",
-          "close-up",
-          "clothed",
-          "clothing",
-          "death",
-          "fight",
-          "open_mouth",
-          "scared",
-          "shocked",
-          "simple_background",
-          "stone_golem",
-          "teeth",
-          "webcomic",
-          "white_background",
-          "wide_eyed"
+          "redacted"
         ],
         "species": [
-          "human",
-          "mammal",
-          "mythological_golem",
-          "reptile",
-          "scalie"
+          "redacted"
         ],
         "character": [
-          "guardian_(twokinds)",
-          "trace_legacy"
+          "redacted"
         ],
         "copyright": [
-          "jewish_mythology",
-          "mythology",
-          "twokinds"
+          "redacted"
         ],
         "artist": [
           "conditional_dnp",
@@ -106,15 +79,9 @@ val samplePost = """{
         "deleted": false
       },
       "rating": "s",
-      "fav_count": 10,
-      "sources": [
-        "https://twokindscomic.com/images/20220204_sketch.png",
-        "https://twokinds.keenspot.com/comic/1166/",
-        "https://twitter.com/TwoKinds/status/1489811019723595776"
-      ],
-      "pools": [
-        7516
-      ],
+      "fav_count": 0,
+      "sources": [],
+      "pools": [],
       "relationships": {
         "parent_id": null,
         "has_children": false,
@@ -122,9 +89,9 @@ val samplePost = """{
         "children": []
       },
       "approver_id": null,
-      "uploader_id": 104363,
-      "description": "\"Breakable\"\r\n\r\nSketch of the 1166th page of TwoKinds.\r\n\r\n[section=Transcript]\r\nTrace: Can we break the crystal?!\r\nRoselyn: Yes, but hurry!\r\nTrace: Stoney!\r\nTrace: We need her to get out of there! Get it open!\r\nStoney:[b] Grah! [/b]\r\n????: [b]NO![/b]\r\n\r\nPage transcript provided by \"BananFisk\":/user/show/104363\r\n[/section]",
-      "comment_count": 11,
+      "uploader_id": 0,
+      "description": "redacted",
+      "comment_count": 0,
       "is_favorited": false,
       "has_notes": false,
       "duration": null
@@ -180,9 +147,9 @@ class TagProcessorTest {
         test(true, "score:10..12")
         test(true, "score:11..12")
         test(true, "score:10..11")
-        test(true, "id:3159688")
-        test(true, "id:<3159689")
-        test(true, "id:>3159687")
+        test(true, "id:100")
+        test(true, "id:<101")
+        test(true, "id:>99")
     }
 
     @Test
@@ -192,9 +159,9 @@ class TagProcessorTest {
         test(false, "score:10")
         test(false, "score:15..20")
         test(false, "score:5..10")
-        test(false, "id:3159689")
-        test(false, "id:>3159689")
-        test(false, "id:<3159687")
+        test(false, "id:101")
+        test(false, "id:>100")
+        test(false, "id:<100")
     }
 
     @Test
