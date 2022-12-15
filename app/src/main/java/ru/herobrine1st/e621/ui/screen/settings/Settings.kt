@@ -13,6 +13,7 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.updatePreferences
+import ru.herobrine1st.e621.ui.component.preferences.SettingLink
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
@@ -82,6 +83,12 @@ fun Settings(navController: NavController) {
                 }
             }
         )
+        SettingLink(
+            title = stringResource(R.string.about),
+            icon = Screen.SettingsAbout.icon
+        ) {
+            navController.navigate(Screen.SettingsAbout.route)
+        }
     }
     if (showPrivacyModeDialog) {
         AlertDialog(stringResource(R.string.privacy_mode_longdesc)) {

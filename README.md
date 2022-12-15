@@ -46,3 +46,8 @@ release builds (they use different signing keys), but you can reinstall if you w
 - [x] MP4
 - [ ] SWF - flash won't be supported neither in near nor far future (but PRs are welcome if they're
   safe in terms of vulnerabilities that Adobe Flash had)
+
+# License
+
+This application is released under GNU GPLv3 (see [LICENSE](LICENSE)).
+Some of the used libraries are released under different licenses.

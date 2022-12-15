@@ -109,4 +109,19 @@
     <string name="internal_server_error">An internal server error occurred. Try again later.</string>
     <string name="api_temporarily_unavailable">API server temporarily unavailable. Try again later.</string>
     <string name="unknown_api_error">An unknown API error occurred</string>
+    <string name="about">About</string>
+    <string name="app_description">An android client for %s.</string>
+    <string name="license_brief">"Copyright © 2022 HeroBrine1st Erquilenne
+
+This application is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+This application is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details."</string>
+    <string name="license_url" translatable="false">https://www.gnu.org/licenses/gpl-3.0.html</string>
+    <string name="license_name" translatable="false">GNU General Public License</string>
+    <string name="license_word">License</string>
+    <string name="open_in_browser">Open in browser</string>
+    <string name="non_affiliation_disclaimer">Developers of this application, and this application itself are not affiliated, associated, authorized, endorsed by, or in any way officially connected with e621.net and e926.net.</string>
+    <string name="i_understand">I understand</string>
+    <string name="explicitly_click_button">Explicitly click button if you\'ve done</string>
+    <string name="license_name_short" translatable="false">GNU GPL</string>
 </resources>

@@ -12,5 +12,6 @@ message Preferences {
   optional AuthorizationCredentials auth = 6;
   optional bool safe_mode_enabled = 7 [default = true];
   optional bool safe_mode_disclaimer_shown = 8 [default = false];
+  optional bool license_and_non_affiliation_disclaimer_shown = 9 [default = false];
 }
 

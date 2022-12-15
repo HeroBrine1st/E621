@@ -109,4 +109,16 @@
     <string name="internal_server_error">Произошла внутренняя серверная ошибка. Попробуйте ещё раз позже.</string>
     <string name="api_temporarily_unavailable">API сервер временно недоступен. Попробуйте позже.</string>
     <string name="unknown_api_error">Произошла неизвестная ошибка API</string>
+    <string name="about">О программе</string>
+    <string name="app_description">Клиент для %s.</string>
+    <string name="license_brief">"Copyright © 2022 HeroBrine1st Erquilenne
+
+Это приложение является свободным программным обеспечением: вы можете распространять и/или модифицировать его в соответствии с условиями GNU General Public License, опубликованной Free Software Foundation, либо версии 3, либо (по вашему выбору) любой поздней версии.
+
+Это приложение распространяется в надежде, что оно будет полезно, но БЕЗ КАКИХ-ЛИБО ГАРАНТИЙ; даже без подразумеваемой гарантии КОММЕРЧЕСКОЙ ПРИГОДНОСТИ или ПРИГОДНОСТИ ДЛЯ ОПРЕДЕЛЕННОЙ ЦЕЛИ. Дополнительные сведения см. в GNU General Public License."</string>
+    <string name="license_word">Лицензия</string>
+    <string name="open_in_browser">Открыть в браузере</string>
+    <string name="non_affiliation_disclaimer">Разработчики этого приложения и само это приложение не являются аффилированными, связанными, уполномоченными, одобренными или каким-либо образом официально связанными с e621.net и e926.net.</string>
+    <string name="i_understand">Понял</string>
+    <string name="explicitly_click_button">Нажмите кнопку, если вы закончили</string>
 </resources>

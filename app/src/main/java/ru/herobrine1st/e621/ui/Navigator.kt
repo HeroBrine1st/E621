@@ -17,6 +17,7 @@ import ru.herobrine1st.e621.ui.screen.post.Post
 import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
+import ru.herobrine1st.e621.ui.screen.settings.SettingsAbout
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.util.getParcelableCompat
 
@@ -134,6 +135,9 @@ fun Navigator(navController: NavHostController) {
             SettingsBlacklist {
                 navController.popBackStack()
             }
+        }
+        composable(Screen.SettingsAbout.route) {
+            SettingsAbout()
         }
     }
 }

@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.*
 import ru.herobrine1st.e621.ui.MainScaffold
+import ru.herobrine1st.e621.ui.component.legal.LicenseAndDisclaimerInitialDialogs
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
@@ -85,6 +86,13 @@ class MainActivity : ComponentActivity() {
                             }
                         },
                         onClose = { showBlacklistDialog = false })
+                LicenseAndDisclaimerInitialDialogs(hasShownBefore = preferences.licenseAndNonAffiliationDisclaimerShown) {
+                    coroutineScope.launch {
+                        context.updatePreferences {
+                            licenseAndNonAffiliationDisclaimerShown = true
+                        }
+                    }
+                }
             }
         }
     }
