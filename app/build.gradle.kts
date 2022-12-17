@@ -104,66 +104,67 @@ configurations.all {
 @Suppress("SpellCheckingInspection")
 dependencies {
     // Android core
-    implementation("androidx.core:core-ktx:1.9.0")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1")
+    implementation("androidx.core:core-ktx:1.9.0") // Apache 2.0
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1") // Apache 2.0
 
     // Jetpack Compose
-    implementation("androidx.compose.ui:ui:1.3.2")
-    implementation("androidx.compose.material:material:1.3.1")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.3.2")
-    implementation("androidx.compose.material:material-icons-extended:1.3.1")
-    implementation("androidx.activity:activity-compose:1.6.1")
+    implementation("androidx.compose.ui:ui:1.3.2") // Apache 2.0
+    implementation("androidx.compose.material:material:1.3.1") // Apache 2.0
+    // TODO make debug
+    implementation("androidx.compose.ui:ui-tooling-preview:1.3.2") // Apache 2.0
+    implementation("androidx.compose.material:material-icons-extended:1.3.1") // Apache 2.0
+    implementation("androidx.activity:activity-compose:1.6.1") // Apache 2.0
 
     // Jetpack Navigation
-    implementation("androidx.navigation:navigation-compose:2.5.3")
+    implementation("androidx.navigation:navigation-compose:2.5.3") // Apache 2.0
 
     // Jetpack Room
     val roomVersion = "2.4.3"
-    implementation("androidx.room:room-runtime:$roomVersion")
-    implementation("androidx.room:room-ktx:$roomVersion")
-    ksp("androidx.room:room-compiler:$roomVersion")
+    implementation("androidx.room:room-runtime:$roomVersion") // Apache 2.0
+    implementation("androidx.room:room-ktx:$roomVersion") // Apache 2.0
+    ksp("androidx.room:room-compiler:$roomVersion") // Not included in binary result
 
     // Jetpack Datastore
-    implementation("androidx.datastore:datastore:1.0.0")
-    implementation("com.google.protobuf:protobuf-javalite:$protobufVersion")
+    implementation("androidx.datastore:datastore:1.0.0") // Apache 2.0
+    implementation("com.google.protobuf:protobuf-javalite:$protobufVersion") // BSD 3-clause
 
     // Jetpack Paging
     val pagingVersion = "3.1.1"
-    implementation("androidx.paging:paging-runtime:$pagingVersion")
-    implementation("androidx.paging:paging-compose:1.0.0-alpha17")
+    implementation("androidx.paging:paging-runtime:$pagingVersion") // Apache 2.0
+    implementation("androidx.paging:paging-compose:1.0.0-alpha17") // Apache 2.0
 
-    // Coroutine Image Loader
+    // Coroutine Image Loader (Apache 2.0)
     val coilVersion = "1.4.0"
     implementation("io.coil-kt:coil:$coilVersion")
     implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")
 
-    // Jackson
+    // Jackson (Apache 2.0)
     val jacksonVersion = "2.14.0"
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
-    // Hilt
+    // Hilt (Apache 2.0)
     val hiltVersion = "2.44"
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
-    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion")
+    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion") // Not included in binary result
 
 
-    // G Accompanist
+    // G Accompanist (Apache 2.0)
     val accompanistVersion = "0.27.0"
     implementation("com.google.accompanist:accompanist-flowlayout:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
 
-    // Retrofit
+    // Retrofit (Apache 2.0)
     implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
 
     // Other libraries
-    implementation("com.google.android.exoplayer:exoplayer:2.18.1")
-    implementation("org.jsoup:jsoup:1.14.3")
+    implementation("com.google.android.exoplayer:exoplayer:2.18.1") // Apache 2.0
+    implementation("org.jsoup:jsoup:1.14.3") // Expat License
 
 
     // Tests

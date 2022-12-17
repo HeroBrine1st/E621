@@ -4,13 +4,10 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.OpenInBrowser
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -19,8 +16,9 @@ import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 
 @Composable
-@Preview
-fun SettingsAbout() {
+fun SettingsAbout(
+    navigateToLicense: () -> Unit
+) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {} // "padding"
         item {
@@ -82,24 +80,25 @@ fun SettingsAbout() {
                         .padding(8.dp)
                         .fillMaxWidth()
                 ) {
-                    val uriHandler = LocalUriHandler.current
-                    val licenseUrl = stringResource(R.string.license_url)
                     Text(stringResource(R.string.license_word), style = MaterialTheme.typography.h6)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(stringResource(R.string.license_brief))
                     OutlinedButton(
                         modifier = Modifier
                             .fillMaxWidth(),
-                        onClick = { uriHandler.openUri(licenseUrl) }) {
+                        onClick = navigateToLicense
+                    ) {
                         Text(stringResource(R.string.license_name))
-                        Icon(
-                            Icons.Default.OpenInBrowser,
-                            contentDescription = stringResource(R.string.open_in_browser)
-                        )
                     }
                 }
             }
         }
         item {}
     }
+}
+
+@Preview
+@Composable
+fun SettingsAbout() {
+    SettingsAbout {}
 }

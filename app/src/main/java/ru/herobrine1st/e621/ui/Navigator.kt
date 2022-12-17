@@ -19,6 +19,7 @@ import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.Settings
 import ru.herobrine1st.e621.ui.screen.settings.SettingsAbout
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
+import ru.herobrine1st.e621.ui.screen.settings.SettingsLicense
 import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable
@@ -137,7 +138,12 @@ fun Navigator(navController: NavHostController) {
             }
         }
         composable(Screen.SettingsAbout.route) {
-            SettingsAbout()
+            SettingsAbout {
+                navController.navigate(Screen.License.route)
+            }
+        }
+        composable(Screen.License.route) {
+            SettingsLicense()
         }
     }
 }
