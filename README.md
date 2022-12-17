@@ -17,7 +17,7 @@ release builds (they use different signing keys), but you can reinstall if you w
 - [x] Search posts
     * [x] Search by arbitrary tags
         * Note that tags you type are sent to server as is, so use underscores when needed. This
-          also means that you can use ``~`` (OR), ``-`` (NOT) and metatags (for
+          also means that you can use ``~`` (OR), ``-`` (NOT) and meta-tags (for
           example, ``type:png``)
     * [x] Sorting
     * [x] Search by rating
@@ -45,9 +45,29 @@ release builds (they use different signing keys), but you can reinstall if you w
 - [x] WEBM
 - [x] MP4
 - [ ] SWF - flash won't be supported neither in near nor far future (but PRs are welcome if they're
-  safe in terms of vulnerabilities that Adobe Flash had)
+  safe in terms of vulnerabilities which Adobe Flash had)
 
 # License
 
-This application is released under GNU GPLv3 (see [LICENSE](LICENSE)).
-Some of the used libraries are released under different licenses.
+This application is released under GNU GPLv3 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). The used
+libraries are released under different licenses.
+
+If you found any violation of your copyright, contact HeroBrine1st Erquilenne. See details below.
+
+# Contact
+
+To directly contact me, HeroBrine1st Erquilenne:
+
+1. Make an issue - optional, but it will speed up my answer and so highly recommended, as I don't
+   check email inbox every day.
+2. Write to project-e621-android@herobrine1st.ru - be advised that I will respond you from other
+   email address as this address is a proxy address (I'm just too lazy to set up a proper e-mail
+   server).
+
+Note that this email address is not for bugs, feature requests and anything that can be discussed
+publicly. Use Github Issues instead.
+
+P.s. (If you're curious) I use email on own domain primarily to protect from spammers: that is, I
+can easily block spam and know which site leaked my email, potentially improving my security by
+detecting leaks before they get into public, for example, when only addresses are got to spammers
+and remaining data is still being processed.
