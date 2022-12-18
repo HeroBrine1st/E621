@@ -23,6 +23,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -36,7 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
+import androidx.paging.compose.itemsIndexed
 import com.google.accompanist.flowlayout.FlowRow
 import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
@@ -101,10 +103,17 @@ fun Posts(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         endOfPagePlaceholder(posts.loadState.prepend)
-        items(posts, key = { it.id }) { post ->
-            if (post == null) return@items
+        itemsIndexed(posts, key = { _, post -> post.id }) { index, post ->
+            if (post == null) return@itemsIndexed
             Post(
                 post = post,
+                // Remove unwanted visual glitch on first post (white corners stick out a mile)
+                shape = if (index == 0)
+                    MaterialTheme.shapes.medium.copy(
+                        topStart = CornerSize(0.dp),
+                        topEnd = CornerSize(0.dp)
+                    )
+                else MaterialTheme.shapes.medium,
                 isFavourite = viewModel.isFavourite(post),
                 isAuthorized = isAuthorized,
                 onAddToFavourites = {
@@ -120,12 +129,17 @@ fun Posts(
 @Composable
 fun Post(
     post: Post,
+    shape: CornerBasedShape = MaterialTheme.shapes.medium,
     isFavourite: Boolean,
     isAuthorized: Boolean,
     onAddToFavourites: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit
 ) {
-    Card(elevation = 4.dp, modifier = Modifier.fillMaxWidth()) {
+    Card(
+        elevation = 4.dp,
+        shape = shape,
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Column(modifier = Modifier.padding(bottom = 0.dp)) {
             when {
                 post.file.type.isSupported -> PostImage(
@@ -166,14 +180,13 @@ fun Post(
                     }
                 }
             }
-            Column(
-                horizontalAlignment = Alignment.Start,
+            Divider(Modifier.padding(horizontal = 8.dp))
+            PostActionsRow(
+                post, isFavourite, isAuthorized,
                 modifier = Modifier.padding(horizontal = 8.dp),
+                onAddToFavourites
             ) {
-                Divider()
-                PostActionsRow(post, isFavourite, isAuthorized, onAddToFavourites) {
-                    openPost(true)
-                }
+                openPost(true)
             }
         }
     }

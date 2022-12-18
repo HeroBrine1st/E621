@@ -43,11 +43,12 @@ fun PostActionsRow(
     post: Post,
     isFavourite: Boolean,
     isAuthorized: Boolean,
+    modifier: Modifier = Modifier,
     onAddToFavourites: () -> Unit,
     onOpenComments: () -> Unit,
 ) {
     Row(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
