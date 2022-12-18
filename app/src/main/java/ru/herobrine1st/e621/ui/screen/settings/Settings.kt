@@ -20,7 +20,6 @@ package ru.herobrine1st.e621.ui.screen.settings
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Block
 import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.runtime.*
@@ -54,7 +53,7 @@ fun Settings(navController: NavController) {
             checked = preferences.blacklistEnabled,
             title = stringResource(R.string.setting_blacklist),
             subtitle = stringResource(R.string.setting_blacklist_subtitle),
-            icon = Icons.Default.Block,
+            icon = Screen.SettingsBlacklist.icon,
             onCheckedChange = { enabled ->
                 coroutineScope.launch {
                     context.updatePreferences {
