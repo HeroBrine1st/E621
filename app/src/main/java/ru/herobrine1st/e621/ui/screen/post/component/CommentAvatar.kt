@@ -18,17 +18,16 @@
 
 package ru.herobrine1st.e621.ui.screen.post.component
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import coil.annotation.ExperimentalCoilApi
-import coil.compose.ImagePainter
-import coil.compose.rememberImagePainter
+import androidx.compose.ui.platform.LocalContext
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
@@ -36,20 +35,30 @@ import com.google.accompanist.placeholder.material.placeholder
 import ru.herobrine1st.e621.api.model.PostReduced
 
 @Composable
-@OptIn(ExperimentalCoilApi::class)
-fun CommentAvatar(avatarPost: PostReduced?, modifier: Modifier = Modifier, placeholder: Boolean = false) {
+fun CommentAvatar(
+    avatarPost: PostReduced?,
+    modifier: Modifier = Modifier,
+    placeholder: Boolean = false
+) {
     val url = avatarPost?.previewUrl ?: avatarPost?.croppedUrl
+    var isPlaceholderActive by remember { mutableStateOf(true) }
     if (url != null) {
-        val imagePainter = rememberImagePainter(url) {
-            crossfade(true)
-            transformations(CircleCropTransformation())
-        }
-        Image(
-            painter = imagePainter,
+        AsyncImage(
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(url)
+                .crossfade(true)
+                .transformations(CircleCropTransformation()) // clip(CircleShape) is wrong (white/black zones are present)
+                .build(),
+            onSuccess = {
+                isPlaceholderActive = false
+            },
+            onError = {
+                isPlaceholderActive = false
+            },
             modifier = modifier
                 .clip(CircleShape) // For placeholder
                 .placeholder(
-                    imagePainter.state is ImagePainter.State.Loading,
+                    isPlaceholderActive,
                     highlight = PlaceholderHighlight.fade()
                 ),
             contentDescription = null

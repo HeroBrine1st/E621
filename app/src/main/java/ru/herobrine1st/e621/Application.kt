@@ -24,7 +24,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
-import coil.util.CoilUtils
+import coil.disk.DiskCache
 import dagger.hilt.android.HiltAndroidApp
 import okhttp3.OkHttpClient
 
@@ -32,13 +32,14 @@ import okhttp3.OkHttpClient
 class Application : Application(), ImageLoaderFactory {
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(applicationContext)
         .crossfade(true)
-        .okHttpClient {
-            OkHttpClient.Builder()
-                .cache(CoilUtils.createDefaultCache(applicationContext))
+        .okHttpClient { OkHttpClient() }
+        .diskCache {
+            DiskCache.Builder()
+                .directory(applicationContext.cacheDir.resolve("coilCache"))
                 .build()
         }
-        .componentRegistry {
-            add(if (Build.VERSION.SDK_INT >= 28) ImageDecoderDecoder(applicationContext) else GifDecoder())
+        .components {
+            add(if (Build.VERSION.SDK_INT >= 28) ImageDecoderDecoder.Factory() else GifDecoder.Factory())
         }
         .build()
 }

@@ -134,7 +134,7 @@ dependencies {
     implementation("androidx.paging:paging-compose:1.0.0-alpha17") // Apache 2.0
 
     // Coroutine Image Loader (Apache 2.0)
-    val coilVersion = "1.4.0"
+    val coilVersion = "2.2.2"
     implementation("io.coil-kt:coil:$coilVersion")
     implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")

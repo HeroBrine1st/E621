@@ -18,7 +18,6 @@
 
 package ru.herobrine1st.e621.ui.component.post
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
@@ -26,16 +25,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.annotation.ExperimentalCoilApi
-import coil.compose.ImagePainter.State
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
@@ -47,13 +43,14 @@ import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
 
 
 @Composable
-@OptIn(ExperimentalCoilApi::class)
 fun PostImage(
     post: Post,
     openPost: (() -> Unit)?,
     file: NormalizedFile,
-    aspectRatio: Float = file.aspectRatio
+    initialAspectRatio: Float = file.aspectRatio
 ) {
+    var isPlaceholderActive by remember { mutableStateOf(true) }
+    var aspectRatio by remember { mutableStateOf(initialAspectRatio) }
     if (aspectRatio <= 0) {
         InvalidPost(stringResource(R.string.invalid_post_server_error))
         return
@@ -65,19 +62,24 @@ fun PostImage(
     val painter = rememberImagePainter(file.urls.first())
 
     Box(contentAlignment = Alignment.TopStart) {
-
-        Image(
-            painter = painter,
-            modifier = modifier
+        AsyncImage(
+            model = file.urls.first(),
+            modifier = Modifier
+                .clickable(openPost != null) {
+                    openPost?.invoke()
+                }
                 .fillMaxWidth()
                 .aspectRatio(aspectRatio)
-                .placeholder(
-                    visible = painter.state is State.Loading,
-                    highlight = PlaceholderHighlight.fade()
-                ),
+                .placeholder(isPlaceholderActive, highlight = PlaceholderHighlight.fade()),
+            onSuccess = {
+                isPlaceholderActive = false
+                aspectRatio = it.result.drawable.run { intrinsicWidth.toFloat() / intrinsicHeight }
+            },
+            onError = {
+                isPlaceholderActive = false
+            },
             contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
-            // TODO get exact resolution and recalculate aspect ratio on load completion
-            contentScale = ContentScale.Crop // Drop 1-2 pixels (on my device)
+            contentScale = ContentScale.Fit /// // Drop 1-2 pixels (on my device)
         )
         if (post.file.type.isNotImage) OutlinedChip( // TODO
             modifier = Modifier.offset(x = 10.dp, y = 10.dp),
