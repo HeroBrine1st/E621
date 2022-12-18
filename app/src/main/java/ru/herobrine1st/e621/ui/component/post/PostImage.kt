@@ -56,11 +56,6 @@ fun PostImage(
         return
     }
 
-    val modifier = if (openPost == null) Modifier else Modifier.clickable {
-        openPost()
-    }
-    val painter = rememberImagePainter(file.urls.first())
-
     Box(contentAlignment = Alignment.TopStart) {
         AsyncImage(
             model = file.urls.first(),
