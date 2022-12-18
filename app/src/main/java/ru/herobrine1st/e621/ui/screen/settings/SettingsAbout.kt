@@ -101,9 +101,9 @@ fun SettingsAbout(
                     Text(stringResource(R.string.license_word), style = MaterialTheme.typography.h6)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(stringResource(R.string.license_brief))
-                    OutlinedButton(
+                    TextButton(
                         modifier = Modifier
-                            .fillMaxWidth(),
+                            .align(Alignment.End),
                         onClick = navigateToLicense
                     ) {
                         Text(stringResource(R.string.license_name))
