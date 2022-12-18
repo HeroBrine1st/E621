@@ -19,7 +19,6 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import android.app.Activity
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -46,7 +45,6 @@ import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.component.Base
-import ru.herobrine1st.e621.ui.component.OutlinedChip
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostImage
 import ru.herobrine1st.e621.ui.screen.Screen
@@ -127,6 +125,7 @@ fun Posts(
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Post(
     post: Post,
@@ -157,26 +156,26 @@ fun Post(
             }
             FlowRow(
                 mainAxisSpacing = 4.dp,
-                crossAxisSpacing = 4.dp,
+                crossAxisSpacing = 2.dp,
                 modifier = Modifier.padding(8.dp)
             ) {
                 var expandTags by remember { mutableStateOf(false) }
-                remember(post.tags, expandTags) {
-                    post.tags.reduced
-                        .let {
-                            if (expandTags) it
-                            else it.take(6)
-                        }
-                }.forEach {
-                    OutlinedChip {
+                val visibleTags by remember(post.tags) {
+                    derivedStateOf {
+                        post.tags.reduced
+                            .let {
+                                if (expandTags) it
+                                else it.take(6)
+                            }
+                    }
+                }
+                visibleTags.forEach {
+                    Chip(onClick = { /*TODO*/ }) {
                         Text(it, style = MaterialTheme.typography.caption)
                     }
                 }
                 if (!expandTags && post.tags.reduced.size > 6) {
-                    OutlinedChip(modifier = Modifier
-                        .clickable {
-                            expandTags = true
-                        }) {
+                    Chip(onClick = { expandTags = true }) {
                         Text("...", style = MaterialTheme.typography.caption)
                     }
                 }
@@ -184,7 +183,9 @@ fun Post(
             Divider(Modifier.padding(horizontal = 8.dp))
             PostActionsRow(
                 post, isFavourite, isAuthorized,
-                modifier = Modifier.padding(horizontal = 8.dp),
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .fillMaxWidth(),
                 onAddToFavourites
             ) {
                 openPost(true)

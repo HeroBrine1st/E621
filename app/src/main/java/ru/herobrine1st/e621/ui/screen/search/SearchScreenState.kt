@@ -29,7 +29,7 @@ import ru.herobrine1st.e621.util.getParcelableCompat
 
 class SearchScreenState(
     initialPostsSearchOptions: PostsSearchOptions,
-    openAddTagDialog: Boolean = false
+    initialCurrentlyModifiedTagIndex: Int = -1
 ) {
     val tags = initialPostsSearchOptions.tags.toMutableStateList()
     var order by mutableStateOf(initialPostsSearchOptions.order)
@@ -37,7 +37,7 @@ class SearchScreenState(
     var rating = initialPostsSearchOptions.rating.toMutableStateList()
     var favouritesOf by mutableStateOf(initialPostsSearchOptions.favouritesOf ?: "")
 
-    var openAddTagDialog by mutableStateOf(openAddTagDialog)
+    var currentlyModifiedTagIndex by mutableStateOf(initialCurrentlyModifiedTagIndex)
 
     fun makeSearchOptions(): PostsSearchOptions =
         PostsSearchOptions(tags.toList(), order, orderAscending, rating.toList(), favouritesOf
@@ -52,9 +52,9 @@ class SearchScreenState(
                         PostsSearchOptions::class.simpleName,
                         makeSearchOptions()
                     )
-                    bundle.putBoolean(
-                        SearchScreenState::openAddTagDialog.name,
-                        openAddTagDialog
+                    bundle.putInt(
+                        SearchScreenState::currentlyModifiedTagIndex.name,
+                        currentlyModifiedTagIndex
                     )
                     return@Saver bundle
                 }
@@ -62,7 +62,7 @@ class SearchScreenState(
             restore = { bundle ->
                 return@Saver SearchScreenState(
                     bundle.getParcelableCompat(PostsSearchOptions::class.simpleName)!!,
-                    bundle.getBoolean(SearchScreenState::openAddTagDialog.name)
+                    bundle.getInt(SearchScreenState::currentlyModifiedTagIndex.name)
                 )
             }
         )

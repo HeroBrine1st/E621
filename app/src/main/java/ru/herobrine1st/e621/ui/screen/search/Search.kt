@@ -22,7 +22,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -30,7 +29,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.NavigateNext
@@ -41,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.integerResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowRow
 import ru.herobrine1st.e621.R
@@ -48,9 +47,10 @@ import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.preference.LocalPreferences
+import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import ru.herobrine1st.e621.ui.component.Base
-import ru.herobrine1st.e621.ui.component.OutlinedChip
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Search(
     initialPostsSearchOptions: PostsSearchOptions,
@@ -71,32 +71,52 @@ fun Search(
         }
     }
 
-    if (state.openAddTagDialog) {
-        AddTagDialog(onClose = { state.openAddTagDialog = false }, onAdd = { state.tags.add(it) })
+    if (state.currentlyModifiedTagIndex == -2) {
+        ModifyTagDialog(
+            onClose = {
+                state.currentlyModifiedTagIndex = -1
+            },
+            onApply = {
+                state.currentlyModifiedTagIndex = -1
+                state.tags.add(it)
+            }
+        )
+    } else if (state.currentlyModifiedTagIndex != -1) {
+        ModifyTagDialog(
+            initialTag = state.tags[state.currentlyModifiedTagIndex],
+            onClose = {
+                state.currentlyModifiedTagIndex = -1
+            },
+            onDelete = {
+                state.tags.removeAt(state.currentlyModifiedTagIndex)
+                state.currentlyModifiedTagIndex = -1
+            },
+            onApply = {
+                state.tags[state.currentlyModifiedTagIndex] = it
+                state.currentlyModifiedTagIndex = -1
+            }
+        )
     }
+
 
     Base(modifier = Modifier.verticalScroll(rememberScrollState(), true)) {
         Spacer(modifier = Modifier.height(4.dp))
         SettingCard(title = stringResource(R.string.tags)) {
-            FlowRow(modifier = Modifier.fillMaxWidth()) {
-                for (tag in state.tags) {
+            FlowRow(modifier = Modifier.fillMaxWidth(), mainAxisSpacing = 4.dp) {
+                state.tags.forEachIndexed { index, tag ->
                     key(tag) {
-                        OutlinedChip(modifier = Modifier.padding(4.dp)) {
+                        Chip(
+                            onClick = {
+                                state.currentlyModifiedTagIndex = index
+                            }
+                        ) {
                             Text(tag)
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = stringResource(R.string.remove),
-                                modifier = Modifier
-                                    .size(16.dp)
-                                    .clickable { state.tags.remove(tag) }
-                                    .padding(2.dp)
-                            )
                         }
                     }
                 }
             }
             TextButton(
-                onClick = { state.openAddTagDialog = true },
+                onClick = { state.currentlyModifiedTagIndex = -2 },
                 modifier = Modifier.align(Alignment.Start)
             ) {
                 Text(stringResource(R.string.add_tag))
@@ -217,7 +237,10 @@ fun Search(
                 singleLine = true,
                 trailingIcon = {
                     IconButton(onClick = { state.favouritesOf = "" }) {
-                        Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
+                        Icon(
+                            Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear)
+                        )
                     }
                 },
                 modifier = Modifier
@@ -259,5 +282,15 @@ fun OrderSelectionList(
                     }
                 }
         }
+    }
+}
+
+@Preview
+@Composable
+fun SearchPreview() {
+    CompositionLocalProvider(LocalPreferences provides Preferences.getDefaultInstance()) {
+        Search(initialPostsSearchOptions = PostsSearchOptions.DEFAULT.copy(
+            tags = listOf("asdlkfjaskldjfasdf", "asddl;kfjaslkdjfas;", "test", "test")
+        ), onSearch = {})
     }
 }

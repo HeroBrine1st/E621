@@ -19,6 +19,17 @@
 package ru.herobrine1st.e621.util
 
 import android.os.Build
+import android.util.Log
+import androidx.compose.runtime.Composable
 import ru.herobrine1st.e621.BuildConfig
+import kotlin.math.pow
 
 val USER_AGENT = BuildConfig.USER_AGENT_TEMPLATE.format(Build.VERSION.RELEASE, BuildConfig.BUILD_TYPE)
+
+@Composable
+inline fun <T> time(name: String, block: @Composable () -> T): T {
+    val start = System.nanoTime()
+    val res = block()
+    Log.d("Timer-Own", "$name taken ${(System.nanoTime() - start)/(10.0.pow(9))} s")
+    return res
+}
