@@ -51,9 +51,9 @@ data class Alternate(
 ) : Parcelable {
     @IgnoredOnParcel
     val normalizedType by lazy {
-        urls.mapNotNull {
+        urls.firstNotNullOfOrNull {
             FileType.byExtension[it?.splitToSequence(".")?.lastOrNull()]
-        }.firstOrNull() ?: FileType.UNDEFINED
+        } ?: FileType.UNDEFINED
     }
 }
 
