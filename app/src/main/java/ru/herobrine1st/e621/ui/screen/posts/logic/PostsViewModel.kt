@@ -94,8 +94,7 @@ class PostsViewModel @AssistedInject constructor(
         // And, maybe, energy.
 
     @Composable
-    fun isFavourite(post: Post) =
-        favouritesCache.flow.collectAsState().value.getOrDefault(post.id, post.isFavorited)
+    fun collectFavouritesCacheAsState() = favouritesCache.flow.collectAsState()
 
     fun handleFavouriteButtonClick(post: Post) {
         viewModelScope.launch {

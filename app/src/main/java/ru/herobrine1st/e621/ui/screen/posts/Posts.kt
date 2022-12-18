@@ -87,6 +87,7 @@ fun Posts(
     )
 ) {
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
+    val favouritesCache by viewModel.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
 
     // Do not reset lazyListState
@@ -115,7 +116,7 @@ fun Posts(
                         topEnd = CornerSize(0.dp)
                     )
                 else MaterialTheme.shapes.medium,
-                isFavourite = viewModel.isFavourite(post),
+                isFavourite = favouritesCache.getOrDefault(post.id, post.isFavorited),
                 isAuthorized = isAuthorized,
                 onAddToFavourites = {
                     viewModel.handleFavouriteButtonClick(post)
@@ -140,7 +141,7 @@ fun Post(
         shape = shape,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Column(modifier = Modifier.padding(bottom = 0.dp)) {
+        Column {
             when {
                 post.file.type.isSupported -> PostImage(
                     post = post,
