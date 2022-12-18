@@ -100,7 +100,8 @@ fun Posts(
 
     LazyColumn(
         state = lazyListState,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
         endOfPagePlaceholder(posts.loadState.prepend)
         itemsIndexed(posts, key = { _, post -> post.id }) { index, post ->
@@ -120,7 +121,6 @@ fun Posts(
                     viewModel.handleFavouriteButtonClick(post)
                 }
             ) { scrollToComments -> openPost(post, scrollToComments) }
-            Spacer(modifier = Modifier.height(4.dp))
         }
         endOfPagePlaceholder(posts.loadState.append)
     }
