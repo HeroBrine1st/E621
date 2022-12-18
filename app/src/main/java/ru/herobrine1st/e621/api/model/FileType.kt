@@ -33,7 +33,7 @@ enum class FileType(
     GIF("gif", isImage = true, weight = 1),
     SWF("swf", isSupported = false),
     WEBM("webm", isVideo = true, weight = 2),
-    UNDEFINED("", isSupported = false);
+    UNDEFINED("undefined", isSupported = false);
 
     val isNotImage = !isImage
 
