@@ -171,12 +171,12 @@ fun Post(
                 }
                 visibleTags.forEach {
                     Chip(onClick = { /*TODO*/ }) {
-                        Text(it, style = MaterialTheme.typography.caption)
+                        Text(it)
                     }
                 }
                 if (!expandTags && post.tags.reduced.size > 6) {
                     Chip(onClick = { expandTags = true }) {
-                        Text("...", style = MaterialTheme.typography.caption)
+                        Text("...")
                     }
                 }
             }
