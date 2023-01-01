@@ -27,6 +27,9 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +47,7 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.ui.component.Base
+import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostImage
 import ru.herobrine1st.e621.ui.screen.Screen
@@ -71,6 +74,7 @@ fun PostsAppBarActions(navController: NavHostController) {
     }
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Posts(
     searchOptions: SearchOptions,
@@ -87,41 +91,70 @@ fun Posts(
     val posts = viewModel.postsFlow.collectAsLazyPagingItems()
     val favouritesCache by viewModel.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
+    val pullRefreshState = rememberPullRefreshState(
+        refreshing = posts.loadState.refresh is LoadState.Loading,
+        onRefresh = { posts.refresh() }
+    )
 
-    // Do not reset lazyListState
-    if (posts.loadState.refresh !is LoadState.NotLoading) {
-        Base {
-            Spacer(modifier = Modifier.height(4.dp))
-            CircularProgressIndicator()
-        }
-        return
-    }
 
-    LazyColumn(
-        state = lazyListState,
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
-    ) {
-        endOfPagePlaceholder(posts.loadState.prepend)
-        itemsIndexed(posts, key = { _, post -> post.id }) { index, post ->
-            if (post == null) return@itemsIndexed
-            Post(
-                post = post,
-                // Remove unwanted visual glitch on first post (white corners stick out a mile)
-                shape = if (index == 0)
-                    MaterialTheme.shapes.medium.copy(
-                        topStart = CornerSize(0.dp),
-                        topEnd = CornerSize(0.dp)
-                    )
-                else MaterialTheme.shapes.medium,
-                isFavourite = favouritesCache.getOrDefault(post.id, post.isFavorited),
-                isAuthorized = isAuthorized,
-                onAddToFavourites = {
-                    viewModel.handleFavouriteButtonClick(post)
+
+    Box(Modifier
+        .pullRefresh(pullRefreshState)
+        .fillMaxSize()) {
+        LazyColumn(
+            // Solution from https://issuetracker.google.com/issues/177245496#comment24
+            state = if (posts.itemCount == 0) rememberLazyListState() else lazyListState,
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            endOfPagePlaceholder(posts.loadState.prepend)
+
+            if (posts.itemCount == 0) {
+                item {
+                    Spacer(Modifier.height(4.dp))
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier
+                            .padding(BASE_PADDING_HORIZONTAL)
+                            .fillMaxSize()
+                    ) {
+                        when (posts.loadState.refresh) {
+                            is LoadState.NotLoading -> Text(stringResource(R.string.empty_results))
+                            is LoadState.Error -> {
+                                Text(stringResource(R.string.unknown_error))
+                            }
+                            LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
+                        }
+                    }
                 }
-            ) { scrollToComments -> openPost(post, scrollToComments) }
+            }
+            itemsIndexed(posts, key = { _, post -> post.id }) { index, post ->
+                if (post == null) return@itemsIndexed
+                Post(
+                    post = post,
+                    // Remove unwanted visual glitch on first post (white corners stick out a mile)
+                    shape = if (index == 0)
+                        MaterialTheme.shapes.medium.copy(
+                            topStart = CornerSize(0.dp),
+                            topEnd = CornerSize(0.dp)
+                        )
+                    else MaterialTheme.shapes.medium,
+                    isFavourite = favouritesCache.getOrDefault(post.id, post.isFavorited),
+                    isAuthorized = isAuthorized,
+                    onAddToFavourites = {
+                        viewModel.handleFavouriteButtonClick(post)
+                    }
+                ) { scrollToComments -> openPost(post, scrollToComments) }
+            }
+            endOfPagePlaceholder(posts.loadState.append)
         }
-        endOfPagePlaceholder(posts.loadState.append)
+        // FIXME indicator is shown for a moment after navigating back
+        // Related: https://issuetracker.google.com/issues/177245496
+        PullRefreshIndicator(
+            refreshing = posts.loadState.refresh is LoadState.Loading,
+            state = pullRefreshState,
+            modifier = Modifier.align(Alignment.TopCenter)
+        )
     }
 }
 

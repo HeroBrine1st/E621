@@ -126,4 +126,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="i_understand">I understand</string>
     <string name="explicitly_click_button">Explicitly click button if you\'ve done</string>
     <string name="license_name_short" translatable="false">GNU GPL</string>
+    <string name="empty_results">Wow, such empty</string>
 </resources>

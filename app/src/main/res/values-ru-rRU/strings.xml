@@ -123,4 +123,5 @@
     <string name="non_affiliation_disclaimer">Разработчики этого приложения и само это приложение не являются аффилированными, связанными, уполномоченными, одобренными или каким-либо образом официально связанными с e621.net и e926.net.</string>
     <string name="i_understand">Понял</string>
     <string name="explicitly_click_button">Нажмите кнопку, если вы закончили</string>
+    <string name="empty_results">Вау, так пусто</string>
 </resources>
