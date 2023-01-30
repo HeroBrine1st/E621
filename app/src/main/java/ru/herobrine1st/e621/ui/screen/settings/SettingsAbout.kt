@@ -35,7 +35,8 @@ import ru.herobrine1st.e621.R
 
 @Composable
 fun SettingsAbout(
-    navigateToLicense: () -> Unit
+    navigateToLicense: () -> Unit,
+    navigateToOssLicenses: () -> Unit,
 ) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         item {} // "padding"
@@ -101,12 +102,18 @@ fun SettingsAbout(
                     Text(stringResource(R.string.license_word), style = MaterialTheme.typography.h6)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(stringResource(R.string.license_brief))
-                    TextButton(
-                        modifier = Modifier
-                            .align(Alignment.End),
-                        onClick = navigateToLicense
+                    Row(
+                        horizontalArrangement = Arrangement.End,
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(stringResource(R.string.license_name))
+                        TextButton(onClick = navigateToOssLicenses) {
+                            Text(stringResource(R.string.oss_licenses))
+                        }
+                        TextButton(
+                            onClick = navigateToLicense
+                        ) {
+                            Text(stringResource(R.string.license_name))
+                        }
                     }
                 }
             }
@@ -118,5 +125,5 @@ fun SettingsAbout(
 @Preview
 @Composable
 fun SettingsAbout() {
-    SettingsAbout {}
+    SettingsAbout({},{})
 }
