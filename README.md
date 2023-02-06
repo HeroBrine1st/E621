@@ -39,6 +39,7 @@ read-only and has some harmless bugs.
       possible without any difficulty... I think)
     - Also I do not recommend to use it without account because of API which may not send some
       fields on it's own, although it is rarely (but stably :/) observed even with account.
+ - [x] Blacklisting
     - [ ] Fancy UI to configure blacklist
     - [x] Support for extended syntax (still incubating)
 - [ ] Hiding posts at the click of button
