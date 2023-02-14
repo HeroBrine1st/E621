@@ -16,16 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.screen.posts
+package ru.herobrine1st.e621.ui.screen.posts.component
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 
 @Composable
-fun InvalidPost(text: String) {
-    Box(contentAlignment = Alignment.TopCenter) {
+fun InvalidPost(text: String, modifier: Modifier = Modifier) {
+    Box(contentAlignment = Alignment.TopCenter, modifier = modifier) {
         Text(text)
     }
 }

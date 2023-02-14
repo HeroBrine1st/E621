@@ -81,7 +81,7 @@ import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
-import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
+import ru.herobrine1st.e621.ui.screen.posts.component.InvalidPost
 import ru.herobrine1st.e621.util.LimitHeightShape
 import java.util.*
 import kotlin.math.roundToInt

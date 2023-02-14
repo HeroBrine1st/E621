@@ -37,7 +37,7 @@ import com.google.accompanist.placeholder.material.placeholder
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
+import ru.herobrine1st.e621.ui.screen.posts.component.InvalidPost
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -46,6 +46,7 @@ fun PostImage(
     post: Post,
     openPost: (() -> Unit)?,
     file: NormalizedFile,
+    modifier: Modifier = Modifier,
     initialAspectRatio: Float = file.aspectRatio
 ) {
     var isPlaceholderActive by remember { mutableStateOf(true) }
@@ -55,7 +56,7 @@ fun PostImage(
         return
     }
 
-    Box(contentAlignment = Alignment.TopStart) {
+    Box(contentAlignment = Alignment.TopStart, modifier = modifier) {
         AsyncImage(
             model = file.urls.first(),
             modifier = Modifier
