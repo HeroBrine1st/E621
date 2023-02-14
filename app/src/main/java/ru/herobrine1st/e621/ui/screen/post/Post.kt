@@ -197,6 +197,7 @@ fun Post(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 state = commentsLazyListState,
                 modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = isExpanded
             ) {
                 item {
                     TopAppBar(backgroundColor = MaterialTheme.colors.surface,
