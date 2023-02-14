@@ -45,6 +45,8 @@ fun RenderBB(text: String, modifier: Modifier = Modifier) {
 
 @Composable
 fun RenderBB(data: List<MessageData<*>>, modifier: Modifier = Modifier) {
+    // Column is used by:
+    // post screen - in subcomposelayout
     Column(modifier) {
         data.forEach {
             RenderBB(it)

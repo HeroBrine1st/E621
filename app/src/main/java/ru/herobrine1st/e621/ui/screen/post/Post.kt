@@ -23,8 +23,9 @@ import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
-import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -37,17 +38,22 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -63,8 +69,10 @@ import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostReduced
+import ru.herobrine1st.e621.api.parseBBCode
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
+import ru.herobrine1st.e621.ui.component.RenderBB
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostImage
 import ru.herobrine1st.e621.ui.component.post.PostVideo
@@ -74,7 +82,9 @@ import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
 import ru.herobrine1st.e621.ui.screen.posts.InvalidPost
+import ru.herobrine1st.e621.util.LimitHeightShape
 import java.util.*
+import kotlin.math.roundToInt
 
 private const val TAG = "Post Screen"
 
@@ -98,6 +108,7 @@ fun Post(
     val post = viewModel.post
     val wikiState = viewModel.wikiState
     val preferences = LocalPreferences.current
+    val density = LocalDensity.current
 
     val coroutineScope = rememberCoroutineScope()
     val commentsLazyListState = rememberLazyListState()
@@ -300,6 +311,92 @@ fun Post(
                             .fillMaxWidth()
                             .padding(horizontal = BASE_PADDING_HORIZONTAL)
                     )
+                }
+                item("description") {
+                    Card(
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp, vertical = 2.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(8.dp)
+                                .fillMaxWidth()
+                        ) {
+                            Text(
+                                stringResource(R.string.description),
+                                style = MaterialTheme.typography.h6
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val fraction = 0.4f
+                            val collapsedHeight = with(density) {
+                                this@BoxWithConstraints.maxHeight.toPx() * fraction
+                            }.roundToInt()
+                            var expanded by remember { mutableStateOf(false) }
+                            val parsed = remember(post) { parseBBCode(post.description) }
+
+                            // Show button only when height limit exceeded
+                            // TODO animation
+                            // TODO extract to composable function (and support more layouts in primary component)
+                            // TODO gradient at the end (when collapsed)
+                            // TODO visually connect description to image and add elevation only at bottom
+                            // (it should look great according to my imagination)
+                            SubcomposeLayout { constraints ->
+                                val element = subcompose(0) {
+                                    RenderBB(parsed)
+                                }.also {
+                                    assert(it.size == 1) { "RenderBB emits zero or more than 1 layouts" }
+                                }[0].measure(constraints)
+
+                                val placeables = mutableListOf<Placeable>()
+                                if (element.measuredHeight > collapsedHeight) {
+                                    placeables += subcompose(1) {
+                                        TextButton(
+                                            onClick = { expanded = !expanded },
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
+                                            Icon(
+                                                Icons.Default.ExpandMore, null, modifier = Modifier
+                                                    .padding(start = 4.dp, end = 12.dp)
+                                                    .rotate(rotation)
+                                            )
+                                            Crossfade(expanded) { state ->
+                                                Text(
+                                                    stringResource(if (!state) R.string.expand else R.string.collapse),
+                                                    modifier = Modifier.weight(1f)
+                                                )
+                                            }
+                                            Box(Modifier.weight(1f))
+                                        }
+                                    }.map { it.measure(constraints) }
+
+                                }
+
+                                val totalHeight =
+                                    (if (expanded) element.height else collapsedHeight) +
+                                            placeables.sumOf { it.height }
+                                layout(constraints.maxWidth, totalHeight) {
+                                    var cumulativeHeight = 0
+                                    if (expanded) {
+                                        element.placeRelative(0, cumulativeHeight)
+                                        cumulativeHeight += element.height
+                                    } else {
+                                        element.placeRelativeWithLayer(0, cumulativeHeight) {
+                                            shape = LimitHeightShape(collapsedHeight.toFloat())
+                                            clip = true
+                                        }
+                                        cumulativeHeight += collapsedHeight
+                                    }
+                                    placeables.forEach {
+                                        it.placeRelative(0, cumulativeHeight)
+                                        cumulativeHeight += it.height
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
                 // Move tags to another screen?
                 tags(post, searchOptions, onModificationClick, onWikiClick = {

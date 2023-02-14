@@ -125,4 +125,5 @@
     <string name="explicitly_click_button">Нажмите кнопку, если вы закончили</string>
     <string name="empty_results">Ого, так пусто</string>
     <string name="oss_licenses">Лицензии СПО</string>
+    <string name="description">Описание</string>
 </resources>
