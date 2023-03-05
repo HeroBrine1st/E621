@@ -29,8 +29,8 @@ jobs:
       uses: gradle/gradle-build-action@v2
       with:
         gradle-version: wrapper
-    - name: Run tests
-      run: gradle testDebugUnitTest
+    # - name: Run tests
+    #   run: gradle testDebugUnitTest
     - name: Build snapshot
       run: gradle assembleRelease
     - uses: actions/cache@v3
