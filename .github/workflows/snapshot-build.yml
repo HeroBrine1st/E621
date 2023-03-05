@@ -30,9 +30,9 @@ jobs:
       with:
         gradle-version: wrapper
     - name: Run tests
-      run: gradle testDebugUnitTest
+      run: ./gradlew testDebugUnitTest
     - name: Build snapshot
-      run: gradle assembleRelease
+      run: ./gradlew assembleRelease
     - uses: actions/cache@v3
       id: debug-key-cache
       with:
