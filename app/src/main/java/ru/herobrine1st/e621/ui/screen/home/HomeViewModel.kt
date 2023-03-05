@@ -146,7 +146,10 @@ class HomeViewModel @Inject constructor(
 
             503 -> LoginState.API_TEMPORARILY_UNAVAILABLE // Likely DDoS protection, but not always
             in 500..599 -> LoginState.INTERNAL_SERVER_ERROR
-            else -> LoginState.UNKNOWN_API_ERROR
+            else -> {
+                Log.w(TAG, "Unknown API error occurred while authenticating (${res.code()} ${res.message()})")
+                LoginState.UNKNOWN_API_ERROR
+            }
         }
     }
 
@@ -172,7 +175,7 @@ class HomeViewModel @Inject constructor(
         LOADING(false),
         IO_ERROR(false),
         INTERNAL_SERVER_ERROR(false),
-        UNKNOWN_API_ERROR(true),
+        UNKNOWN_API_ERROR(false),
         API_TEMPORARILY_UNAVAILABLE(false),
         NO_AUTH(true),
         AUTHORIZED(false)

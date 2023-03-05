@@ -32,6 +32,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -92,7 +93,7 @@ fun Home(
                             Text(stringResource(R.string.favourites))
                         }
                     }
-                    LoginState.NO_AUTH, LoginState.UNKNOWN_API_ERROR -> AuthorizationMenu { u, p, cb ->
+                    LoginState.NO_AUTH -> AuthorizationMenu { u, p, cb ->
                         viewModel.login(u, p, cb)
                     }
                     LoginState.IO_ERROR -> {
@@ -111,6 +112,21 @@ fun Home(
                         Text(stringResource(R.string.api_temporarily_unavailable))
                         Button(onClick = { viewModel.checkAuthorization() }) {
                             Text(stringResource(R.string.retry))
+                        }
+                    }
+                    LoginState.UNKNOWN_API_ERROR -> {
+                        Text(stringResource(R.string.unknown_api_error))
+                        Row {
+                            Button(onClick = { viewModel.checkAuthorization() }) {
+                                Text(stringResource(R.string.retry))
+                            }
+                            Spacer(Modifier.size(8.dp))
+                            Button(
+                                onClick = { viewModel.logout() },
+                                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+                            ) {
+                                Text(stringResource(R.string.login_logout))
+                            }
                         }
                     }
                 }
