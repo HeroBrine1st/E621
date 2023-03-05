@@ -64,7 +64,7 @@ fun ModifyTagDialog(
             }
         }
         TextButton(onClick = { onApply(text) }) {
-            Text(stringResource(R.string.add))
+            Text(stringResource(if(initialTag == null) R.string.add else R.string.apply))
         }
     }, onDismissRequest = onClose) {
         OutlinedTextField(

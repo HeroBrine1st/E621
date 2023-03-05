@@ -37,6 +37,9 @@ class SearchScreenState(
     var rating = initialPostsSearchOptions.rating.toMutableStateList()
     var favouritesOf by mutableStateOf(initialPostsSearchOptions.favouritesOf ?: "")
 
+    // -2 = add new tag
+    // -1 = idle
+    // anything else = edit tag
     var currentlyModifiedTagIndex by mutableStateOf(initialCurrentlyModifiedTagIndex)
 
     fun makeSearchOptions(): PostsSearchOptions =
