@@ -18,6 +18,7 @@
 
 package ru.herobrine1st.e621.ui.screen.settings
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explicit
@@ -26,7 +27,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.updatePreferences
@@ -36,6 +39,7 @@ import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
 import ru.herobrine1st.e621.ui.screen.Screen
+import ru.herobrine1st.e621.util.restart
 
 @Composable
 fun Settings(navController: NavController) {
@@ -87,15 +91,13 @@ fun Settings(navController: NavController) {
             subtitle = stringResource(R.string.settings_safe_mode_shortdesc),
             icon = Icons.Default.Explicit,
             onCheckedChange = { enabled: Boolean ->
-                if (enabled) coroutineScope.launch {
-                    context.updatePreferences {
-                        safeModeEnabled = true
-                    }
-                }
-                else if (!preferences.safeModeDisclaimerShown) showSafeModeDisclaimer = true
+                if (!enabled && !preferences.safeModeDisclaimerShown) showSafeModeDisclaimer = true
                 else coroutineScope.launch {
                     context.updatePreferences {
-                        safeModeEnabled = false
+                        safeModeEnabled = enabled
+                    }
+                    withContext(Dispatchers.Main.immediate) {
+                        (context as Activity).restart()
                     }
                 }
             }
@@ -125,6 +127,9 @@ fun Settings(navController: NavController) {
                     context.updatePreferences {
                         safeModeEnabled = false
                         safeModeDisclaimerShown = true
+                    }
+                    withContext(Dispatchers.Main.immediate) {
+                        (context as Activity).restart()
                     }
                 }
             }, onDismissRequest = {

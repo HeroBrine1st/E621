@@ -18,11 +18,13 @@
 
 package ru.herobrine1st.e621.util
 
+import android.app.Activity
 import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.Composable
 import ru.herobrine1st.e621.BuildConfig
 import kotlin.math.pow
+
 
 val USER_AGENT = BuildConfig.USER_AGENT_TEMPLATE.format(Build.VERSION.RELEASE, BuildConfig.BUILD_TYPE)
 
@@ -30,6 +32,12 @@ val USER_AGENT = BuildConfig.USER_AGENT_TEMPLATE.format(Build.VERSION.RELEASE, B
 inline fun <T> time(name: String, block: @Composable () -> T): T {
     val start = System.nanoTime()
     val res = block()
-    Log.d("Timer-Own", "$name taken ${(System.nanoTime() - start)/(10.0.pow(9))} s")
+    Log.d("Timer-Own", "$name taken ${(System.nanoTime() - start) / (10.0.pow(9))} s")
     return res
+}
+
+fun Activity.restart() {
+    val intent = intent
+    finish()
+    startActivity(intent)
 }

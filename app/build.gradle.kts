@@ -1,4 +1,4 @@
-@file:Suppress("SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection", "UnstableApiUsage")
 
 import com.android.build.api.dsl.VariantDimension
 import com.google.protobuf.gradle.generateProtoTasks
@@ -47,8 +47,10 @@ android {
         resValue("string", "deep_link_host", "e621.net")
         buildConfigField("int", "PAGER_PAGE_SIZE", "500")
         stringBuildConfigField("DATABASE_NAME", "DATABASE")
-        stringBuildConfigField( "API_BASE_URL", "https://e621.net")
-        stringBuildConfigField( "DEEP_LINK_BASE_URL", "https://e621.net")
+        stringBuildConfigField("API_BASE_URL", "https://e621.net")
+        stringBuildConfigField("SAFE_API_BASE_URL", "https://e926.net")
+        stringBuildConfigField("DEEP_LINK_BASE_URL", "https://e621.net")
+        // TODO DEEP_LINK_SAFE_BASE_URL
         stringBuildConfigField(
             "USER_AGENT_TEMPLATE",
             "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) " +
@@ -101,7 +103,7 @@ configurations.all {
     resolutionStrategy {
         force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
         force("androidx.appcompat:appcompat:1.6.0") // Fix class duplicates
-        force(" com.google.android.gms:play-services-basement:18.0.2") // "Fix" vulnerability
+        force("com.google.android.gms:play-services-basement:18.0.2") // "Fix" vulnerability
     }
 }
 @Suppress("SpellCheckingInspection")

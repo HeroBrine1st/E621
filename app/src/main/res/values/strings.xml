@@ -99,7 +99,7 @@
     <string name="message_text">Text</string>
     <string name="unknown_error">Unknown error occurred</string>
     <string name="retry">Retry</string>
-    <string name="settings_safe_mode">Safe mode</string>
+    <string name="settings_safe_mode">Safe mode (app will restart)</string>
     <string name="settings_safe_mode_shortdesc">Hide explicit content from search results</string>
     <string name="disclaimer">Disclaimer</string>
     <string name="disclaimer_agree">I agree</string>

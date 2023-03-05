@@ -26,6 +26,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ActivityRetainedScoped
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -35,6 +37,7 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.net.AuthorizationInterceptor
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.net.UserAgentInterceptor
+import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.util.USER_AGENT
 import ru.herobrine1st.e621.util.objectMapper
 import java.io.File
@@ -68,9 +71,16 @@ class APIModule {
 
     @Provides
     @ActivityRetainedScoped
-    fun provideRetrofit(@APIHttpClient okHttpClient: OkHttpClient): Retrofit =
+    fun provideRetrofit(
+        @APIHttpClient okHttpClient: OkHttpClient,
+        @ApplicationContext context: Context
+    ): Retrofit =
         Retrofit.Builder()
-            .baseUrl(BuildConfig.API_BASE_URL)
+            .baseUrl(
+                if (runBlocking { context.getPreferencesFlow { it.safeModeEnabled }.first() })
+                    BuildConfig.SAFE_API_BASE_URL
+                else BuildConfig.API_BASE_URL
+            )
             .addConverterFactory(JacksonConverterFactory.create(objectMapper))
             .client(okHttpClient)
             .build()
