@@ -18,11 +18,18 @@
 
 package ru.herobrine1st.e621.ui.component
 
+
+import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material.Button
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.util.LimitHeightShape
 
 /**
@@ -38,7 +45,6 @@ import ru.herobrine1st.e621.util.LimitHeightShape
  * @param button collapse/expand button at the bottom of this layout. Composed lazily - this
  * parameter is unused if height of [content] if less that [collapsedHeight].
  */
-// TODO animation
 // TODO gradient
 @Composable
 fun CollapsibleColumn(
@@ -49,6 +55,8 @@ fun CollapsibleColumn(
 ) {
     val density = LocalDensity.current
     val collapsedHeightPx = with(density) { collapsedHeight.roundToPx() }
+    val heightAnimatable = remember { Animatable(0f) }
+    val coroutineScope = rememberCoroutineScope()
     SubcomposeLayout { constraints ->
         val contentMeasured = subcompose(CollapsibleColumnSlot.CONTENT, content).map {
             it.measure(constraints)
@@ -62,22 +70,30 @@ fun CollapsibleColumn(
             }.map { it.measure(constraints) }
         } else emptyList()
 
-        val totalHeight =
-            (if (state.expanded) contentHeight
-            else contentHeight.coerceAtMost(collapsedHeightPx)) +
-                    buttonMeasured.sumOf { it.height }
+        val totalHeight = heightAnimatable.value.toInt() + buttonMeasured.sumOf { it.height }
+        if (heightAnimatable.lowerBound == null) {
+            heightAnimatable.updateBounds(
+                contentHeight.coerceAtMost(collapsedHeightPx).toFloat(),
+                contentHeight.toFloat()
+            )
+        }
+        coroutineScope.launch {
+            heightAnimatable.animateTo((if(state.expanded) contentHeight else contentHeight.coerceAtMost(collapsedHeightPx)).toFloat())
+        }
+
         layout(constraints.maxWidth, totalHeight) {
             var cumulativeHeight = 0
+            val currentHeight = heightAnimatable.value.toInt()
             for (placeable in contentMeasured) {
-                if (state.expanded || cumulativeHeight + placeable.height < collapsedHeightPx) {
+                if (cumulativeHeight + placeable.height < currentHeight) {
                     placeable.placeRelative(0, cumulativeHeight)
                     cumulativeHeight += placeable.height
                 } else {
                     placeable.placeRelativeWithLayer(0, cumulativeHeight) {
-                        shape = LimitHeightShape((collapsedHeightPx - cumulativeHeight).toFloat())
+                        shape = LimitHeightShape((currentHeight - cumulativeHeight).toFloat())
                         clip = true
                     }
-                    cumulativeHeight = collapsedHeightPx
+                    cumulativeHeight = currentHeight
                     break
                 }
             }
@@ -92,6 +108,18 @@ fun CollapsibleColumn(
 @Composable
 fun rememberCollapsibleColumnState(expandedInitial: Boolean = false) = remember {
     CollapsibleColumnState(expandedInitial)
+}
+
+@Preview
+@Composable
+private fun Preview() {
+    CollapsibleColumn(collapsedHeight = 16.dp, button = { expanded, onClick ->
+        Button(onClick = onClick) {
+            Text("Toggle $expanded")
+        }
+    }) {
+        Text("123\n".repeat(16))
+    }
 }
 
 class CollapsibleColumnState(
