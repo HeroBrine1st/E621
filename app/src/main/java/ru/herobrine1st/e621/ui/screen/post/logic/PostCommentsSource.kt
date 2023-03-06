@@ -22,6 +22,7 @@ import android.util.Log
 import androidx.compose.material.SnackbarDuration
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import com.fasterxml.jackson.core.JacksonException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
@@ -31,6 +32,7 @@ import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.parseComments
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.JacksonExceptionHandler
 import java.io.IOException
 import kotlin.math.ceil
 import kotlin.properties.Delegates
@@ -38,6 +40,7 @@ import kotlin.properties.Delegates
 class PostCommentsSource(
     private val api: API,
     private val snackbar: SnackbarAdapter,
+    private val jacksonExceptionHandler: JacksonExceptionHandler,
     private val postId: Int
 ) : PagingSource<Int, Pair<CommentBB, PostReduced?>>() {
     // userId to post
@@ -83,6 +86,9 @@ class PostCommentsSource(
                 prevKey = if (page == firstPage) null else page + 1,
                 nextKey = if (page == 1) null else page - 1,
             )
+        } catch (e: JacksonException) {
+            jacksonExceptionHandler.handleDeserializationError(e)
+            LoadResult.Error(e)
         } catch (e: IOException) {
             Log.e("PostCommentsSource", "Unable to load comments", e)
             snackbar.enqueueMessage(

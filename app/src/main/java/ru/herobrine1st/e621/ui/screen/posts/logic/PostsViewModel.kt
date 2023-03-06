@@ -46,6 +46,7 @@ import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
+import ru.herobrine1st.e621.util.JacksonExceptionHandler
 import java.io.IOException
 import java.util.function.Predicate
 
@@ -53,6 +54,7 @@ class PostsViewModel @AssistedInject constructor(
     private val api: API,
     private val snackbar: SnackbarAdapter,
     private val favouritesCache: FavouritesCache,
+    private val jacksonExceptionHandler: JacksonExceptionHandler,
     @ApplicationContext applicationContext: Context,
     @Assisted private val searchOptions: SearchOptions,
     blacklistRepository: BlacklistRepository,
@@ -63,7 +65,7 @@ class PostsViewModel @AssistedInject constructor(
             initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
         )
     ) {
-        PostsSource(api, snackbar, searchOptions)
+        PostsSource(api, snackbar, jacksonExceptionHandler, searchOptions)
     }
 
     private val blacklistPredicateFlow =

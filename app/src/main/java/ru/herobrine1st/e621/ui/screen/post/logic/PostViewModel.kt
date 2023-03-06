@@ -30,6 +30,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
+import com.fasterxml.jackson.core.JacksonException
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import dagger.assisted.Assisted
@@ -51,6 +52,7 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.JacksonExceptionHandler
 import java.io.IOException
 
 class PostViewModel @AssistedInject constructor(
@@ -58,6 +60,7 @@ class PostViewModel @AssistedInject constructor(
     val api: API,
     val snackbar: SnackbarAdapter,
     private val exoPlayer: ExoPlayer,
+    private val jacksonExceptionHandler: JacksonExceptionHandler,
     @Assisted postId: Int,
     @Assisted initialPost: Post?
 ) : ViewModel() {
@@ -79,7 +82,7 @@ class PostViewModel @AssistedInject constructor(
             initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
         )
     ) {
-        PostCommentsSource(api, snackbar, postId)
+        PostCommentsSource(api, snackbar, jacksonExceptionHandler, postId)
     }
 
     val commentsFlow = pager.flow.cachedIn(viewModelScope)
@@ -92,12 +95,14 @@ class PostViewModel @AssistedInject constructor(
             if (initialPost?.isFavorited != false || !isPrivacyModeEnabled) {
                 try {
                     post = withContext(Dispatchers.IO) {
-                         api.getPost(id).await().post
+                        api.getPost(id).await().post
                     }
                     isLoadingPost = false
                     setMediaItem()
                     // Maybe reload ExoPlayer if old object contains invalid URL?
                     // exoPlayer.playbackState may help with that
+                } catch (e: JacksonException) {
+                    jacksonExceptionHandler.handleDeserializationError(e)
                 } catch (e: IOException) {
                     Log.e(TAG, "Unable to get post $id", e)
                     snackbar.enqueueMessage(

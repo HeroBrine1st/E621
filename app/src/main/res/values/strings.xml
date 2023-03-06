@@ -129,4 +129,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="empty_results">Wow, such empty</string>
     <string name="oss_licenses">Open Source Licenses</string>
     <string name="description">Description</string>
+    <string name="jackson_deserialization_error">Cannot deserialize response</string>
 </resources>
