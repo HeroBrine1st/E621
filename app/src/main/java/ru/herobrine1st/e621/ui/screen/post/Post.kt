@@ -274,6 +274,7 @@ fun Post(
                                     onClick = onClick,
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
+                                    // TODO expose animation state from CollapsibleColumn and use it here
                                     val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
                                     Icon(
                                         Icons.Default.ExpandMore, null, modifier = Modifier
