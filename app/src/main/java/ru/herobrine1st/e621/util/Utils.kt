@@ -33,3 +33,4 @@ inline fun <T> time(name: String, block: @Composable () -> T): T {
     Log.d("Timer-Own", "$name taken ${(System.nanoTime() - start)/(10.0.pow(9))} s")
     return res
 }
+

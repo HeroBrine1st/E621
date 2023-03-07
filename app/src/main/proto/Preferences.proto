@@ -2,6 +2,7 @@ syntax = "proto2";
 package ru.herobrine1st.e621.preference.proto;
 
 import "AuthorizationCredentials.proto";
+import "Proxy.proto";
 
 message Preferences {
   optional bool blacklist_enabled = 1 [default = true];
@@ -13,5 +14,6 @@ message Preferences {
   optional bool safe_mode_enabled = 7 [default = true];
   optional bool safe_mode_disclaimer_shown = 8 [default = false];
   optional bool license_and_non_affiliation_disclaimer_shown = 9 [default = false];
+  optional Proxy proxy = 10;
 }
 

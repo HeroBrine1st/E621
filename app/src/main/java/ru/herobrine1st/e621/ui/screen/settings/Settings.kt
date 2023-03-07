@@ -18,9 +18,11 @@
 
 package ru.herobrine1st.e621.ui.screen.settings
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explicit
+import androidx.compose.material.icons.filled.Public
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +38,8 @@ import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
 import ru.herobrine1st.e621.ui.screen.Screen
+import ru.herobrine1st.e621.ui.screen.settings.component.ProxyDialog
+import ru.herobrine1st.e621.util.restart
 
 @Composable
 fun Settings(navController: NavController) {
@@ -46,6 +50,7 @@ fun Settings(navController: NavController) {
     val preferences = LocalPreferences.current
     var showPrivacyModeDialog by remember { mutableStateOf(false) }
     var showSafeModeDisclaimer by remember { mutableStateOf(false) }
+    var showProxySettingsDialog by remember { mutableStateOf(false) }
 
     // Composition
     Column {
@@ -95,6 +100,32 @@ fun Settings(navController: NavController) {
                 }
             }
         )
+
+        SettingLinkWithSwitch(
+            checked = preferences.hasProxy() && preferences.proxy.enabled,
+            title = stringResource(
+                R.string.proxy_server
+            ),
+            subtitle = if (preferences.hasProxy()) with(preferences.proxy) {
+                "${type.toString().lowercase()}://$hostname:$port"
+            } else "",
+            icon = Icons.Default.Public,
+            onCheckedChange = {
+                if (!preferences.hasProxy() && it) showProxySettingsDialog = true
+                else coroutineScope.launch {
+                    context.updatePreferences {
+                        proxy = proxy.toBuilder().apply {
+                            enabled = it
+                        }.build()
+                    }
+                    (context as Activity).restart()
+                }
+            },
+            onClick = {
+                showProxySettingsDialog = true
+            }
+        )
+
         SettingLink(
             title = stringResource(R.string.about),
             icon = Screen.SettingsAbout.icon
@@ -126,5 +157,18 @@ fun Settings(navController: NavController) {
                 showSafeModeDisclaimer = false
             }
         )
-    }
+    } else if (showProxySettingsDialog) ProxyDialog(
+        // it returns default instance if not hasProxy()
+        getInitialProxy = { preferences.proxy },
+        onClose = { showProxySettingsDialog = false },
+        onApply = { proxy_ ->
+            showProxySettingsDialog = false
+            coroutineScope.launch {
+                context.updatePreferences {
+                    proxy = proxy_
+                }
+                (context as Activity).restart()
+            }
+        }
+    )
 }
