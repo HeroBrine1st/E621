@@ -2,10 +2,13 @@
 
 # E621
 
-Android client for e926.net and e621.net
+Android client for e621.net
 
 This project is a work in progress. It may contain bugs, slow code or even features. Use at your own
 risk, but it is harmless as this client is mostly read-only :-)
+
+e926 is also supported, but there's no switch in settings, i.e. rebuild required, although you can
+decompile, change url and assemble back. It is complicated though.
 
 Development is focused on internal code changes (like cleaning up code - that's what I do the most -
 and fixing bugs), but new features are rarely seen too. Get latest
@@ -58,6 +61,9 @@ read-only and has some harmless bugs.
 - [ ] Up/down score
 - [ ] Possibility to make changes visible to another users, like tag editing, commenting etc
     - It is planned, but not in priority
+- [x] Basic SOCKS5 proxy support. **WARNING**: it *will* fall back to direct connection if proxy is
+  unreachable in any way
+    - [ ] Preference to control fall back behavior
 
 ## File types supported
 
