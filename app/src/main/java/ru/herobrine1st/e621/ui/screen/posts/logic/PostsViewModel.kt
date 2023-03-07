@@ -44,6 +44,7 @@ import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.*
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
@@ -75,27 +76,30 @@ class PostsViewModel @AssistedInject constructor(
             .map { list ->
                 list.filter { it.enabled }
                     .map { createTagProcessor(it.query) }
-                    .fold(Predicate<Post> { false }) { a, b ->
-                        a.or(b)
-                    }
+                    .reduceOrNull { a, b -> a.or(b) } ?: Predicate { false }
             }
             .flowOn(Dispatchers.Default)
 
     val postsFlow = combine(
-        pager.flow.cachedIn(viewModelScope), // cachedIn strictly required here (otherwise - double collect exception)
+        pager.flow.cachedIn(viewModelScope), // cachedIn strictly required here (double collection exception otherwise)
         applicationContext.getPreferencesFlow { it.blacklistEnabled },
         blacklistPredicateFlow,
         favouritesCache.flow
     ) { posts, isBlacklistEnabled, blacklistPredicate, favourites ->
         if (!isBlacklistEnabled) posts
         else posts.filter {
-            favourites.getOrDefault(it.id, it.isFavorited) // Include if either favourite
-                    || !blacklistPredicate.test(it)        //         or not blacklisted
+            favourites.getOrDefault(it.id, it.isFavorited) // Show post if it is either favourite
+                    || !blacklistPredicate.test(it)        //           or is not blacklisted
         }
-    }
-        .flowOn(Dispatchers.Default) // CPU intensive ?
-        // Does it need to be cached? I mean, in terms of memory and CPU resources
-        // And, maybe, energy.
+    }.combine(applicationContext.getPreferencesFlow { it.safeModeEnabled }) { posts, safeModeEnabled ->
+        if (safeModeEnabled) posts.filter { it.rating == Rating.SAFE }
+        else posts
+        /* CPU intensive ?
+         * Does it need to be cached? I mean, in terms of memory and CPU resources
+         * And, maybe, energy.
+         */
+    }.flowOn(Dispatchers.Default)
+
 
     @Composable
     fun collectFavouritesCacheAsState() = favouritesCache.flow.collectAsState()

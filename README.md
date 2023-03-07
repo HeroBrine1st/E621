@@ -30,9 +30,8 @@ read-only and has some harmless bugs.
         * [x] Server-side
         * [ ] Local
     * [ ] "Micro-search" (fast local search though current results)
-- [x] Safe mode on search screen (i.e. if you somehow open search results without rating filter,
-  e.g. your existing favourites, safe mode is useless, but on new account/without account it is ok),
-  enabled by default with disclaimer on disable.
+- [x] Safe mode on search and posts screen (i.e. you can open explicit post from your browser, but
+  cannot open in through search within app), enabled by default with disclaimer on disable.
 - [ ] Autocomplete tags
 - [x] Authorization
     - [ ] Authorization by regular username and password (I'm not sure it won't break ToS, but it is
