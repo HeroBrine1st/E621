@@ -82,6 +82,7 @@ import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
 import ru.herobrine1st.e621.ui.screen.posts.component.InvalidPost
+import ru.herobrine1st.e621.util.normalizeTag
 import java.util.*
 
 private const val TAG = "Post Screen"
@@ -433,7 +434,7 @@ fun LazyListScope.tags(
         }
     }
     items(tags, key = { "$it tag" }) {
-        Tag(it, searchOptions, onModificationClick, onWikiClick)
+        Tag(it.normalizeTag(), searchOptions, onModificationClick, onWikiClick)
     }
 }
 

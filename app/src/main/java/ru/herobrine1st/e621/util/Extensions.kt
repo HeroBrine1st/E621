@@ -61,3 +61,7 @@ fun Activity.restart() {
     finish()
     startActivity(intent)
 }
+
+inline fun <T> T.runIf(condition: Boolean, block: T.() -> T): T {
+    return if(condition) block(this) else this
+}

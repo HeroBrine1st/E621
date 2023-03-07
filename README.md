@@ -20,9 +20,9 @@ read-only and has some harmless bugs.
 
 - [x] Search posts
     * [x] Search by arbitrary tags
-        * Note that tags you type are sent to server as is, so use underscores when needed. This
-          also means that you can use ``~`` (OR), ``-`` (NOT) and meta-tags (for
-          example, ``type:png``)
+        * You can use ``~`` (OR), ``-`` (NOT) and meta-tags (for example, ``type:png``), as tags
+          sent to the API almost as is. Underscores are hidden and instead replaced with spaces in
+          UI.
     * [x] UI to sort search results (`order` meta-tag)
     * [x] UI to filter by rating (safe-questionable-explicit)
     * [ ] UI to filter by file type
@@ -39,7 +39,7 @@ read-only and has some harmless bugs.
       possible without any difficulty... I think)
     - Also I do not recommend to use it without account because of API which may not send some
       fields on it's own, although it is rarely (but stably :/) observed even with account.
- - [x] Blacklisting
+- [x] Blacklisting
     - [ ] Fancy UI to configure blacklist
     - [x] Support for extended syntax (still incubating)
 - [ ] Hiding posts at the click of button

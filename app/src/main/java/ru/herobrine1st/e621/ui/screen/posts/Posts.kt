@@ -58,6 +58,7 @@ import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.getParcelableCompat
+import ru.herobrine1st.e621.util.normalizeTag
 
 @Composable
 fun PostsAppBarActions(navController: NavHostController) {
@@ -101,9 +102,11 @@ fun Posts(
 
 
 
-    Box(Modifier
-        .pullRefresh(pullRefreshState)
-        .fillMaxSize()) {
+    Box(
+        Modifier
+            .pullRefresh(pullRefreshState)
+            .fillMaxSize()
+    ) {
         LazyColumn(
             // Solution from https://issuetracker.google.com/issues/177245496#comment24
             state = if (posts.itemCount == 0) rememberLazyListState() else lazyListState,
@@ -207,7 +210,7 @@ fun Post(
                 }
                 visibleTags.forEach {
                     Chip(onClick = { /*TODO*/ }) {
-                        Text(it)
+                        Text(it.normalizeTag())
                     }
                 }
                 if (!expandTags && post.tags.reduced.size > 6) {
