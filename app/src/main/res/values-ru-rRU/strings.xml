@@ -111,7 +111,7 @@
     <string name="unknown_api_error">Произошла неизвестная ошибка API</string>
     <string name="about">О программе</string>
     <string name="app_description">Клиент для %s.</string>
-    <string name="license_brief">"Copyright © 2022 HeroBrine1st Erquilenne
+    <string name="license_brief">"Copyright © 2022-2023 HeroBrine1st Erquilenne
 
 Это приложение является свободным программным обеспечением: вы можете распространять и/или модифицировать его в соответствии с условиями GNU General Public License, опубликованной Free Software Foundation, либо версии 3, либо (по вашему выбору) любой поздней версии.
 
