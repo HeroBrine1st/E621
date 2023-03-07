@@ -48,9 +48,7 @@ android {
         buildConfigField("int", "PAGER_PAGE_SIZE", "500")
         stringBuildConfigField("DATABASE_NAME", "DATABASE")
         stringBuildConfigField("API_BASE_URL", "https://e621.net")
-        stringBuildConfigField("SAFE_API_BASE_URL", "https://e926.net")
         stringBuildConfigField("DEEP_LINK_BASE_URL", "https://e621.net")
-        // TODO DEEP_LINK_SAFE_BASE_URL
         stringBuildConfigField(
             "USER_AGENT_TEMPLATE",
             "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) " +

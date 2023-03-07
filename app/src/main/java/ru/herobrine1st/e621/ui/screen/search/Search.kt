@@ -62,6 +62,15 @@ fun Search(
 
     val preferences = LocalPreferences.current
 
+    LaunchedEffect(preferences.safeModeEnabled) {
+        if (preferences.safeModeEnabled) {
+            state.rating.apply {
+                clear()
+                add(Rating.SAFE)
+            }
+        }
+    }
+
     if (state.currentlyModifiedTagIndex == -2) {
         ModifyTagDialog(
             onClose = {
@@ -195,18 +204,18 @@ fun Search(
             AnimatedVisibility(visible = preferences.safeModeEnabled) {
                 Text(stringResource(R.string.search_safe_mode))
             }
-            // Do not waste 1 tag (max is 6 or something), but show "Safe" selected when safe mode enabled
-            val localRating = if (preferences.safeModeEnabled) listOf(Rating.SAFE) else state.rating
-            ItemSelectionRadioButton(
-                selected = localRating.isEmpty(),
-                text = stringResource(R.string.any),
-                enabled = !preferences.safeModeEnabled
-            ) {
-                state.rating.clear()
+            key(null) {
+                ItemSelectionRadioButton(
+                    selected = state.rating.size == 0,
+                    text = stringResource(R.string.any),
+                    enabled = !preferences.safeModeEnabled
+                ) {
+                    state.rating.clear()
+                }
             }
             for (v in Rating.values()) {
                 ItemSelectionCheckbox(
-                    checked = v in localRating,
+                    checked = v in state.rating,
                     text = stringResource(v.descriptionId),
                     enabled = !preferences.safeModeEnabled
                 ) {

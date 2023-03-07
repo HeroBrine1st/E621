@@ -18,7 +18,6 @@
 
 package ru.herobrine1st.e621.ui.screen.settings
 
-import android.app.Activity
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Explicit
@@ -27,9 +26,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.updatePreferences
@@ -39,7 +36,6 @@ import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
 import ru.herobrine1st.e621.ui.screen.Screen
-import ru.herobrine1st.e621.util.restart
 
 @Composable
 fun Settings(navController: NavController) {
@@ -79,8 +75,8 @@ fun Settings(navController: NavController) {
                     context.updatePreferences {
                         privacyModeEnabled = enabled
                     }
-                    if (!preferences.privacyModeDisclaimerShown && enabled) showPrivacyModeDialog =
-                        true
+                    if (!preferences.privacyModeDisclaimerShown && enabled)
+                        showPrivacyModeDialog = true
                 }
             }
         )
@@ -95,9 +91,6 @@ fun Settings(navController: NavController) {
                 else coroutineScope.launch {
                     context.updatePreferences {
                         safeModeEnabled = enabled
-                    }
-                    withContext(Dispatchers.Main.immediate) {
-                        (context as Activity).restart()
                     }
                 }
             }
@@ -127,9 +120,6 @@ fun Settings(navController: NavController) {
                     context.updatePreferences {
                         safeModeEnabled = false
                         safeModeDisclaimerShown = true
-                    }
-                    withContext(Dispatchers.Main.immediate) {
-                        (context as Activity).restart()
                     }
                 }
             }, onDismissRequest = {
