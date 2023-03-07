@@ -31,6 +31,7 @@ import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
 
 // Like also, but debug
+// TODO setting to enable debug in preferences
 @OptIn(ExperimentalContracts::class)
 inline fun <T> T.debug(block: T.() -> Unit): T {
     contract {
