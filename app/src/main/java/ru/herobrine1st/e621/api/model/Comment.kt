@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.api.model
 
-import androidx.compose.runtime.Stable
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
 import org.jsoup.Jsoup
@@ -60,26 +59,7 @@ data class CommentBB(
     // val warningUserId: Unknown?,
     val creatorName: String,
     val updaterName: String
-) {
-    companion object {
-        val sample
-            @Stable get() = CommentBB(
-                id = 0,
-                createdAt = OffsetDateTime.MIN,
-                parentPostId = 0,
-                creatorId = 0,
-                updaterId = 0,
-                body = "Some text",
-                score = 0,
-                updatedAt = OffsetDateTime.MIN,
-                doNotBumpPost = false,
-                isHidden = false,
-                isSticky = false,
-                creatorName = "Creator name",
-                updaterName = "Updater name"
-            )
-    }
-}
+)
 
 @Suppress("SpellCheckingInspection")
 val dateTimeFormatter: DateTimeFormatter by lazy { DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm[:ss]XXX") }
