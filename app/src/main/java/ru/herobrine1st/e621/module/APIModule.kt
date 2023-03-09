@@ -67,6 +67,8 @@ class APIModule {
         val proxies = if (preferences.hasProxy() && preferences.proxy.enabled)
             listOf(ProxyWithAuth(preferences.proxy)) else emptyList()
         Authenticator.setDefault(AuthenticatorImpl(proxies))
+        // TODO add fall back preference (maybe after multiple proxies support)
+        ProxySelector.setDefault(ProxySelectorImpl(proxies + Proxy.NO_PROXY))
 
         val cacheDir = File(context.cacheDir, "okhttp").apply { mkdirs() }
         val size = (StatFs(cacheDir.absolutePath).let {
@@ -81,8 +83,6 @@ class APIModule {
             .addNetworkInterceptor(UserAgentInterceptor(USER_AGENT))
             .addInterceptor(authorizationInterceptor)
             .cache(Cache(cacheDir, size))
-                // TODO add fall back preference (maybe after multiple proxies support)
-            .proxySelector(ProxySelectorImpl(proxies + Proxy.NO_PROXY))
             .build()
     }
 
