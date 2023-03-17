@@ -53,7 +53,6 @@ import javax.inject.Qualifier
 @Module
 @InstallIn(ActivityRetainedComponent::class)
 class APIModule {
-
     @Provides
     @ActivityRetainedScoped
     @APIHttpClient

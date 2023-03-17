@@ -20,18 +20,15 @@
 
 package ru.herobrine1st.e621.ui
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.preference.LocalPreferences
@@ -40,16 +37,12 @@ import ru.herobrine1st.e621.ui.screen.home.Home
 import ru.herobrine1st.e621.ui.screen.post.Post
 import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
-import ru.herobrine1st.e621.ui.screen.settings.Settings
-import ru.herobrine1st.e621.ui.screen.settings.SettingsAbout
-import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
-import ru.herobrine1st.e621.ui.screen.settings.SettingsLicense
+import ru.herobrine1st.e621.ui.screen.settings.*
 import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable
 fun Navigator(navController: NavHostController) {
     val preferences = LocalPreferences.current
-    val context = LocalContext.current
 
     NavHost(
         navController = navController,
@@ -164,17 +157,16 @@ fun Navigator(navController: NavHostController) {
         }
         composable(Screen.SettingsAbout.route) {
             SettingsAbout(navigateToLicense = {
-                navController.navigate(Screen.License.route)
+                navController.navigate(Screen.SettingsLicense.route)
             }, navigateToOssLicenses = {
-                ContextCompat.startActivity(
-                    context,
-                    Intent(context, OssLicensesMenuActivity::class.java),
-                    null
-                )
+                navController.navigate(Screen.SettingsLicenses.route)
             })
         }
-        composable(Screen.License.route) {
+        composable(Screen.SettingsLicense.route) {
             SettingsLicense()
+        }
+        composable(Screen.SettingsLicenses.route) {
+            SettingsLicenses()
         }
     }
 }

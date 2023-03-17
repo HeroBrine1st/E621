@@ -120,7 +120,7 @@ data class MessageQuote(
 val pattern = Regex("""\[(?:([^\[\]/]+)|/([^\[\]/]+)|\[([^\[\]/]+)(?:\|([^\[\]/]+))?)]""")
 
 // [quote]"name":/user/show/0 said:
-val quotePattern = Regex("""(?:"?([^"\n]+)"?:/user(?:s|/show)/(\d+)|([^\s]+)) said:\r?\n""")
+val quotePattern = Regex("""(?:"?([^"\n]+)"?:/user(?:s|/show)/(\d+)|(\S+)) said:\r?\n""")
 
 fun parseBBCode(input: String): List<MessageData<*>> {
     val (parsed, end) = parseBBCodeInternal(input, null, 0)

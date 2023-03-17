@@ -15,7 +15,7 @@ plugins {
     kotlin("kapt")
     id("dagger.hilt.android.plugin")
     id("com.google.protobuf")
-    id("com.google.android.gms.oss-licenses-plugin")
+    id("com.mikepenz.aboutlibraries.plugin")
 }
 
 val kotlinVersion = "1.7.0"
@@ -100,8 +100,6 @@ android {
 configurations.all {
     resolutionStrategy {
         force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
-        force("androidx.appcompat:appcompat:1.6.0") // Fix class duplicates
-        force("com.google.android.gms:play-services-basement:18.0.2") // "Fix" vulnerability
     }
 }
 @Suppress("SpellCheckingInspection")
@@ -168,7 +166,7 @@ dependencies {
     // Other libraries
     implementation("com.google.android.exoplayer:exoplayer:2.18.1") // Apache 2.0
     implementation("org.jsoup:jsoup:1.14.3") // Expat License
-    implementation("com.google.android.gms:play-services-oss-licenses:17.0.0")
+    implementation("com.mikepenz:aboutlibraries-compose:10.6.1") // Apache 2.0
 
 
     // Tests
@@ -222,4 +220,5 @@ fun getCommitIndexNumber(revision: String = "HEAD"): Int {
     return byteArrayOutputStream.toString().trim().toInt()
 }
 
-fun VariantDimension.stringBuildConfigField(name: String, value: String) = buildConfigField("String", name, "\"${value.replace("\"", "\\\"")}\"")
+fun VariantDimension.stringBuildConfigField(name: String, value: String) =
+    buildConfigField("String", name, "\"${value.replace("\"", "\\\"")}\"")

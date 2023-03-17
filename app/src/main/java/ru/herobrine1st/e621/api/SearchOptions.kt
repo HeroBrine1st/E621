@@ -52,6 +52,7 @@ data class PostsSearchOptions(
     val favouritesOf: String? = null, // "favorited_by" in api
 ) : SearchOptions, Parcelable, JsonSerializable {
     // TODO randomSeed or something like that for Order.RANDOM
+
     private fun compileToQuery(): String {
         val cache = mutableListOf<String>()
 

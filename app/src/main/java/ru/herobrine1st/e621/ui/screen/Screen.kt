@@ -137,7 +137,8 @@ enum class Screen(
         appBarActions = { SettingsBlacklistAppBarActions() },
         floatingActionButton = { SettingsBlacklistFloatingActionButton() }),
     SettingsAbout(R.string.about, Icons.Default.Copyright, "settings/about"),
-    License(R.string.license_name, Icons.Default.Info, "settings/license");
+    SettingsLicense(R.string.license_name, Icons.Default.Info, "settings/license"),
+    SettingsLicenses(R.string.oss_licenses, Icons.Default.Info, "settings/licenses");
 
     companion object {
         val byRoute: Map<String, Screen> = HashMap<String, Screen>().apply {
