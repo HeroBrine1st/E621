@@ -73,7 +73,7 @@ read-only and has some harmless bugs.
 - [x] WEBM
 - [x] MP4
 - [ ] SWF - flash won't be supported neither in near nor far future (but PRs are welcome if they're
-  safe in terms of vulnerabilities which Adobe Flash had)
+  safe in terms of vulnerabilities which Adobe Flash had (and of course it is not possible, you know))
 
 # License
 
