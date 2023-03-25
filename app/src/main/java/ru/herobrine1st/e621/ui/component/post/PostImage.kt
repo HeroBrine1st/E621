@@ -53,10 +53,6 @@ fun PostImage(
 ) {
     var isPlaceholderActive by remember { mutableStateOf(true) }
     var aspectRatio by remember { mutableStateOf(initialAspectRatio) }
-    if (aspectRatio <= 0) {
-        InvalidPost(stringResource(R.string.invalid_post_server_error))
-        return
-    }
 
     Box(contentAlignment = Alignment.TopStart, modifier = modifier) {
         AsyncImage(
@@ -66,7 +62,7 @@ fun PostImage(
                     openPost?.invoke()
                 }
                 .fillMaxWidth()
-                .aspectRatio(aspectRatio)
+                .aspectRatio(aspectRatio.takeIf { it > 0 } ?: 1f)
                 .placeholder(isPlaceholderActive, highlight = PlaceholderHighlight.fade()),
             onSuccess = {
                 isPlaceholderActive = false
