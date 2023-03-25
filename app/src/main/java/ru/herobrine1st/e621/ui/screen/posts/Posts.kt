@@ -58,7 +58,7 @@ import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.getParcelableCompat
-import ru.herobrine1st.e621.util.normalizeTag
+import ru.herobrine1st.e621.util.normalizeTagForUI
 
 @Composable
 fun PostsAppBarActions(navController: NavHostController) {
@@ -228,7 +228,7 @@ fun Post(
                 }
                 visibleTags.forEach {
                     Chip(onClick = { /*TODO*/ }) {
-                        Text(it.normalizeTag())
+                        Text(it.normalizeTagForUI())
                     }
                 }
                 // TODO use SubcomposeLayout to fill two lines of chips

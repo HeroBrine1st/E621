@@ -41,9 +41,7 @@ inline fun <T> time(name: String, block: @Composable () -> T): T {
     return res
 }
 
-const val HIDE_UNDERSCORES_FROM_USER = true
-
 // TODO value class Tag?
-fun String.normalizeTag() = this.runIf(HIDE_UNDERSCORES_FROM_USER) {
+fun String.normalizeTagForUI() = this.runIf(BuildConfig.HIDE_UNDERSCORES_FROM_USER) {
     replace('_', ' ')
 }

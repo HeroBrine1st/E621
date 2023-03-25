@@ -51,9 +51,7 @@ import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import ru.herobrine1st.e621.ui.component.Base
-import ru.herobrine1st.e621.util.HIDE_UNDERSCORES_FROM_USER
-import ru.herobrine1st.e621.util.normalizeTag
-import ru.herobrine1st.e621.util.runIf
+import ru.herobrine1st.e621.util.normalizeTagForUI
 
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -89,7 +87,7 @@ fun Search(
         )
     } else if (state.currentlyModifiedTagIndex != -1) {
         ModifyTagDialog(
-            initialTag = state.tags[state.currentlyModifiedTagIndex].normalizeTag(),
+            initialTag = state.tags[state.currentlyModifiedTagIndex],
             onClose = {
                 state.currentlyModifiedTagIndex = -1
             },
@@ -98,8 +96,7 @@ fun Search(
                 state.currentlyModifiedTagIndex = -1
             },
             onApply = {
-                state.tags[state.currentlyModifiedTagIndex] =
-                    it.runIf(HIDE_UNDERSCORES_FROM_USER) { replace(' ', '_') }
+                state.tags[state.currentlyModifiedTagIndex] = it
                 state.currentlyModifiedTagIndex = -1
             }
         )
@@ -117,7 +114,7 @@ fun Search(
                                 state.currentlyModifiedTagIndex = index
                             }
                         ) {
-                            Text(tag.normalizeTag())
+                            Text(tag.normalizeTagForUI())
                         }
                     }
                 }

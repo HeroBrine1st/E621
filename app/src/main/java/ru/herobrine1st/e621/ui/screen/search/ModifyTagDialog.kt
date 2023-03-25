@@ -35,8 +35,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
+import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
+import ru.herobrine1st.e621.util.normalizeTagForUI
+import ru.herobrine1st.e621.util.runIf
 
 @Composable
 fun ModifyTagDialog(
@@ -48,8 +51,17 @@ fun ModifyTagDialog(
     val localInspectionMode = LocalInspectionMode.current
     var text by rememberSaveable {
         mutableStateOf(
-            initialTag ?: if (localInspectionMode) "test" else ""
+            initialTag?.normalizeTagForUI() ?: if (localInspectionMode) "test" else ""
         )
+    }
+
+    fun apply() {
+        onApply(text.runIf(
+            BuildConfig.HIDE_UNDERSCORES_FROM_USER
+                    || BuildConfig.CONVERT_SPACES_TO_UNDERSCORES_IN_SEARCH
+        ) {
+            replace(' ', '_')
+        })
     }
 
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
@@ -65,8 +77,8 @@ fun ModifyTagDialog(
                 Text(stringResource(R.string.remove))
             }
         }
-        TextButton(onClick = { onApply(text) }) {
-            Text(stringResource(if(initialTag == null) R.string.add else R.string.apply))
+        TextButton(onClick = { apply() }) {
+            Text(stringResource(if (initialTag == null) R.string.add else R.string.apply))
         }
     }, onDismissRequest = onClose) {
         OutlinedTextField(
@@ -76,7 +88,7 @@ fun ModifyTagDialog(
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth(),
-            keyboardActions = KeyboardActions { onApply(text); onClose() }
+            keyboardActions = KeyboardActions { apply() }
         )
         // TODO autocomplete
     }

@@ -46,6 +46,10 @@ android {
         // Application properties
         resValue("string", "deep_link_host", "e621.net")
         buildConfigField("int", "PAGER_PAGE_SIZE", "500")
+        // Implicitly converts spaces to underscores in search
+        buildConfigField("boolean", "HIDE_UNDERSCORES_FROM_USER", "true")
+        // Will not work if underscores are hidden (the setting above)
+        buildConfigField("boolean", "CONVERT_SPACES_TO_UNDERSCORES_IN_SEARCH", "true")
         stringBuildConfigField("DATABASE_NAME", "DATABASE")
         stringBuildConfigField("API_BASE_URL", "https://e621.net")
         stringBuildConfigField("DEEP_LINK_BASE_URL", "https://e621.net")

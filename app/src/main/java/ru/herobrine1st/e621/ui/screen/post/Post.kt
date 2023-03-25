@@ -82,7 +82,7 @@ import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
 import ru.herobrine1st.e621.ui.screen.posts.component.InvalidPost
-import ru.herobrine1st.e621.util.normalizeTag
+import ru.herobrine1st.e621.util.normalizeTagForUI
 import java.util.*
 
 private const val TAG = "Post Screen"
@@ -434,7 +434,7 @@ fun LazyListScope.tags(
         }
     }
     items(tags, key = { "$it tag" }) {
-        Tag(it.normalizeTag(), searchOptions, onModificationClick, onWikiClick)
+        Tag(it, searchOptions, onModificationClick, onWikiClick)
     }
 }
 
@@ -449,7 +449,7 @@ fun Tag(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(start = 8.dp)
     ) {
-        Text(tag, modifier = Modifier.weight(1f))
+        Text(tag.normalizeTagForUI(), modifier = Modifier.weight(1f))
         IconButton( // Add
             onClick = {
                 onModificationClick(searchOptions.toBuilder { tags += tag })
