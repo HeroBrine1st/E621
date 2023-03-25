@@ -28,7 +28,7 @@ read-only and has some harmless bugs.
           UI.
     * [x] UI to sort search results (`order` meta-tag)
     * [x] UI to filter by rating (safe-questionable-explicit)
-    * [ ] UI to filter by file type
+    * [x] UI to filter by file type
     * [x] Search favourites
         * [x] Server-side
         * [ ] Local
