@@ -34,7 +34,8 @@ data class File(
     val type: FileType,
     val size: Long,
     val md5: String,
-    val url: String
+    @JsonProperty(required = false) // Strange bug on API side, probably database related
+    val url: String = ""
 ) : Parcelable
 
 data class NormalizedFile(

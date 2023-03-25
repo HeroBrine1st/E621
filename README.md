@@ -39,8 +39,13 @@ read-only and has some harmless bugs.
 - [x] Authorization
     - [ ] Authorization by regular username and password (I'm not sure it won't break ToS, but it is
       possible without any difficulty... I think)
-    - Also I do not recommend to use it without account because of API which may not send some
-      fields on it's own, although it is rarely (but stably :/) observed even with account.
+    - ~~Also I do not recommend to use it without account because of API which may not send some
+      fields on it's own, although it is rarely (but stably :/) observed even with account.~~
+      It is fixed now. I think.  
+      The error was malformed JSON with some null-filled fields from the API. Fixed by treating
+      those fields as unfilled and then filling with empty string. Because those fields are URLs to
+      images, the images will fail to load, but, I think, you can open post and it will be loaded,
+      because error is observed only in /posts.json and /favorites.json endpoints.
 - [x] Blacklisting
     - [ ] Fancy UI to configure blacklist
     - [x] Support for extended syntax (still incubating)
@@ -73,7 +78,8 @@ read-only and has some harmless bugs.
 - [x] WEBM
 - [x] MP4
 - [ ] SWF - flash won't be supported neither in near nor far future (but PRs are welcome if they're
-  safe in terms of vulnerabilities which Adobe Flash had (and of course it is not possible, you know))
+  safe in terms of vulnerabilities which Adobe Flash had (and of course it is not possible, you
+  know))
 
 # License
 

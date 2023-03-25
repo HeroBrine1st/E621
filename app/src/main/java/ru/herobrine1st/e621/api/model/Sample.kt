@@ -34,7 +34,8 @@ data class Sample(
     val has: Boolean, // вщ не ебу что это
     val height: Int,
     val width: Int,
-    val url: String,
+    // Strange bug on API side, probably database related
+    val url: String = "",
     val alternates: Map<String, Alternate>
 ) : Parcelable {
     @IgnoredOnParcel
