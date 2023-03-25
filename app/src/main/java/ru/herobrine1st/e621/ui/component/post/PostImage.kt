@@ -20,12 +20,14 @@
 
 package ru.herobrine1st.e621.ui.component.post
 
+import android.util.Log
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,11 +38,14 @@ import coil.compose.AsyncImage
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.ui.screen.posts.component.InvalidPost
+import ru.herobrine1st.e621.net.collectDownloadProgressAsState
+import ru.herobrine1st.e621.util.debug
 
+private const val TAG = "PostImage"
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -51,31 +56,48 @@ fun PostImage(
     modifier: Modifier = Modifier,
     initialAspectRatio: Float = file.aspectRatio
 ) {
-    var isPlaceholderActive by remember { mutableStateOf(true) }
+    var isLoading by remember { mutableStateOf(true) }
+    var isError by remember { mutableStateOf(false) }
     var aspectRatio by remember { mutableStateOf(initialAspectRatio) }
 
-    Box(contentAlignment = Alignment.TopStart, modifier = modifier) {
+    val url = remember(file) { file.urls.first().toHttpUrl() }
+    val progress by collectDownloadProgressAsState(url)
+
+    debug {
+        var maxProgress by remember { mutableStateOf(progress.progress) }
+        LaunchedEffect(progress.progress) {
+            if(progress.progress < maxProgress) {
+                Log.w(TAG, "Progress for $url went backwards: from $maxProgress to ${progress.progress}")
+            } else maxProgress = progress.progress
+        }
+    }
+
+    Box(contentAlignment = Alignment.Center, modifier = modifier) {
         AsyncImage(
-            model = file.urls.first(),
+            model = url,
             modifier = Modifier
                 .clickable(openPost != null) {
                     openPost?.invoke()
                 }
                 .fillMaxWidth()
                 .aspectRatio(aspectRatio.takeIf { it > 0 } ?: 1f)
-                .placeholder(isPlaceholderActive, highlight = PlaceholderHighlight.fade()),
+                .placeholder(isLoading, highlight = PlaceholderHighlight.fade()),
             onSuccess = {
-                isPlaceholderActive = false
+                isLoading = false
+                isError = false
                 aspectRatio = it.result.drawable.run { intrinsicWidth.toFloat() / intrinsicHeight }
             },
             onError = {
-                isPlaceholderActive = false
+                isLoading = false
+                isError = true
             },
             contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
             contentScale = ContentScale.Fit
         )
         if (post.file.type.isNotImage) Chip( // TODO
-            modifier = Modifier.offset(x = 10.dp, y = 10.dp),
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .offset(x = 10.dp, y = 10.dp),
             colors = ChipDefaults.outlinedChipColors(
                 backgroundColor = MaterialTheme.colors.surface.copy(alpha = 0.3f)
             ),
@@ -83,6 +105,23 @@ fun PostImage(
             onClick = {}
         ) {
             Text(post.file.type.extension)
+        }
+        when {
+            isError -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Icon(Icons.Outlined.Error, contentDescription = null)
+                Text(stringResource(R.string.unknown_error))
+            }
+            isLoading -> Crossfade(progress.isValid) {
+                when (it) {
+                    false -> CircularProgressIndicator()
+                    true -> CircularProgressIndicator(
+                        animateFloatAsState(
+                            targetValue = progress.progress,
+                            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+                        ).value
+                    )
+                }
+            }
         }
     }
 }

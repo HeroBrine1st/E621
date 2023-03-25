@@ -29,12 +29,17 @@ import coil.decode.ImageDecoderDecoder
 import coil.disk.DiskCache
 import dagger.hilt.android.HiltAndroidApp
 import okhttp3.OkHttpClient
+import ru.herobrine1st.e621.net.DownloadProgressInterceptor
 
 @HiltAndroidApp
 class Application : Application(), ImageLoaderFactory {
     override fun newImageLoader(): ImageLoader = ImageLoader.Builder(applicationContext)
         .crossfade(true)
-        .okHttpClient { OkHttpClient() }
+        .okHttpClient {
+            OkHttpClient.Builder()
+                .addInterceptor(DownloadProgressInterceptor)
+                .build()
+        }
         .diskCache {
             DiskCache.Builder()
                 .directory(applicationContext.cacheDir.resolve("coilCache"))
