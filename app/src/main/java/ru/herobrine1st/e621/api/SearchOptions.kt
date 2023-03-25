@@ -26,6 +26,7 @@ import android.util.Log
 import androidx.navigation.NavType
 import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.parcelize.Parcelize
+import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
@@ -50,31 +51,35 @@ data class PostsSearchOptions(
     val orderAscending: Boolean = false,
     val rating: List<Rating> = emptyList(),
     val favouritesOf: String? = null, // "favorited_by" in api
+    val fileType: FileType? = null,
+    val fileTypeInvert: Boolean = false
 ) : SearchOptions, Parcelable, JsonSerializable {
     // TODO randomSeed or something like that for Order.RANDOM
 
     private fun compileToQuery(): String {
         val cache = mutableListOf<String>()
 
-        cache.addAll(tags)
-
-        (if (orderAscending) this.order.ascendingApiName else this.order.apiName)?.let {
-            cache.add("order:$it")
-        }
-        if (rating.size < Rating.values().size && rating.isNotEmpty()) {
-            if (rating.size == 1) {
-                cache.add("rating:${rating[0].apiName}")
-            } else {
-                cache.addAll(rating.map { "~rating:${it.apiName}" })
-            }
-        }
-        if (favouritesOf != null) {
-            cache.add("fav:$favouritesOf")
-        }
+        cache += tags
+        cache += optimizeRatingSelection(rating)
+        fileType?.extension?.let { cache += (if (fileTypeInvert) "-" else "") + "type:" + it }
+        favouritesOf?.let { cache += "fav:$it" }
+        (if (orderAscending) order.ascendingApiName else order.apiName)?.let { cache += "order:$it" }
 
         return cache.joinToString(" ").debug {
             Log.d(PostsSearchOptions::class.simpleName, "Built query: $this")
         }
+    }
+
+    private fun optimizeRatingSelection(
+        selection: Collection<Rating>,
+    ): List<String> {
+        val isOptimizationRequired = selection.size > Rating.values().size / 2
+        val minima = if (isOptimizationRequired) {
+            Rating.values().toList() - selection.toSet()
+        } else selection
+        assert(minima.size <= 1)
+        val prefix = if (isOptimizationRequired) "-" else ""
+        return minima.map { prefix + "rating:" + it.apiName }
     }
 
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
@@ -83,7 +88,15 @@ data class PostsSearchOptions(
 
     companion object {
         val DEFAULT =
-            PostsSearchOptions(emptyList(), Order.NEWEST_TO_OLDEST, false, emptyList(), null)
+            PostsSearchOptions(
+                emptyList(),
+                Order.NEWEST_TO_OLDEST,
+                false,
+                emptyList(),
+                null,
+                null,
+                false
+            )
 
         fun builder(
             options: SearchOptions? = null,
@@ -102,8 +115,11 @@ data class PostsSearchOptions(
         var orderAscending: Boolean = false,
         var rating: List<Rating> = mutableListOf(),
         var favouritesOf: String? = null,
+        var fileType: FileType? = null,
+        var fileTypeInvert: Boolean = false
     ) {
-        fun build() = PostsSearchOptions(tags, order, orderAscending, rating, favouritesOf)
+        fun build() =
+            PostsSearchOptions(tags, order, orderAscending, rating, favouritesOf, fileType, fileTypeInvert)
 
         companion object {
             fun from(options: SearchOptions) = when (options) {

@@ -44,6 +44,8 @@ enum class FileType(
             values()
                 .forEach { this[it.extension] = it }
         }.toImmutableMap()
+
+        fun supportedValues() = values().filter { it.isSupported }
     }
 }
 

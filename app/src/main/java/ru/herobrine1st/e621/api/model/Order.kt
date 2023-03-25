@@ -19,14 +19,16 @@
  */
 
 
-
 package ru.herobrine1st.e621.api.model
 
 import androidx.annotation.StringRes
 import ru.herobrine1st.e621.R
 
+@Suppress("SpellCheckingInspection")
 enum class Order(
-    @StringRes val descriptionId: Int, val apiName: String?, val supportsAscending: Boolean = true,
+    @StringRes val descriptionId: Int,
+    val apiName: String?,
+    val supportsAscending: Boolean = true,
     val supportsPaging: Boolean = true,
     val ascendingApiName: String = apiName + "_asc"
 ) {
@@ -43,4 +45,5 @@ enum class Order(
     DURATION(R.string.order_duration, "duration"),
     CHANGE(R.string.order_change, "change", supportsAscending = false),
     RANDOM(R.string.order_random, "random", supportsAscending = false, supportsPaging = false)
+
 }

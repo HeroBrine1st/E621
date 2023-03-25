@@ -136,4 +136,6 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="proxy_port">Port</string>
     <string name="proxy_username">Username</string>
     <string name="proxy_password">Password</string>
+    <string name="file_type">File type</string>
+    <string name="file_type_invert_selection">Exclude</string>
 </resources>

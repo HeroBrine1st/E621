@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import com.google.accompanist.flowlayout.FlowRow
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.PostsSearchOptions
+import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.preference.LocalPreferences
@@ -229,6 +230,31 @@ fun Search(
                     }
                     if (state.rating.size == Rating.values().size) state.rating.clear()
                 }
+            }
+        }
+        // Lazy column?
+        Spacer(modifier = Modifier.height(4.dp))
+        SettingCard(title = stringResource(R.string.file_type)) {
+            ItemSelectionRadioButton(
+                selected = state.fileType == null,
+                text = stringResource(R.string.any)
+            ) {
+                state.fileType = null
+                state.fileTypeInvert = false
+            }
+            for (v in FileType.supportedValues()) {
+                ItemSelectionRadioButton(
+                    selected = v == state.fileType,
+                    text = v.extension
+                ) {
+                    state.fileType = v
+                }
+            }
+            ItemSelectionCheckbox(
+                checked = state.fileTypeInvert,
+                text = stringResource(R.string.file_type_invert_selection)
+            ) {
+                state.fileTypeInvert = it
             }
         }
         Spacer(modifier = Modifier.height(4.dp))

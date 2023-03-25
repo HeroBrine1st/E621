@@ -36,8 +36,11 @@ class SearchScreenState(
     val tags = initialPostsSearchOptions.tags.toMutableStateList()
     var order by mutableStateOf(initialPostsSearchOptions.order)
     var orderAscending by mutableStateOf(initialPostsSearchOptions.orderAscending)
-    var rating = initialPostsSearchOptions.rating.toMutableStateList()
+    val rating = initialPostsSearchOptions.rating.toMutableStateList()
     var favouritesOf by mutableStateOf(initialPostsSearchOptions.favouritesOf ?: "")
+    var fileType by mutableStateOf(initialPostsSearchOptions.fileType)
+    var fileTypeInvert by mutableStateOf(initialPostsSearchOptions.fileTypeInvert)
+
 
     // -2 = add new tag
     // -1 = idle
@@ -46,7 +49,7 @@ class SearchScreenState(
 
     fun makeSearchOptions(): PostsSearchOptions =
         PostsSearchOptions(tags.toList(), order, orderAscending, rating.toList(), favouritesOf
-            .ifBlank { null })
+            .ifBlank { null }, fileType, fileTypeInvert)
 
     companion object {
         val Saver: Saver<SearchScreenState, Bundle> = Saver(
