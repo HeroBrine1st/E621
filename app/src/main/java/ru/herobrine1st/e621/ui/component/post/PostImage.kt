@@ -39,6 +39,7 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
@@ -60,8 +61,9 @@ fun PostImage(
     var isError by remember { mutableStateOf(false) }
     var aspectRatio by remember { mutableStateOf(initialAspectRatio) }
 
-    val url = remember(file) { file.urls.first().toHttpUrl() }
-    val progress by collectDownloadProgressAsState(url)
+    val url = remember(file) { file.urls.first().toHttpUrlOrNull() }
+    // "1.1.1.1" is another workaround for null-filled URL coming from the API
+    val progress by collectDownloadProgressAsState(url ?: "https://1.1.1.1".toHttpUrl())
 
     debug {
         var maxProgress by remember { mutableStateOf(progress.progress) }
