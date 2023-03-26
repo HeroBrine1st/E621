@@ -44,6 +44,7 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.net.collectDownloadProgressAsState
+import ru.herobrine1st.e621.net.downloadProgressSharedFlow
 import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "PostImage"
@@ -65,12 +66,25 @@ fun PostImage(
     // "1.1.1.1" is another workaround for null-filled URL coming from the API
     val progress by collectDownloadProgressAsState(url ?: "https://1.1.1.1".toHttpUrl())
 
+
+
     debug {
-        var maxProgress by remember { mutableStateOf(progress.progress) }
+        var maxProgress by remember { mutableStateOf(progress) }
         LaunchedEffect(progress.progress) {
-            if(progress.progress < maxProgress) {
+            if(progress.progress < maxProgress.progress) {
                 Log.w(TAG, "Progress for $url went backwards: from $maxProgress to ${progress.progress}")
-            } else maxProgress = progress.progress
+                Log.d(TAG, "$maxProgress to $progress")
+            } else maxProgress = progress
+        }
+
+        // FIXME in some cases it returns download progress for another URL
+        LaunchedEffect(progress.url) {
+            if(progress.url != url) {
+                // Great place for breakpoint. Do not forget to suspend ALL threads.
+                // Also I couldn't catch it. Good luck.
+                Log.w(TAG, "Download progress for $url is $progress with another URL.")
+                downloadProgressSharedFlow.replayCache // Suppress "unused" from where it needs
+            }
         }
     }
 

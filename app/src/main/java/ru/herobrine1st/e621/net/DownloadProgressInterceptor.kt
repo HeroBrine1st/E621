@@ -26,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filter
 import okhttp3.*
 import okio.*
@@ -34,6 +35,9 @@ private val mutableSharedFlow = MutableSharedFlow<DownloadProgress>(
     extraBufferCapacity = 5,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
 )
+
+// For debugging
+val downloadProgressSharedFlow: SharedFlow<DownloadProgress> = mutableSharedFlow
 
 private const val TAG = "DownloadProgressInterceptor"
 
