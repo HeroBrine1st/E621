@@ -1,9 +1,6 @@
 @file:Suppress("SpellCheckingInspection", "UnstableApiUsage")
 
 import com.android.build.api.dsl.VariantDimension
-import com.google.protobuf.gradle.generateProtoTasks
-import com.google.protobuf.gradle.protobuf
-import com.google.protobuf.gradle.protoc
 import java.io.ByteArrayOutputStream
 import java.util.*
 
@@ -18,10 +15,10 @@ plugins {
     id("com.mikepenz.aboutlibraries.plugin")
 }
 
-val kotlinVersion = "1.7.0"
-val composeCompilerVersion = "1.2.0"
-val protobufVersion = "3.21.2"
-val okHttpVersion = "4.9.3"
+val kotlinVersion = "1.8.10"
+val composeCompilerVersion = "1.4.4"
+val protobufVersion = "3.22.2"
+val okHttpVersion = "4.10.0"
 val retrofitVersion = "2.9.0"
 
 val applicationId = "ru.herobrine1st.e621"
@@ -110,21 +107,21 @@ configurations.all {
 dependencies {
     // Android core
     implementation("androidx.core:core-ktx:1.9.0") // Apache 2.0
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.5.1") // Apache 2.0
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1") // Apache 2.0
 
     // Jetpack Compose
-    implementation("androidx.compose.ui:ui:1.3.2") // Apache 2.0
-    implementation("androidx.compose.material:material:1.3.1") // Apache 2.0
+    implementation("androidx.compose.ui:ui:1.4.0") // Apache 2.0
+    implementation("androidx.compose.material:material:1.4.0") // Apache 2.0
     // TODO make debug
-    implementation("androidx.compose.ui:ui-tooling-preview:1.3.2") // Apache 2.0
-    implementation("androidx.compose.material:material-icons-extended:1.3.1") // Apache 2.0
-    implementation("androidx.activity:activity-compose:1.6.1") // Apache 2.0
+    implementation("androidx.compose.ui:ui-tooling-preview:1.4.0") // Apache 2.0
+    implementation("androidx.compose.material:material-icons-extended:1.4.0") // Apache 2.0
+    implementation("androidx.activity:activity-compose:1.7.0") // Apache 2.0
 
     // Jetpack Navigation
     implementation("androidx.navigation:navigation-compose:2.5.3") // Apache 2.0
 
     // Jetpack Room
-    val roomVersion = "2.4.3"
+    val roomVersion = "2.5.1"
     implementation("androidx.room:room-runtime:$roomVersion") // Apache 2.0
     implementation("androidx.room:room-ktx:$roomVersion") // Apache 2.0
     ksp("androidx.room:room-compiler:$roomVersion") // Not included in binary result
@@ -136,29 +133,29 @@ dependencies {
     // Jetpack Paging
     val pagingVersion = "3.1.1"
     implementation("androidx.paging:paging-runtime:$pagingVersion") // Apache 2.0
-    implementation("androidx.paging:paging-compose:1.0.0-alpha17") // Apache 2.0
+    implementation("androidx.paging:paging-compose:1.0.0-alpha18") // Apache 2.0
 
     // Coroutine Image Loader (Apache 2.0)
-    val coilVersion = "2.2.2"
+    val coilVersion = "2.3.0"
     implementation("io.coil-kt:coil:$coilVersion")
     implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")
 
     // Jackson (Apache 2.0)
-    val jacksonVersion = "2.14.0"
+    val jacksonVersion = "2.14.2"
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Hilt (Apache 2.0)
-    val hiltVersion = "2.44"
+    val hiltVersion = "2.45"
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     kapt("com.google.dagger:hilt-android-compiler:$hiltVersion") // Not included in binary result
 
 
     // G Accompanist (Apache 2.0)
-    val accompanistVersion = "0.27.0"
+    val accompanistVersion = "0.30.0"
     implementation("com.google.accompanist:accompanist-flowlayout:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
 
@@ -168,26 +165,26 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
 
     // Other libraries
-    implementation("com.google.android.exoplayer:exoplayer:2.18.1") // Apache 2.0
-    implementation("org.jsoup:jsoup:1.14.3") // Expat License
+    implementation("com.google.android.exoplayer:exoplayer:2.18.5") // Apache 2.0
+    implementation("org.jsoup:jsoup:1.15.4") // Expat License
     implementation("com.mikepenz:aboutlibraries-compose:10.6.1") // Apache 2.0
 
 
     // Tests
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.9")
-    testImplementation("androidx.compose.ui:ui-test-junit4:1.3.2")
-    testImplementation("org.mockito:mockito-core:4.9.0")
-    testImplementation("org.mockito:mockito-inline:4.9.0")
+    testImplementation("org.robolectric:robolectric:4.9.2")
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.4.0")
+    testImplementation("org.mockito:mockito-core:5.2.0")
+    testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
     testImplementation("androidx.test:core:1.5.0")
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
-    androidTestImplementation("androidx.test.ext:junit:1.1.4")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
     kaptAndroidTest("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.3.2")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.3.2")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.4.0")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.4.0")
 }
 
 protobuf {
@@ -195,11 +192,11 @@ protobuf {
         artifact = "com.google.protobuf:protoc:$protobufVersion"
     }
     generateProtoTasks {
-        all().forEach { task ->
-            task.plugins {
+        all().configureEach {
+            builtins {
                 // TODO protoc plugin 'java' not defined. Trying to use 'protoc-gen-java' from system path
                 create("java") {
-                    option("lite")
+                  option("lite")
                 }
             }
         }
