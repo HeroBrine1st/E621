@@ -86,6 +86,7 @@ class PostsViewModel @AssistedInject constructor(
         blacklistPredicateFlow,
         favouritesCache.flow
     ) { posts, isBlacklistEnabled, blacklistPredicate, favourites ->
+
         if (!isBlacklistEnabled) posts
         else posts.filter {
             favourites.getOrDefault(it.id, it.isFavorited) // Show post if it is either favourite

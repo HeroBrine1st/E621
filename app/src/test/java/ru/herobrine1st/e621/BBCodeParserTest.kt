@@ -118,8 +118,8 @@ class BBCodeParserTest {
                 }.toAnnotatedString(),
             (quote.data.first() as MessageText).text
         )
-        assertEquals("name", quote.userName)
-        assertEquals(0, quote.userId)
+        assertEquals("name", quote.author?.userName)
+        assertEquals(0, quote.author?.userId)
     }
 
     @Test
@@ -158,8 +158,8 @@ class BBCodeParserTest {
                 }.toAnnotatedString(),
             (quote.data[0] as MessageText).text
         )
-        assertEquals("name", quote.userName)
-        assertEquals(0, quote.userId)
+        assertEquals("name", quote.author?.userName)
+        assertEquals(0, quote.author?.userId)
 
         val text2 = res[2] as MessageText
         assertEquals(

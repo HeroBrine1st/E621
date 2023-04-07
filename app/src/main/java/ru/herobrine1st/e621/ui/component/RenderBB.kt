@@ -60,7 +60,9 @@ fun RenderBB(data: List<MessageData<*>>, modifier: Modifier = Modifier) {
 fun RenderBB(data: MessageData<*>, modifier: Modifier = Modifier) {
     when (data) {
         is MessageQuote -> {
-            Text(stringResource(R.string.quote_comments, data.userName))
+            data.author?.let {
+                Text(stringResource(R.string.quote_comments, it.userName))
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.height(IntrinsicSize.Min)

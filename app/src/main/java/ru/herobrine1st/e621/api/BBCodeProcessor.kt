@@ -93,20 +93,23 @@ data class MessageText(
 
 /**
  * Quote in message
- * @param userName user who sent referred message
- * @param userId user who sent referred message
- * @param data part of text in referred message
+ * @param author name and id of author of the quote
+ * @param data the quote
  */
 @Immutable
 data class MessageQuote(
-    val userName: String,
-    val userId: Int,
+    val author: Author?,
     val data: List<MessageData<*>>
 ) : MessageData<MessageQuote> {
     override fun isEmpty(): Boolean = data.isEmpty()
     override fun getDescription(): Int = R.string.message_quote
     override fun stylize(tag: BBCodeTag): MessageQuote = this
 
+    @Immutable
+    data class Author(
+        val userName: String,
+        val userId: Int
+    )
 }
 
 /**
@@ -139,22 +142,59 @@ private fun parseBBCodeInternal(
     val output = mutableListOf<MessageData<*>>()
     var start = initialStart
 
-    // name, id
-    val quoteData: Pair<String, Int>? = currentTag
-        ?.takeIf { it == "quote" }
-        ?.let { parseQuoteHeader(input, start) }
-        ?.let { res ->
-            start = res.third
-            res.first to res.second
+    val quoteAuthor = when (currentTag) {
+        "quote" -> parseQuoteHeader(input, start)
+            ?.also { start = it.second }
+            ?.first
+        else -> null
+    }
+
+    var tagClosed = false
+
+    while (start < input.length) {
+        val match: MatchResult = pattern.find(input, startIndex = start) ?: break
+        if (match.range.first > start) { // Include text ([tag] -> recurse -> include_this_text[\tag])
+            output.add(MessageText(AnnotatedString(input.substring(start, match.range.first))))
+        }
+        start = match.range.last + 1
+
+        val openingTag = match.groupValues[1]
+        if (openingTag != "") {
+            output += parseBBCodeInternal(input, openingTag, match.range.last + 1).also {
+                start = it.second
+            }.first
+            continue
         }
 
-    fun stylize() = when {
-        currentTag == null -> output
-        currentTag == "b" -> output.map { it.stylize(BBCodeTag.Bold) }
-        currentTag == "i" -> output.map { it.stylize(BBCodeTag.Italic) }
-        currentTag == "quote" && quoteData != null -> listOf(
-            MessageQuote(quoteData.first, quoteData.second, output.collapseMessageTexts())
-        )
+        val closingTag = match.groupValues[2]
+        if (closingTag != "") {
+            if (closingTag == currentTag) {
+                tagClosed = true
+                break
+            } else {
+                debug {
+                    Log.d(TAG, "Invalid closing tag found at indexes ${match.range}")
+                    Log.d(TAG, input)
+                }
+                output += MessageText(AnnotatedString("[/$closingTag]"))
+            }
+            continue
+        }
+
+        // Catchall, as not all groups are used
+        output += MessageText(AnnotatedString(match.groupValues[0]))
+    }
+
+    if (!tagClosed) {
+        output.add(MessageText(AnnotatedString(input.substring(start))))
+        start = input.length
+    }
+
+    val stylizedOutput = when (currentTag) {
+        null -> output
+        "b" -> output.map { it.stylize(BBCodeTag.Bold) }
+        "i" -> output.map { it.stylize(BBCodeTag.Italic) }
+        "quote" -> listOf(MessageQuote(quoteAuthor, output.collapseMessageTexts()))
         else -> {
             debug {
                 Log.w(TAG, "Unknown/invalid tag $currentTag found near index $initialStart")
@@ -169,48 +209,15 @@ private fun parseBBCodeInternal(
         }
     }
 
-
-
-    while (true) {
-        val match: MatchResult = pattern.find(input, startIndex = start) ?: break
-        if (match.range.first > start) { // Include text ([tag] -> recurse -> include_this_text[\tag])
-            output.add(MessageText(AnnotatedString(input.substring(start, match.range.first))))
-        }
-        when (val tag = match.groupValues[2]) {
-            "" -> {}
-            // Tag closed, stylize and leave
-            currentTag -> return stylize() to match.range.last + 1
-            // Invalid closing tag
-            // Abort, stylize and leave
-            else -> {
-                debug {
-                    Log.d(TAG, "Invalid closing tag found at indexes ${match.range}")
-                    Log.d(TAG, input)
-                }
-                return stylize() + listOf(MessageText(AnnotatedString("[/$tag]"))) to match.range.last + 1
-            }
-        }
-        when (val tag = match.groupValues[1]) {
-            "" -> {}
-            else -> {
-                output += parseBBCodeInternal(input, tag, match.range.last + 1).also {
-                    start = it.second
-                }.first
-            }
-        }
-
-        if (start >= input.length) break
-    }
-    output.add(MessageText(AnnotatedString(input.substring(start))))
-    return stylize() to input.length
+    return stylizedOutput to start
 }
 
-private fun parseQuoteHeader(input: String, initialStart: Int): Triple<String, Int, Int>? {
+private fun parseQuoteHeader(input: String, initialStart: Int): Pair<MessageQuote.Author, Int>? {
     val match = quotePattern.matchAt(input, index = initialStart) ?: return null
-    return Triple(
-        match.groupValues[1].ifEmpty { match.groupValues[3] }, match.groupValues[2].ifEmpty { "-1" }.toInt(),
-        match.range.last + 1
-    )
+    return MessageQuote.Author(
+        match.groupValues[1].ifEmpty { match.groupValues[3] },
+        match.groupValues[2].ifEmpty { "-1" }.toInt()
+    ) to match.range.last + 1
 }
 
 private fun List<MessageData<*>>.collapseMessageTexts(): List<MessageData<*>> {

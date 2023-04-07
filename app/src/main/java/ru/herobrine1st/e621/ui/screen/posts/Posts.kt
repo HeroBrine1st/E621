@@ -100,8 +100,6 @@ fun Posts(
         onRefresh = { posts.refresh() }
     )
 
-
-
     Box(
         Modifier
             .pullRefresh(pullRefreshState)
