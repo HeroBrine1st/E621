@@ -156,7 +156,7 @@ private fun parseBBCodeInternal(
     while (start < input.length) {
         val match: MatchResult = pattern.find(input, startIndex = start) ?: break
         if (match.range.first > start) { // Include text ([tag] -> recurse -> include_this_text[\tag])
-            output.add(MessageText(AnnotatedString(input.substring(start, match.range.first))))
+            output += MessageText(AnnotatedString(input.substring(start, match.range.first)))
         }
         start = match.range.last + 1
 
