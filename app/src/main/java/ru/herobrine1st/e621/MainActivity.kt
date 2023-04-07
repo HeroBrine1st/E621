@@ -33,7 +33,6 @@ import com.google.android.exoplayer2.ExoPlayer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.*
 import ru.herobrine1st.e621.ui.MainScaffold
 import ru.herobrine1st.e621.ui.component.legal.LicenseAndDisclaimerInitialDialogs
@@ -100,7 +99,6 @@ class MainActivity : ComponentActivity() {
                 )
                 CompositionLocalProvider(
                     LocalSnackbar provides snackbarAdapter,
-                    LocalExoPlayer provides exoPlayer,
                     LocalPreferences provides preferences
                 ) {
                     MainScaffold(
