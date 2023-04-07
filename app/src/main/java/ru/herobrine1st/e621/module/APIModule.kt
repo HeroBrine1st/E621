@@ -22,15 +22,12 @@ package ru.herobrine1st.e621.module
 
 import android.content.Context
 import android.os.StatFs
-import android.util.Log
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityRetainedComponent
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.android.scopes.ActivityRetainedScoped
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.runBlocking
 import okhttp3.Cache
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -40,13 +37,8 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.net.AuthorizationInterceptor
 import ru.herobrine1st.e621.net.RateLimitInterceptor
 import ru.herobrine1st.e621.net.UserAgentInterceptor
-import ru.herobrine1st.e621.preference.getPreferencesFlow
-import ru.herobrine1st.e621.preference.proto.ProxyOuterClass
-import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.ProxyType
-import ru.herobrine1st.e621.util.USER_AGENT
-import ru.herobrine1st.e621.util.objectMapper
+import ru.herobrine1st.e621.util.*
 import java.io.File
-import java.io.IOException
 import java.net.*
 import javax.inject.Qualifier
 
@@ -60,15 +52,6 @@ class APIModule {
         @ApplicationContext context: Context,
         authorizationInterceptor: AuthorizationInterceptor
     ): OkHttpClient {
-        val preferences = runBlocking {
-            context.getPreferencesFlow().first()
-        }
-        val proxies = if (preferences.hasProxy() && preferences.proxy.enabled)
-            listOf(ProxyWithAuth(preferences.proxy)) else emptyList()
-        Authenticator.setDefault(AuthenticatorImpl(proxies))
-        // TODO add fall back preference (maybe after multiple proxies support)
-        ProxySelector.setDefault(ProxySelectorImpl(proxies + Proxy.NO_PROXY))
-
         val cacheDir = File(context.cacheDir, "okhttp").apply { mkdirs() }
         val size = (StatFs(cacheDir.absolutePath).let {
             it.blockCountLong * it.blockSizeLong
@@ -111,35 +94,3 @@ class APIModule {
 @Retention(AnnotationRetention.BINARY)
 annotation class APIHttpClient
 
-private class ProxyWithAuth(proxy: ProxyOuterClass.Proxy) : Proxy(
-    when (proxy.type) {
-        ProxyType.SOCKS5 -> Type.SOCKS
-        null -> throw RuntimeException("Got null from proxy.type, which is impossible")
-    },
-    InetSocketAddress(proxy.hostname, proxy.port)
-) {
-    val auth = if (proxy.hasAuth()) PasswordAuthentication(
-        proxy.auth.username,
-        proxy.auth.password.toCharArray()
-    ) else null
-}
-
-private class ProxySelectorImpl(proxies: List<Proxy>) : ProxySelector() {
-    private val proxies = proxies.ifEmpty { listOf(Proxy.NO_PROXY) }
-    override fun select(uri: URI?) = proxies
-
-    override fun connectFailed(uri: URI?, sa: SocketAddress?, ioe: IOException?) {}
-}
-
-private class AuthenticatorImpl(private val proxies: List<ProxyWithAuth>) : Authenticator() {
-    override fun getPasswordAuthentication(): PasswordAuthentication? {
-        if (requestorType != RequestorType.PROXY) return null
-        if (proxies.isEmpty()) return null
-
-        Log.d("Authenticator", "$requestorType $requestingSite $requestingHost $requestingPort")
-        return proxies.find {
-            val address = it.address() as InetSocketAddress
-            requestingHost == address.hostName && requestingPort == address.port
-        }?.auth
-    }
-}

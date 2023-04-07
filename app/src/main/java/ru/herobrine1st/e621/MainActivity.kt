@@ -32,7 +32,6 @@ import androidx.navigation.compose.rememberNavController
 import com.google.android.exoplayer2.ExoPlayer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.module.LocalExoPlayer
 import ru.herobrine1st.e621.preference.*
@@ -44,6 +43,12 @@ import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.ui.snackbar.SnackbarController
 import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
 import ru.herobrine1st.e621.ui.theme.E621Theme
+import ru.herobrine1st.e621.util.AuthenticatorImpl
+import ru.herobrine1st.e621.util.ProxySelectorImpl
+import ru.herobrine1st.e621.util.ProxyWithAuth
+import java.net.Authenticator
+import java.net.Proxy
+import java.net.ProxySelector
 import javax.inject.Inject
 
 
@@ -63,9 +68,16 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             try {
-                applicationContext.getPreferencesFlow().first()
+                applicationContext.getPreferencesFlow()
+                    .collect { preferences ->
+                        val proxies = if (preferences.hasProxy() && preferences.proxy.enabled)
+                            listOf(ProxyWithAuth(preferences.proxy)) else emptyList()
+                        Authenticator.setDefault(AuthenticatorImpl(proxies))
+                        // TODO add fall back preference (maybe after multiple proxies support)
+                        ProxySelector.setDefault(ProxySelectorImpl(proxies + Proxy.NO_PROXY))
+                    }
             } catch (t: Throwable) {
-                Log.e(TAG, "An error occurred while pre-reading preferences", t)
+                Log.wtf(TAG, "An error occurred while setting up proxy", t)
             }
         }
 
