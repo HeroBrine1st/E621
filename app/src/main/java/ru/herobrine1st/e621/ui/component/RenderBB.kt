@@ -40,24 +40,20 @@ import ru.herobrine1st.e621.api.parseBBCode
 import ru.herobrine1st.e621.ui.theme.disabledText
 
 @Composable
-fun RenderBB(text: String, modifier: Modifier = Modifier) {
+fun RenderBB(text: String) {
     val parsed = remember(text) { parseBBCode(text) }
-    RenderBB(parsed, modifier)
+    RenderBB(parsed)
 }
 
 @Composable
-fun RenderBB(data: List<MessageData<*>>, modifier: Modifier = Modifier) {
-    // Column is used by:
-    // post screen - in subcomposelayout
-    Column(modifier) {
-        data.forEach {
-            RenderBB(it)
-        }
+fun RenderBB(data: List<MessageData<*>>) {
+    data.forEach {
+        RenderBB(it)
     }
 }
 
 @Composable
-fun RenderBB(data: MessageData<*>, modifier: Modifier = Modifier) {
+fun RenderBB(data: MessageData<*>) {
     when (data) {
         is MessageQuote -> {
             data.author?.let {
@@ -76,11 +72,7 @@ fun RenderBB(data: MessageData<*>, modifier: Modifier = Modifier) {
                 )
                 Spacer(Modifier.width(4.dp))
                 RenderBB(
-                    data = data.data,
-                    modifier = modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp, start = 4.dp, bottom = 4.dp)
-
+                    data = data.data
                 )
             }
         }
