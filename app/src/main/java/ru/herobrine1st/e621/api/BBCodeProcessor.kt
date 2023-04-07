@@ -222,7 +222,16 @@ private fun parseQuoteHeader(input: String, initialStart: Int): Pair<MessageQuot
     ) to match.range.last + 1
 }
 
+/**
+ * Fix message data in a way that it can be properly displayed in Column, i.e. concatenate row of [MessageText]s
+ * into one object, so that there would be no line break at tag boundary.
+ *
+ * Order of text and other [MessageData] is kept.
+ *
+ * @return Optimized list of [MessageData]
+ */
 private fun List<MessageData<*>>.collapseMessageTexts(): List<MessageData<*>> {
+    // FAST PATH: Short comment, maybe with one quote or picture.
     if (this.size < 2) return this
         .filter { (it as? MessageText)?.text?.isNotEmpty() != false }
         .map { (it as? MessageText)?.trim() ?: it }
