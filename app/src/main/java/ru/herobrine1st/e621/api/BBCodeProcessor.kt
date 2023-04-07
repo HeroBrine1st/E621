@@ -122,7 +122,9 @@ data class MessageQuote(
 @Suppress("KDocUnresolvedReference")
 val pattern = Regex("""\[(?:([^\[\]/]+)|/([^\[\]/]+)|\[([^\[\]/]+)(?:\|([^\[\]/]+))?)]""")
 
-// [quote]"name":/user/show/0 said:
+// "name":/user/show/0 said:
+// "name":/users/0 said:
+// name said:
 val quotePattern = Regex("""(?:"?([^"\n]+)"?:/user(?:s|/show)/(\d+)|(\S+)) said:\r?\n""")
 
 fun parseBBCode(input: String): List<MessageData<*>> {
