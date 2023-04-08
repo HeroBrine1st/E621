@@ -31,7 +31,7 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.PostReduced
-import ru.herobrine1st.e621.api.model.parseComments
+import ru.herobrine1st.e621.api.model.parseCommentAvatarsAndGetCommentCount
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.JacksonExceptionHandler
@@ -57,25 +57,22 @@ class PostCommentsSource(
 
         return try {
             if (!::avatars.isInitialized) {
-                val commentsRaw = withContext(Dispatchers.Default) {
-                    parseComments(withContext(Dispatchers.IO) {
+                val (avatars, commentCount) = withContext(Dispatchers.Default) {
+                    parseCommentAvatarsAndGetCommentCount(withContext(Dispatchers.IO) {
                         api.getCommentsForPostHTML(postId).await()
                     })
                 }
-                if (commentsRaw.isEmpty())
+                this.avatars = avatars
+                if (commentCount == 0)
                     return LoadResult.Page(
                         data = emptyList(),
                         nextKey = null,
                         prevKey = null
                     )
-                avatars = withContext(Dispatchers.Default) {
-                    commentsRaw.associateBy { it.authorId }.mapValues { it.value.avatarPost }
-                }
-
 
                 // Comments are reversed, doing my best to reverse it back
                 firstPage =
-                    ceil(commentsRaw.size.toDouble() / params.loadSize).toInt() // Kotlin/JVM wtf
+                    ceil(commentCount.toDouble() / params.loadSize).toInt() // Kotlin/JVM wtf
             }
             val page = params.key ?: firstPage
             val limit = params.loadSize
