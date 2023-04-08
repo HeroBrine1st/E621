@@ -208,7 +208,7 @@ fun Post(
                 }
                 item { Spacer(Modifier.height(8.dp)) }
                 if (comments.loadState.refresh is LoadState.Loading) {
-                    items(count = 50) {
+                    items(count = post.commentCount) {
                         PostCommentPlaceholder(modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL))
                         Spacer(Modifier.height(8.dp))
                     }
