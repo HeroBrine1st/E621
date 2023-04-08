@@ -53,7 +53,7 @@ fun parseCommentAvatarsAndGetCommentCount(response: PostCommentsEndpoint): Pair<
             article.getElementsByClass("author-info").first()!!.let { authorInfo ->
                 authorInfo.getElementsByClass("avatar").first()
                     ?.getElementsByClass("post-thumb")?.first()?.attr("data-id")
-                    ?.toInt() ?: 0
+                    ?.toIntOrNull() ?: 0
             }
         id to response.posts[avatarPostId]
     } to document.children().size
