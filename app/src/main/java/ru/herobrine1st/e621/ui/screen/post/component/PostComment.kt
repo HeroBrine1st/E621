@@ -22,6 +22,7 @@ package ru.herobrine1st.e621.ui.screen.post.component
 
 import android.text.format.DateUtils
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -70,7 +71,9 @@ fun PostComment(
 
         }
         Spacer(Modifier.height(4.dp))
-        RenderBB(text = comment.body)
+        SelectionContainer {
+            RenderBB(text = comment.body)
+        }
     }
 }
 
