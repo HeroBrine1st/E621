@@ -35,14 +35,12 @@ import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
-import ru.herobrine1st.e621.api.model.CommentBB
-import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.ui.component.RenderBB
+import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 
 @Composable
 fun PostComment(
-    comment: CommentBB,
-    avatarPost: PostReduced?,
+    commentData: CommentData,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -50,14 +48,14 @@ fun PostComment(
             .fillMaxWidth()
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CommentAvatar(avatarPost, Modifier.size(24.dp))
+            CommentAvatar(commentData.author.avatarUrl, Modifier.size(24.dp))
             Spacer(Modifier.width(4.dp))
-            Text(text = comment.creatorName, fontWeight = FontWeight.Medium, fontSize = 12.sp)
+            Text(text = commentData.author.displayName, fontWeight = FontWeight.Medium, fontSize = 12.sp)
 
             Spacer(Modifier.width(2.dp))
             Text(
                 text = DateUtils.getRelativeTimeSpanString(
-                    comment.createdAt.toEpochSecond() * 1000,
+                    commentData.creationTime.toEpochSecond() * 1000,
                     System.currentTimeMillis(),
                     0L,
                     DateUtils.FORMAT_ABBREV_ALL
@@ -67,12 +65,12 @@ fun PostComment(
                 fontSize = 12.sp,
             )
             Spacer(Modifier.weight(1f))
-            Text(text = comment.score.toString())
+            Text(text = commentData.score.toString())
 
         }
         Spacer(Modifier.height(4.dp))
         SelectionContainer {
-            RenderBB(text = comment.body)
+            RenderBB(commentData.message)
         }
     }
 }

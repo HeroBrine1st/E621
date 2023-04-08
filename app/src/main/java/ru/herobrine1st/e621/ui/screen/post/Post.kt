@@ -66,9 +66,7 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
-import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
@@ -215,12 +213,11 @@ fun Post(
                     return@LazyColumn
                 }
                 endOfPagePlaceholder(comments.loadState.prepend)
-                items(comments, key = { it.first.id }) {
-                    if (it == null) return@items
-                    if (it.first.isHidden) return@items
+                items(comments, key = { it.id }) { comment ->
+                    if (comment == null) return@items
+                    if (comment.isHidden) return@items
                     PostComment(
-                        it.first,
-                        it.second,
+                        comment,
                         modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
                     )
                     Spacer(Modifier.height(8.dp))
@@ -327,9 +324,8 @@ fun Post(
                                     if (comments.itemSnapshotList.isEmpty()) {
                                         Text(stringResource(R.string.no_comments_found))
                                     } else {
-                                        val comment: CommentBB? = comments.peek(0)?.first
-                                        val avatarPost: PostReduced? = comments.peek(0)?.second
-                                        if (comment != null) PostComment(comment, avatarPost)
+                                        val comment = comments.peek(0)
+                                        if (comment != null) PostComment(comment)
                                         else Text(stringResource(R.string.no_comments_found))
                                     }
                                 }

@@ -30,9 +30,9 @@ import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.await
-import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.parseComments
+import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.JacksonExceptionHandler
 import java.io.IOException
@@ -44,16 +44,16 @@ class PostCommentsSource(
     private val snackbar: SnackbarAdapter,
     private val jacksonExceptionHandler: JacksonExceptionHandler,
     private val postId: Int
-) : PagingSource<Int, Pair<CommentBB, PostReduced?>>() {
+) : PagingSource<Int, CommentData>() {
     // userId to post
     private lateinit var avatars: Map<Int, PostReduced?>
     private var firstPage by Delegates.notNull<Int>()
 
-    override fun getRefreshKey(state: PagingState<Int, Pair<CommentBB, PostReduced?>>): Int? {
+    override fun getRefreshKey(state: PagingState<Int, CommentData>): Int? {
         return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
     }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Pair<CommentBB, PostReduced?>> {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, CommentData> {
 
         return try {
             if (!::avatars.isInitialized) {
@@ -82,9 +82,17 @@ class PostCommentsSource(
 
             val res = withContext(Dispatchers.IO) {
                 api.getCommentsForPostBBCode(postId, page, limit).await()
-            }
+            }.asReversed()
+                .run {
+                    withContext(Dispatchers.Default) {
+                        map {
+                            CommentData.fromE621Comment(it, avatars[it.creatorId])
+                        }
+                    }
+                }
+
             LoadResult.Page(
-                data = res.map { it to avatars[it.creatorId] }.asReversed(),
+                data = res,
                 prevKey = if (page == firstPage) null else page + 1,
                 nextKey = if (page == 1) null else page - 1,
             )

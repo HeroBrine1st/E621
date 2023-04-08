@@ -34,15 +34,13 @@ import coil.transform.CircleCropTransformation
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
-import ru.herobrine1st.e621.api.model.PostReduced
 
 @Composable
 fun CommentAvatar(
-    avatarPost: PostReduced?,
+    url: String?,
     modifier: Modifier = Modifier,
     placeholder: Boolean = false
 ) {
-    val url = avatarPost?.previewUrl ?: avatarPost?.croppedUrl
     var isPlaceholderActive by remember { mutableStateOf(true) }
     if (url != null) {
         AsyncImage(
@@ -69,7 +67,7 @@ fun CommentAvatar(
         Icon(
             Icons.Filled.AccountCircle,
             contentDescription = null,
-            // If placeholder = true, there should be no avatarPost object provided (=null)
+            // If placeholder = true, there should be no url provided (=null)
             modifier = modifier
                 .clip(CircleShape) // For placeholder
                 .placeholder(placeholder, highlight = PlaceholderHighlight.fade())
