@@ -55,17 +55,20 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
+import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
 import dagger.hilt.android.EntryPointAccessors
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
@@ -75,6 +78,7 @@ import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
+import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
 import ru.herobrine1st.e621.util.normalizeTagForUI
@@ -104,26 +108,14 @@ fun Post(
     val wikiState = viewModel.wikiState
     val preferences = LocalPreferences.current
 
-
     val coroutineScope = rememberCoroutineScope()
-    val commentsLazyListState = rememberLazyListState()
 
-    val drawerState =
-        rememberBottomDrawerState(
-            initialValue = if (openComments) BottomDrawerValue.Expanded // Opened works here
-            else BottomDrawerValue.Closed
-        )
+    val drawerState = rememberBottomDrawerState(
+        initialValue = if (openComments) BottomDrawerValue.Expanded // Opened works here
+        else BottomDrawerValue.Closed
+    )
+
     var loadComments by remember { mutableStateOf(!preferences.privacyModeEnabled || openComments) } // Do not make excessive API calls (user preference)
-
-    val isExpanded by remember(drawerState) {
-        derivedStateOf {
-            drawerState.progress.fraction == 1f && drawerState.progress.to == BottomDrawerValue.Expanded
-        }
-    }
-
-    val elevation by animateDpAsState(if (isExpanded) 0.dp else AppBarDefaults.TopAppBarElevation)
-    val shapeSize by animateDpAsState(if (isExpanded) 0.dp else 8.dp)
-    val drawerBackgroundColor by animateColorAsState(if (isExpanded) MaterialTheme.colors.background else MaterialTheme.colors.surface)
 
     if (post == null) {
         Column(
@@ -166,62 +158,11 @@ fun Post(
         }
     }
 
-    val isGesturesEnabled by remember(drawerState, commentsLazyListState) {
-        derivedStateOf {
-            !drawerState.isClosed // Disallow opening by gesture
-                    // Disallow closing when scrolled down
-                    && commentsLazyListState.firstVisibleItemIndex == 0
-                    && commentsLazyListState.firstVisibleItemScrollOffset == 0
-        }
-    }
-
-    BottomDrawer(
+    CommentsBottomDrawer(
         drawerState = drawerState,
-        gesturesEnabled = isGesturesEnabled,
-        drawerShape = RoundedCornerShape(shapeSize),
-        scrimColor = Color.Transparent,
-        drawerBackgroundColor = drawerBackgroundColor,
-        drawerContent = {
-            // Do not load comments while drawer is closed
-            if (!loadComments) {
-                Box(Modifier.fillMaxSize()) // Set size so that drawer won't auto-expand when opened
-                return@BottomDrawer
-            }
-            val comments = viewModel.commentsFlow.collectAsLazyPagingItems()
-            LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                state = commentsLazyListState,
-                modifier = Modifier.fillMaxSize(),
-                userScrollEnabled = isExpanded
-            ) {
-                item {
-                    TopAppBar(backgroundColor = MaterialTheme.colors.surface,
-                        elevation = elevation,
-                        title = {
-                            Text(stringResource(R.string.comments))
-                        })
-                }
-                item { Spacer(Modifier.height(8.dp)) }
-                if (comments.loadState.refresh is LoadState.Loading) {
-                    items(count = post.commentCount) {
-                        PostCommentPlaceholder(modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL))
-                        Spacer(Modifier.height(8.dp))
-                    }
-                    return@LazyColumn
-                }
-                endOfPagePlaceholder(comments.loadState.prepend)
-                items(comments, key = { it.id }) { comment ->
-                    if (comment == null) return@items
-                    if (comment.isHidden) return@items
-                    PostComment(
-                        comment,
-                        modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
-                    )
-                    Spacer(Modifier.height(8.dp))
-                }
-                endOfPagePlaceholder(comments.loadState.append)
-            }
-        }
+        commentsFlow = viewModel.commentsFlow,
+        post = post,
+        loadComments = loadComments
     ) {
         BoxWithConstraints {
             LazyColumn(
@@ -342,7 +283,90 @@ fun Post(
             }
         }
     }
+}
 
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+fun CommentsBottomDrawer(
+    drawerState: BottomDrawerState,
+    commentsFlow: Flow<PagingData<CommentData>>,
+    post: Post,
+    loadComments: Boolean,
+    content: @Composable () -> Unit
+) {
+
+    val commentsLazyListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
+    val isExpanded by remember(drawerState) {
+        derivedStateOf {
+            drawerState.progress.fraction == 1f && drawerState.progress.to == BottomDrawerValue.Expanded
+        }
+    }
+
+    val elevation by animateDpAsState(if (isExpanded) 0.dp else AppBarDefaults.TopAppBarElevation)
+    val shapeSize by animateDpAsState(if (isExpanded) 0.dp else 8.dp)
+    val drawerBackgroundColor by animateColorAsState(if (isExpanded) MaterialTheme.colors.background else MaterialTheme.colors.surface)
+
+    val isGesturesEnabled by remember(drawerState, commentsLazyListState) {
+        derivedStateOf {
+            !drawerState.isClosed // Disallow opening by gesture
+                    // Disallow closing when scrolled down
+                    && commentsLazyListState.firstVisibleItemIndex == 0
+                    && commentsLazyListState.firstVisibleItemScrollOffset == 0
+        }
+    }
+
+    BottomDrawer(
+        drawerState = drawerState,
+        gesturesEnabled = isGesturesEnabled,
+        drawerShape = RoundedCornerShape(shapeSize),
+        scrimColor = Color.Transparent,
+        drawerBackgroundColor = drawerBackgroundColor,
+        drawerContent = {
+            // Do not load comments while drawer is closed
+            if (!loadComments) {
+                Box(Modifier.fillMaxSize()) // Set size so that drawer won't auto-expand when opened
+                return@BottomDrawer
+            }
+            val comments = commentsFlow.collectAsLazyPagingItems()
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                state = commentsLazyListState,
+                modifier = Modifier.fillMaxSize(),
+                userScrollEnabled = isExpanded
+            ) {
+                item {
+                    TopAppBar(backgroundColor = MaterialTheme.colors.surface,
+                        elevation = elevation,
+                        title = {
+                            Text(stringResource(R.string.comments))
+                        })
+                }
+                item { Spacer(Modifier.height(8.dp)) }
+                if (comments.loadState.refresh is LoadState.Loading) {
+                    items(count = post.commentCount) {
+                        PostCommentPlaceholder(modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL))
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    return@LazyColumn
+                }
+                endOfPagePlaceholder(comments.loadState.prepend)
+                items(comments, key = { it.id }) { comment ->
+                    if (comment == null) return@items
+                    if (comment.isHidden) return@items
+                    PostComment(
+                        comment,
+                        modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+                endOfPagePlaceholder(comments.loadState.append)
+            }
+        }
+    ) {
+        content()
+    }
 
     BackHandler(enabled = drawerState.isOpen) {
         coroutineScope.launch {
@@ -460,7 +484,3 @@ fun Tag(
     }
 }
 
-fun Post.selectSample() = when {
-    file.type.isVideo -> files.first { it.type.isVideo }
-    else -> normalizedSample
-}

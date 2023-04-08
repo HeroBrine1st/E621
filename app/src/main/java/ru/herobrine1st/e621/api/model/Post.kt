@@ -100,3 +100,8 @@ data class PostReduced(
     val previewUrl: String? = null,
     val croppedUrl: String? = null
 )
+
+fun Post.selectSample() = when {
+    file.type.isVideo -> files.first { it.type.isVideo }
+    else -> normalizedSample
+}
