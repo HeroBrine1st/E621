@@ -71,9 +71,11 @@ fun RenderBB(data: MessageData<*>) {
                         .background(MaterialTheme.colors.disabledText)
                 )
                 Spacer(Modifier.width(4.dp))
-                RenderBB(
-                    data = data.data
-                )
+                Column {
+                    RenderBB(
+                        data = data.data
+                    )
+                }
             }
         }
         is MessageText -> Text(data.text)
