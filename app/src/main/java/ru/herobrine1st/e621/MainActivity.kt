@@ -108,7 +108,7 @@ class MainActivity : ComponentActivity() {
                         isBlacklistEnabled = preferences.blacklistEnabled,
                         toggleBlacklist = { enabled: Boolean ->
                             coroutineScope.launch {
-                                context.updatePreferences { setBlacklistEnabled(enabled) }
+                                context.updatePreferences { blacklistEnabled = enabled }
                             }
                         },
                         onClose = { showBlacklistDialog = false })
