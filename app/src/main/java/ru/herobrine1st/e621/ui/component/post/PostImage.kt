@@ -23,7 +23,6 @@ package ru.herobrine1st.e621.ui.component.post
 import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -41,8 +40,8 @@ import com.google.accompanist.placeholder.material.placeholder
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.net.collectDownloadProgressAsState
 import ru.herobrine1st.e621.net.downloadProgressSharedFlow
 import ru.herobrine1st.e621.util.debug
@@ -52,10 +51,10 @@ private const val TAG = "PostImage"
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PostImage(
-    post: Post,
-    openPost: (() -> Unit)?,
     file: NormalizedFile,
+    contentDescription: String?,
     modifier: Modifier = Modifier,
+    actualPostFileType: FileType? = null,
     initialAspectRatio: Float = file.aspectRatio
 ) {
     var isLoading by remember { mutableStateOf(true) }
@@ -65,8 +64,6 @@ fun PostImage(
     val url = remember(file) { file.urls.first().toHttpUrlOrNull() }
     // "1.1.1.1" is another workaround for null-filled URL coming from the API
     val progress by collectDownloadProgressAsState(url ?: "https://1.1.1.1".toHttpUrl())
-
-
 
     debug {
         var maxProgress by remember { mutableStateOf(progress) }
@@ -91,11 +88,8 @@ fun PostImage(
     Box(contentAlignment = Alignment.Center, modifier = modifier) {
         AsyncImage(
             model = url,
+            contentDescription = contentDescription,
             modifier = Modifier
-                .clickable(openPost != null) {
-                    openPost?.invoke()
-                }
-                .fillMaxWidth()
                 .aspectRatio(aspectRatio.takeIf { it > 0 } ?: 1f)
                 .placeholder(isLoading, highlight = PlaceholderHighlight.fade()),
             onSuccess = {
@@ -107,10 +101,9 @@ fun PostImage(
                 isLoading = false
                 isError = true
             },
-            contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
             contentScale = ContentScale.Fit
         )
-        if (post.file.type.isNotImage) Chip( // TODO
+        if (actualPostFileType != null) Chip( // TODO
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset(x = 10.dp, y = 10.dp),
@@ -120,7 +113,7 @@ fun PostImage(
             enabled = false,
             onClick = {}
         ) {
-            Text(post.file.type.extension)
+            Text(actualPostFileType.extension)
         }
         when {
             isError -> Column(horizontalAlignment = Alignment.CenterHorizontally) {

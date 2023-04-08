@@ -53,7 +53,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.*
-import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -72,14 +71,12 @@ import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
 import ru.herobrine1st.e621.ui.component.RenderBB
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
-import ru.herobrine1st.e621.ui.component.post.PostImage
-import ru.herobrine1st.e621.ui.component.post.PostVideo
+import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.logic.PostViewModel
 import ru.herobrine1st.e621.ui.screen.post.logic.WikiResult
-import ru.herobrine1st.e621.ui.screen.posts.component.InvalidPost
 import ru.herobrine1st.e621.util.normalizeTagForUI
 import java.util.*
 
@@ -231,26 +228,10 @@ fun Post(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item("media") {
-                    when {
-                        post.file.type.isVideo -> PostVideo(
-                            post.files.first { it.type.isVideo },
-                            maxHeight = maxHeight,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .zIndex(1f)
-                        )
-                        post.file.type.isImage -> PostImage(
-                            post = post,
-                            openPost = null,
-                            file = post.normalizedSample
-                        )
-                        else -> InvalidPost(
-                            text = stringResource(
-                                R.string.unsupported_post_type,
-                                post.file.type.extension
-                            )
-                        )
-                    }
+                    PostMediaContainer(
+                        file = post.selectSample(),
+                        contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
+                    )
                 }
                 // TODO visually connect description to image and add elevation only at bottom
                 // (it should look great according to my imagination)
@@ -477,4 +458,9 @@ fun Tag(
             )
         }
     }
+}
+
+fun Post.selectSample() = when {
+    file.type.isVideo -> files.first { it.type.isVideo }
+    else -> normalizedSample
 }

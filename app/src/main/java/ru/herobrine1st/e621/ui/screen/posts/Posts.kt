@@ -21,6 +21,7 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import android.app.Activity
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -51,9 +52,8 @@ import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
-import ru.herobrine1st.e621.ui.component.post.PostImage
+import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.screen.Screen
-import ru.herobrine1st.e621.ui.screen.posts.component.InvalidPost
 import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
@@ -178,19 +178,13 @@ fun Post(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            when {
-                post.file.type.isSupported -> PostImage(
-                    post = post,
-                    openPost = { openPost(false) },
-                    file = post.normalizedSample
-                )
-                else -> InvalidPost(
-                    text = stringResource(
-                        R.string.unsupported_post_type,
-                        post.file.type.extension
-                    )
-                )
-            }
+            PostMediaContainer(
+                file = post.normalizedSample,
+                contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
+                modifier = Modifier.clickable {
+                    openPost(false)
+                }
+            )
             // FIXME UI jank in both FlowRow and PostActionsRow
             // This issue is somehow related to Text, but quick test shows that removing Text
             // does not help while removing both FlowRow and PostActionsRow make scrolling smooth
