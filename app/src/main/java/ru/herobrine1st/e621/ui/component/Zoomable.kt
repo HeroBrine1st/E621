@@ -24,6 +24,7 @@ import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
@@ -40,13 +41,18 @@ import javax.annotation.CheckReturnValue
  * and zooming in and out (only to initial size).
  */
 @Composable
-fun Zoomable(content: @Composable BoxScope.() -> Unit) {
+fun Zoomable(
+    modifier: Modifier = Modifier,
+    contentAlignment: Alignment = Alignment.TopStart,
+    propagateMinConstraints: Boolean = false,
+    content: @Composable BoxScope.() -> Unit
+) {
     var offset by remember { mutableStateOf(Offset.Zero) }
     var scale by remember { mutableStateOf(1f) }
     var size by remember { mutableStateOf(IntSize.Zero) }
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .pointerInput(Unit) {
                 // Warning! Math ahead!
                 detectTransformGestures { centroid, pan, gestureZoom, _ ->
@@ -78,8 +84,17 @@ fun Zoomable(content: @Composable BoxScope.() -> Unit) {
             }
             .onSizeChanged {
                 size = it
+                // FIXME if fillMax* modifier is applied, empty space is considered as zoomable
+                // so that it participate in the function below as usable space
+                // and so user can zoom enough and pan the content out of bounds
+                // while this function is trying to prevent that
+                // Possible solution: place content in its own box and move
+                // onSizeChanged and graphicsLayer there
+                // (and center that box in outer box)
                 offset = offset.coercePanWithinSize(size, scale)
             },
+        contentAlignment = contentAlignment,
+        propagateMinConstraints = propagateMinConstraints,
         content = content,
     )
 }

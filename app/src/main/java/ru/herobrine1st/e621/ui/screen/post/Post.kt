@@ -28,9 +28,8 @@ import androidx.annotation.StringRes
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -47,8 +46,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -67,15 +69,14 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
+import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.preference.LocalPreferences
-import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
-import ru.herobrine1st.e621.ui.component.CollapsibleColumn
-import ru.herobrine1st.e621.ui.component.RenderBB
-import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
+import ru.herobrine1st.e621.ui.component.*
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.dialog.ContentDialog
+import ru.herobrine1st.e621.ui.screen.post.component.GoingToFullscreenAnimation
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
@@ -87,7 +88,7 @@ import java.util.*
 private const val TAG = "Post Screen"
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalAnimationApi::class)
 @Composable
 fun Post(
     id: Int,
@@ -158,21 +159,60 @@ fun Post(
         }
     }
 
+    var fullscreenState by remember { mutableStateOf(FullscreenState.CLOSE) }
+
+    var imagePositionInParent by remember { mutableStateOf(Offset.Unspecified) }
+
+    val media = remember {
+        movableContentOf { file: NormalizedFile ->
+            PostMediaContainer(
+                file = file,
+                contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
+            )
+        }
+    }
+
     CommentsBottomDrawer(
         drawerState = drawerState,
         commentsFlow = viewModel.commentsFlow,
         post = post,
-        loadComments = loadComments
+        loadComments = loadComments,
     ) {
         BoxWithConstraints {
             LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                userScrollEnabled = fullscreenState == FullscreenState.CLOSE
             ) {
                 item("media") {
-                    PostMediaContainer(
-                        file = post.selectSample(),
-                        contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
-                    )
+                    val sample = post.selectSample()
+
+                    // "Open to fullscreen" behavior
+                    // It is obvious that this code is bad from its size (it is not all, the
+                    // second part is below, and also in another file)
+                    // It is not really fullscreen - status bar is still visible
+                    // Still VIP, maybe Window is should be used
+                    // Or navigation should handle this. As AndroidX Compose Navigation is
+                    // not flexible, I look at Decompose
+                    Box(
+                        Modifier
+                            // This box will be empty if image is gone to fullscreen
+                            .aspectRatio(sample.aspectRatio)
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = fullscreenState == FullscreenState.CLOSE
+                                        && !post.file.type.isVideo,
+                                indication = null, // The animation is the indication
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                fullscreenState = FullscreenState.OPEN
+                            }
+                            .onGloballyPositioned {
+                                imagePositionInParent = it.positionInParent()
+                            }
+                    ) {
+                        if (fullscreenState == FullscreenState.CLOSE)
+                            media(sample)
+                    }
                 }
                 // TODO visually connect description to image and add elevation only at bottom
                 // (it should look great according to my imagination)
@@ -280,6 +320,37 @@ fun Post(
                 tags(post, searchOptions, onModificationClick, onWikiClick = {
                     viewModel.handleWikiClick(it)
                 })
+            }
+
+            GoingToFullscreenAnimation(
+                isFullscreen = fullscreenState == FullscreenState.OPEN,
+                contentAspectRatio = post.selectSample().aspectRatio,
+                getContentPositionRelativeToParent = { imagePositionInParent },
+                assumeTranslatedComponentIsInFullscreenContainerCentered = true,
+                onExit = {
+                    fullscreenState = FullscreenState.CLOSE
+                },
+                componentBackground = {
+                    Surface(
+                        color = Color.Black,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .clickable(
+                            indication = null, // The animation is the indication
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            fullscreenState = FullscreenState.CLOSING
+                        }
+                    ) {}
+                }
+            ) {
+                Zoomable(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    media(post.selectSample())
+                }
+            }
+
+            BackHandler(fullscreenState == FullscreenState.OPEN) {
+                fullscreenState = FullscreenState.CLOSING
             }
         }
     }
@@ -484,3 +555,8 @@ fun Tag(
     }
 }
 
+enum class FullscreenState {
+    OPEN,
+    CLOSE,
+    CLOSING
+}
