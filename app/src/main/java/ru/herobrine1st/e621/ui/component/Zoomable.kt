@@ -33,6 +33,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import coil.compose.AsyncImage
+import javax.annotation.CheckReturnValue
 
 /**
  * A layout composable that can be zoomed. It supports dragging zoomed image (with one and two fingers)
@@ -77,13 +78,14 @@ fun Zoomable(content: @Composable BoxScope.() -> Unit) {
             }
             .onSizeChanged {
                 size = it
-                offset.coercePanWithinSize(size, scale)
+                offset = offset.coercePanWithinSize(size, scale)
             },
         content = content,
     )
 }
 
 // Assumes transformOrigin is (0;0) and offset is non-scaled, so it is private
+@CheckReturnValue
 private fun Offset.coercePanWithinSize(size: IntSize, scale: Float): Offset {
     // Think of it as (scale - 1f) / scale (as offset is multiplied by scale later)
     // This makes sense if you imagine Zoomable as a window from which you see the [content]
