@@ -20,26 +20,18 @@
 
 package ru.herobrine1st.e621.net
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filter
 import okhttp3.*
 import okio.*
+import ru.herobrine1st.e621.util.StaticValueState
 
 private val mutableSharedFlow = MutableSharedFlow<DownloadProgress>(
     extraBufferCapacity = 5,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
 )
-
-// For debugging
-val downloadProgressSharedFlow: SharedFlow<DownloadProgress> = mutableSharedFlow
-
-private const val TAG = "DownloadProgressInterceptor"
 
 object DownloadProgressInterceptor : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response {
@@ -84,10 +76,25 @@ data class DownloadProgress(
     val contentLength: Long
 ) {
     inline val progress get() = downloaded.toFloat() / contentLength
-    inline val isValid get() = downloaded >= 0
 }
 
+/**
+ * Collect download progress for [url] as observable [State].
+ *
+ * Returned state value is null initially, but it is guaranteed that value will never be null once
+ * it is not null, if the [url] parameter itself is not null.
+ * If the parameter [url] is null, this function will return [State] with null value
+ * **regardless of any conditions**.
+ *
+ * Works only if request is intercepted by [DownloadProgressInterceptor]
+ *
+ * @param url [HttpUrl] to observe. May be null to disable observing (for convenience)
+ * @return Observable state with content length and download progress in bytes.
+ */
 @Composable
-fun collectDownloadProgressAsState(url: HttpUrl): State<DownloadProgress> =
-    remember { mutableSharedFlow.filter { it.url == url } }
-        .collectAsState(initial = DownloadProgress(url, -1, 1))
+@Stable
+fun collectDownloadProgressAsState(url: HttpUrl?) = when (url) {
+    null -> remember { StaticValueState(null) }
+    else -> remember(url) { mutableSharedFlow.filter { it.url == url } }
+        .collectAsState(initial = null)
+}

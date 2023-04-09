@@ -30,20 +30,19 @@ import androidx.compose.material.icons.outlined.Error
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.compose.AsyncImagePainter
+import coil.compose.AsyncImagePainter.State.*
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.net.collectDownloadProgressAsState
-import ru.herobrine1st.e621.net.downloadProgressSharedFlow
 import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "PostImage"
@@ -54,54 +53,48 @@ fun PostImage(
     file: NormalizedFile,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    actualPostFileType: FileType? = null,
-    initialAspectRatio: Float = file.aspectRatio
+    actualPostFileType: FileType? = null
 ) {
-    var isLoading by remember { mutableStateOf(true) }
-    var isError by remember { mutableStateOf(false) }
-    var aspectRatio by remember { mutableStateOf(initialAspectRatio) }
+    val aspectRatio = file.aspectRatio
+    val url = file.urls.firstNotNullOfOrNull { it.toHttpUrlOrNull() }
 
-    val url = remember(file) { file.urls.first().toHttpUrlOrNull() }
-    // "1.1.1.1" is another workaround for null-filled URL coming from the API
-    val progress by collectDownloadProgressAsState(url ?: "https://1.1.1.1".toHttpUrl())
+    var painterState by remember { mutableStateOf<AsyncImagePainter.State>(Empty) }
+    val progress by collectDownloadProgressAsState(url)
 
     debug {
         var maxProgress by remember { mutableStateOf(progress) }
-        LaunchedEffect(progress.progress) {
-            if(progress.progress < maxProgress.progress) {
-                Log.w(TAG, "Progress for $url went backwards: from $maxProgress to ${progress.progress}")
-                Log.d(TAG, "$maxProgress to $progress")
-            } else maxProgress = progress
-        }
-
-        // FIXME in some cases it returns download progress for another URL
-        LaunchedEffect(progress.url) {
-            if(progress.url != url) {
-                // Great place for breakpoint. Do not forget to suspend ALL threads.
-                // Also I couldn't catch it. Good luck.
-                Log.w(TAG, "Download progress for $url is $progress with another URL.")
-                downloadProgressSharedFlow.replayCache // Suppress "unused" from where it needs
+        LaunchedEffect(progress?.progress) {
+            progress?.let { progress ->
+                if (progress.progress < (maxProgress?.progress ?: 0f)) {
+                    Log.w(
+                        TAG,
+                        "Progress for ${progress.url} went backwards: from $maxProgress to $progress"
+                    )
+                } else {
+                    maxProgress = progress
+                    Log.v(TAG, "Progress from $maxProgress to $progress")
+                }
             }
         }
     }
 
-    Box(contentAlignment = Alignment.Center, modifier = modifier) {
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .aspectRatio(aspectRatio.takeIf { it > 0 } ?: 1f)
+    ) {
         AsyncImage(
             model = url,
             contentDescription = contentDescription,
             modifier = Modifier
-                .aspectRatio(aspectRatio.takeIf { it > 0 } ?: 1f)
-                .placeholder(isLoading, highlight = PlaceholderHighlight.fade()),
-            onSuccess = {
-                isLoading = false
-                isError = false
-                aspectRatio = it.result.drawable.run { intrinsicWidth.toFloat() / intrinsicHeight }
-            },
-            onError = {
-                isLoading = false
-                isError = true
-            },
-            contentScale = ContentScale.Fit
+                .matchParentSize()
+                .placeholder(
+                    visible = painterState is Loading || painterState is Empty,
+                    highlight = PlaceholderHighlight.fade()
+                ),
+            onState = {
+                painterState = it
+            }
         )
         if (actualPostFileType != null) Chip( // TODO
             modifier = Modifier
@@ -115,23 +108,25 @@ fun PostImage(
         ) {
             Text(actualPostFileType.extension)
         }
-        when {
-            isError -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        when (painterState) {
+            is Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Outlined.Error, contentDescription = null)
                 Text(stringResource(R.string.unknown_error))
             }
-            isLoading -> Crossfade(progress.isValid) {
+            is Loading, Empty -> Crossfade(progress == null) {
                 when (it) {
-                    false -> CircularProgressIndicator()
-                    true -> CircularProgressIndicator(
+                    true -> CircularProgressIndicator()
+                    false -> CircularProgressIndicator(
                         animateFloatAsState(
-                            targetValue = progress.progress,
+                            // Non-nullability is guaranteed by collectDownloadProgressByState,
+                            // which internally uses non-nullable SharedFlow
+                            targetValue = progress!!.progress,
                             animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
                         ).value
                     )
                 }
             }
+            else -> {}
         }
     }
 }
-
