@@ -47,8 +47,10 @@ fun RenderBB(text: String) {
 
 @Composable
 fun RenderBB(data: List<MessageData<*>>) {
-    data.forEach {
-        RenderBB(it)
+    Column {
+        data.forEach {
+            RenderBB(it)
+        }
     }
 }
 
@@ -71,11 +73,9 @@ fun RenderBB(data: MessageData<*>) {
                         .background(MaterialTheme.colors.disabledText)
                 )
                 Spacer(Modifier.width(4.dp))
-                Column {
-                    RenderBB(
-                        data = data.data
-                    )
-                }
+                RenderBB(
+                    data = data.data
+                )
             }
         }
         is MessageText -> Text(data.text)
