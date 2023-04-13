@@ -20,65 +20,70 @@
 
 package ru.herobrine1st.e621.ui
 
-import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.LocalOwnersProvider
-import androidx.navigation.compose.currentBackStackEntryAsState
-import ru.herobrine1st.e621.R
+import kotlinx.coroutines.launch
+import ru.herobrine1st.e621.preference.LocalPreferences
+import ru.herobrine1st.e621.preference.updatePreferences
+import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.screen.Screen
 
 @Composable
-fun MainScaffold(navController: NavHostController, scaffoldState: ScaffoldState, onOpenBlacklistDialog: () -> Unit) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val screen by remember { derivedStateOf { Screen.byRoute[navBackStackEntry?.destination?.route] } }
+fun MainScaffold(
+    navController: NavHostController,
+    scaffoldState: ScaffoldState,
+    screen: Screen,
+    content: @Composable () -> Unit
+) {
+    val preferences = LocalPreferences.current
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+rememberScaffoldState()
+    var openBlacklistDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    // Emulate NavHost over whole screen (Its animations, I mean)
-                    Crossfade(screen) {
-                        Text(stringResource(it?.title ?: R.string.app_name))
-                    }
+                    Text(stringResource(screen.title))
                 },
                 backgroundColor = MaterialTheme.colors.primarySurface,
                 elevation = 12.dp,
                 actions = {
-                    val saveableStateHolder = rememberSaveableStateHolder()
-                    Crossfade(navBackStackEntry to screen) {
-                        it.first?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
-                            it.second?.appBarActions?.invoke(this, navController)
-                        }
+                    // TODO expose as parameter
+                    screen.appBarActions(this, navController)
+
+                    ActionBarMenu(navController) {
+                        openBlacklistDialog = true
                     }
-                    ActionBarMenu(navController, onOpenBlacklistDialog)
                 }
             )
         },
         scaffoldState = scaffoldState,
         floatingActionButton = {
-            val saveableStateHolder = rememberSaveableStateHolder()
-            Crossfade(navBackStackEntry to screen) {
-                it.first?.LocalOwnersProvider(saveableStateHolder = saveableStateHolder) {
-                    it.second?.floatingActionButton?.invoke()
-                }
-            }
+            screen.floatingActionButton()
         }
     ) {
         Surface(
             color = MaterialTheme.colors.background,
-            modifier = Modifier.padding(it)
-        ) {
-            Navigator(navController)
-        }
+            modifier = Modifier.padding(it),
+            content = content
+        )
     }
+
+    if (openBlacklistDialog)
+        BlacklistTogglesDialog(
+            isBlacklistEnabled = preferences.blacklistEnabled,
+            toggleBlacklist = { enabled: Boolean ->
+                coroutineScope.launch {
+                    context.updatePreferences { blacklistEnabled = enabled }
+                }
+            },
+            onClose = { openBlacklistDialog = false })
 }

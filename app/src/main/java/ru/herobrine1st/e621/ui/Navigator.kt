@@ -21,11 +21,12 @@
 package ru.herobrine1st.e621.ui
 
 import android.os.Bundle
+import androidx.compose.material.SnackbarHostState
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -41,7 +42,7 @@ import ru.herobrine1st.e621.ui.screen.settings.*
 import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable
-fun Navigator(navController: NavHostController) {
+fun Navigator(navController: NavHostController, snackbarHostState: SnackbarHostState) {
     val preferences = LocalPreferences.current
 
     NavHost(
@@ -49,14 +50,20 @@ fun Navigator(navController: NavHostController) {
         startDestination = Screen.Home.route
     ) {
         composable(Screen.Home.route) {
-            Home(
-                navigateToFavorites = {
-                    navController.navigate(Screen.Favourites.route)
-                },
-                navigateToSearch = {
-                    navController.navigate(Screen.Search.route)
-                }
-            )
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.Home
+            ) {
+                Home(
+                    navigateToFavorites = {
+                        navController.navigate(Screen.Favourites.route)
+                    },
+                    navigateToSearch = {
+                        navController.navigate(Screen.Search.route)
+                    }
+                )
+            }
         }
         composable(
             Screen.Search.route,
@@ -67,13 +74,19 @@ fun Navigator(navController: NavHostController) {
 
             val searchOptions = arguments.getParcelableCompat("query")
                 ?: PostsSearchOptions.DEFAULT
-            Search(searchOptions) {
-                navController.popBackStack()
-                navController.navigate(
-                    Screen.Posts.buildRoute {
-                        addArgument("query", it)
-                    }
-                )
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.Search
+            ) {
+                Search(searchOptions) {
+                    navController.popBackStack()
+                    navController.navigate(
+                        Screen.Posts.buildRoute {
+                            addArgument("query", it)
+                        }
+                    )
+                }
             }
         }
         composable(Screen.Posts.route, Screen.Posts.arguments) {
@@ -81,22 +94,29 @@ fun Navigator(navController: NavHostController) {
                 it.arguments!!.getParcelableCompat<PostsSearchOptions>("query")!!
             }
 
-            Posts(
-                searchOptions,
-                preferences.hasAuth(),
-                openPost = { post, scrollToComments ->
-                    navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
-                    navController.currentBackStackEntry!!.savedStateHandle["query"] = searchOptions
-                    navController.navigate(
-                        Screen.Post.buildRoute {
-                            addArgument("id", post.id)
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.Posts
+            ) {
+                Posts(
+                    searchOptions,
+                    preferences.hasAuth(),
+                    openPost = { post, scrollToComments ->
+                        navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
+                        navController.currentBackStackEntry!!.savedStateHandle["query"] =
+                            searchOptions
+                        navController.navigate(
+                            Screen.Post.buildRoute {
+                                addArgument("id", post.id)
 //                            addArgument("post", post)
-                            addArgument("openComments", scrollToComments)
+                                addArgument("openComments", scrollToComments)
 //                            addArgument("query", searchOptions)
-                        }
-                    )
-                }
-            )
+                            }
+                        )
+                    }
+                )
+            }
         }
         composable(Screen.Favourites.route, Screen.Favourites.arguments) {
             val arguments =
@@ -104,69 +124,113 @@ fun Navigator(navController: NavHostController) {
             val searchOptions =
                 remember { FavouritesSearchOptions(arguments.getString("user")) }
             val username by remember { derivedStateOf { if (preferences.hasAuth()) preferences.auth.username else null } }
-            Posts(
-                searchOptions,
-                preferences.hasAuth(),
-                openPost = { post, scrollToComments ->
-                    navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
-                    navController.currentBackStackEntry!!.savedStateHandle["query"] =
-                        PostsSearchOptions(favouritesOf = arguments.getString("user") ?: username)
-                    navController.navigate(
-                        Screen.Post.buildRoute {
-                            addArgument("id", post.id)
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.Favourites
+            ) {
+                Posts(
+                    searchOptions,
+                    preferences.hasAuth(),
+                    openPost = { post, scrollToComments ->
+                        navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
+                        navController.currentBackStackEntry!!.savedStateHandle["query"] =
+                            PostsSearchOptions(
+                                favouritesOf = arguments.getString("user") ?: username
+                            )
+                        navController.navigate(
+                            Screen.Post.buildRoute {
+                                addArgument("id", post.id)
 //                            addArgument("post", post)
-                            addArgument("openComments", scrollToComments)
+                                addArgument("openComments", scrollToComments)
 //                            addArgument(
 //                                "query", PostsSearchOptions(
 //                                    favouritesOf = arguments.getString("user") ?: username
 //                                )
 //                            )
-                        }
-                    )
-                }
-            )
+                            }
+                        )
+                    }
+                )
+            }
         }
         composable(Screen.Post.route, Screen.Post.arguments, deepLinks = Screen.Post.deepLinks) {
             val arguments =
                 it.arguments!!
 
-            Post(
-                arguments.getInt("id"),
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.Post
+            ) {
+                Post(
+                    arguments.getInt("id"),
 //                arguments.getParcelable("post"),
-                navController.previousBackStackEntry?.savedStateHandle?.get("clickedPost"),
-                arguments.getBoolean("openComments"),
+                    navController.previousBackStackEntry?.savedStateHandle?.get("clickedPost"),
+                    arguments.getBoolean("openComments"),
 //                arguments.getParcelable("query")
-                navController.previousBackStackEntry?.savedStateHandle?.get("query")
-                    ?: PostsSearchOptions.DEFAULT,
-                onModificationClick = {
-                    navController.navigate(
-                        Screen.Search.buildRoute {
-                            addArgument("query", it)
-                        }
-                    )
-                }
-            )
+                    navController.previousBackStackEntry?.savedStateHandle?.get("query")
+                        ?: PostsSearchOptions.DEFAULT,
+                    onModificationClick = {
+                        navController.navigate(
+                            Screen.Search.buildRoute {
+                                addArgument("query", it)
+                            }
+                        )
+                    }
+                )
+            }
         }
         composable(Screen.Settings.route) {
-            Settings(navController)
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.Settings
+            ) {
+                Settings(navController)
+            }
         }
         composable(Screen.SettingsBlacklist.route) {
-            SettingsBlacklist {
-                navController.popBackStack()
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.SettingsBlacklist
+            ) {
+                SettingsBlacklist {
+                    navController.popBackStack()
+                }
             }
         }
         composable(Screen.SettingsAbout.route) {
-            SettingsAbout(navigateToLicense = {
-                navController.navigate(Screen.SettingsLicense.route)
-            }, navigateToOssLicenses = {
-                navController.navigate(Screen.SettingsLicenses.route)
-            })
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.SettingsAbout
+            ) {
+                SettingsAbout(navigateToLicense = {
+                    navController.navigate(Screen.SettingsLicense.route)
+                }, navigateToOssLicenses = {
+                    navController.navigate(Screen.SettingsLicenses.route)
+                })
+            }
         }
         composable(Screen.SettingsLicense.route) {
-            SettingsLicense()
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.SettingsLicense
+            ) {
+                SettingsLicense()
+            }
         }
         composable(Screen.SettingsLicenses.route) {
-            SettingsLicenses()
+            MainScaffold(
+                navController = navController,
+                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
+                screen = Screen.SettingsLicenses
+            ) {
+                SettingsLicenses()
+            }
         }
     }
 }

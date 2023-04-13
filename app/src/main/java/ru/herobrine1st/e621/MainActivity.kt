@@ -24,22 +24,28 @@ import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material.rememberScaffoldState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.preference.*
-import ru.herobrine1st.e621.ui.MainScaffold
+import ru.herobrine1st.e621.ui.Navigator
 import ru.herobrine1st.e621.ui.component.legal.LicenseAndDisclaimerInitialDialogs
-import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.ui.snackbar.SnackbarController
 import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
+import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.util.AuthenticatorImpl
 import ru.herobrine1st.e621.util.ProxySelectorImpl
@@ -87,31 +93,39 @@ class MainActivity : ComponentActivity() {
                 // State
                 val preferences by context.dataStore.data.collectAsState(initial = PreferencesSerializer.defaultValue)
 
-                var showBlacklistDialog by remember { mutableStateOf(false) }
-                val scaffoldState = rememberScaffoldState()
+                val snackbarHostState = remember { SnackbarHostState() }
                 SnackbarController(
                     snackbarMessagesFlow,
-                    scaffoldState.snackbarHostState
+                    snackbarHostState
                 )
                 CompositionLocalProvider(
                     LocalSnackbar provides snackbarAdapter,
                     LocalPreferences provides preferences
                 ) {
-                    MainScaffold(
-                        navController = navController,
-                        scaffoldState = scaffoldState,
-                        onOpenBlacklistDialog = { showBlacklistDialog = true })
+                    Box {
+                        TopAppBar( // Surrogate for animation background
+                            title = {},
+                            actions = {
+                                IconButton(onClick = {}) {
+                                    Icon(
+                                        Icons.Default.MoreVert,
+                                        contentDescription = null,
+                                        tint = ActionBarIconColor
+                                    )
+                                }
+                            },
+                            backgroundColor = MaterialTheme.colors.primarySurface,
+                            elevation = 12.dp,
+                            modifier = Modifier.align(Alignment.TopStart)
+                        )
+
+                        Navigator(
+                            navController = navController,
+                            snackbarHostState = snackbarHostState
+                        )
+                    }
                 }
 
-                if (showBlacklistDialog)
-                    BlacklistTogglesDialog(
-                        isBlacklistEnabled = preferences.blacklistEnabled,
-                        toggleBlacklist = { enabled: Boolean ->
-                            coroutineScope.launch {
-                                context.updatePreferences { blacklistEnabled = enabled }
-                            }
-                        },
-                        onClose = { showBlacklistDialog = false })
                 LicenseAndDisclaimerInitialDialogs(hasShownBefore = preferences.licenseAndNonAffiliationDisclaimerShown) {
                     coroutineScope.launch {
                         context.updatePreferences {
