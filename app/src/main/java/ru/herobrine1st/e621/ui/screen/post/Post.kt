@@ -164,10 +164,11 @@ fun Post(
     var imagePositionInParent by remember { mutableStateOf(Offset.Unspecified) }
 
     val media = remember {
-        movableContentOf { file: NormalizedFile, post: Post ->
+        movableContentOf { file: NormalizedFile, post: Post, modifier: Modifier ->
             PostMediaContainer(
                 file = file,
-                contentDescription = remember(post.id) { post.tags.all.joinToString(" ") }
+                contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
+                modifier = modifier
             )
         }
     }
@@ -211,7 +212,7 @@ fun Post(
                             }
                     ) {
                         if (fullscreenState == FullscreenState.CLOSE)
-                            media(sample, post)
+                            media(sample, post, Modifier.fillMaxWidth())
                     }
                 }
                 // TODO visually connect description to image and add elevation only at bottom
@@ -345,7 +346,7 @@ fun Post(
                 }
             ) {
                 Zoomable(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    media(post.selectSample(), post)
+                    media(post.selectSample(), post, Modifier.fillMaxSize())
                 }
             }
 

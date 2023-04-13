@@ -1,13 +1,11 @@
 package ru.herobrine1st.e621.ui.component.post
 
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.zIndex
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
-import ru.herobrine1st.e621.ui.screen.posts.component.InvalidPost
 
 @Composable
 fun PostMediaContainer(
@@ -19,19 +17,19 @@ fun PostMediaContainer(
         file.type.isVideo -> PostVideo(
             file,
             modifier = modifier
-                .fillMaxWidth()
-                .zIndex(1f)
+                .zIndex(1f) // TODO idk what is it for
         )
         file.type.isImage -> PostImage(
             file = file,
             contentDescription = contentDescription,
-            modifier = modifier.fillMaxWidth()
+            modifier = modifier
         )
         else -> InvalidPost(
             text = stringResource(
                 R.string.unsupported_post_type,
                 file.type.extension
-            )
+            ),
+            modifier = modifier
         )
     }
 }

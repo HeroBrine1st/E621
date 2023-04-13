@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.screen.posts.component
+package ru.herobrine1st.e621.ui.component.post
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material.Text
