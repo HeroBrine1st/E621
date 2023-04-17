@@ -95,6 +95,9 @@ android {
             isIncludeAndroidResources = true
         }
     }
+    lint {
+        fatal += "StopShip"
+    }
     namespace = "ru.herobrine1st.e621"
 }
 
@@ -117,8 +120,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended:1.4.0") // Apache 2.0
     implementation("androidx.activity:activity-compose:1.7.0") // Apache 2.0
 
-    // Jetpack Navigation
-    implementation("androidx.navigation:navigation-compose:2.5.3") // Apache 2.0
+    // Decompose
+    val decomposeVersion = "2.0.0-alpha-01"
+    implementation("com.arkivanov.decompose:decompose:$decomposeVersion") // Apache 2.0
+    implementation("com.arkivanov.decompose:extensions-compose-jetpack:$decomposeVersion")
 
     // Jetpack Room
     val roomVersion = "2.5.1"

@@ -96,28 +96,6 @@ interface API {
     @GET("/wiki_pages/{id}.json")
     fun getWikiPage(@Path("id") id: Int): Call<WikiPage>
 
-    /*
-        @Suppress("MemberVisibilityCanBePrivate")
-    fun getCommentsForPost(id: Int): List<Comment> {
-        // Получить комментарии:
-        // GET /comments.json?group_by=comment&search[post_id]=$id&page=$page
-        // Не даст ни постов, ни маппинга юзер->аватарка, но даст адекватные комментарии
-        // Посты и маппинги можно получить кодом ниже
-        val req = requestBuilder()
-            .url(
-                API_BASE_URL.newBuilder()
-                    .addPathSegments("posts/$id/comments.json")
-                    .build()
-            )
-            .build()
-        val response = okHttpClient.newCall(req).execute().use {
-            it.checkStatus()
-            objectMapper.readValue<PostCommentsEndpoint>(it.body!!.charStream())
-        }
-        return parseComments(response)
-    }
-     */
-
     @CheckResult
     @GET("/posts/{post_id}/comments.json")
     fun getCommentsForPostHTML(
@@ -139,8 +117,8 @@ suspend fun API.getWikiPage(tag: String): WikiPage {
     val id = firstResponse.raw().request.url.pathSegments.last().toIntOrNull()
     if (id == null) {
         Log.e(TAG, "Invalid redirection: cannot extract ID from url")
-        Log.e(TAG, firstResponse.raw().headers.joinToString("\n") {
-            it.first + ": " + it.second
+        Log.e(TAG, firstResponse.raw().headers.joinToString("\n") { (name, value) ->
+            "$name: $value"
         })
         throw ApiException("Unknown error", firstResponse.code())
     }

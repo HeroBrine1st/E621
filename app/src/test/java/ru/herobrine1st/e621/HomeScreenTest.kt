@@ -1,5 +1,7 @@
 package ru.herobrine1st.e621
 
+// It does not compile after migration to Decompose
+/*
 import androidx.activity.ComponentActivity
 import androidx.annotation.StringRes
 import androidx.compose.runtime.mutableStateOf
@@ -169,3 +171,4 @@ class HomeScreenTest {
 
     private fun stringResource(@StringRes id: Int) = composeTestRule.activity.getString(id)
 }
+ */

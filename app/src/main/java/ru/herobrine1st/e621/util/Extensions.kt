@@ -23,9 +23,12 @@ package ru.herobrine1st.e621.util
 import android.app.Activity
 import android.os.Build
 import android.os.Bundle
+import com.arkivanov.decompose.router.stack.StackNavigator
+import com.arkivanov.decompose.router.stack.navigate
 import okhttp3.Credentials
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
+import javax.inject.Provider
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -65,4 +68,10 @@ fun Activity.restart() {
 
 inline fun <T> T.runIf(condition: Boolean, block: T.() -> T): T {
     return if(condition) block(this) else this
+}
+
+fun <T> Provider<T>.lazy() = lazy { get() }
+
+inline fun <T: Any> StackNavigator<T>.pushIndexed(crossinline create: (index: Int) -> T) = navigate {
+    it + create(it.size)
 }

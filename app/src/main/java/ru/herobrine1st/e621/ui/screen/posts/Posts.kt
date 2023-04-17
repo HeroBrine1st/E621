@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.ui.screen.posts
 
-import android.app.Activity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -30,135 +29,127 @@ import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemsIndexed
 import com.google.accompanist.flowlayout.FlowRow
-import dagger.hilt.android.EntryPointAccessors
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.PostsSearchOptions
-import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
-import ru.herobrine1st.e621.ui.screen.Screen
+import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
-import ru.herobrine1st.e621.ui.screen.posts.logic.PostsViewModel
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
-import ru.herobrine1st.e621.util.getParcelableCompat
 import ru.herobrine1st.e621.util.normalizeTagForUI
-
-@Composable
-fun PostsAppBarActions(navController: NavHostController) {
-    IconButton(onClick = {
-        val arguments = navController.currentBackStackEntry!!.arguments!!
-        navController.navigate(
-            Screen.Search.buildRoute {
-                addArgument("query", arguments.getParcelableCompat<PostsSearchOptions>("query")!!)
-            }
-        )
-    }) {
-        Icon(
-            imageVector = Icons.Filled.Search,
-            contentDescription = stringResource(R.string.search),
-            tint = ActionBarIconColor
-        )
-    }
-}
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun Posts(
-    searchOptions: SearchOptions,
-    isAuthorized: Boolean,
-    openPost: (post: Post, scrollToComments: Boolean) -> Unit,
-    viewModel: PostsViewModel = viewModel(
-        factory = PostsViewModel.provideFactory(
-            EntryPointAccessors.fromActivity<PostsViewModel.FactoryProvider>(
-                LocalContext.current as Activity
-            ).provideFactory(), searchOptions
-        )
-    )
+    mainScaffoldState: MainScaffoldState,
+    component: PostListingComponent,
+    isAuthorized: Boolean, // TODO move to component
 ) {
-    val posts = viewModel.postsFlow.collectAsLazyPagingItems()
-    val favouritesCache by viewModel.collectFavouritesCacheAsState()
+    val posts = component.postsFlow.collectAsLazyPagingItems()
+    val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
     val pullRefreshState = rememberPullRefreshState(
         refreshing = posts.loadState.refresh is LoadState.Loading,
+        // TODO move away from Jetpack Paging: cannot refresh from out of composable
+        // also I want to manipulate on the items in a way like it can be done with a regular list
+        // (I want to show how many posts are skipped due to blacklist, like hidden items on github)
         onRefresh = { posts.refresh() }
     )
 
-    Box(
-        Modifier
-            .pullRefresh(pullRefreshState)
-            .fillMaxSize()
+    MainScaffold(
+        state = mainScaffoldState,
+        title = { Text(stringResource(R.string.posts)) },
+        appBarActions = {
+            IconButton(onClick = {
+                component.onOpenSearch()
+            }) {
+                Icon(
+                    imageVector = Icons.Filled.Search,
+                    contentDescription = stringResource(R.string.search),
+                    tint = ActionBarIconColor
+                )
+            }
+        }
     ) {
-        LazyColumn(
-            // Solution from https://issuetracker.google.com/issues/177245496#comment24
-            state = if (posts.itemCount == 0) rememberLazyListState() else lazyListState,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+        Box(
+            Modifier
+                .pullRefresh(pullRefreshState)
+                .fillMaxSize()
         ) {
-            endOfPagePlaceholder(posts.loadState.prepend)
-
-            if (posts.itemCount == 0) {
-                item {
-                    Spacer(Modifier.height(4.dp))
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .padding(BASE_PADDING_HORIZONTAL)
-                            .fillMaxSize()
-                    ) {
-                        when (posts.loadState.refresh) {
-                            is LoadState.NotLoading -> Text(stringResource(R.string.empty_results))
-                            is LoadState.Error -> {
-                                Text(stringResource(R.string.unknown_error))
+            LazyColumn(
+                // Solution from https://issuetracker.google.com/issues/177245496#comment24
+                state = if (posts.itemCount == 0) rememberLazyListState() else lazyListState,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                endOfPagePlaceholder(posts.loadState.prepend)
+                if (posts.itemCount == 0) {
+                    item {
+                        Spacer(Modifier.height(4.dp))
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .padding(BASE_PADDING_HORIZONTAL)
+                                .fillMaxSize()
+                        ) {
+                            when (posts.loadState.refresh) {
+                                is LoadState.NotLoading -> Text(stringResource(R.string.empty_results))
+                                is LoadState.Error -> {
+                                    Icon(Icons.Outlined.Error, contentDescription = null)
+                                    Text(stringResource(R.string.unknown_error))
+                                }
+                                LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
                             }
-                            LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
                         }
                     }
                 }
+                itemsIndexed(posts, key = { _, post -> post.id }) { index, post ->
+                    if (post == null) return@itemsIndexed
+                    Post(
+                        post = post,
+                        // Remove unwanted visual glitch on first post (white corners stick out a mile)
+                        shape = if (index == 0)
+                            MaterialTheme.shapes.medium.copy(
+                                topStart = CornerSize(0.dp),
+                                topEnd = CornerSize(0.dp)
+                            )
+                        else MaterialTheme.shapes.medium,
+                        isFavourite = favouritesCache.getOrDefault(post.id, post.isFavorited),
+                        isAuthorized = isAuthorized,
+                        onAddToFavourites = {
+                            component.handleFavouriteButtonClick(post)
+                        },
+                        openPost = { openComments ->
+                            component.onOpenPost(post, openComments)
+                        }
+                    )
+                }
+                endOfPagePlaceholder(posts.loadState.append)
             }
-            itemsIndexed(posts, key = { _, post -> post.id }) { index, post ->
-                if (post == null) return@itemsIndexed
-                Post(
-                    post = post,
-                    // Remove unwanted visual glitch on first post (white corners stick out a mile)
-                    shape = if (index == 0)
-                        MaterialTheme.shapes.medium.copy(
-                            topStart = CornerSize(0.dp),
-                            topEnd = CornerSize(0.dp)
-                        )
-                    else MaterialTheme.shapes.medium,
-                    isFavourite = favouritesCache.getOrDefault(post.id, post.isFavorited),
-                    isAuthorized = isAuthorized,
-                    onAddToFavourites = {
-                        viewModel.handleFavouriteButtonClick(post)
-                    }
-                ) { scrollToComments -> openPost(post, scrollToComments) }
-            }
-            endOfPagePlaceholder(posts.loadState.append)
+            // FIXME indicator is shown for a moment after navigating back
+            // Related: https://issuetracker.google.com/issues/177245496
+            PullRefreshIndicator(
+                refreshing = posts.loadState.refresh is LoadState.Loading,
+                state = pullRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
-        // FIXME indicator is shown for a moment after navigating back
-        // Related: https://issuetracker.google.com/issues/177245496
-        PullRefreshIndicator(
-            refreshing = posts.loadState.refresh is LoadState.Loading,
-            state = pullRefreshState,
-            modifier = Modifier.align(Alignment.TopCenter)
-        )
     }
 }
 
@@ -183,7 +174,8 @@ fun Post(
                 contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
                 modifier = Modifier.clickable {
                     openPost(false)
-                }
+                },
+                post = post
             )
             // FIXME UI jank in both FlowRow and PostActionsRow
             // This issue is somehow related to Text, but quick test shows that removing Text

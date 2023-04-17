@@ -23,10 +23,13 @@ package ru.herobrine1st.e621.entity
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.arkivanov.essenty.parcelable.Parcelable
+import kotlinx.parcelize.Parcelize
 
+@Parcelize
 @Entity(tableName = "blacklist")
 data class BlacklistEntry(
     @ColumnInfo val query: String,
     @ColumnInfo val enabled: Boolean,
     @PrimaryKey(autoGenerate = true) val id: Long = 0
-)
+): Parcelable

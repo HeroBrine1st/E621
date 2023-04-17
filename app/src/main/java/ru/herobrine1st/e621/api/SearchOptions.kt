@@ -20,11 +20,8 @@
 
 package ru.herobrine1st.e621.api
 
-import android.os.Bundle
 import android.os.Parcelable
 import android.util.Log
-import androidx.navigation.NavType
-import com.fasterxml.jackson.module.kotlin.readValue
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
@@ -32,11 +29,10 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.util.JsonSerializable
 import ru.herobrine1st.e621.util.debug
-import ru.herobrine1st.e621.util.getParcelableCompat
-import ru.herobrine1st.e621.util.objectMapper
 import java.io.IOException
 
-interface SearchOptions {
+
+sealed interface SearchOptions: Parcelable {
     @Throws(ApiException::class, IOException::class)
     suspend fun getPosts(api: API, limit: Int, page: Int): List<Post>
 
@@ -53,7 +49,7 @@ data class PostsSearchOptions(
     val favouritesOf: String? = null, // "favorited_by" in api
     val fileType: FileType? = null,
     val fileTypeInvert: Boolean = false
-) : SearchOptions, Parcelable, JsonSerializable {
+) : SearchOptions, JsonSerializable {
     // TODO randomSeed or something like that for Order.RANDOM
 
     private fun compileToQuery(): String {
@@ -110,10 +106,10 @@ data class PostsSearchOptions(
     }
 
     class Builder(
-        var tags: List<String> = mutableListOf(),
+        var tags: MutableList<String> = mutableListOf(),
         var order: Order = Order.NEWEST_TO_OLDEST,
         var orderAscending: Boolean = false,
-        var rating: List<Rating> = mutableListOf(),
+        var rating: MutableList<Rating> = mutableListOf(),
         var favouritesOf: String? = null,
         var fileType: FileType? = null,
         var fileTypeInvert: Boolean = false
@@ -124,35 +120,20 @@ data class PostsSearchOptions(
         companion object {
             fun from(options: SearchOptions) = when (options) {
                 is PostsSearchOptions -> with(options) {
-                    Builder(tags, order, orderAscending, rating, favouritesOf)
+                    Builder(tags.toMutableList(), order, orderAscending, rating.toMutableList(), favouritesOf)
                 }
                 is FavouritesSearchOptions -> Builder(favouritesOf = options.favouritesOf)
-                else -> throw NotImplementedError()
             }
         }
     }
 }
 
-data class FavouritesSearchOptions(val favouritesOf: String?) : SearchOptions {
-    private var id: Int? = null
+@Parcelize
+data class FavouritesSearchOptions(val favouritesOf: String, private var id: Int? = null) : SearchOptions {
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
-        id = id ?: favouritesOf?.let {
+        id = id ?: favouritesOf.let {
             api.getUser(favouritesOf).await().get("id").asInt()
         }
         return api.getFavourites(userId = id, page = page, limit = limit).await().posts
-    }
-}
-
-class PostsSearchOptionsNavType : NavType<PostsSearchOptions?>(true) {
-    override fun get(bundle: Bundle, key: String): PostsSearchOptions? {
-        return bundle.getParcelableCompat(key)
-    }
-
-    override fun parseValue(value: String): PostsSearchOptions {
-        return objectMapper.readValue(value)
-    }
-
-    override fun put(bundle: Bundle, key: String, value: PostsSearchOptions?) {
-        bundle.putParcelable(key, value)
     }
 }

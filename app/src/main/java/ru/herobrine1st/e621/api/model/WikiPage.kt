@@ -20,8 +20,11 @@
 
 package ru.herobrine1st.e621.api.model
 
+import com.arkivanov.essenty.parcelable.Parcelable
+import kotlinx.parcelize.Parcelize
 import java.time.OffsetDateTime
 
+@Parcelize
 data class WikiPage(
     val id: Int,
     val createdAt: OffsetDateTime,
@@ -36,4 +39,4 @@ data class WikiPage(
     val otherNames: List<String>,
     val categoryName: Int,
     val categoryId: Int
-)
+): Parcelable

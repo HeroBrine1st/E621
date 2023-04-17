@@ -20,28 +20,27 @@
 
 package ru.herobrine1st.e621.util
 
-import dagger.hilt.android.scopes.ActivityRetainedScoped
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.getAndUpdate
-import ru.herobrine1st.e621.api.model.Post
-import javax.inject.Inject
+import androidx.compose.runtime.Composable
+import com.arkivanov.decompose.DefaultComponentContext
+import com.arkivanov.decompose.router.stack.StackNavigator
+import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import ru.herobrine1st.e621.navigation.config.Config
 
-/**
- * To synchronize many screens.
- */
-@ActivityRetainedScoped
-class FavouritesCache @Inject constructor() {
-    private val _flow = MutableStateFlow<Map<Int, Boolean>>(mapOf()) // id to isFavourite
+@RequiresOptIn(message = "This should only be used in previews")
+@Retention(AnnotationRetention.BINARY)
+annotation class PreviewUtils
 
-    val flow = _flow.asStateFlow()
+@Composable
+@PreviewUtils
+fun getPreviewComponentContext() = DefaultComponentContext(LifecycleRegistry())
 
-    fun setFavourite(id: Int, isFavourite: Boolean) {
-        _flow.getAndUpdate {
-            it + (id to isFavourite)
-        }
+@Composable
+@PreviewUtils
+fun getPreviewStackNavigator() = object: StackNavigator<Config> {
+    override fun navigate(
+        transformer: (stack: List<Config>) -> List<Config>,
+        onComplete: (newStack: List<Config>, oldStack: List<Config>) -> Unit
+    ) {
+        onComplete(emptyList(), transformer(emptyList()))
     }
-
-    fun isFavourite(post: Post) = flow.value.getOrDefault(post.id, post.isFavorited)
-
 }

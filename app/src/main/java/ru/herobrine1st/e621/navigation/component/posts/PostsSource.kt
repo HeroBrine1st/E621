@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.screen.posts.logic
+package ru.herobrine1st.e621.navigation.component.posts
 
 import android.util.Log
 import androidx.compose.material.SnackbarDuration

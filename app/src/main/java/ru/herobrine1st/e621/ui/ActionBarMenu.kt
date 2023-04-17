@@ -32,9 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 
 @Composable
@@ -52,9 +50,12 @@ fun MenuAction(
     }
 }
 
+/**
+ * @param onNavigateToSettings called when user click "Settings". Should prohibit multiple Settings configurations in backstack.
+ */
 @Composable
 fun ActionBarMenu(
-    navController: NavController,
+    onNavigateToSettings: () -> Unit,
     onOpenBlacklistDialog: () -> Unit
 ) {
     var openMenu by remember { mutableStateOf(false) }
@@ -77,10 +78,7 @@ fun ActionBarMenu(
         }
         MenuAction(Icons.Outlined.Settings, stringResource(R.string.settings)) {
             openMenu = false
-            if (navController.backQueue.any { it.destination.route == Screen.Settings.route }) return@MenuAction
-            navController.navigate(Screen.Settings.route) {
-                launchSingleTop = true
-            }
+            onNavigateToSettings()
         }
     }
 }

@@ -20,28 +20,18 @@
 
 package ru.herobrine1st.e621.util
 
-import dagger.hilt.android.scopes.ActivityRetainedScoped
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.getAndUpdate
-import ru.herobrine1st.e621.api.model.Post
-import javax.inject.Inject
+import androidx.annotation.CallSuper
+import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 
-/**
- * To synchronize many screens.
- */
-@ActivityRetainedScoped
-class FavouritesCache @Inject constructor() {
-    private val _flow = MutableStateFlow<Map<Int, Boolean>>(mapOf()) // id to isFavourite
+abstract class InstanceBase : InstanceKeeper.Instance {
+    protected val lifecycleScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
-    val flow = _flow.asStateFlow()
-
-    fun setFavourite(id: Int, isFavourite: Boolean) {
-        _flow.getAndUpdate {
-            it + (id to isFavourite)
-        }
+    @CallSuper
+    override fun onDestroy() {
+        lifecycleScope.cancel()
     }
-
-    fun isFavourite(post: Post) = flow.value.getOrDefault(post.id, post.isFavorited)
-
 }

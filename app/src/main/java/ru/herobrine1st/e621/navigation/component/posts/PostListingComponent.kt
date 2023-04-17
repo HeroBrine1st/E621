@@ -18,26 +18,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.screen.posts.logic
+package ru.herobrine1st.e621.navigation.component.posts
 
 import android.content.Context
 import android.util.Log
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewModelScope
-import androidx.paging.*
-import dagger.assisted.Assisted
-import dagger.assisted.AssistedFactory
-import dagger.assisted.AssistedInject
-import dagger.hilt.EntryPoint
-import dagger.hilt.InstallIn
-import dagger.hilt.android.components.ActivityComponent
-import dagger.hilt.android.qualifiers.ApplicationContext
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.cachedIn
+import androidx.paging.filter
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.stack.StackNavigator
+import com.arkivanov.essenty.instancekeeper.getOrCreate
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.BuildConfig
@@ -46,22 +44,29 @@ import ru.herobrine1st.e621.api.*
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
+import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.JacksonExceptionHandler
+import ru.herobrine1st.e621.util.pushIndexed
 import java.io.IOException
 import java.util.function.Predicate
 
-class PostsViewModel @AssistedInject constructor(
+private const val TAG = "PostListingComponent"
+
+class PostListingComponent private constructor(
     private val api: API,
     private val snackbar: SnackbarAdapter,
     private val favouritesCache: FavouritesCache,
     private val jacksonExceptionHandler: JacksonExceptionHandler,
-    @ApplicationContext applicationContext: Context,
-    @Assisted private val searchOptions: SearchOptions,
+    private val searchOptions: SearchOptions,
+    private val navigator: StackNavigator<Config>,
+    applicationContext: Context,
     blacklistRepository: BlacklistRepository,
-) : ViewModel() {
+) : InstanceBase() {
+
     private val pager = Pager(
         PagingConfig(
             pageSize = BuildConfig.PAGER_PAGE_SIZE,
@@ -76,17 +81,16 @@ class PostsViewModel @AssistedInject constructor(
             .map { list ->
                 list.filter { it.enabled }
                     .map { createTagProcessor(it.query) }
-                    .reduceOrNull { a, b -> a.or(b) } ?: Predicate { false }
+                    .reduceOrNull { a, b -> ;a.or(b) } ?: Predicate { false }
             }
             .flowOn(Dispatchers.Default)
 
     val postsFlow = combine(
-        pager.flow.cachedIn(viewModelScope), // cachedIn strictly required here (double collection exception otherwise)
+        pager.flow.cachedIn(lifecycleScope), // cachedIn strictly required here (double collection exception otherwise)
         applicationContext.getPreferencesFlow { it.blacklistEnabled },
         blacklistPredicateFlow,
         favouritesCache.flow
     ) { posts, isBlacklistEnabled, blacklistPredicate, favourites ->
-
         if (!isBlacklistEnabled) posts
         else posts.filter {
             favourites.getOrDefault(it.id, it.isFavorited) // Show post if it is either favourite
@@ -106,8 +110,9 @@ class PostsViewModel @AssistedInject constructor(
     fun collectFavouritesCacheAsState() = favouritesCache.flow.collectAsState()
 
     fun handleFavouriteButtonClick(post: Post) {
-        viewModelScope.launch {
-            val wasFavourite = favouritesCache.flow.value.getOrDefault(post.id, post.isFavorited)
+        lifecycleScope.launch {
+            val wasFavourite = favouritesCache.isFavourite(post)
+            // TODO implement tristate: disable button while request is in fly
             favouritesCache.setFavourite(post.id, !wasFavourite) // Instant UI reaction
             try {
                 withContext(Dispatchers.IO) {
@@ -130,32 +135,54 @@ class PostsViewModel @AssistedInject constructor(
         }
     }
 
-    // Assisted inject stuff
-
-    @AssistedFactory
-    interface Factory {
-        fun create(searchOptions: SearchOptions): PostsViewModel
+    fun onOpenPost(post: Post, openComments: Boolean) {
+        navigator.pushIndexed {
+            Config.Post(
+                id = post.id,
+                post = post,
+                openComments = openComments,
+                query = searchOptions,
+                index = it
+            )
+        }
     }
 
-    @EntryPoint
-    @InstallIn(ActivityComponent::class)
-    interface FactoryProvider {
-        @Suppress("INAPPLICABLE_JVM_NAME")
-        @JvmName("providePostsViewModelFactory")
-        fun provideFactory(): Factory
+    fun onOpenSearch() {
+        navigator.pushIndexed { index ->
+            Config.Search(
+                initialSearch = when (searchOptions) {
+                    is PostsSearchOptions -> searchOptions
+                    is FavouritesSearchOptions -> PostsSearchOptions(
+                        favouritesOf = searchOptions.favouritesOf
+                    )
+                },
+                index = index
+            )
+        }
     }
 
     companion object {
-        const val TAG = "PostsViewModel"
-
-        @Suppress("UNCHECKED_CAST")
-        fun provideFactory(
-            assistedFactory: Factory,
+        operator fun invoke(
+            componentContext: ComponentContext,
+            api: API,
+            snackbar: SnackbarAdapter,
+            favouritesCache: FavouritesCache,
+            jacksonExceptionHandler: JacksonExceptionHandler,
             searchOptions: SearchOptions,
-        ): ViewModelProvider.Factory = object : ViewModelProvider.Factory {
-            override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                return assistedFactory.create(searchOptions) as T
-            }
+            navigator: StackNavigator<Config>,
+            applicationContext: Context,
+            blacklistRepository: BlacklistRepository,
+        ) = componentContext.instanceKeeper.getOrCreate {
+            PostListingComponent(
+                api,
+                snackbar,
+                favouritesCache,
+                jacksonExceptionHandler,
+                searchOptions,
+                navigator,
+                applicationContext,
+                blacklistRepository
+            )
         }
     }
 }

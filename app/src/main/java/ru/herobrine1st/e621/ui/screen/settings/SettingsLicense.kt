@@ -28,24 +28,39 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.rememberPreviewMainScaffoldState
+import ru.herobrine1st.e621.util.PreviewUtils
 import ru.herobrine1st.e621.util.readRawResourceString
 
 @Composable
-@Preview
-fun SettingsLicense() {
-    Box(
-        Modifier
-            .padding(horizontal=8.dp)
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+fun SettingsLicense(mainScaffoldState: MainScaffoldState) {
+    MainScaffold(
+        state = mainScaffoldState,
+        title = { Text(stringResource(R.string.license_name)) },
     ) {
-        Text(
-            readRawResourceString(R.raw.copying),
-            fontFamily = FontFamily.Monospace
-        )
+        Box(
+            Modifier
+                .padding(horizontal = 8.dp)
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+        ) {
+            Text(
+                readRawResourceString(R.raw.copying),
+                fontFamily = FontFamily.Monospace
+            )
+        }
     }
 }
+
+
+@Composable
+@Preview
+@OptIn(PreviewUtils::class)
+private fun SettingsLicensePreview() = SettingsLicense(rememberPreviewMainScaffoldState())

@@ -3,26 +3,27 @@ package ru.herobrine1st.e621.ui.component.post
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.zIndex
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
+import ru.herobrine1st.e621.api.model.Post
 
 @Composable
 fun PostMediaContainer(
     file: NormalizedFile,
     contentDescription: String?,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    post: Post? = null
 ) {
     when {
         file.type.isVideo -> PostVideo(
             file,
             modifier = modifier
-                .zIndex(1f) // TODO idk what is it for
         )
         file.type.isImage -> PostImage(
             file = file,
             contentDescription = contentDescription,
-            modifier = modifier
+            modifier = modifier,
+            actualPostFileType = post?.file?.type
         )
         else -> InvalidPost(
             text = stringResource(

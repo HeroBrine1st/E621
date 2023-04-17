@@ -22,14 +22,12 @@ package ru.herobrine1st.e621.ui.screen.settings
 
 import android.app.Activity
 import androidx.compose.foundation.layout.Column
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Explicit
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.navigation.NavController
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.preference.LocalPreferences
@@ -37,14 +35,18 @@ import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.component.preferences.SettingLink
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
+import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
-import ru.herobrine1st.e621.ui.screen.Screen
 import ru.herobrine1st.e621.ui.screen.settings.component.ProxyDialog
 import ru.herobrine1st.e621.util.restart
 
 @Composable
-fun Settings(navController: NavController) {
+fun Settings(
+    mainScaffoldState: MainScaffoldState,
+    onNavigateToBlacklistSettings: () -> Unit, onNavigateToAbout: () -> Unit
+) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -54,85 +56,89 @@ fun Settings(navController: NavController) {
     var showSafeModeDisclaimer by remember { mutableStateOf(false) }
     var showProxySettingsDialog by remember { mutableStateOf(false) }
 
-    // Composition
-    Column {
-        SettingLinkWithSwitch(
-            checked = preferences.blacklistEnabled,
-            title = stringResource(R.string.setting_blacklist),
-            subtitle = stringResource(R.string.setting_blacklist_subtitle),
-            icon = Screen.SettingsBlacklist.icon,
-            onCheckedChange = { enabled ->
-                coroutineScope.launch {
-                    context.updatePreferences {
-                        blacklistEnabled = enabled
+    // UI
+    MainScaffold(
+        state = mainScaffoldState,
+        title = { Text(stringResource(R.string.settings)) },
+    ) {
+        Column {
+            SettingLinkWithSwitch(
+                checked = preferences.blacklistEnabled,
+                title = stringResource(R.string.setting_blacklist),
+                subtitle = stringResource(R.string.setting_blacklist_subtitle),
+                icon = Icons.Default.Block,
+                onCheckedChange = { enabled ->
+                    coroutineScope.launch {
+                        context.updatePreferences {
+                            blacklistEnabled = enabled
+                        }
+                    }
+                },
+                onClick = onNavigateToBlacklistSettings
+            )
+
+            SettingSwitch(
+                checked = preferences.privacyModeEnabled,
+                title = stringResource(R.string.privacy_mode),
+                subtitle = stringResource(R.string.privacy_mode_subtitle),
+                icon = Icons.Default.Shield,
+                onCheckedChange = { enabled: Boolean ->
+                    coroutineScope.launch {
+                        context.updatePreferences {
+                            privacyModeEnabled = enabled
+                        }
+                        if (!preferences.privacyModeDisclaimerShown && enabled)
+                            showPrivacyModeDialog = true
                     }
                 }
-            }
-        ) {
-            navController.navigate(Screen.SettingsBlacklist.route)
-        }
+            )
 
-        SettingSwitch(
-            checked = preferences.privacyModeEnabled,
-            title = stringResource(R.string.privacy_mode),
-            subtitle = stringResource(R.string.privacy_mode_subtitle),
-            icon = Icons.Default.Shield,
-            onCheckedChange = { enabled: Boolean ->
-                coroutineScope.launch {
-                    context.updatePreferences {
-                        privacyModeEnabled = enabled
-                    }
-                    if (!preferences.privacyModeDisclaimerShown && enabled)
-                        showPrivacyModeDialog = true
-                }
-            }
-        )
-
-        SettingSwitch(
-            checked = preferences.safeModeEnabled,
-            title = stringResource(R.string.settings_safe_mode),
-            subtitle = stringResource(R.string.settings_safe_mode_shortdesc),
-            icon = Icons.Default.Explicit,
-            onCheckedChange = { enabled: Boolean ->
-                if (!enabled && !preferences.safeModeDisclaimerShown) showSafeModeDisclaimer = true
-                else coroutineScope.launch {
-                    context.updatePreferences {
-                        safeModeEnabled = enabled
+            SettingSwitch(
+                checked = preferences.safeModeEnabled,
+                title = stringResource(R.string.settings_safe_mode),
+                subtitle = stringResource(R.string.settings_safe_mode_shortdesc),
+                icon = Icons.Default.Explicit,
+                onCheckedChange = { enabled: Boolean ->
+                    if (!enabled && !preferences.safeModeDisclaimerShown) showSafeModeDisclaimer =
+                        true
+                    else coroutineScope.launch {
+                        context.updatePreferences {
+                            safeModeEnabled = enabled
+                        }
                     }
                 }
-            }
-        )
+            )
 
-        SettingLinkWithSwitch(
-            checked = preferences.hasProxy() && preferences.proxy.enabled,
-            title = stringResource(
-                R.string.proxy_server
-            ),
-            subtitle = if (preferences.hasProxy()) with(preferences.proxy) {
-                "${type.toString().lowercase()}://$hostname:$port"
-            } else "",
-            icon = Icons.Default.Public,
-            onCheckedChange = {
-                if (!preferences.hasProxy() && it) showProxySettingsDialog = true
-                else coroutineScope.launch {
-                    context.updatePreferences {
-                        proxy = proxy.toBuilder().apply {
-                            enabled = it
-                        }.build()
+            SettingLinkWithSwitch(
+                checked = preferences.hasProxy() && preferences.proxy.enabled,
+                title = stringResource(
+                    R.string.proxy_server
+                ),
+                subtitle = if (preferences.hasProxy()) with(preferences.proxy) {
+                    "${type.toString().lowercase()}://$hostname:$port"
+                } else "",
+                icon = Icons.Default.Public,
+                onCheckedChange = {
+                    if (!preferences.hasProxy() && it) showProxySettingsDialog = true
+                    else coroutineScope.launch {
+                        context.updatePreferences {
+                            proxy = proxy.toBuilder().apply {
+                                enabled = it
+                            }.build()
+                        }
+                        (context as Activity).restart()
                     }
-                    (context as Activity).restart()
+                },
+                onClick = {
+                    showProxySettingsDialog = true
                 }
-            },
-            onClick = {
-                showProxySettingsDialog = true
-            }
-        )
+            )
 
-        SettingLink(
-            title = stringResource(R.string.about),
-            icon = Screen.SettingsAbout.icon
-        ) {
-            navController.navigate(Screen.SettingsAbout.route)
+            SettingLink(
+                title = stringResource(R.string.about),
+                icon =  Icons.Default.Copyright,
+                onClick = onNavigateToAbout
+            )
         }
     }
     if (showPrivacyModeDialog) {

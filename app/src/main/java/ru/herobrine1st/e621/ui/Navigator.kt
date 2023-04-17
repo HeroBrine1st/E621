@@ -20,217 +20,101 @@
 
 package ru.herobrine1st.e621.ui
 
-import android.os.Bundle
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.SnackbarHostState
-import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import ru.herobrine1st.e621.api.FavouritesSearchOptions
-import ru.herobrine1st.e621.api.PostsSearchOptions
+import androidx.compose.ui.Modifier
+import com.arkivanov.decompose.Child
+import com.arkivanov.decompose.extensions.compose.jetpack.stack.Children
+import com.arkivanov.decompose.extensions.compose.jetpack.stack.animation.fade
+import com.arkivanov.decompose.extensions.compose.jetpack.stack.animation.plus
+import com.arkivanov.decompose.extensions.compose.jetpack.stack.animation.stackAnimation
+import com.arkivanov.decompose.router.slot.navigate
+import com.arkivanov.decompose.router.stack.navigate
+import com.arkivanov.decompose.router.stack.pop
+import com.arkivanov.decompose.router.stack.push
+import ru.herobrine1st.e621.navigation.component.root.RootComponent
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.*
+import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.preference.LocalPreferences
-import ru.herobrine1st.e621.ui.screen.Screen
+import ru.herobrine1st.e621.ui.animation.reducedSlide
+import ru.herobrine1st.e621.ui.component.scaffold.rememberMainScaffoldState
 import ru.herobrine1st.e621.ui.screen.home.Home
 import ru.herobrine1st.e621.ui.screen.post.Post
 import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.*
-import ru.herobrine1st.e621.util.getParcelableCompat
 
 @Composable
-fun Navigator(navController: NavHostController, snackbarHostState: SnackbarHostState) {
+fun Navigator(rootComponent: RootComponent, snackbarHostState: SnackbarHostState) {
     val preferences = LocalPreferences.current
+    val navigation = rootComponent.navigation
 
-    NavHost(
-        navController = navController,
-        startDestination = Screen.Home.route
-    ) {
-        composable(Screen.Home.route) {
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.Home
-            ) {
-                Home(
-                    navigateToFavorites = {
-                        navController.navigate(Screen.Favourites.route)
-                    },
-                    navigateToSearch = {
-                        navController.navigate(Screen.Search.route)
-                    }
-                )
-            }
-        }
-        composable(
-            Screen.Search.route,
-            Screen.Search.arguments
-        ) { entry ->
-            val arguments: Bundle =
-                entry.arguments!!
-
-            val searchOptions = arguments.getParcelableCompat("query")
-                ?: PostsSearchOptions.DEFAULT
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.Search
-            ) {
-                Search(searchOptions) {
-                    navController.popBackStack()
-                    navController.navigate(
-                        Screen.Posts.buildRoute {
-                            addArgument("query", it)
-                        }
-                    )
+    Children(
+        stack = rootComponent.stack,
+        modifier = Modifier.fillMaxSize(),
+        animation = stackAnimation(
+            fade() + reducedSlide(1 / 16f)
+        )
+    ) { child: Child.Created<*, RootComponent.Child> ->
+        val mainScaffoldState = rememberMainScaffoldState(
+            snackbarHostState = snackbarHostState,
+            goToSettings = {
+                navigation.navigate { stack ->
+                    if (stack.any { it is Config.Settings }) stack
+                    else stack + Config.Settings
+                }
+            },
+            openBlacklistDialog = {
+                rootComponent.dialogNavigation.navigate {
+                    // Usually it is not possible to click appbar while dialog is open
+                    // so it is safe to omit checks
+                    RootComponent.DialogConfig.BlacklistToggles
                 }
             }
-        }
-        composable(Screen.Posts.route, Screen.Posts.arguments) {
-            val searchOptions = remember {
-                it.arguments!!.getParcelableCompat<PostsSearchOptions>("query")!!
-            }
-
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.Posts
-            ) {
-                Posts(
-                    searchOptions,
-                    preferences.hasAuth(),
-                    openPost = { post, scrollToComments ->
-                        navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
-                        navController.currentBackStackEntry!!.savedStateHandle["query"] =
-                            searchOptions
-                        navController.navigate(
-                            Screen.Post.buildRoute {
-                                addArgument("id", post.id)
-//                            addArgument("post", post)
-                                addArgument("openComments", scrollToComments)
-//                            addArgument("query", searchOptions)
-                            }
-                        )
-                    }
-                )
-            }
-        }
-        composable(Screen.Favourites.route, Screen.Favourites.arguments) {
-            val arguments =
-                it.arguments!!
-            val searchOptions =
-                remember { FavouritesSearchOptions(arguments.getString("user")) }
-            val username by remember { derivedStateOf { if (preferences.hasAuth()) preferences.auth.username else null } }
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.Favourites
-            ) {
-                Posts(
-                    searchOptions,
-                    preferences.hasAuth(),
-                    openPost = { post, scrollToComments ->
-                        navController.currentBackStackEntry!!.savedStateHandle["clickedPost"] = post
-                        navController.currentBackStackEntry!!.savedStateHandle["query"] =
-                            PostsSearchOptions(
-                                favouritesOf = arguments.getString("user") ?: username
-                            )
-                        navController.navigate(
-                            Screen.Post.buildRoute {
-                                addArgument("id", post.id)
-//                            addArgument("post", post)
-                                addArgument("openComments", scrollToComments)
-//                            addArgument(
-//                                "query", PostsSearchOptions(
-//                                    favouritesOf = arguments.getString("user") ?: username
-//                                )
-//                            )
-                            }
-                        )
-                    }
-                )
-            }
-        }
-        composable(Screen.Post.route, Screen.Post.arguments, deepLinks = Screen.Post.deepLinks) {
-            val arguments =
-                it.arguments!!
-
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.Post
-            ) {
-                Post(
-                    arguments.getInt("id"),
-//                arguments.getParcelable("post"),
-                    navController.previousBackStackEntry?.savedStateHandle?.get("clickedPost"),
-                    arguments.getBoolean("openComments"),
-//                arguments.getParcelable("query")
-                    navController.previousBackStackEntry?.savedStateHandle?.get("query")
-                        ?: PostsSearchOptions.DEFAULT,
-                    onModificationClick = {
-                        navController.navigate(
-                            Screen.Search.buildRoute {
-                                addArgument("query", it)
-                            }
-                        )
-                    }
-                )
-            }
-        }
-        composable(Screen.Settings.route) {
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.Settings
-            ) {
-                Settings(navController)
-            }
-        }
-        composable(Screen.SettingsBlacklist.route) {
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.SettingsBlacklist
-            ) {
-                SettingsBlacklist {
-                    navController.popBackStack()
+        )
+        when (val instance: RootComponent.Child = child.instance) {
+            is Home -> Home(
+                mainScaffoldState = mainScaffoldState,
+                component = instance.component
+            )
+            is Search -> Search(mainScaffoldState, instance.component)
+            is PostListing -> Posts(
+                mainScaffoldState,
+                instance.component,
+                preferences.hasAuth()
+            )
+            is Post -> Post(
+                mainScaffoldState = mainScaffoldState,
+                // TODO move it under component
+                component = instance.component,
+            )
+            is Settings -> Settings(
+                mainScaffoldState = mainScaffoldState,
+                onNavigateToBlacklistSettings = {
+                    navigation.push(Config.Settings.Blacklist)
+                },
+                onNavigateToAbout = {
+                    navigation.push(Config.Settings.About)
                 }
-            }
-        }
-        composable(Screen.SettingsAbout.route) {
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.SettingsAbout
-            ) {
-                SettingsAbout(navigateToLicense = {
-                    navController.navigate(Screen.SettingsLicense.route)
-                }, navigateToOssLicenses = {
-                    navController.navigate(Screen.SettingsLicenses.route)
-                })
-            }
-        }
-        composable(Screen.SettingsLicense.route) {
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.SettingsLicense
-            ) {
-                SettingsLicense()
-            }
-        }
-        composable(Screen.SettingsLicenses.route) {
-            MainScaffold(
-                navController = navController,
-                scaffoldState = rememberScaffoldState(snackbarHostState = snackbarHostState),
-                screen = Screen.SettingsLicenses
-            ) {
-                SettingsLicenses()
-            }
+            )
+            is Settings.Blacklist ->
+                SettingsBlacklist(
+                    mainScaffoldState = mainScaffoldState,
+                    component = instance.component,
+                    exit = navigation::pop
+                )
+            is Settings.About -> SettingsAbout(
+                mainScaffoldState = mainScaffoldState,
+                navigateToLicense = {
+                    navigation.push(Config.Settings.License)
+                },
+                navigateToOssLicenses = {
+                    navigation.push(Config.Settings.AboutLibraries)
+                }
+            )
+            is Settings.License -> SettingsLicense(mainScaffoldState)
+            is Settings.AboutLibraries -> SettingsLicenses(mainScaffoldState)
         }
     }
 }

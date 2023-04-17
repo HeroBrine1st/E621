@@ -54,7 +54,6 @@ class PostCommentsSource(
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, CommentData> {
-
         return try {
             if (!::avatars.isInitialized) {
                 val (avatars, commentCount) = withContext(Dispatchers.Default) {

@@ -70,7 +70,6 @@ fun BoxWithConstraintsScope.GoingToFullscreenAnimation(
 
     LaunchedEffect(isFullscreen) {
         if (isFullscreen) {
-            // FIXME flicker
             animatable.snapTo(getContentPositionRelativeToParent().y + compensation)
             animatable.animateTo(
                 with(density) {

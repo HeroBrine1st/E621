@@ -42,92 +42,98 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.navigation.component.home.HomeComponent
+import ru.herobrine1st.e621.navigation.component.home.HomeComponent.LoginState
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.Base
-import ru.herobrine1st.e621.ui.screen.home.HomeViewModel.LoginState
+import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 
 @Composable
 fun Home(
-    navigateToSearch: () -> Unit,
-    navigateToFavorites: () -> Unit,
-    viewModel: HomeViewModel = hiltViewModel()
+    mainScaffoldState: MainScaffoldState,
+    component: HomeComponent
 ) {
-    Base {
-        Button(
-            onClick = navigateToSearch,
-            modifier = Modifier
-                .padding(4.dp)
-                .fillMaxWidth()
-        ) {
-            Text(stringResource(R.string.search))
-            Icon(Icons.Rounded.NavigateNext, contentDescription = null)
-        }
-        Spacer(modifier = Modifier.height(8.dp))
-        Crossfade(targetState = viewModel.state) { state ->
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally
+    MainScaffold(
+        state = mainScaffoldState,
+        title = { Text(stringResource(R.string.app_name)) }
+    ) {
+        Base {
+            Button(
+                onClick = component::navigateToSearch,
+                modifier = Modifier
+                    .padding(4.dp)
+                    .fillMaxWidth()
             ) {
-                when (state) {
-                    LoginState.LOADING -> CircularProgressIndicator()
-                    LoginState.AUTHORIZED -> {
-                        Button(
-                            onClick = {
-                                viewModel.logout()
-                            },
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .fillMaxWidth()
-                        ) {
-                            Text(stringResource(R.string.login_logout))
-                        }
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(
-                            onClick = navigateToFavorites,
-                            modifier = Modifier
-                                .padding(4.dp)
-                                .fillMaxWidth()
-                        ) {
-                            Text(stringResource(R.string.favourites))
-                        }
-                    }
-                    LoginState.NO_AUTH -> AuthorizationMenu { u, p, cb ->
-                        viewModel.login(u, p, cb)
-                    }
-                    LoginState.IO_ERROR -> {
-                        Text(stringResource(R.string.network_error))
-                        Button(onClick = { viewModel.checkAuthorization() }) {
-                            Text(stringResource(R.string.retry))
-                        }
-                    }
-                    LoginState.INTERNAL_SERVER_ERROR -> {
-                        Text(stringResource(R.string.internal_server_error))
-                        Button(onClick = { viewModel.checkAuthorization() }) {
-                            Text(stringResource(R.string.retry))
-                        }
-                    }
-                    LoginState.API_TEMPORARILY_UNAVAILABLE -> {
-                        Text(stringResource(R.string.api_temporarily_unavailable))
-                        Button(onClick = { viewModel.checkAuthorization() }) {
-                            Text(stringResource(R.string.retry))
-                        }
-                    }
-                    LoginState.UNKNOWN_API_ERROR -> {
-                        Text(stringResource(R.string.unknown_api_error))
-                        Row {
-                            Button(onClick = { viewModel.checkAuthorization() }) {
-                                Text(stringResource(R.string.retry))
-                            }
-                            Spacer(Modifier.size(8.dp))
+                Text(stringResource(R.string.search))
+                Icon(Icons.Rounded.NavigateNext, contentDescription = null)
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Crossfade(targetState = component.state) { state ->
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    when (state) {
+                        LoginState.Loading -> CircularProgressIndicator()
+                        is LoginState.Authorized -> {
                             Button(
-                                onClick = { viewModel.logout() },
-                                colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+                                onClick = {
+                                    component.logout()
+                                },
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .fillMaxWidth()
                             ) {
                                 Text(stringResource(R.string.login_logout))
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(
+                                onClick = component::navigateToFavourites,
+                                modifier = Modifier
+                                    .padding(4.dp)
+                                    .fillMaxWidth()
+                            ) {
+                                Text(stringResource(R.string.favourites))
+                            }
+                        }
+                        LoginState.NoAuth -> AuthorizationMenu { u, p, cb ->
+                            component.login(u, p, cb)
+                        }
+                        LoginState.IOError -> {
+                            Text(stringResource(R.string.network_error))
+                            Button(onClick = { component.checkAuthorization() }) {
+                                Text(stringResource(R.string.retry))
+                            }
+                        }
+                        LoginState.InternalServerError -> {
+                            Text(stringResource(R.string.internal_server_error))
+                            Button(onClick = { component.checkAuthorization() }) {
+                                Text(stringResource(R.string.retry))
+                            }
+                        }
+                        LoginState.APITemporarilyUnavailable -> {
+                            Text(stringResource(R.string.api_temporarily_unavailable))
+                            Button(onClick = { component.checkAuthorization() }) {
+                                Text(stringResource(R.string.retry))
+                            }
+                        }
+                        LoginState.UnknownAPIError -> {
+                            Text(stringResource(R.string.unknown_api_error))
+                            Row {
+                                Button(onClick = { component.checkAuthorization() }) {
+                                    Text(stringResource(R.string.retry))
+                                }
+                                Spacer(Modifier.size(8.dp))
+                                Button(
+                                    onClick = { component.logout() },
+                                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+                                ) {
+                                    Text(stringResource(R.string.login_logout))
+                                }
                             }
                         }
                     }
@@ -156,7 +162,7 @@ fun AuthorizationMenu(
             focusManager.clearFocus()
             onLogin(username, password) {
                 isLoggingIn = false
-                if (it == LoginState.AUTHORIZED) {
+                if (it is LoginState.Authorized) {
                     username = ""
                     password = ""
                 }
@@ -243,7 +249,7 @@ fun PreviewAuthorizationMenu() {
         AuthorizationMenu { _, _, cb ->
             scope.launch {
                 delay(5000L)
-                cb(LoginState.AUTHORIZED)
+                cb(LoginState.Authorized("abcd", 0))
             }
         }
     }

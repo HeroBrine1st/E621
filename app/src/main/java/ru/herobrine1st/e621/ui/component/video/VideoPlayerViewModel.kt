@@ -30,6 +30,10 @@ import com.google.android.exoplayer2.Timeline
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
+// TODO replace exoplayer with something multiplatform
+//      or, at least, with something not built on exoplayer
+//      then drop ViewModels and Hilt
+//      and, maybe, migrate to Kotlin/Multiplatform
 @HiltViewModel
 class VideoPlayerViewModel @Inject constructor(
     val exoPlayer: ExoPlayer

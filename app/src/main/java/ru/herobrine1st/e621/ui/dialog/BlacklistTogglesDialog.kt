@@ -20,7 +20,7 @@
 
 package ru.herobrine1st.e621.ui.dialog
 
-import android.util.Log
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -36,41 +36,30 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.placeholder
 import com.google.accompanist.placeholder.material.shimmer
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.entity.BlacklistEntry
-import javax.inject.Inject
+import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
+import ru.herobrine1st.e621.preference.LocalPreferences
 
 @Composable
 fun BlacklistTogglesDialog(
-    isBlacklistEnabled: Boolean,
-    toggleBlacklist: (Boolean) -> Unit,
-    onClose: () -> Unit,
+    component: BlacklistTogglesDialogComponent
 ) {
-    val viewModel: BlacklistTogglesDialogViewModel = hiltViewModel()
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val isBlacklistEnabled = LocalPreferences.current.blacklistEnabled
 
     var isBlacklistUpdating by remember { mutableStateOf(false) }
     val isBlacklistLoading: Boolean
-    val blacklistEntries = viewModel.entriesFlow
+    val blacklistEntries = component.entriesFlow
         .collectAsState().value.also {
             isBlacklistLoading = it == null
         } ?: emptyList()
 
     val onCancel = {
         blacklistEntries.forEach { it.resetChanges() }
-        onClose()
+        component.onClose()
     }
 
     ActionDialog(
@@ -79,10 +68,9 @@ fun BlacklistTogglesDialog(
             if (isBlacklistUpdating) CircularProgressIndicator(modifier = Modifier.size(24.dp))
             DialogActions(!isBlacklistUpdating, onApply = {
                 isBlacklistUpdating = true
-                viewModel.viewModelScope.launch {
-                    viewModel.applyChanges()
+                component.applyChanges {
                     isBlacklistUpdating = false
-                    onClose()
+                    component.onClose()
                 }
             }, onCancel = {
                 onCancel()
@@ -91,70 +79,82 @@ fun BlacklistTogglesDialog(
             onCancel()
         }
     ) {
-        if (!isBlacklistLoading && blacklistEntries.isEmpty()) Text(stringResource(R.string.dialog_blacklist_empty))
-        else LazyColumn(
-            modifier = Modifier.height(screenHeight * 0.4f),
-            // userScrollEnabled = !isBlacklistLoading TODO in 1.2.0 compose foundation
-        ) {
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.toggleable(
-                        isBlacklistEnabled,
-                        remember { MutableInteractionSource() },
-                        null,
-                        onValueChange = toggleBlacklist
-                    )
+        if (!isBlacklistLoading && blacklistEntries.isEmpty())
+            Text(stringResource(R.string.dialog_blacklist_empty))
+        else Crossfade(isBlacklistLoading) { loading ->
+            if (loading) {
+                Box(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(screenHeight * 0.4f),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        stringResource(if (isBlacklistEnabled) R.string.blacklist_enabled else R.string.blacklist_disabled),
-                        modifier = Modifier.weight(1f)
-                    )
-                    Switch(
-                        checked = isBlacklistEnabled,
-                        onCheckedChange = toggleBlacklist,
-                        colors = SwitchDefaults.colors(
-                            checkedThumbColor = MaterialTheme.colors.primary,
-                            uncheckedThumbColor = MaterialTheme.colors.onSurface
+                    CircularProgressIndicator()
+                }
+            } else LazyColumn(
+                modifier = Modifier.height(screenHeight * 0.4f),
+                userScrollEnabled = !isBlacklistLoading
+            ) {
+                item {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.toggleable(
+                            isBlacklistEnabled,
+                            remember { MutableInteractionSource() },
+                            null,
+                            onValueChange = component::toggleBlacklist
                         )
-                    )
+                    ) {
+                        Text(
+                            stringResource(if (isBlacklistEnabled) R.string.blacklist_enabled else R.string.blacklist_disabled),
+                            modifier = Modifier.weight(1f)
+                        )
+                        Switch(
+                            checked = isBlacklistEnabled,
+                            onCheckedChange = component::toggleBlacklist,
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colors.primary,
+                                uncheckedThumbColor = MaterialTheme.colors.onSurface
+                            )
+                        )
+                    }
+                    Divider()
                 }
-                Divider()
-            }
-            if (isBlacklistLoading) {
-                items(50) {
+                if (isBlacklistLoading) {
+                    items(50) {
+                        BlacklistEntryLine(
+                            value = true,
+                            onValueChange = {},
+                            text = "",
+                            isBlacklistUpdating = isBlacklistUpdating,
+                            placeholder = true
+                        )
+                    }
+                    return@LazyColumn
+                }
+                item {
+                    val isAllEnabled = blacklistEntries.all { it.enabled }
                     BlacklistEntryLine(
-                        value = true,
-                        onValueChange = {},
-                        text = "",
-                        isBlacklistUpdating = isBlacklistUpdating,
-                        placeholder = true
+                        value = isAllEnabled,
+                        onValueChange = { blacklistEntries.forEach { it.enabled = !isAllEnabled } },
+                        text = stringResource(R.string.selection_all),
+                        isBlacklistUpdating = isBlacklistUpdating
                     )
+                    if (blacklistEntries.isNotEmpty())
+                        Divider()
                 }
-                return@LazyColumn
-            }
-            item {
-                val isAllEnabled = blacklistEntries.all { it.enabled }
-                BlacklistEntryLine(
-                    value = isAllEnabled,
-                    onValueChange = { blacklistEntries.forEach { it.enabled = !isAllEnabled } },
-                    text = stringResource(R.string.selection_all),
-                    isBlacklistUpdating = isBlacklistUpdating
-                )
-                if (blacklistEntries.isNotEmpty())
-                    Divider()
-            }
-            itemsIndexed(blacklistEntries) { i, entry ->
-                BlacklistEntryLine(
-                    value = entry.enabled,
-                    onValueChange = { entry.enabled = it },
-                    text = entry.query,
-                    isBlacklistUpdating = isBlacklistUpdating,
-                    showResetButton = entry.isChanged,
-                    onReset = { entry.resetChanges() }
-                )
-                if (i < blacklistEntries.size - 1)
-                    Divider()
+                itemsIndexed(blacklistEntries) { i, entry ->
+                    BlacklistEntryLine(
+                        value = entry.enabled,
+                        onValueChange = { entry.enabled = it },
+                        text = entry.query,
+                        isBlacklistUpdating = isBlacklistUpdating,
+                        showResetButton = entry.isChanged,
+                        onReset = { entry.resetChanges() }
+                    )
+                    if (i < blacklistEntries.size - 1)
+                        Divider()
+                }
             }
         }
     }
@@ -227,55 +227,3 @@ private fun DialogActions(
         Text(stringResource(R.string.apply))
     }
 }
-
-@HiltViewModel
-class BlacklistTogglesDialogViewModel @Inject constructor(
-    private val blacklistRepository: BlacklistRepository
-) : ViewModel() {
-
-    val entriesFlow = blacklistRepository.getEntriesFlow()
-        .map { list -> list.map { it.asToggleable() } }
-        .stateIn(
-            viewModelScope,
-            SharingStarted.WhileSubscribed(),
-            null
-        )
-
-    suspend fun applyChanges() {
-        val entries = entriesFlow.value ?: kotlin.run {
-            Log.e(TAG, "Illegal call to applyChanges(): data isn't even downloaded from database")
-            throw IllegalStateException()
-        }
-        blacklistRepository.updateEntries(entries.map { it.toEntry() })
-    }
-
-    companion object {
-        const val TAG = "BlacklistTogglesDialogViewModel"
-    }
-}
-
-@Stable
-class ToggleableBlacklistEntry private constructor(val query: String, private val dbEnabled: Boolean, val id: Long) {
-    companion object {
-        fun of(blacklistEntry: BlacklistEntry): ToggleableBlacklistEntry =
-            ToggleableBlacklistEntry(
-                blacklistEntry.query,
-                blacklistEntry.enabled,
-                blacklistEntry.id
-            )
-    }
-
-    var enabled by mutableStateOf(dbEnabled)
-
-    val isChanged get() = enabled != dbEnabled
-
-
-    fun resetChanges() {
-        if (!isChanged) return
-        enabled = dbEnabled
-    }
-
-    fun toEntry() = BlacklistEntry(query, enabled, id)
-}
-
-fun BlacklistEntry.asToggleable() = ToggleableBlacklistEntry.of(this)
