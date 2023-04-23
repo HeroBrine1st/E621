@@ -26,13 +26,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material.Button
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.util.LimitHeightShape
 
 /**
  * Make [content] collapsible if its height exceeds [collapsedHeight].
@@ -172,4 +177,19 @@ class CollapsibleColumnState(
 enum class CollapsibleColumnSlot {
     CONTENT,
     BUTTON;
+}
+
+private class LimitHeightShape(private val height: Float) : Shape {
+    override fun createOutline(
+        size: Size,
+        layoutDirection: LayoutDirection,
+        density: Density
+    ): Outline = Outline.Rectangle(
+        Rect(
+            left = 0f,
+            top = 0f,
+            right = size.width,
+            bottom = height
+        )
+    )
 }
