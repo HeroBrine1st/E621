@@ -95,10 +95,7 @@ fun PostImage(
                 painterState = it
             }
         )
-        // FIXME now it is always visible..
-        // it is always visible because of fix which fixed that is was always NOT visible
-        // ironic..
-        if (actualPostFileType != null && actualPostFileType != file.type) Chip( // TODO
+        if (actualPostFileType != null && actualPostFileType.isNotImage) Chip( // TODO
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset(x = 10.dp, y = 10.dp),
