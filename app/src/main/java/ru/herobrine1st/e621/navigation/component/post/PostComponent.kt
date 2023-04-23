@@ -121,9 +121,7 @@ class PostComponent(
                 ) {
                     isLoadingPost = true
                     try {
-                        this@PostComponent.post = withContext(Dispatchers.IO) {
-                            api.getPost(id).await().post
-                        }
+                        post = api.getPost(id).await().post
                         // Maybe reload ExoPlayer if old object contains invalid URL?
                         // exoPlayer.playbackState may help with that
                     } catch (e: JacksonException) {

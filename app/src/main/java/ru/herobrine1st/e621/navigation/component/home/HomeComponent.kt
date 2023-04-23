@@ -184,10 +184,9 @@ class HomeComponent private constructor(
 
         private suspend fun checkCredentials(credentials: AuthorizationCredentials): LoginState {
             val res = try {
-                withContext(Dispatchers.IO) {
-                    api.getUser(credentials.username, credentials.credentials)
-                        .awaitResponse()
-                }
+                api.getUser(credentials.username, credentials.credentials)
+                    .awaitResponse()
+
             } catch (e: IOException) {
                 Log.e(
                     TAG,
@@ -247,11 +246,13 @@ class HomeComponent private constructor(
         private suspend fun fetchBlacklistFromAccount() {
             if (blacklistRepository.count() != 0) return
             val state = state as LoginState.Authorized
-            val entries = withContext(Dispatchers.IO) {
-                api.getUser(name = state.username).await().get("blacklisted_tags").asText()
-            }.split("\n").map {
-                BlacklistEntry(query = it, enabled = true)
-            }
+            val entries =
+                api.getUser(name = state.username).await()
+                    .get("blacklisted_tags").asText()
+                    .split("\n")
+                    .map {
+                        BlacklistEntry(query = it, enabled = true)
+                    }
             try {
                 blacklistRepository.insertEntries(entries)
             } catch (e: SQLiteException) {

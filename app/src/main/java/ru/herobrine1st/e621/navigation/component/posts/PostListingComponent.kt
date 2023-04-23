@@ -134,11 +134,8 @@ class PostListingComponent(
             // Instant UI reaction
             favouritesCache.setFavourite(post.id, FavouriteState.InFly(wasFavourite))
             try {
-                withContext(Dispatchers.IO) {
-                    if (wasFavourite.isFavourite) api.removeFromFavourites(post.id)
-                        .awaitResponse()
-                    else api.addToFavourites(post.id).awaitResponse()
-                }
+                if (wasFavourite.isFavourite) api.removeFromFavourites(post.id).awaitResponse()
+                else api.addToFavourites(post.id).awaitResponse()
                 favouritesCache.setFavourite(
                     post.id,
                     FavouriteState.Determined.fromBoolean(!wasFavourite.isFavourite)

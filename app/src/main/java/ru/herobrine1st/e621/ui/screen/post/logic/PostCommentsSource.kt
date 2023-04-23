@@ -57,9 +57,9 @@ class PostCommentsSource(
         return try {
             if (!::avatars.isInitialized) {
                 val (avatars, commentCount) = withContext(Dispatchers.Default) {
-                    parseCommentAvatarsAndGetCommentCount(withContext(Dispatchers.IO) {
+                    parseCommentAvatarsAndGetCommentCount(
                         api.getCommentsForPostHTML(postId).await()
-                    })
+                    )
                 }
                 this.avatars = avatars
                 if (commentCount == 0)
@@ -76,16 +76,15 @@ class PostCommentsSource(
             val page = params.key ?: firstPage
             val limit = params.loadSize
 
-            val res = withContext(Dispatchers.IO) {
-                api.getCommentsForPostBBCode(postId, page, limit).await()
-            }.asReversed()
-                .run {
-                    withContext(Dispatchers.Default) {
-                        map {
-                            CommentData.fromE621Comment(it, avatars[it.creatorId])
+            val res =
+                api.getCommentsForPostBBCode(postId, page, limit).await().asReversed()
+                    .run {
+                        withContext(Dispatchers.Default) {
+                            map {
+                                CommentData.fromE621Comment(it, avatars[it.creatorId])
+                            }
                         }
                     }
-                }
 
             LoadResult.Page(
                 data = res,

@@ -27,15 +27,19 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Call
 import retrofit2.Response
-import retrofit2.awaitResponse
 import ru.herobrine1st.e621.util.objectMapper
+import kotlin.coroutines.CoroutineContext
 
-private suspend fun <T> Call<T>.awaitResponseInternal(): Response<T> {
-    val response = this.awaitResponse()
+private suspend fun <T> Call<T>.awaitResponseInternal(context: CoroutineContext = Dispatchers.IO): Response<T> {
+    // Not really await, but under the hood it uses MainThreadExecutor
+    // No point in overriding it, we have Dispatchers.IO
+    val response = withContext(context) {
+        this@awaitResponseInternal.execute()
+    }
     if (response.code() !in 200..399) { // Include redirects
         val message = kotlin.run {
-            if(response.code() == 404) return@run "Not found"
-            val body = withContext(Dispatchers.IO) {
+            if (response.code() == 404) return@run "Not found"
+            val body = withContext(context) {
                 objectMapper.readValue<ObjectNode>(response.errorBody()!!.charStream())
             }
             body.get("message")?.asText() ?: body.toPrettyString()
@@ -48,16 +52,19 @@ private suspend fun <T> Call<T>.awaitResponseInternal(): Response<T> {
     return response
 }
 
-suspend fun <T> Call<T>.awaitResponse(): Response<T> = this.awaitResponseInternal()
-suspend fun <T> Call<T>.await(): T {
-    val response = this.awaitResponseInternal()
+suspend fun <T> Call<T>.awaitResponse(context: CoroutineContext = Dispatchers.IO): Response<T> =
+    this.awaitResponseInternal(context)
+
+suspend fun <T> Call<T>.await(context: CoroutineContext = Dispatchers.IO): T {
+    val response = this.awaitResponseInternal(context)
+
     val body = response.body()
     // 204 is "No Content" meaning body length is 0 bytes and is not "Null Response" :///
     if (response.code() == 204 && body == null) {
-        Log.e(
+        Log.wtf(
             "API",
             "Response code is 204, therefore body is null, use awaitResponse() instead"
         )
     }
-    return response.body()!!
+    return body!!
 }
