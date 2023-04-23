@@ -32,12 +32,11 @@ import androidx.paging.filter
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
-import kotlinx.coroutines.Dispatchers
+import com.arkivanov.essenty.lifecycle.doOnDestroy
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.*
@@ -56,55 +55,63 @@ import java.util.function.Predicate
 
 private const val TAG = "PostListingComponent"
 
-class PostListingComponent private constructor(
+class PostListingComponent(
     private val api: API,
     private val snackbar: SnackbarAdapter,
     private val favouritesCache: FavouritesCache,
-    private val jacksonExceptionHandler: JacksonExceptionHandler,
+    jacksonExceptionHandler: JacksonExceptionHandler,
     private val searchOptions: SearchOptions,
     private val navigator: StackNavigator<Config>,
+    componentContext: ComponentContext,
     applicationContext: Context,
     blacklistRepository: BlacklistRepository,
-) : InstanceBase() {
+) : ComponentContext by componentContext {
 
-    private val pager = Pager(
-        PagingConfig(
-            pageSize = BuildConfig.PAGER_PAGE_SIZE,
-            initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
+    private val instance = instanceKeeper.getOrCreate {
+        Instance(
+            api,
+            snackbar,
+            favouritesCache,
+            jacksonExceptionHandler,
+            searchOptions,
+            applicationContext,
+            blacklistRepository
         )
-    ) {
-        PostsSource(api, snackbar, jacksonExceptionHandler, searchOptions)
     }
 
-    private val blacklistPredicateFlow =
-        blacklistRepository.getEntriesFlow()
-            .map { list ->
-                list.filter { it.enabled }
-                    .map { createTagProcessor(it.query) }
-                    .reduceOrNull { a, b -> ;a.or(b) } ?: Predicate { false }
-            }
-            .flowOn(Dispatchers.Default)
+    private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
 
-    val postsFlow = combine(
-        pager.flow.cachedIn(lifecycleScope), // cachedIn strictly required here (double collection exception otherwise)
-        applicationContext.getPreferencesFlow { it.blacklistEnabled },
-        blacklistPredicateFlow,
-        favouritesCache.flow
-    ) { posts, isBlacklistEnabled, blacklistPredicate, favourites ->
-        if (!isBlacklistEnabled) posts
-        else posts.filter {
-            favourites.getOrDefault(it.id, it.isFavorited) // Show post if it is either favourite
-                    || !blacklistPredicate.test(it)        //           or is not blacklisted
+    init {
+        lifecycle.doOnDestroy {
+            lifecycleScope.cancel()
         }
-    }.combine(applicationContext.getPreferencesFlow { it.safeModeEnabled }) { posts, safeModeEnabled ->
-        if (safeModeEnabled) posts.filter { it.rating == Rating.SAFE }
-        else posts
-        /* CPU intensive ?
-         * Does it need to be cached? I mean, in terms of memory and CPU resources
-         * And, maybe, energy.
-         */
-    }.flowOn(Dispatchers.Default)
+    }
 
+    fun onOpenPost(post: Post, openComments: Boolean) {
+        navigator.pushIndexed {
+            Config.Post(
+                id = post.id,
+                post = post,
+                openComments = openComments,
+                query = searchOptions,
+                index = it
+            )
+        }
+    }
+
+    fun onOpenSearch() {
+        navigator.pushIndexed { index ->
+            Config.Search(
+                initialSearch = when (searchOptions) {
+                    is PostsSearchOptions -> searchOptions
+                    is FavouritesSearchOptions -> PostsSearchOptions(
+                        favouritesOf = searchOptions.favouritesOf
+                    )
+                },
+                index = index
+            )
+        }
+    }
 
     @Composable
     fun collectFavouritesCacheAsState() = favouritesCache.flow.collectAsState()
@@ -135,54 +142,57 @@ class PostListingComponent private constructor(
         }
     }
 
-    fun onOpenPost(post: Post, openComments: Boolean) {
-        navigator.pushIndexed {
-            Config.Post(
-                id = post.id,
-                post = post,
-                openComments = openComments,
-                query = searchOptions,
-                index = it
-            )
-        }
-    }
+    val postsFlow get() = instance.postsFlow
 
-    fun onOpenSearch() {
-        navigator.pushIndexed { index ->
-            Config.Search(
-                initialSearch = when (searchOptions) {
-                    is PostsSearchOptions -> searchOptions
-                    is FavouritesSearchOptions -> PostsSearchOptions(
-                        favouritesOf = searchOptions.favouritesOf
-                    )
-                },
-                index = index
-            )
-        }
-    }
+    private class Instance(
+        api: API,
+        snackbar: SnackbarAdapter,
+        favouritesCache: FavouritesCache,
+        jacksonExceptionHandler: JacksonExceptionHandler,
+        searchOptions: SearchOptions,
+        applicationContext: Context,
+        blacklistRepository: BlacklistRepository,
+    ) : InstanceBase() {
 
-    companion object {
-        operator fun invoke(
-            componentContext: ComponentContext,
-            api: API,
-            snackbar: SnackbarAdapter,
-            favouritesCache: FavouritesCache,
-            jacksonExceptionHandler: JacksonExceptionHandler,
-            searchOptions: SearchOptions,
-            navigator: StackNavigator<Config>,
-            applicationContext: Context,
-            blacklistRepository: BlacklistRepository,
-        ) = componentContext.instanceKeeper.getOrCreate {
-            PostListingComponent(
-                api,
-                snackbar,
-                favouritesCache,
-                jacksonExceptionHandler,
-                searchOptions,
-                navigator,
-                applicationContext,
-                blacklistRepository
+        private val pager = Pager(
+            PagingConfig(
+                pageSize = BuildConfig.PAGER_PAGE_SIZE,
+                initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
             )
+        ) {
+            PostsSource(api, snackbar, jacksonExceptionHandler, searchOptions)
         }
+
+        private val blacklistPredicateFlow =
+            blacklistRepository.getEntriesFlow()
+                .map { list ->
+                    list.filter { it.enabled }
+                        .map { createTagProcessor(it.query) }
+                        .reduceOrNull { a, b -> ;a.or(b) } ?: Predicate { false }
+                }
+                .flowOn(Dispatchers.Default)
+
+        val postsFlow = combine(
+            pager.flow.cachedIn(lifecycleScope), // cachedIn strictly required here (double collection exception otherwise)
+            applicationContext.getPreferencesFlow { it.blacklistEnabled },
+            blacklistPredicateFlow,
+            favouritesCache.flow
+        ) { posts, isBlacklistEnabled, blacklistPredicate, favourites ->
+            if (!isBlacklistEnabled) posts
+            else posts.filter {
+                favourites.getOrDefault(
+                    it.id,
+                    it.isFavorited
+                ) // Show post if it is either favourite
+                        || !blacklistPredicate.test(it)        //           or is not blacklisted
+            }
+        }.combine(applicationContext.getPreferencesFlow { it.safeModeEnabled }) { posts, safeModeEnabled ->
+            if (safeModeEnabled) posts.filter { it.rating == Rating.SAFE }
+            else posts
+            /* CPU intensive ?
+         * Does it need to be cached? I mean, in terms of memory and CPU resources
+         * And, maybe, energy.
+         */
+        }.flowOn(Dispatchers.Default)
     }
 }
