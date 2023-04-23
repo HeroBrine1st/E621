@@ -44,13 +44,13 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.config.Config
+import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
-import ru.herobrine1st.e621.util.JacksonExceptionHandler
-import ru.herobrine1st.e621.util.pushIndexed
 import java.io.IOException
 import java.util.function.Predicate
 
@@ -60,7 +60,7 @@ class PostListingComponent(
     private val api: API,
     private val snackbar: SnackbarAdapter,
     private val favouritesCache: FavouritesCache,
-    jacksonExceptionHandler: JacksonExceptionHandler,
+    exceptionReporter: ExceptionReporter,
     private val searchOptions: SearchOptions,
     private val navigator: StackNavigator<Config>,
     componentContext: ComponentContext,
@@ -73,7 +73,7 @@ class PostListingComponent(
             api,
             snackbar,
             favouritesCache,
-            jacksonExceptionHandler,
+            exceptionReporter,
             searchOptions,
             applicationContext,
             blacklistRepository
@@ -162,7 +162,7 @@ class PostListingComponent(
         api: API,
         snackbar: SnackbarAdapter,
         favouritesCache: FavouritesCache,
-        jacksonExceptionHandler: JacksonExceptionHandler,
+        exceptionReporter: ExceptionReporter,
         searchOptions: SearchOptions,
         applicationContext: Context,
         blacklistRepository: BlacklistRepository,
@@ -174,7 +174,7 @@ class PostListingComponent(
                 initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
             )
         ) {
-            PostsSource(api, snackbar, jacksonExceptionHandler, searchOptions)
+            PostsSource(api, snackbar, exceptionReporter, searchOptions)
         }
 
         private val blacklistPredicateFlow =

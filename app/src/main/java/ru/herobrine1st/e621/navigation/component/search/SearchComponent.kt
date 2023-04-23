@@ -31,7 +31,7 @@ import com.arkivanov.essenty.statekeeper.consume
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.navigation.config.Config
-import ru.herobrine1st.e621.util.pushIndexed
+import ru.herobrine1st.e621.navigation.pushIndexed
 
 const val STATE_KEY = "SEARCH_COMPONENT_STATE_KEY"
 

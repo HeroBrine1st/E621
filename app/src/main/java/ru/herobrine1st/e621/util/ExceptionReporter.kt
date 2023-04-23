@@ -25,6 +25,7 @@ import androidx.compose.material.SnackbarDuration
 import com.fasterxml.jackson.core.JacksonException
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -32,12 +33,27 @@ import javax.inject.Singleton
 // Right now it does nothing but logs
 // Should it handle any IOException?
 @Singleton
-class JacksonExceptionHandler @Inject constructor(
+class ExceptionReporter @Inject constructor(
     private val snackbarAdapter: SnackbarAdapter
 ) {
-    suspend fun handleDeserializationError(exception: JacksonException) {
-        Log.e(TAG, "An exception occurred while deserializing response", exception)
-        snackbarAdapter.enqueueMessage(R.string.jackson_deserialization_error, SnackbarDuration.Indefinite)
+    suspend fun handleDeserializationError(exception: JacksonException) =
+        handleNetworkException(exception)
+
+    suspend fun handleNetworkException(
+        e: IOException,
+        message: String = "Unknown network exception occurred"
+    ) {
+        Log.e(TAG, message, e)
+        when (e) {
+            is JacksonException -> snackbarAdapter.enqueueMessage(
+                R.string.jackson_deserialization_error,
+                SnackbarDuration.Indefinite
+            )
+            else -> snackbarAdapter.enqueueMessage(
+                R.string.network_error,
+                SnackbarDuration.Indefinite
+            )
+        }
     }
 
     companion object {

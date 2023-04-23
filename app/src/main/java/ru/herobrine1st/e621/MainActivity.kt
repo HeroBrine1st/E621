@@ -84,7 +84,7 @@ class MainActivity : ComponentActivity() {
     lateinit var favouritesCacheProvider: Provider<FavouritesCache>
 
     @Inject
-    lateinit var jacksonExceptionHandlerProvider: Provider<JacksonExceptionHandler>
+    lateinit var exceptionReporterProvider: Provider<ExceptionReporter>
 
     @Inject
     lateinit var exoPlayerProvider: Provider<ExoPlayer>
@@ -114,7 +114,7 @@ class MainActivity : ComponentActivity() {
             snackbarAdapterProvider = lazyOf(snackbarAdapter),
             blacklistRepositoryProvider = blacklistRepositoryProvider.lazy(),
             favouritesCacheProvider = favouritesCacheProvider.lazy(),
-            jacksonExceptionHandlerProvider = jacksonExceptionHandlerProvider.lazy(),
+            exceptionReporterProvider = exceptionReporterProvider.lazy(),
             exoPlayerProvider = exoPlayerProvider.lazy(),
             componentContext = defaultComponentContext()
         )

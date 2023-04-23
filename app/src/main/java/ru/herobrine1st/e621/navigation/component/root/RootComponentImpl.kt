@@ -41,8 +41,8 @@ import ru.herobrine1st.e621.navigation.component.settings.*
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.config.Config.*
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
-import ru.herobrine1st.e621.util.JacksonExceptionHandler
 
 class RootComponentImpl(
     private val applicationContext: Context,
@@ -50,7 +50,7 @@ class RootComponentImpl(
     private val apiProvider: Lazy<API>,
     private val snackbarAdapterProvider: Lazy<SnackbarAdapter>,
     private val favouritesCacheProvider: Lazy<FavouritesCache>,
-    private val jacksonExceptionHandlerProvider: Lazy<JacksonExceptionHandler>,
+    private val exceptionReporterProvider: Lazy<ExceptionReporter>,
     private val blacklistRepositoryProvider: Lazy<BlacklistRepository>,
     private val exoPlayerProvider: Lazy<ExoPlayer>,
     componentContext: ComponentContext
@@ -99,7 +99,7 @@ class RootComponentImpl(
                     api = apiProvider.value,
                     snackbar = snackbarAdapterProvider.value,
                     favouritesCache = favouritesCacheProvider.value,
-                    jacksonExceptionHandler = jacksonExceptionHandlerProvider.value,
+                    exceptionReporter = exceptionReporterProvider.value,
                     searchOptions = configuration.search,
                     navigator = navigation,
                     applicationContext = applicationContext,
@@ -116,7 +116,7 @@ class RootComponentImpl(
                     navigation,
                     applicationContext,
                     snackbarAdapterProvider.value,
-                    jacksonExceptionHandlerProvider.value,
+                    exceptionReporterProvider.value,
                     favouritesCacheProvider.value,
                     exoPlayerProvider.value,
                     apiProvider.value

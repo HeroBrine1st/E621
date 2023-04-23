@@ -41,12 +41,12 @@ import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.navigation.config.Config
+import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.credentials
 import ru.herobrine1st.e621.util.debug
-import ru.herobrine1st.e621.util.pushIndexed
 import java.io.IOException
 
 

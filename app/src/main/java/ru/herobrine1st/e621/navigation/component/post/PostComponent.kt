@@ -23,7 +23,6 @@ package ru.herobrine1st.e621.navigation.component.post
 import android.content.Context
 import android.os.Parcelable
 import android.util.Log
-import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -36,26 +35,24 @@ import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
 import com.arkivanov.essenty.statekeeper.consume
-import com.fasterxml.jackson.core.JacksonException
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.BuildConfig
-import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.*
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.navigation.config.Config
+import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.screen.post.logic.PostCommentsSource
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
-import ru.herobrine1st.e621.util.JacksonExceptionHandler
-import ru.herobrine1st.e621.util.pushIndexed
 import java.io.IOException
 
 private const val STATE_KEY = "POST_COMPONENT_STATE_KEY"
@@ -70,13 +67,13 @@ class PostComponent(
     private val navigator: StackNavigator<Config>,
     applicationContext: Context,
     snackbarAdapter: SnackbarAdapter,
-    jacksonExceptionHandler: JacksonExceptionHandler,
+    exceptionReporter: ExceptionReporter,
     favouritesCache: FavouritesCache,
     private val exoPlayer: ExoPlayer,
     val api: API
 ) : ComponentContext by componentContext {
     private val instance = instanceKeeper.getOrCreate {
-        Instance(postId, api, snackbarAdapter, jacksonExceptionHandler)
+        Instance(postId, api, snackbarAdapter, exceptionReporter)
     }
 
     private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
@@ -124,14 +121,9 @@ class PostComponent(
                         post = api.getPost(id).await().post
                         // Maybe reload ExoPlayer if old object contains invalid URL?
                         // exoPlayer.playbackState may help with that
-                    } catch (e: JacksonException) {
-                        jacksonExceptionHandler.handleDeserializationError(e)
                     } catch (e: IOException) {
                         Log.e(TAG, "Unable to get post $id", e)
-                        snackbarAdapter.enqueueMessage(
-                            R.string.network_error,
-                            SnackbarDuration.Indefinite
-                        )
+                        exceptionReporter.handleNetworkException(e)
                     } catch (t: Throwable) {
                         Log.e(TAG, "Unable to get post $id", t)
                     }
@@ -212,7 +204,7 @@ class PostComponent(
         postId: Int,
         api: API,
         snackbar: SnackbarAdapter,
-        jacksonExceptionHandler: JacksonExceptionHandler,
+        exceptionReporter: ExceptionReporter,
     ) : InstanceBase() {
         private val pager = Pager(
             PagingConfig(
@@ -220,7 +212,7 @@ class PostComponent(
                 initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
             )
         ) {
-            PostCommentsSource(api, snackbar, jacksonExceptionHandler, postId)
+            PostCommentsSource(api, snackbar, exceptionReporter, postId)
         }
 
         val commentsFlow = pager.flow.cachedIn(lifecycleScope)

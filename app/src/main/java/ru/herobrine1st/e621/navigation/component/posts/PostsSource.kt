@@ -21,24 +21,21 @@
 package ru.herobrine1st.e621.navigation.component.posts
 
 import android.util.Log
-import androidx.compose.material.SnackbarDuration
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.fasterxml.jackson.core.JacksonException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
-import ru.herobrine1st.e621.util.JacksonExceptionHandler
+import ru.herobrine1st.e621.util.ExceptionReporter
 import java.io.IOException
 
 class PostsSource(
     private val api: API,
     private val snackbar: SnackbarAdapter,
-    private val jacksonExceptionHandler: JacksonExceptionHandler,
+    private val exceptionReporter: ExceptionReporter,
     private val searchOptions: SearchOptions?,
 ) : PagingSource<Int, Post>() {
     override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
@@ -64,15 +61,9 @@ class PostsSource(
                 prevKey = if (page == 1) null else page - 1,
                 nextKey = if (posts.isNotEmpty()) page + 1 else null
             )
-        } catch(e: JacksonException) {
-            jacksonExceptionHandler.handleDeserializationError(e)
-            LoadResult.Error(e)
         } catch (e: IOException) {
             Log.e("Posts", "Unable to load posts", e)
-            snackbar.enqueueMessage(
-                R.string.network_error,
-                SnackbarDuration.Indefinite
-            )
+            exceptionReporter.handleNetworkException(e)
             LoadResult.Error(e)
         } catch (e: Throwable) {
             Log.e("Posts", "Unable to load posts", e)
