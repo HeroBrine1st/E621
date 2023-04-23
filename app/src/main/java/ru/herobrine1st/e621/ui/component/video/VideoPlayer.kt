@@ -50,7 +50,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.audio.AudioAttributes
@@ -81,7 +81,7 @@ fun VideoPlayer(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val viewModel = hiltViewModel<VideoPlayerViewModel>()
+    val viewModel = viewModel<VideoPlayerViewModel>()
 
     fun resetHideControlsDeadline() {
         state.hideControlsDeadlineMs = System.currentTimeMillis() + controlsTimeoutMs

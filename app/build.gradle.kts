@@ -119,6 +119,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview:1.4.0") // Apache 2.0
     implementation("androidx.compose.material:material-icons-extended:1.4.0") // Apache 2.0
     implementation("androidx.activity:activity-compose:1.7.0") // Apache 2.0
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
 
     // Decompose
     val decomposeVersion = "2.0.0-alpha-01"
@@ -155,7 +156,6 @@ dependencies {
     // Hilt (Apache 2.0)
     val hiltVersion = "2.45"
     implementation("com.google.dagger:hilt-android:$hiltVersion")
-    implementation("androidx.hilt:hilt-navigation-compose:1.0.0")
     kapt("com.google.dagger:hilt-android-compiler:$hiltVersion") // Not included in binary result
 
 
