@@ -28,7 +28,6 @@ import androidx.compose.material.Surface
 import androidx.compose.material.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import ru.herobrine1st.e621.ui.ActionBarMenu
 
 @Composable
 fun MainScaffold(
