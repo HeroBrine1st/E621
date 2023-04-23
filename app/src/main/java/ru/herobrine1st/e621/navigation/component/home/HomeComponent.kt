@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.navigation.component.home
 
+import android.database.sqlite.SQLiteException
 import android.util.Log
 import androidx.compose.material.SnackbarDuration
 import androidx.compose.runtime.getValue
@@ -34,8 +35,11 @@ import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
+import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.awaitResponse
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
+import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
@@ -65,7 +69,6 @@ class HomeComponent private constructor(
         (state as? LoginState.Authorized)?.let {
             Config.PostListing(
                 FavouritesSearchOptions(
-                    // null user id = self
                     favouritesOf = it.username,
                     id = it.id
                 ),
@@ -82,12 +85,16 @@ class HomeComponent private constructor(
             authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
             apiProvider: Lazy<API>,
             snackbarAdapter: SnackbarAdapter,
+            blacklistRepository: BlacklistRepository,
             stackNavigator: StackNavigator<Config>,
             componentContext: ComponentContext
         ): HomeComponent {
             val instance = componentContext.instanceKeeper.getOrCreate {
                 HomeComponentInstance(
-                    authorizationRepositoryProvider, apiProvider, snackbarAdapter
+                    authorizationRepositoryProvider,
+                    apiProvider,
+                    snackbarAdapter,
+                    blacklistRepository
                 )
             }
             return HomeComponent(stackNavigator, instance, componentContext)
@@ -98,6 +105,7 @@ class HomeComponent private constructor(
         authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
         apiProvider: Lazy<API>,
         private val snackbarAdapter: SnackbarAdapter,
+        private val blacklistRepository: BlacklistRepository
     ) : InstanceBase(), IHomeComponentInstanceMethods {
 
         override var state by mutableStateOf<LoginState>(LoginState.Loading)
@@ -132,10 +140,10 @@ class HomeComponent private constructor(
                         .setPassword(apiKey)
                         .build()
                 )
-                callback(result)
                 when (result) {
                     is LoginState.Authorized -> {
                         authorizationRepository.insertAccount(login, apiKey)
+                        fetchBlacklistFromAccount()
                         state = result
                     }
                     LoginState.IOError ->
@@ -158,6 +166,7 @@ class HomeComponent private constructor(
                     )
                     LoginState.Loading -> throw IllegalStateException()
                 }
+                callback(result)
             }
         }
 
@@ -234,6 +243,26 @@ class HomeComponent private constructor(
             }
             assert(state != LoginState.Loading)
         }
+
+        private suspend fun fetchBlacklistFromAccount() {
+            if (blacklistRepository.count() != 0) return
+            val state = state as LoginState.Authorized
+            val entries = withContext(Dispatchers.IO) {
+                api.getUser(name = state.username).await().get("blacklisted_tags").asText()
+            }.split("\n").map {
+                BlacklistEntry(query = it, enabled = true)
+            }
+            try {
+                blacklistRepository.insertEntries(entries)
+            } catch (e: SQLiteException) {
+                Log.e(TAG, "SQLite Error while trying to add tag to blacklist", e)
+                snackbarAdapter.enqueueMessage(
+                    R.string.database_error_updating_blacklist,
+                    SnackbarDuration.Long
+                )
+                return
+            }
+        }
     }
 
     // Can authorize is "can press login button"
@@ -246,6 +275,4 @@ class HomeComponent private constructor(
         object NoAuth : LoginState(true)
         class Authorized(val username: String, val id: Int) : LoginState(false)
     }
-
-
 }

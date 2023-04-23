@@ -44,6 +44,9 @@ interface BlacklistDao {
     @Insert
     suspend fun insert(blacklist: BlacklistEntry): Long
 
+    @Insert
+    suspend fun insertAll(entries: List<BlacklistEntry>)
+
     @Update
     suspend fun update(blacklist: BlacklistEntry)
 

@@ -29,7 +29,7 @@ import javax.inject.Inject
 
 class BlacklistRepositoryImpl @Inject constructor(
     database: Database,
-    val dao: BlacklistDao
+    private val dao: BlacklistDao
 ) : BaseRepositoryImpl(database), BlacklistRepository {
 
     override fun getEntriesFlow(): Flow<List<BlacklistEntry>> = dao.getFlowOfAll()
@@ -40,9 +40,12 @@ class BlacklistRepositoryImpl @Inject constructor(
 
     override suspend fun insertEntry(entry: BlacklistEntry) = dao.insert(entry)
 
+    override suspend fun insertEntries(entries: List<BlacklistEntry>) = dao.insertAll(entries)
+
     override suspend fun deleteEntry(entry: BlacklistEntry) = dao.delete(entry)
 
     override suspend fun deleteEntryById(id: Long) = dao.delete(id)
 
     override suspend fun updateEntries(entries: List<BlacklistEntry>) = dao.update(entries)
+    override suspend fun count(): Int = dao.count()
 }

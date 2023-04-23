@@ -33,9 +33,13 @@ interface BlacklistRepository: BaseRepository {
 
     suspend fun insertEntry(entry: BlacklistEntry): Long
 
+    suspend fun insertEntries(entries: List<BlacklistEntry>)
+
     suspend fun deleteEntry(entry: BlacklistEntry)
 
     suspend fun deleteEntryById(id: Long)
 
     suspend fun updateEntries(entries: List<BlacklistEntry>)
+
+    suspend fun count(): Int
 }

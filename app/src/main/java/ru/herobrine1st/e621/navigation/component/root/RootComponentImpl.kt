@@ -81,6 +81,7 @@ class RootComponentImpl(
                     authorizationRepositoryProvider,
                     apiProvider,
                     snackbarAdapterProvider.value,
+                    blacklistRepositoryProvider.value,
                     navigation,
                     context
                 )
