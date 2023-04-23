@@ -52,6 +52,7 @@ import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.screen.post.logic.PostCommentsSource
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
+import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.JacksonExceptionHandler
 import ru.herobrine1st.e621.util.pushIndexed
@@ -109,8 +110,15 @@ class PostComponent(
                 val isPrivacyModeEnabled =
                     applicationContext.getPreferencesFlow { it.privacyModeEnabled }
                         .first()
+                val currentPost = post
                 val id = post?.id ?: postId
-                if (post?.let { favouritesCache.isFavourite(it) } != false || !isPrivacyModeEnabled) {
+                if (currentPost == null // Nothing to show
+                    || !isPrivacyModeEnabled
+                    || favouritesCache.isFavourite(currentPost).let {
+                        it == FavouriteState.Determined.FAVOURITE // Post is favourite
+                                || it is FavouriteState.InFly && !it.isFavourite // Post is going to be favourite
+                    }
+                ) {
                     isLoadingPost = true
                     try {
                         this@PostComponent.post = withContext(Dispatchers.IO) {
@@ -143,6 +151,7 @@ class PostComponent(
 //        }
         lifecycle.doOnDestroy {
             lifecycleScope.cancel()
+            exoPlayer.clearMediaItems()
         }
     }
 

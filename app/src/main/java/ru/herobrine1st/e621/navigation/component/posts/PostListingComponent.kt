@@ -47,6 +47,7 @@ import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
+import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.JacksonExceptionHandler
 import ru.herobrine1st.e621.util.pushIndexed
@@ -118,14 +119,34 @@ class PostListingComponent(
 
     fun handleFavouriteButtonClick(post: Post) {
         lifecycleScope.launch {
-            val wasFavourite = favouritesCache.isFavourite(post)
-            // TODO implement tristate: disable button while request is in fly
-            favouritesCache.setFavourite(post.id, !wasFavourite) // Instant UI reaction
+            val wasFavourite: FavouriteState = favouritesCache.isFavourite(post)
+            when (wasFavourite) {
+                is FavouriteState.InFly -> {
+                    Log.w(
+                        TAG,
+                        "Inconsistent state: \"favourite\" button was clicked while should be disabled"
+                    )
+                    return@launch
+                }
+                // Smart cast is not that smart
+                is FavouriteState.Determined -> {}
+            }
+            // Instant UI reaction
+            favouritesCache.setFavourite(post.id, FavouriteState.InFly(wasFavourite))
             try {
                 withContext(Dispatchers.IO) {
-                    if (wasFavourite) api.removeFromFavourites(post.id).awaitResponse()
+                    if (wasFavourite.isFavourite) api.removeFromFavourites(post.id)
+                        .awaitResponse()
                     else api.addToFavourites(post.id).awaitResponse()
                 }
+                favouritesCache.setFavourite(
+                    post.id,
+                    FavouriteState.Determined.fromBoolean(!wasFavourite.isFavourite)
+                )
+            } catch (e: ApiException) {
+                favouritesCache.setFavourite(post.id, wasFavourite)
+                snackbar.enqueueMessage(R.string.unknown_api_error, SnackbarDuration.Long)
+                Log.e(TAG, "An API exception occurred", e)
             } catch (e: IOException) {
                 favouritesCache.setFavourite(post.id, wasFavourite)
                 Log.e(
@@ -134,10 +155,6 @@ class PostListingComponent(
                     e
                 )
                 snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
-            } catch (e: ApiException) {
-                favouritesCache.setFavourite(post.id, wasFavourite)
-                snackbar.enqueueMessage(R.string.unknown_api_error, SnackbarDuration.Long)
-                Log.e(TAG, "An API exception occurred", e)
             }
         }
     }
@@ -182,8 +199,8 @@ class PostListingComponent(
             else posts.filter {
                 favourites.getOrDefault(
                     it.id,
-                    it.isFavorited
-                ) // Show post if it is either favourite
+                    FavouriteState.Determined.fromBoolean(it.isFavorited)
+                ) != FavouriteState.Determined.UNFAVOURITE // Show post if it is either favourite
                         || !blacklistPredicate.test(it)        //           or is not blacklisted
             }
         }.combine(applicationContext.getPreferencesFlow { it.safeModeEnabled }) { posts, safeModeEnabled ->

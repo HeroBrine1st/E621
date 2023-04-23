@@ -52,6 +52,8 @@ import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
+import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
+import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.e621.util.normalizeTagForUI
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -130,7 +132,7 @@ fun Posts(
                                 topEnd = CornerSize(0.dp)
                             )
                         else MaterialTheme.shapes.medium,
-                        isFavourite = favouritesCache.getOrDefault(post.id, post.isFavorited),
+                        favouriteState = favouritesCache.isFavourite(post),
                         isAuthorized = isAuthorized,
                         onAddToFavourites = {
                             component.handleFavouriteButtonClick(post)
@@ -158,7 +160,7 @@ fun Posts(
 fun Post(
     post: Post,
     shape: CornerBasedShape = MaterialTheme.shapes.medium,
-    isFavourite: Boolean,
+    favouriteState: FavouriteState,
     isAuthorized: Boolean,
     onAddToFavourites: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit
@@ -224,7 +226,7 @@ fun Post(
             }
             Divider(Modifier.padding(horizontal = 8.dp))
             PostActionsRow(
-                post, isFavourite, isAuthorized,
+                post, favouriteState, isAuthorized,
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),

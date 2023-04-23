@@ -32,16 +32,47 @@ import javax.inject.Inject
  */
 @ActivityRetainedScoped
 class FavouritesCache @Inject constructor() {
-    private val _flow = MutableStateFlow<Map<Int, Boolean>>(mapOf()) // id to isFavourite
+    private val _flow = MutableStateFlow<Map<Int, FavouriteState>>(mapOf()) // id to isFavourite
 
     val flow = _flow.asStateFlow()
 
-    fun setFavourite(id: Int, isFavourite: Boolean) {
+    fun setFavourite(id: Int, isFavourite: FavouriteState) {
         _flow.getAndUpdate {
             it + (id to isFavourite)
         }
     }
 
-    fun isFavourite(post: Post) = flow.value.getOrDefault(post.id, post.isFavorited)
+    fun isFavourite(post: Post) = flow.value.isFavourite(post)
 
+    sealed interface FavouriteState {
+        val isFavourite: Boolean
+
+        sealed interface Determined : FavouriteState {
+
+
+            object UNFAVOURITE : Determined {
+                override val isFavourite: Boolean = false
+            }
+
+            object FAVOURITE : Determined {
+                override val isFavourite: Boolean = true
+            }
+
+            companion object {
+                fun fromBoolean(favourite: Boolean) = when (favourite) {
+                    true -> FAVOURITE
+                    false -> UNFAVOURITE
+                }
+            }
+        }
+
+        class InFly(val fromState: Determined) : FavouriteState {
+            override val isFavourite: Boolean get() = fromState.isFavourite
+        }
+    }
 }
+
+fun Map<Int, FavouritesCache.FavouriteState>.isFavourite(post: Post) = this.getOrDefault(
+    post.id,
+    FavouritesCache.FavouriteState.Determined.fromBoolean(post.isFavorited)
+)
