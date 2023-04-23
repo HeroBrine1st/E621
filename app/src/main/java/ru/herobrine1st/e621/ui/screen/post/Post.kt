@@ -50,16 +50,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.*
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
-import com.google.accompanist.placeholder.PlaceholderHighlight
-import com.google.accompanist.placeholder.material.placeholder
-import com.google.accompanist.placeholder.material.shimmer
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
@@ -67,14 +63,12 @@ import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
-import ru.herobrine1st.e621.navigation.component.post.WikiResult
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.*
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.component.scaffold.eraseSnackbarHostState
-import ru.herobrine1st.e621.ui.dialog.ContentDialog
 import ru.herobrine1st.e621.ui.screen.post.component.GoingToFullscreenAnimation
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
@@ -82,7 +76,6 @@ import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.util.normalizeTagForUI
 import java.util.*
 
-private const val TAG = "Post Screen"
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -91,9 +84,7 @@ fun Post(
     mainScaffoldState: MainScaffoldState,
     component: PostComponent
 ) {
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val post = component.post
-    val wikiState = component.wikiState
     val preferences = LocalPreferences.current
 
     val coroutineScope = rememberCoroutineScope()
@@ -113,41 +104,6 @@ fun Post(
             CircularProgressIndicator()
         }
         return
-    }
-
-    if (wikiState != null) ContentDialog(
-        title = wikiState.tag.replaceFirstChar { // Capitalize
-            if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
-        },
-        onDismissRequest = { component.closeWikiPage() }
-    ) {
-        LazyColumn(
-            modifier = Modifier.height(screenHeight * 0.4f)
-        ) {
-            when (wikiState) {
-                is WikiResult.Loading -> items(50) {
-                    Text(
-                        text = "",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .placeholder(true, highlight = PlaceholderHighlight.shimmer())
-                    )
-                    Spacer(Modifier.height(4.dp))
-                }
-
-                is WikiResult.Failure -> item {
-                    Text(stringResource(R.string.wiki_load_failed))
-                }
-
-                is WikiResult.NotFound -> item {
-                    Text(stringResource(R.string.not_found))
-                }
-
-                is WikiResult.Success -> item {
-                    Text(wikiState.result.body)
-                }
-            }
-        }
     }
 
     var fullscreenState by remember { mutableStateOf(FullscreenState.CLOSE) }

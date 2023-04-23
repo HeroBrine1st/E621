@@ -56,6 +56,12 @@ sealed interface Config : Parcelable {
         private val index: Int
     ) : Config
 
+    @Parcelize
+    data class Wiki(
+        val tag: String,
+        private val index: Int
+    ) : Config
+
     // Not needed: already covered by [PostListing]
     // data class Favourites
 

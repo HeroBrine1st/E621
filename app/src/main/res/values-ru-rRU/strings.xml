@@ -82,7 +82,7 @@
     <string name="exclude_tag_from_search">Убрать тег из поиска</string>
     <string name="tag_view_wiki">Посмотреть в вики</string>
     <string name="not_found">Не найдено</string>
-    <string name="wiki_load_failed">Ошибка при загрузке страницы вики</string>
+    <string name="wiki_load_failed">Ошибка при загрузке вики-страницы</string>
     <string name="uploaded_relative_date">Загружено %s</string>
     <string name="artist_tags">Автор(ы)</string>
     <string name="copyright_tags">Авторские права</string>
@@ -135,4 +135,5 @@
     <string name="proxy_password">Пароль</string>
     <string name="file_type">Тип файла</string>
     <string name="file_type_invert_selection">Исключить</string>
+    <string name="wiki_page_not_found">К сожалению, данной вики-страницы не существует. Возможно, она еще не была создана.</string>
 </resources>

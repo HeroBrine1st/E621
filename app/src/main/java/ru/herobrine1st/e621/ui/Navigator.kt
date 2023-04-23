@@ -39,6 +39,7 @@ import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.animation.reducedSlide
 import ru.herobrine1st.e621.ui.component.scaffold.rememberMainScaffoldState
+import ru.herobrine1st.e621.ui.screen.WikiScreen
 import ru.herobrine1st.e621.ui.screen.home.Home
 import ru.herobrine1st.e621.ui.screen.post.Post
 import ru.herobrine1st.e621.ui.screen.posts.Posts
@@ -115,6 +116,7 @@ fun Navigator(rootComponent: RootComponent, snackbarHostState: SnackbarHostState
             )
             is Settings.License -> SettingsLicense(mainScaffoldState)
             is Settings.AboutLibraries -> SettingsLicenses(mainScaffoldState)
+            is Wiki -> WikiScreen(mainScaffoldState, instance.component)
         }
     }
 }

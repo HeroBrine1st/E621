@@ -32,6 +32,7 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
+import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
@@ -134,6 +135,15 @@ class RootComponentImpl(
             is Settings.License -> Child.Settings.License(SettingsLicenseComponent(context))
             is Settings.AboutLibraries -> Child.Settings.AboutLibraries(
                 SettingsAboutLibrariesComponent(context)
+            )
+            is Wiki -> Child.Wiki(
+                WikiComponent(
+                    configuration.tag,
+                    context,
+                    apiProvider.value,
+                    snackbarAdapterProvider.value,
+                    exceptionReporterProvider.value
+                )
             )
         }
     }

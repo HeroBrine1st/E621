@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.navigation.component.post
 
 import android.content.Context
-import android.os.Parcelable
 import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,16 +33,15 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
-import com.arkivanov.essenty.statekeeper.consume
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
-import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.BuildConfig
-import ru.herobrine1st.e621.api.*
+import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.SearchOptions
+import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
@@ -55,7 +53,7 @@ import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
 import java.io.IOException
 
-private const val STATE_KEY = "POST_COMPONENT_STATE_KEY"
+//private const val STATE_KEY = "POST_COMPONENT_STATE_KEY"
 private const val TAG = "PostComponent"
 
 class PostComponent(
@@ -85,21 +83,16 @@ class PostComponent(
     var isLoadingPost by mutableStateOf(initialPost != null)
         private set
 
-    var wikiState by mutableStateOf<WikiResult?>(null)
-        private set
-    private var wikiClickJob: Job? = null
-
     // TODO move to another component (it should be overlay component)
     val commentsFlow get() = instance.commentsFlow
 
     init {
-        stateKeeper.register(STATE_KEY) {
-            State(/*contentPositionMs = rememberedPositionMs,*/ wikiState = wikiState)
-        }
-        stateKeeper.consume<State>(STATE_KEY)?.let {
+//        stateKeeper.register(STATE_KEY) {
+//            State(contentPositionMs = rememberedPositionMs)
+//        }
+//        stateKeeper.consume<State>(STATE_KEY)?.let {
 //            rememberedPositionMs = it.contentPositionMs
-            wikiState = it.wikiState
-        }
+//        }
 
         lifecycle.doOnResume {
             // TODO preference to update on resume
@@ -157,34 +150,9 @@ class PostComponent(
     }
 
     fun handleWikiClick(tag: String) {
-        if (wikiClickJob != null) throw IllegalStateException()
-        wikiState = WikiResult.Loading(tag)
-        wikiClickJob = lifecycleScope.launch {
-            wikiState = try {
-                WikiResult.Success(api.getWikiPage(tag))
-            } catch (e: NotFoundException) {
-                WikiResult.NotFound(tag)
-            } catch (e: ApiException) {
-                WikiResult.Failure(tag)
-            } catch (t: Throwable) {
-                Log.e(
-                    TAG,
-                    "Unknown error occurred while downloading wiki page",
-                    t
-                )
-                WikiResult.Failure(tag)
-            } finally {
-                wikiClickJob = null
-            }
+        navigator.pushIndexed {
+            Config.Wiki(tag = tag, index = it)
         }
-    }
-
-    fun closeWikiPage() {
-        wikiClickJob?.let {
-            it.cancel()
-            wikiClickJob = null
-        }
-        wikiState = null
     }
 
     fun handleTagModification(tag: String, exclude: Boolean) {
@@ -218,31 +186,8 @@ class PostComponent(
         val commentsFlow = pager.flow.cachedIn(lifecycleScope)
     }
 
-    @Parcelize
-    private data class State(
-//        val contentPositionMs: Long,
-        val wikiState: WikiResult?,
-    ) : Parcelable
-}
-
-// TODO transform it to something more elegant
-// (or just move to another screen, which is preferred)
-@Parcelize
-sealed interface WikiResult : Parcelable {
-    val tag: String
-
-    @Parcelize
-    class Loading(override val tag: String) : WikiResult
-
-    @Parcelize
-    class Success(val result: WikiPage) : WikiResult {
-        override val tag: String
-            get() = result.title
-    }
-
-    @Parcelize
-    class Failure(override val tag: String) : WikiResult
-
-    @Parcelize
-    class NotFound(override val tag: String) : WikiResult
+//    @Parcelize
+//    private data class State(
+//        val contentPositionMs: Long
+//    ) : Parcelable
 }

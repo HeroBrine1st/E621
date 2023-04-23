@@ -28,6 +28,7 @@ import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.parcelable.Parcelable
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
+import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
@@ -37,15 +38,16 @@ import ru.herobrine1st.e621.navigation.config.Config
 
 interface RootComponent {
     sealed interface Child {
-        class Home(val component: HomeComponent): Child
-        class Search(val component: SearchComponent): Child
-        class PostListing(val component: PostListingComponent): Child
-        class Post(val component: PostComponent): Child
-        class Settings(val component: SettingsComponent): Child {
-            class Blacklist(val component: SettingsBlacklistComponent): Child
-            class About(val component: SettingsAboutComponent): Child
-            class License(val component: SettingsLicenseComponent): Child
-            class AboutLibraries(val component: SettingsAboutLibrariesComponent): Child
+        class Home(val component: HomeComponent) : Child
+        class Search(val component: SearchComponent) : Child
+        class PostListing(val component: PostListingComponent) : Child
+        class Post(val component: PostComponent) : Child
+        class Wiki(val component: WikiComponent) : Child
+        class Settings(val component: SettingsComponent) : Child {
+            class Blacklist(val component: SettingsBlacklistComponent) : Child
+            class About(val component: SettingsAboutComponent) : Child
+            class License(val component: SettingsLicenseComponent) : Child
+            class AboutLibraries(val component: SettingsAboutLibrariesComponent) : Child
         }
     }
 
