@@ -17,17 +17,17 @@ class SettingsBlacklistEntryComponent(
     componentContext: ComponentContext,
     val id: Long,
     initialQuery: String,
-    initialEnabled: Boolean,
+    private val enabled: Boolean,
     private val blacklistRepository: BlacklistRepository,
     private val navigator: StackNavigator<*>
 ) : ComponentContext by componentContext {
 
     var query by mutableStateOf(initialQuery)
-    var enabled by mutableStateOf(initialEnabled)
 
     private val lifecycleScope = LifecycleScope()
 
     fun apply(callback: () -> Unit) {
+        if (query.isEmpty()) return
         lifecycleScope.launch {
             if (id != 0L) blacklistRepository.updateEntry(
                 BlacklistEntry(

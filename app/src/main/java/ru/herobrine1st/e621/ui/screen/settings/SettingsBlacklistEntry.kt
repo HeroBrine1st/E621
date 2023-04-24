@@ -4,7 +4,10 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,18 +44,6 @@ fun SettingsBlacklistEntry(
                     },
                     singleLine = true,
                     enabled = !applying,
-                    trailingIcon = {
-                        Switch(
-                            checked = component.enabled,
-                            onCheckedChange = {
-                                component.enabled = it
-                            },
-                            colors = SwitchDefaults.colors(
-                                checkedThumbColor = MaterialTheme.colors.primary,
-                                uncheckedThumbColor = MaterialTheme.colors.onSurface
-                            )
-                        )
-                    },
                     modifier = Modifier.fillMaxWidth()
                 )
                 Button(
@@ -62,7 +53,7 @@ fun SettingsBlacklistEntry(
                             applying = false
                         }
                     },
-                    enabled = !applying,
+                    enabled = !applying && component.query.isNotEmpty(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Crossfade(component.id) { id ->
