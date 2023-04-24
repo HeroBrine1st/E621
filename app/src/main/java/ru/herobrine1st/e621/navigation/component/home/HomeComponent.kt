@@ -77,7 +77,6 @@ class HomeComponent private constructor(
         } ?: error("Inconsistent state: state is not Authorized while is inferred to be so")
     }
 
-
     companion object {
         const val TAG = "HomeViewModel"
 
@@ -143,7 +142,7 @@ class HomeComponent private constructor(
                 when (result) {
                     is LoginState.Authorized -> {
                         authorizationRepository.insertAccount(login, apiKey)
-                        fetchBlacklistFromAccount()
+                        fetchBlacklistFromAccount(result)
                         state = result
                     }
                     LoginState.IOError ->
@@ -243,9 +242,8 @@ class HomeComponent private constructor(
             assert(state != LoginState.Loading)
         }
 
-        private suspend fun fetchBlacklistFromAccount() {
+        private suspend fun fetchBlacklistFromAccount(state: LoginState.Authorized) {
             if (blacklistRepository.count() != 0) return
-            val state = state as LoginState.Authorized
             val entries =
                 api.getUser(name = state.username).await()
                     .get("blacklisted_tags").asText()
