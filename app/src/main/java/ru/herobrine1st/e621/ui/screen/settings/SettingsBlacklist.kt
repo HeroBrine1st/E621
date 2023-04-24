@@ -127,7 +127,7 @@ fun SettingsBlacklist(
                                 // FIXME all checkboxes are disabled
                                 //       adding id to key does not help
                                 //       tested on emulator with API 33
-                                Checkbox(
+                                Switch(
                                     checked = entry.enabled,
                                     onCheckedChange = {
                                         enabled = false
@@ -135,7 +135,11 @@ fun SettingsBlacklist(
                                             enabled = true
                                         }
                                     },
-                                    enabled = enabled
+                                    enabled = enabled,
+                                    colors = SwitchDefaults.colors(
+                                        checkedThumbColor = MaterialTheme.colors.primary,
+                                        uncheckedThumbColor = MaterialTheme.colors.onSurface
+                                    )
                                 )
                             }
                         }

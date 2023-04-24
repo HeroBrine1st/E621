@@ -31,7 +31,7 @@ fun SettingsBlacklistEntry(
     ) {
         Box {
             Column(modifier = Modifier.padding(horizontal = 8.dp)) {
-                TextField(
+                OutlinedTextField(
                     value = component.query,
                     onValueChange = {
                         component.query = it
@@ -46,7 +46,11 @@ fun SettingsBlacklistEntry(
                             checked = component.enabled,
                             onCheckedChange = {
                                 component.enabled = it
-                            }
+                            },
+                            colors = SwitchDefaults.colors(
+                                checkedThumbColor = MaterialTheme.colors.primary,
+                                uncheckedThumbColor = MaterialTheme.colors.onSurface
+                            )
                         )
                     },
                     modifier = Modifier.fillMaxWidth()
