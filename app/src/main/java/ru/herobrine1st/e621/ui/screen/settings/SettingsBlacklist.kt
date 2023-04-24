@@ -124,16 +124,16 @@ fun SettingsBlacklist(
                             }
                             key("Enable/disable checkbox") {
                                 var enabled by remember { mutableStateOf(true) }
-                                // FIXME all checkboxes are disabled
-                                //       adding id to key does not help
-                                //       tested on emulator with API 33
                                 Switch(
                                     checked = entry.enabled,
                                     onCheckedChange = {
-                                        enabled = false
-                                        component.toggleEntry(entry) {
-                                            enabled = true
-                                        }
+                                        component.toggleEntry(
+                                            entry,
+                                            onTooLong = { enabled = false },
+                                            onComplete = {
+                                                enabled = true
+                                            }
+                                        )
                                     },
                                     enabled = enabled,
                                     colors = SwitchDefaults.colors(
