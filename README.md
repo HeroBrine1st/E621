@@ -10,11 +10,12 @@ risk, but it is harmless as this client is mostly read-only :-)
 e926 is also supported, but there's no switch in settings, i.e. rebuild required, although you can
 decompile, change url and assemble back. It is complicated though.
 
-Development is focused on internal code changes (like cleaning up code - that's what I do the most -
-and fixing bugs), but new features are rarely seen too. Get latest
+This project is mostly in stable state, but there's no releases because there's no *big enough* changes. Get latest
 snapshot [here](https://github.com/HeroBrine1st/E621/actions/workflows/snapshot-build.yml) (select
 last passed workflow and see artifacts). Keep in mind that snapshot builds aren't compatible with
 release builds (they use different signing keys), but you can reinstall if you want.
+
+The roadmap to next release is heavy optimization. Animations are laggy (and not the first frame) and I still don't know why.
 
 # Features
 
@@ -41,7 +42,7 @@ read-only and has some harmless bugs.
       possible without any difficulty... I think)
     - ~~Also I do not recommend to use it without account because of API which may not send some
       fields on it's own, although it is rarely (but stably :/) observed even with account.~~
-      It is fixed now. I think.  
+      It is fixed now.  
       The error was malformed JSON with some null-filled fields from the API. Fixed by treating
       those fields as unfilled and then filling with empty string. Because those fields are URLs to
       images, the images will fail to load, but, I think, you can open post and it will be loaded,
