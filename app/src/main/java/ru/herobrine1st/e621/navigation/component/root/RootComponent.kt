@@ -44,7 +44,10 @@ interface RootComponent {
         class Post(val component: PostComponent) : Child
         class Wiki(val component: WikiComponent) : Child
         class Settings(val component: SettingsComponent) : Child {
-            class Blacklist(val component: SettingsBlacklistComponent) : Child
+            class Blacklist(val component: SettingsBlacklistComponent) : Child {
+                class Entry(val component: SettingsBlacklistEntryComponent) : Child
+            }
+
             class About(val component: SettingsAboutComponent) : Child
             class License(val component: SettingsLicenseComponent) : Child
             class AboutLibraries(val component: SettingsAboutLibrariesComponent) : Child
@@ -54,12 +57,12 @@ interface RootComponent {
     // Global dialogs only !!
     // I mean, only dialogs that are not bound to component (hence, bind 'em to the root component)
     sealed interface DialogChild {
-        class BlacklistToggles(val component: BlacklistTogglesDialogComponent): DialogChild
+        class BlacklistToggles(val component: BlacklistTogglesDialogComponent) : DialogChild
     }
 
-    sealed interface DialogConfig: Parcelable {
+    sealed interface DialogConfig : Parcelable {
         @Parcelize
-        object BlacklistToggles: DialogConfig
+        object BlacklistToggles : DialogConfig
     }
 
     val navigation: StackNavigation<Config>

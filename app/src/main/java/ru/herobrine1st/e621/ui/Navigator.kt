@@ -31,7 +31,6 @@ import com.arkivanov.decompose.extensions.compose.jetpack.stack.animation.plus
 import com.arkivanov.decompose.extensions.compose.jetpack.stack.animation.stackAnimation
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.navigate
-import com.arkivanov.decompose.router.stack.pop
 import com.arkivanov.decompose.router.stack.push
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.*
@@ -102,9 +101,12 @@ fun Navigator(rootComponent: RootComponent, snackbarHostState: SnackbarHostState
             is Settings.Blacklist ->
                 SettingsBlacklist(
                     mainScaffoldState = mainScaffoldState,
-                    component = instance.component,
-                    exit = navigation::pop
+                    component = instance.component
                 )
+            is Settings.Blacklist.Entry -> SettingsBlacklistEntry(
+                mainScaffoldState,
+                instance.component
+            )
             is Settings.About -> SettingsAbout(
                 mainScaffoldState = mainScaffoldState,
                 navigateToLicense = {

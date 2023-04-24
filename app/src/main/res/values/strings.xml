@@ -139,4 +139,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="file_type">File type</string>
     <string name="file_type_invert_selection">Exclude</string>
     <string name="wiki_page_not_found">"There\'s no such wiki page&lt;br /&gt;It may not have been created yet"</string>
+    <string name="screen_settings_blacklist_entry">Blacklist entry</string>
 </resources>

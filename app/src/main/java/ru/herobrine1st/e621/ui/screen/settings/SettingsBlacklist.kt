@@ -20,49 +20,34 @@
 
 package ru.herobrine1st.e621.ui.screen.settings
 
-import androidx.activity.compose.BackHandler
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material.icons.outlined.Undo
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.navigation.component.settings.EditedBlacklistEntry
 import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistComponent
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
-import ru.herobrine1st.e621.ui.dialog.StopThereAreUnsavedChangesDialog
-import ru.herobrine1st.e621.ui.dialog.TextInputDialog
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 
 
 @Composable
-fun blacklistHasChanges(entries: List<EditedBlacklistEntry>?) =
-    remember(entries) { entries?.any { it.isChanged } ?: false }
-
-@Composable
 fun SettingsBlacklist(
     mainScaffoldState: MainScaffoldState,
-    component: SettingsBlacklistComponent, exit: () -> Unit
+    component: SettingsBlacklistComponent
 ) {
-    val entries = component.entriesFlow.collectAsState().value
-    var editQueryEntry by remember { mutableStateOf<EditedBlacklistEntry?>(null) }
-    val hasChanges = blacklistHasChanges(entries)
-    var openExitDialog by remember { mutableStateOf(false) }
-    var openAddDialog by rememberSaveable { mutableStateOf(false) }
+    val entries by component.entriesFlow.collectAsState()
 
     MainScaffold(
         state = mainScaffoldState,
@@ -70,138 +55,96 @@ fun SettingsBlacklist(
         appBarActions = {
             if (component.isUpdating || entries == null) {
                 CircularProgressIndicator(color = ActionBarIconColor)
-            } else if (hasChanges) {
-                IconButton(onClick = { component.applyChanges() }) {
-                    Icon(
-                        imageVector = Icons.Filled.Done,
-                        contentDescription = stringResource(R.string.search),
-                        tint = ActionBarIconColor
-                    )
-                }
             }
         },
         floatingActionButton = {
             FloatingActionButton(onClick = {
-                openAddDialog = true
+                component.createNewEntry()
             }) {
                 Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add))
             }
 
         }
     ) {
-        LazyColumn(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            if (entries != null) itemsIndexed(entries) { i, entry ->
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(horizontal = BASE_PADDING_HORIZONTAL)
-                        .fillMaxWidth()
+        Crossfade(entries) { entries ->
+            when (entries) {
+                null -> {
+                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                }
+                else -> LazyColumn(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    if (entry.isPendingInsertion) {
-                        key("New item indicator") {
-                            Icon(
-                                Icons.Default.Add,
-                                contentDescription = stringResource(R.string.new_item)
-                            )
-                            Spacer(modifier = Modifier.width(2.dp))
+                    itemsIndexed(
+                        entries,
+                        key = { _, entry ->
+                            entry.id
                         }
-                    }
-                    key("Query string") {
-                        Text(
-                            entry.query, modifier = Modifier.weight(1f), color = when {
-                                entry.isPendingInsertion -> Color.Unspecified
-                                entry.isPendingUpdate -> Color.Unspecified
-                                entry.isPendingDeletion -> Color.Red
-                                else -> Color.Unspecified
+                    ) { i, entry ->
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(horizontal = BASE_PADDING_HORIZONTAL)
+                                .fillMaxWidth()
+                        ) {
+                            key("Query string") {
+                                Text(
+                                    entry.query, modifier = Modifier.weight(1f)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
                             }
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    if (entry.isChanged) {
-                        key("Undo button") {
-                            IconButton(
-                                onClick = { component.resetEntry(entry) },
-                            ) {
-                                Icon(
-                                    Icons.Outlined.Undo,
-                                    contentDescription = stringResource(R.string.cancel)
+                            key("Delete button") {
+                                var enabled by remember { mutableStateOf(true) }
+                                IconButton(
+                                    onClick = {
+                                        enabled = false
+                                        component.deleteEntry(entry) {
+                                            // TODO fade out
+                                        }
+                                    },
+                                    enabled = enabled
+                                ) {
+                                    Icon(
+                                        Icons.Default.Remove,
+                                        contentDescription = stringResource(R.string.remove)
+                                    )
+                                }
+                            }
+                            key("Edit button") {
+                                IconButton(
+                                    onClick = { component.editEntry(entry) }
+                                ) {
+                                    Icon(
+                                        Icons.Default.Edit,
+                                        contentDescription = stringResource(R.string.edit)
+                                    )
+                                }
+                            }
+                            key("Enable/disable checkbox") {
+                                var enabled by remember { mutableStateOf(true) }
+                                // FIXME all checkboxes are disabled
+                                //       adding id to key does not help
+                                //       tested on emulator with API 33
+                                Checkbox(
+                                    checked = entry.enabled,
+                                    onCheckedChange = {
+                                        enabled = false
+                                        component.toggleEntry(entry) {
+                                            enabled = true
+                                        }
+                                    },
+                                    enabled = enabled
                                 )
                             }
                         }
-                    }
-                    key("Delete button") {
-                        IconButton(
-                            onClick = {
-                                component.markEntryAsDeleted(entry, !entry.isPendingDeletion)
-                            }
-                        ) {
-                            Icon(
-                                if (entry.isPendingDeletion) Icons.Default.Add else Icons.Default.Remove,
-                                contentDescription = stringResource(R.string.remove)
-                            )
-                        }
-                    }
-
-                    key("Edit button") {
-                        IconButton(
-                            onClick = { editQueryEntry = entry }
-                        ) {
-                            Icon(
-                                Icons.Default.Edit,
-                                contentDescription = stringResource(R.string.edit)
-                            )
-                        }
-                    }
-
-                    key("Enable/disable checkbox") {
-                        Checkbox(checked = entry.enabled, onCheckedChange = {
-                            component.editEntry(entry, enabled = it)
-                        })
+                        if (i < entries.size - 1)
+                            Divider(Modifier.padding(horizontal = 8.dp))
                     }
                 }
-                if (i < entries.size - 1)
-                    Divider()
             }
         }
     }
-
-    BackHandler(enabled = hasChanges) {
-        openExitDialog = true
-    }
-
-    if (openExitDialog) StopThereAreUnsavedChangesDialog(onClose = { openExitDialog = false }) {
-        component.resetChanges()
-        exit()
-    }
-
-    if (editQueryEntry != null) {
-        val entry = editQueryEntry!!
-        TextInputDialog(
-            title = stringResource(R.string.edit_blacklist_entry),
-            submitButtonText = stringResource(R.string.apply),
-            textFieldLabel = stringResource(R.string.tag_combination),
-            initialText = entry.query,
-            onClose = { editQueryEntry = null },
-            onSubmit = {
-                component.editEntry(
-                    entry, query = it
-                )
-            }
-        )
-    }
-
-    if (openAddDialog) TextInputDialog(
-        title = stringResource(R.string.add_entry_to_blacklist),
-        submitButtonText = stringResource(R.string.apply),
-        textFieldLabel = stringResource(R.string.tag_combination),
-        onClose = { openAddDialog = false },
-        onSubmit = {
-            if (it.isBlank()) return@TextInputDialog
-            component.appendEntry(it)
-        }
-    )
 }
 

@@ -65,11 +65,18 @@ sealed interface Config : Parcelable {
     // Not needed: already covered by [PostListing]
     // data class Favourites
 
-    // These are true singletons and used only once in a stack
+    // These are used only once in a stack
     @Parcelize
     object Settings : Config {
         @Parcelize
-        object Blacklist : Config
+        object Blacklist : Config {
+            @Parcelize
+            data class Entry(
+                val id: Long,
+                val query: String,
+                val enabled: Boolean
+            ) : Config
+        }
 
         @Parcelize
         object About : Config

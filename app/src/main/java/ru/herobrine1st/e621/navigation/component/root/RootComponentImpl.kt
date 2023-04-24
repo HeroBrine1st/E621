@@ -128,9 +128,21 @@ class RootComponentImpl(
                 SettingsBlacklistComponent(
                     blacklistRepositoryProvider.value,
                     snackbarAdapterProvider.value,
+                    navigation,
                     context
                 )
             )
+            is Settings.Blacklist.Entry ->
+                Child.Settings.Blacklist.Entry(
+                    SettingsBlacklistEntryComponent(
+                        context,
+                        configuration.id,
+                        configuration.query,
+                        configuration.enabled,
+                        blacklistRepositoryProvider.value,
+                        navigation
+                    )
+                )
             is Settings.About -> Child.Settings.About(SettingsAboutComponent(context))
             is Settings.License -> Child.Settings.License(SettingsLicenseComponent(context))
             is Settings.AboutLibraries -> Child.Settings.AboutLibraries(
@@ -148,7 +160,10 @@ class RootComponentImpl(
         }
     }
 
-    private fun createDialogChild(configuration: DialogConfig, componentContext: ComponentContext): DialogChild =
+    private fun createDialogChild(
+        configuration: DialogConfig,
+        componentContext: ComponentContext
+    ): DialogChild =
         @Suppress("USELESS_IS_CHECK")
         when (configuration) {
             is DialogConfig -> DialogChild.BlacklistToggles(
