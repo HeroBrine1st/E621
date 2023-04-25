@@ -23,7 +23,11 @@ package ru.herobrine1st.e621.ui.component
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -53,10 +57,17 @@ fun Zoomable(
 
     Box(
         modifier = modifier
+            // TODO fling gesture (inertial pan, like on G Maps, it is very satisfying)
             .pointerInput(Unit) {
                 // Warning! Math ahead!
                 detectTransformGestures { centroid, pan, gestureZoom, _ ->
                     // Just to avoid saving old scale. Those values will be in any way saved to stack, but later.
+                    // TODO this calculations supposed to save position of finders on zoomed image
+                    //      but if you zoom enough with one finger fixed, image can sometimes move
+                    //      and that finger will point to another place on an image.
+                    //      Consider implementing a new formula from scratch together with removing
+                    //      multiplying by scale in graphicsLayer.
+                    // I think we should divide here by new scale, not old scale
                     val centroidInAbsoluteScale = centroid / scale
                     val panInAbsoluteScale = pan / scale
 
@@ -91,6 +102,8 @@ fun Zoomable(
                 // Possible solution: place content in its own box and move
                 // onSizeChanged and graphicsLayer there
                 // (and center that box in outer box)
+                //
+                // I gathered some user feedback and some say this is good feature.
                 offset = offset.coercePanWithinSize(size, scale)
             },
         contentAlignment = contentAlignment,
