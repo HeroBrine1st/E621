@@ -119,7 +119,7 @@ dependencies {
     // Jetpack Compose
     implementation("androidx.compose.ui:ui:1.4.2") // Apache 2.0
     implementation("androidx.compose.material:material:1.4.2") // Apache 2.0
-    debugImplementation("androidx.compose.ui:ui-tooling-preview:1.4.2")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.4.2") // Apache 2.0
     implementation("androidx.compose.material:material-icons-extended:1.4.2") // Apache 2.0
     implementation("androidx.activity:activity-compose:1.7.1") // Apache 2.0
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
