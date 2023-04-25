@@ -25,15 +25,14 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.icons.rounded.NavigateNext
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,7 +50,6 @@ import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
-import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberPreviewMainScaffoldState
@@ -108,195 +106,210 @@ fun Search(
 
     MainScaffold(
         state = mainScaffoldState,
-        title = { Text(stringResource(R.string.search)) }
+        title = { Text(stringResource(R.string.search)) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = component::proceed) {
+                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+            }
+        }
     ) {
-        Base(modifier = Modifier.verticalScroll(rememberScrollState(), true)) {
-            Spacer(modifier = Modifier.height(4.dp))
-            SettingCard(title = stringResource(R.string.tags)) {
-                FlowRow(modifier = Modifier.fillMaxWidth(), mainAxisSpacing = 4.dp) {
-                    component.tags.forEachIndexed { index, tag ->
-                        key(tag) {
-                            Chip(
-                                onClick = {
-                                    component.currentlyModifiedTagIndex = index
+        LazyColumn(
+            modifier = Modifier.padding(horizontal = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            item {}
+            item("tags") {
+                SettingCard(title = stringResource(R.string.tags)) {
+                    FlowRow(mainAxisSpacing = 4.dp) {
+                        component.tags.forEachIndexed { index, tag ->
+                            key(tag) {
+                                Chip(
+                                    onClick = {
+                                        component.currentlyModifiedTagIndex = index
+                                    }
+                                ) {
+                                    Text(tag.normalizeTagForUI())
                                 }
-                            ) {
-                                Text(tag.normalizeTagForUI())
                             }
                         }
                     }
-                }
-                TextButton(
-                    onClick = { component.currentlyModifiedTagIndex = -2 },
-                    modifier = Modifier.align(Alignment.Start)
-                ) {
-                    Text(stringResource(R.string.add_tag))
-                    Icon(Icons.Rounded.Add, contentDescription = null)
-                }
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            SettingCard(
-                title = stringResource(R.string.order), modifier = Modifier.selectableGroup()
-            ) {
-                var expanded by remember { mutableStateOf(false) }
-                val collapsedCount = integerResource(R.integer.order_selection_collapsed_count)
-                val onSelect: (Order) -> Unit = {
-                    component.order = it
-                    if (!it.supportsAscending) component.orderAscending = false
-                }
-
-                Order.values()
-                    .take(collapsedCount)
-                    .forEach {
-                        OrderItem(it, it == component.order) { onSelect(it) }
-                    }
-                //region Split list to 2 lists by selected item and display selected item even if collapsed
-                //           ..list of remaining choices to..
-                val first: List<Order>
-                val second: List<Order>
-                val displaySelectedSpecially: Boolean
-
-                Order.values().drop(collapsedCount).let { remaining ->
-                    val index = remaining.indexOf(component.order)
-                    if ((index != -1).also { displaySelectedSpecially = it }) {
-                        first = remaining.subList(0, index)
-                        second = remaining.subList(index + 1, remaining.size)
-                    } else {
-                        first = remaining
-                        second = emptyList()
-                    }
-                }
-                OrderSelectionList(first, component.order, expanded, onSelect)
-                // Animate exit only if collapsed
-                if (expanded) {
-                    if (displaySelectedSpecially) OrderItem(component.order, true, onClick = {})
-                } else AnimatedVisibility(
-                    visible = displaySelectedSpecially,
-                    enter = fadeIn(initialAlpha = 1f), // Disable
-                    // Placing an if with "fadeOut(1f)" here (and adding expanded to if below) results
-                    // in visual glitches, so it is lifted out
-                    exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) + shrinkVertically(
-                        shrinkTowards = Alignment.Top
-                    ),
-                ) {
-                    // item holds the selected order at the time of selecting
-                    // so if user wants to select other order, it will collapse as expected by user
-                    // otherwise (without item) it will collapse with the new selection.
-                    // Also this prevents some glitches, for example, it could replace one order with
-                    // selection (or with recently selected order) (I have no reproduce steps)
-                    var item by remember { mutableStateOf(component.order) }
-                    if (displaySelectedSpecially) item = component.order
-                    OrderItem(item, true, onClick = {})
-                }
-                if (second.isNotEmpty()) OrderSelectionList(
-                    second,
-                    component.order,
-                    expanded,
-                    onSelect
-                )
-                ItemSelectionCheckbox(
-                    checked = component.orderAscending,
-                    enabled = component.order.supportsAscending,
-                    text = stringResource(R.string.order_ascending)
-                ) {
-                    component.orderAscending = !component.orderAscending
-                }
-                //endregion
-                TextButton(onClick = { expanded = !expanded }) {
-                    val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
-                    Icon(
-                        Icons.Default.ExpandMore, null, modifier = Modifier
-                            .padding(start = 4.dp, end = 12.dp)
-                            .rotate(rotation)
-                    )
-                    Text(
-                        stringResource(if (!expanded) R.string.expand else R.string.collapse),
-                        modifier = Modifier.weight(1f)
-                    )
-                }
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            SettingCard(title = stringResource(R.string.rating)) {
-                AnimatedVisibility(visible = preferences.safeModeEnabled) {
-                    Text(stringResource(R.string.search_safe_mode))
-                }
-                key(null) {
-                    ItemSelectionRadioButton(
-                        selected = component.rating.size == 0,
-                        text = stringResource(R.string.any),
-                        enabled = !preferences.safeModeEnabled
+                    TextButton(
+                        onClick = { component.currentlyModifiedTagIndex = -2 },
+                        modifier = Modifier.align(Alignment.Start)
                     ) {
-                        component.rating.clear()
+                        Text(stringResource(R.string.add_tag))
+                        Icon(Icons.Rounded.Add, contentDescription = null)
                     }
                 }
-                for (v in Rating.values()) {
+            }
+            item("order") {
+                SettingCard(
+                    title = stringResource(R.string.order),
+                    modifier = Modifier.selectableGroup()
+                ) {
+                    var expanded by remember { mutableStateOf(false) }
+                    val collapsedCount = integerResource(R.integer.order_selection_collapsed_count)
+                    val onSelect: (Order) -> Unit = {
+                        component.order = it
+                        if (!it.supportsAscending) component.orderAscending = false
+                    }
+
+                    Order.values()
+                        .take(collapsedCount)
+                        .forEach {
+                            OrderItem(it, it == component.order) { onSelect(it) }
+                        }
+                    //region Split list to 2 lists by selected item and display selected item even if collapsed
+                    //           ..list of remaining choices to..
+                    val first: List<Order>
+                    val second: List<Order>
+                    val displaySelectedSpecially: Boolean
+
+                    Order.values().drop(collapsedCount).let { remaining ->
+                        val index = remaining.indexOf(component.order)
+                        if ((index != -1).also { displaySelectedSpecially = it }) {
+                            first = remaining.subList(0, index)
+                            second = remaining.subList(index + 1, remaining.size)
+                        } else {
+                            first = remaining
+                            second = emptyList()
+                        }
+                    }
+                    OrderSelectionList(first, component.order, expanded, onSelect)
+                    // Animate exit only if collapsed
+                    if (expanded) {
+                        if (displaySelectedSpecially) OrderItem(component.order, true, onClick = {})
+                    } else AnimatedVisibility(
+                        visible = displaySelectedSpecially,
+                        enter = fadeIn(initialAlpha = 1f), // Disable
+                        // Placing an if with "fadeOut(1f)" here (and adding expanded to if below) results
+                        // in visual glitches, so it is lifted out
+                        exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) + shrinkVertically(
+                            shrinkTowards = Alignment.Top
+                        ),
+                    ) {
+                        // item holds the selected order at the time of selecting
+                        // so if user wants to select other order, it will collapse as expected by user
+                        // otherwise (without item) it will collapse with the new selection.
+                        // Also this prevents some glitches, for example, it could replace one order with
+                        // selection (or with recently selected order) (I have no reproduce steps)
+                        var item by remember { mutableStateOf(component.order) }
+                        if (displaySelectedSpecially) item = component.order
+                        OrderItem(item, true, onClick = {})
+                    }
+                    if (second.isNotEmpty()) OrderSelectionList(
+                        second,
+                        component.order,
+                        expanded,
+                        onSelect
+                    )
                     ItemSelectionCheckbox(
-                        checked = v in component.rating,
-                        text = stringResource(v.descriptionId),
-                        enabled = !preferences.safeModeEnabled
+                        checked = component.orderAscending,
+                        enabled = component.order.supportsAscending,
+                        text = stringResource(R.string.order_ascending)
                     ) {
-                        when (v) {
-                            in component.rating -> component.rating.remove(v)
-                            else -> component.rating.add(v)
-                        }
-                        if (component.rating.size == Rating.values().size) component.rating.clear()
+                        component.orderAscending = !component.orderAscending
+                    }
+                    //endregion
+                    TextButton(onClick = { expanded = !expanded }) {
+                        val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
+                        Icon(
+                            Icons.Default.ExpandMore, null, modifier = Modifier
+                                .padding(start = 4.dp, end = 12.dp)
+                                .rotate(rotation)
+                        )
+                        Text(
+                            stringResource(if (!expanded) R.string.expand else R.string.collapse),
+                            modifier = Modifier.weight(1f)
+                        )
                     }
                 }
             }
-            // Lazy column?
-            Spacer(modifier = Modifier.height(4.dp))
-            SettingCard(title = stringResource(R.string.file_type)) {
-                ItemSelectionRadioButton(
-                    selected = component.fileType == null,
-                    text = stringResource(R.string.any)
+            item("rating") {
+                SettingCard(
+                    title = stringResource(R.string.rating),
+                    modifier = Modifier.selectableGroup()
                 ) {
-                    component.fileType = null
-                    component.fileTypeInvert = false
+                    AnimatedVisibility(visible = preferences.safeModeEnabled) {
+                        Text(stringResource(R.string.search_safe_mode))
+                    }
+                    key(null) {
+                        ItemSelectionRadioButton(
+                            selected = component.rating.size == 0,
+                            text = stringResource(R.string.any),
+                            enabled = !preferences.safeModeEnabled
+                        ) {
+                            component.rating.clear()
+                        }
+                    }
+                    for (v in Rating.values()) {
+                        ItemSelectionCheckbox(
+                            checked = v in component.rating,
+                            text = stringResource(v.descriptionId),
+                            enabled = !preferences.safeModeEnabled
+                        ) {
+                            when (v) {
+                                in component.rating -> component.rating.remove(v)
+                                else -> component.rating.add(v)
+                            }
+                            if (component.rating.size == Rating.values().size) component.rating.clear()
+                        }
+                    }
                 }
-                for (v in FileType.supportedValues()) {
+            }
+            item("file type") {
+                SettingCard(
+                    title = stringResource(R.string.file_type),
+                    modifier = Modifier.selectableGroup()
+                ) {
                     ItemSelectionRadioButton(
-                        selected = v == component.fileType,
-                        text = v.extension
+                        selected = component.fileType == null,
+                        text = stringResource(R.string.any)
                     ) {
-                        component.fileType = v
+                        component.fileType = null
+                        component.fileTypeInvert = false
+                    }
+                    for (v in FileType.supportedValues()) {
+                        ItemSelectionRadioButton(
+                            selected = v == component.fileType,
+                            text = v.extension
+                        ) {
+                            component.fileType = v
+                        }
+                    }
+                    ItemSelectionCheckbox(
+                        checked = component.fileTypeInvert,
+                        text = stringResource(R.string.file_type_invert_selection)
+                    ) {
+                        component.fileTypeInvert = it
                     }
                 }
-                ItemSelectionCheckbox(
-                    checked = component.fileTypeInvert,
-                    text = stringResource(R.string.file_type_invert_selection)
-                ) {
-                    component.fileTypeInvert = it
+            }
+            item("favourites of") {
+                SettingCard(title = stringResource(R.string.favourites_of)) {
+                    // TODO autocomplete - накостылить через передачу fav:${state.favouritesOf} в autocomplete.json
+                    OutlinedTextField(
+                        value = component.favouritesOf,
+                        onValueChange = { component.favouritesOf = it },
+                        label = { Text(stringResource(R.string.user)) },
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { component.favouritesOf = "" }) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = stringResource(R.string.clear)
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
                 }
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            SettingCard(title = stringResource(R.string.favourites_of)) {
-                // TODO autocomplete - накостылить через передачу fav:${state.favouritesOf} в autocomplete.json
-                OutlinedTextField(
-                    value = component.favouritesOf,
-                    onValueChange = { component.favouritesOf = it },
-                    label = { Text(stringResource(R.string.user)) },
-                    singleLine = true,
-                    trailingIcon = {
-                        IconButton(onClick = { component.favouritesOf = "" }) {
-                            Icon(
-                                Icons.Default.Clear,
-                                contentDescription = stringResource(R.string.clear)
-                            )
-                        }
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Button(
-                onClick = component::proceed,
-                modifier = Modifier
-                    .padding(4.dp)
-                    .fillMaxWidth()
-            ) {
-                Text(stringResource(R.string.search))
-                Icon(Icons.Rounded.NavigateNext, contentDescription = null)
+            item("size placeholder for fab") {
+                // FAB size is 56 dp, plus spacing of fab (16 dp * 2 because we want symmetry)
+                // minus spacing between items (4 dp)
+                // and minus magic 4 dp because 84 dp is too much
+                Spacer(Modifier.height(80.dp))
             }
         }
     }

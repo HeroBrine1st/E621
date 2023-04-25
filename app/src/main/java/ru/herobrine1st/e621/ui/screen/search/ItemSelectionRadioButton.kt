@@ -58,7 +58,7 @@ fun ItemSelectionRadioButton(
             selected = selected,
             onClick = onClick,
             enabled = enabled,
-            colors = RadioButtonDefaults.colors(MaterialTheme.colors.primary)
+            colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colors.primary)
         )
         Text(
             text = text,
