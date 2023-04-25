@@ -161,20 +161,22 @@ fun Search(
                         }
                     //region Split list to 2 lists by selected item and display selected item even if collapsed
                     //           ..list of remaining choices to..
-                    val first: List<Order>
-                    val second: List<Order>
-                    val displaySelectedSpecially: Boolean
-
-                    Order.values().drop(collapsedCount).let { remaining ->
-                        val index = remaining.indexOf(component.order)
-                        if ((index != -1).also { displaySelectedSpecially = it }) {
-                            first = remaining.subList(0, index)
-                            second = remaining.subList(index + 1, remaining.size)
-                        } else {
-                            first = remaining
-                            second = emptyList()
+                    val (first, second, displaySelectedSpecially) = remember {
+                        derivedStateOf {
+                            val remaining = Order.values().drop(collapsedCount)
+                            val index = remaining.indexOf(component.order)
+                            if (index != -1) {
+                                Triple(
+                                    remaining.subList(0, index),
+                                    remaining.subList(index + 1, remaining.size),
+                                    true
+                                )
+                            } else {
+                                Triple(remaining, emptyList(), false)
+                            }
                         }
-                    }
+                    }.value
+
                     OrderSelectionList(first, component.order, expanded, onSelect)
                     // Animate exit only if collapsed
                     if (expanded) {
