@@ -62,7 +62,11 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = true
-            proguardFiles(getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro", "intellij-idea-does-not-like-these-proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android.txt"),
+                "proguard-rules.pro",
+                "intellij-idea-does-not-like-these-proguard-rules.pro"
+            )
         }
         debug {
             applicationIdSuffix = ".test"
@@ -109,16 +113,15 @@ configurations.all {
 @Suppress("SpellCheckingInspection")
 dependencies {
     // Android core
-    implementation("androidx.core:core-ktx:1.9.0") // Apache 2.0
+    implementation("androidx.core:core-ktx:1.10.0") // Apache 2.0
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1") // Apache 2.0
 
     // Jetpack Compose
-    implementation("androidx.compose.ui:ui:1.4.0") // Apache 2.0
-    implementation("androidx.compose.material:material:1.4.0") // Apache 2.0
-    // TODO make debug
-    implementation("androidx.compose.ui:ui-tooling-preview:1.4.0") // Apache 2.0
-    implementation("androidx.compose.material:material-icons-extended:1.4.0") // Apache 2.0
-    implementation("androidx.activity:activity-compose:1.7.0") // Apache 2.0
+    implementation("androidx.compose.ui:ui:1.4.2") // Apache 2.0
+    implementation("androidx.compose.material:material:1.4.2") // Apache 2.0
+    debugImplementation("androidx.compose.ui:ui-tooling-preview:1.4.2")
+    implementation("androidx.compose.material:material-icons-extended:1.4.2") // Apache 2.0
+    implementation("androidx.activity:activity-compose:1.7.1") // Apache 2.0
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
 
     // Decompose
@@ -170,15 +173,14 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
 
     // Other libraries
-    implementation("com.google.android.exoplayer:exoplayer:2.18.5") // Apache 2.0
+    implementation("com.google.android.exoplayer:exoplayer:2.18.6") // Apache 2.0
     implementation("org.jsoup:jsoup:1.15.4") // Expat License
-    implementation("com.mikepenz:aboutlibraries-compose:10.6.1") // Apache 2.0
-
+    implementation("com.mikepenz:aboutlibraries-compose:10.6.2") // Apache 2.0
 
     // Tests
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.9.2")
-    testImplementation("androidx.compose.ui:ui-test-junit4:1.4.0")
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.4.2")
     testImplementation("org.mockito:mockito-core:5.2.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
@@ -188,8 +190,8 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
     kaptAndroidTest("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.4.0")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.4.0")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.4.2")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.4.2")
 }
 
 protobuf {
@@ -201,7 +203,7 @@ protobuf {
             builtins {
                 // TODO protoc plugin 'java' not defined. Trying to use 'protoc-gen-java' from system path
                 create("java") {
-                  option("lite")
+                    option("lite")
                 }
             }
         }
