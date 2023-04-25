@@ -30,6 +30,7 @@ import androidx.compose.material.icons.outlined.Error
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -93,7 +94,8 @@ fun PostImage(
                 ),
             onState = {
                 painterState = it
-            }
+            },
+            contentScale = if (aspectRatio > 0) ContentScale.Crop else ContentScale.Fit
         )
         if (actualPostFileType != null && actualPostFileType.isNotImage) Chip( // TODO
             modifier = Modifier
