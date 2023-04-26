@@ -25,7 +25,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import kotlinx.coroutines.flow.MutableSharedFlow
-import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarMessage
 import javax.inject.Singleton
 
 @Module

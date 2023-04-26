@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.ui
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.Child
@@ -46,7 +45,10 @@ import ru.herobrine1st.e621.ui.screen.search.Search
 import ru.herobrine1st.e621.ui.screen.settings.*
 
 @Composable
-fun Navigator(rootComponent: RootComponent, snackbarHostState: SnackbarHostState) {
+fun Navigator(
+    rootComponent: RootComponent,
+    snackbarHostState: androidx.compose.material3.SnackbarHostState
+) {
     val preferences = LocalPreferences.current
     val navigation = rootComponent.navigation
 
@@ -64,15 +66,14 @@ fun Navigator(rootComponent: RootComponent, snackbarHostState: SnackbarHostState
                     if (stack.any { it is Config.Settings }) stack
                     else stack + Config.Settings
                 }
-            },
-            openBlacklistDialog = {
-                rootComponent.dialogNavigation.navigate {
-                    // Usually it is not possible to click appbar while dialog is open
-                    // so it is safe to omit checks
-                    RootComponent.DialogConfig.BlacklistToggles
-                }
             }
-        )
+        ) {
+            rootComponent.dialogNavigation.navigate {
+                // Usually it is not possible to click appbar while dialog is open
+                // so it is safe to omit checks
+                RootComponent.DialogConfig.BlacklistToggles
+            }
+        }
         when (val instance: RootComponent.Child = child.instance) {
             is Home -> Home(
                 mainScaffoldState = mainScaffoldState,

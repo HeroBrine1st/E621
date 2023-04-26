@@ -49,12 +49,12 @@ import ru.herobrine1st.e621.preference.*
 import ru.herobrine1st.e621.ui.Navigator
 import ru.herobrine1st.e621.ui.component.legal.LicenseAndDisclaimerInitialDialogs
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
-import ru.herobrine1st.e621.ui.snackbar.LocalSnackbar
-import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
-import ru.herobrine1st.e621.ui.snackbar.SnackbarController
-import ru.herobrine1st.e621.ui.snackbar.SnackbarMessage
 import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.ui.theme.E621Theme
+import ru.herobrine1st.e621.ui.theme.snackbar.LocalSnackbar
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarController
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarMessage
 import ru.herobrine1st.e621.util.*
 import java.net.Authenticator
 import java.net.Proxy
@@ -120,14 +120,14 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            E621Theme(window) {
+            E621Theme {
                 val context = LocalContext.current
                 val coroutineScope = rememberCoroutineScope()
 
                 // State
                 val preferences by context.dataStore.data.collectAsState(initial = PreferencesSerializer.defaultValue)
 
-                val snackbarHostState = remember { SnackbarHostState() }
+                val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
                 SnackbarController(
                     snackbarMessagesFlow,
                     snackbarHostState

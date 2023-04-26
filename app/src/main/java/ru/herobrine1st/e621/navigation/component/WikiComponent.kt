@@ -22,7 +22,7 @@ package ru.herobrine1st.e621.navigation.component
 
 import android.os.Parcelable
 import android.util.Log
-import androidx.compose.material.SnackbarDuration
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -37,7 +37,7 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.*
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.navigation.LifecycleScope
-import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import java.io.IOException
 

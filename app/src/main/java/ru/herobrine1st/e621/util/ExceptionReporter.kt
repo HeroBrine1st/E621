@@ -21,10 +21,10 @@
 package ru.herobrine1st.e621.util
 
 import android.util.Log
-import androidx.compose.material.SnackbarDuration
+import androidx.compose.material3.SnackbarDuration
 import com.fasterxml.jackson.core.JacksonException
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton

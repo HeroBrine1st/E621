@@ -41,7 +41,7 @@ import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.navigation.component.settings.*
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.config.Config.*
-import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
 

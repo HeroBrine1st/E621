@@ -22,7 +22,7 @@ package ru.herobrine1st.e621.navigation.component.home
 
 import android.database.sqlite.SQLiteException
 import android.util.Log
-import androidx.compose.material.SnackbarDuration
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -43,7 +43,7 @@ import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
-import ru.herobrine1st.e621.ui.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.credentials
 import ru.herobrine1st.e621.util.debug

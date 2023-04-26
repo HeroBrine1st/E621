@@ -41,6 +41,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material3.SnackbarHost
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -318,7 +319,7 @@ fun Post(
         }
 
         SnackbarHost(
-            hostState = mainScaffoldState.scaffoldState.snackbarHostState,
+            hostState = mainScaffoldState.snackbarHostState,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }

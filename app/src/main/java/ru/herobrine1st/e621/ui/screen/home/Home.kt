@@ -25,9 +25,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.NavigateNext
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
@@ -64,12 +64,17 @@ fun Home(
         Base {
             Button(
                 onClick = component::navigateToSearch,
+                colors = ButtonDefaults.filledTonalButtonColors(),
+                elevation = ButtonDefaults.filledTonalButtonElevation(),
                 modifier = Modifier
                     .padding(4.dp)
                     .fillMaxWidth()
             ) {
-                Text(stringResource(R.string.search))
-                Icon(Icons.Rounded.NavigateNext, contentDescription = null)
+                Text(text = stringResource(R.string.search))
+                Icon(
+                    Icons.Rounded.NavigateNext,
+                    contentDescription = null
+                )
             }
             Spacer(modifier = Modifier.height(8.dp))
             Crossfade(targetState = component.state) { state ->
@@ -80,24 +85,22 @@ fun Home(
                     when (state) {
                         LoginState.Loading -> CircularProgressIndicator()
                         is LoginState.Authorized -> {
-                            Button(
-                                onClick = {
-                                    component.logout()
-                                },
+                            FilledTonalButton(
+                                onClick = component::logout,
                                 modifier = Modifier
                                     .padding(4.dp)
                                     .fillMaxWidth()
                             ) {
-                                Text(stringResource(R.string.login_logout))
+                                Text(text = stringResource(R.string.login_logout))
                             }
                             Spacer(modifier = Modifier.height(8.dp))
-                            Button(
+                            FilledTonalButton(
                                 onClick = component::navigateToFavourites,
                                 modifier = Modifier
                                     .padding(4.dp)
                                     .fillMaxWidth()
                             ) {
-                                Text(stringResource(R.string.favourites))
+                                Text(text = stringResource(R.string.favourites))
                             }
                         }
                         LoginState.NoAuth -> AuthorizationMenu { u, p, cb ->
@@ -105,32 +108,38 @@ fun Home(
                         }
                         LoginState.IOError -> {
                             Text(stringResource(R.string.network_error))
-                            Button(onClick = { component.checkAuthorization() }) {
+                            Button(onClick = component::checkAuthorization) {
                                 Text(stringResource(R.string.retry))
                             }
                         }
                         LoginState.InternalServerError -> {
                             Text(stringResource(R.string.internal_server_error))
-                            Button(onClick = { component.checkAuthorization() }) {
+                            Button(
+                                onClick = component::checkAuthorization
+                            ) {
                                 Text(stringResource(R.string.retry))
                             }
                         }
                         LoginState.APITemporarilyUnavailable -> {
                             Text(stringResource(R.string.api_temporarily_unavailable))
-                            Button(onClick = { component.checkAuthorization() }) {
+                            Button(
+                                onClick = component::checkAuthorization
+                            ) {
                                 Text(stringResource(R.string.retry))
                             }
                         }
                         LoginState.UnknownAPIError -> {
                             Text(stringResource(R.string.unknown_api_error))
                             Row {
-                                Button(onClick = { component.checkAuthorization() }) {
+                                ElevatedButton(onClick = component::checkAuthorization) {
                                     Text(stringResource(R.string.retry))
                                 }
                                 Spacer(Modifier.size(8.dp))
-                                Button(
-                                    onClick = { component.logout() },
-                                    colors = ButtonDefaults.buttonColors(backgroundColor = Color.Red)
+                                FilledTonalButton(
+                                    onClick = component::logout,
+                                    colors = ButtonDefaults.elevatedButtonColors(
+                                        containerColor = Color.Red
+                                    )
                                 ) {
                                     Text(stringResource(R.string.login_logout))
                                 }
@@ -143,6 +152,7 @@ fun Home(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthorizationMenu(
     onLogin: (username: String, password: String, onSuccess: (LoginState) -> Unit) -> Unit
@@ -174,25 +184,28 @@ fun AuthorizationMenu(
     OutlinedTextField(
         value = username,
         onValueChange = { username = it },
-        label = { Text(stringResource(R.string.login_username)) },
+        label = {
+            Text(stringResource(R.string.login_username))
+        },
         singleLine = true,
         enabled = !isLoggingIn,
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions { passwordFieldFocusRequester.requestFocus() }
     )
     Spacer(modifier = Modifier.height(8.dp))
     OutlinedTextField(
         value = password,
-        visualTransformation = PasswordVisualTransformation(),
         onValueChange = { password = it },
-        label = { Text(stringResource(R.string.login_password)) },
+        visualTransformation = PasswordVisualTransformation(),
+        label = {
+            Text(stringResource(R.string.login_password))
+        },
         singleLine = true,
         enabled = !isLoggingIn,
         modifier = Modifier
-            .focusRequester(passwordFieldFocusRequester)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .focusRequester(passwordFieldFocusRequester),
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
             imeAction = ImeAction.Done
@@ -242,14 +255,14 @@ fun PreviewAuthorizationMenu() {
     val scope = rememberCoroutineScope()
     Column(
         Modifier
-            .background(MaterialTheme.colors.surface)
+            .background(MaterialTheme.colorScheme.surface)
             .padding(horizontal = BASE_PADDING_HORIZONTAL)
             .fillMaxSize()
     ) {
         AuthorizationMenu { _, _, cb ->
             scope.launch {
                 delay(5000L)
-                cb(LoginState.Authorized("abcd", 0))
+                cb(LoginState.Authorized("test", 0))
             }
         }
     }

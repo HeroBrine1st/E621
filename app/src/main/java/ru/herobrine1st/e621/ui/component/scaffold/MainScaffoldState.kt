@@ -1,12 +1,12 @@
 package ru.herobrine1st.e621.ui.component.scaffold
 
-import androidx.compose.material.*
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import ru.herobrine1st.e621.util.PreviewUtils
 
 class MainScaffoldState(
-    val scaffoldState: ScaffoldState,
+    val snackbarHostState: SnackbarHostState,
     val goToSettings: () -> Unit,
     val openBlacklistDialog: () -> Unit
 )
@@ -16,23 +16,26 @@ class MainScaffoldState(
  */
 @Composable
 fun rememberMainScaffoldState(
-    drawerState: DrawerState = rememberDrawerState(DrawerValue.Closed),
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     goToSettings: () -> Unit,
     openBlacklistDialog: () -> Unit
 ): MainScaffoldState {
     return remember {
         MainScaffoldState(
-            ScaffoldState(drawerState, snackbarHostState),
+            snackbarHostState,
             goToSettings,
             openBlacklistDialog
         )
     }
 }
 
+@Deprecated(
+    level = DeprecationLevel.WARNING,
+    message = "Should be replaced with snackbarHost = {}",
+    replaceWith = ReplaceWith("")
+)
 @Composable
 fun MainScaffoldState.eraseSnackbarHostState() = rememberMainScaffoldState(
-    drawerState = scaffoldState.drawerState,
     goToSettings = goToSettings,
     openBlacklistDialog = openBlacklistDialog
 )
@@ -41,6 +44,5 @@ fun MainScaffoldState.eraseSnackbarHostState() = rememberMainScaffoldState(
 @Composable
 fun rememberPreviewMainScaffoldState() =
     rememberMainScaffoldState(
-        goToSettings = {},
-        openBlacklistDialog = {}
-    )
+        goToSettings = {}
+    ) {}

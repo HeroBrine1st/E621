@@ -18,10 +18,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.snackbar
+package ru.herobrine1st.e621.ui.theme.snackbar
 
 import androidx.annotation.StringRes
-import androidx.compose.material.SnackbarDuration
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.staticCompositionLocalOf
 import kotlinx.coroutines.flow.MutableSharedFlow
 import javax.inject.Inject
@@ -32,8 +32,9 @@ class SnackbarAdapter @Inject constructor(private val snackbarSharedFlow: Mutabl
     suspend fun enqueueMessage(
         @StringRes resourceId: Int,
         duration: SnackbarDuration = SnackbarDuration.Long,
+        withDismissAction: Boolean = true,
         vararg formatArgs: Any
-    ) = snackbarSharedFlow.enqueueMessage(resourceId, duration, formatArgs)
+    ) = snackbarSharedFlow.enqueueMessage(resourceId, duration, withDismissAction, formatArgs)
 }
 
 val LocalSnackbar =

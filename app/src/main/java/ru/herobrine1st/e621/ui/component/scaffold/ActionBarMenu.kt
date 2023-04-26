@@ -22,7 +22,10 @@ package ru.herobrine1st.e621.ui.component.scaffold
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Block
@@ -33,7 +36,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 
 @Composable
 fun MenuAction(
@@ -60,11 +62,10 @@ fun ActionBarMenu(
 ) {
     var openMenu by remember { mutableStateOf(false) }
 
-    IconButton(onClick = { openMenu = !openMenu }) {
+    androidx.compose.material3.IconButton(onClick = { openMenu = !openMenu }) {
         Icon(
             Icons.Default.MoreVert,
-            contentDescription = stringResource(R.string.appbar_morevert),
-            tint = ActionBarIconColor
+            contentDescription = stringResource(R.string.appbar_morevert)
         )
     }
 

@@ -18,14 +18,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.snackbar
+package ru.herobrine1st.e621.ui.theme.snackbar
 
 import androidx.annotation.StringRes
-import androidx.compose.material.SnackbarDuration
+import androidx.compose.material3.SnackbarDuration
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 data class SnackbarMessage(
     @StringRes val stringId: Int,
+    val withDismissAction: Boolean = false,
     val duration: SnackbarDuration,
     val formatArgs: Array<out Any>
 ) {
@@ -53,9 +54,10 @@ data class SnackbarMessage(
 suspend fun MutableSharedFlow<SnackbarMessage>.enqueueMessage(
     @StringRes resourceId: Int,
     duration: SnackbarDuration = SnackbarDuration.Long,
+    withDismissAction: Boolean = true,
     vararg formatArgs: Any
 ) {
     this.emit(
-        SnackbarMessage(resourceId, duration, formatArgs)
+        SnackbarMessage(resourceId, withDismissAction, duration, formatArgs)
     )
 }

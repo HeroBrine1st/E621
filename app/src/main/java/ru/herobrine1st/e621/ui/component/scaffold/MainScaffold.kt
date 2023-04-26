@@ -23,13 +23,17 @@ package ru.herobrine1st.e621.ui.component.scaffold
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Scaffold
 import androidx.compose.material.Surface
-import androidx.compose.material.TopAppBar
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
+
 @Composable
+@OptIn(ExperimentalMaterial3Api::class)
 fun MainScaffold(
     state: MainScaffoldState,
     title: @Composable () -> Unit,
@@ -39,19 +43,17 @@ fun MainScaffold(
 ) {
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = title,
-                actions = {
-                    // TODO create API for actions
-                    appBarActions()
-                    ActionBarMenu(
-                        onNavigateToSettings = state.goToSettings,
-                        onOpenBlacklistDialog = state.openBlacklistDialog
-                    )
-                }
-            )
+            TopAppBar(title = title, actions = {
+                appBarActions()
+                ActionBarMenu(
+                    onNavigateToSettings = state.goToSettings,
+                    onOpenBlacklistDialog = state.openBlacklistDialog
+                )
+            })
         },
-        scaffoldState = state.scaffoldState,
+        snackbarHost = {
+            SnackbarHost(hostState = state.snackbarHostState)
+        },
         floatingActionButton = floatingActionButton
     ) {
         Surface(

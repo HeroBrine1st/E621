@@ -18,14 +18,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.snackbar
+package ru.herobrine1st.e621.ui.theme.snackbar
 
-import androidx.compose.material.SnackbarHostState
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.Flow
-import ru.herobrine1st.e621.R
 
 
 @Composable
@@ -38,9 +37,10 @@ fun SnackbarController(
     LaunchedEffect(snackbarMessagesFlow, snackbarHostState) {
         snackbarMessagesFlow.collect {
             snackbarHostState.showSnackbar(
-                context.resources.getString(it.stringId, *it.formatArgs),
-                context.resources.getString(R.string.okay),
-                it.duration
+                message = context.resources.getString(it.stringId, *it.formatArgs),
+                //actionLabel = context.resources.getString(R.string.okay),
+                withDismissAction = it.withDismissAction,
+                duration = it.duration
             )
         }
     }
