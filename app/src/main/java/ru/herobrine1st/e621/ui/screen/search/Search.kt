@@ -21,23 +21,19 @@
 package ru.herobrine1st.e621.ui.screen.search
 
 import androidx.compose.animation.*
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.res.integerResource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -104,6 +100,8 @@ fun Search(
         )
     }
 
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -115,7 +113,8 @@ fun Search(
                         onNavigateToSettings = mainScaffoldState.goToSettings,
                         onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
                     )
-                }
+                },
+                scrollBehavior = scrollBehavior
             )
         },
         snackbarHost = {
@@ -131,13 +130,14 @@ fun Search(
                 },
                 onClick = component::proceed
             )
-        }
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
-                .padding(paddingValues)
                 .padding(horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = paddingValues
         ) {
             item {}
             item("tags") {
@@ -168,86 +168,52 @@ fun Search(
             }
             item("order") {
                 SettingCard(
-                    title = stringResource(R.string.order),
-                    modifier = Modifier.selectableGroup()
+                    title = stringResource(R.string.order)
                 ) {
                     var expanded by remember { mutableStateOf(false) }
-                    val collapsedCount = integerResource(R.integer.order_selection_collapsed_count)
-                    val onSelect: (Order) -> Unit = {
-                        component.order = it
-                        if (!it.supportsAscending) component.orderAscending = false
-                    }
-
-                    Order.values()
-                        .take(collapsedCount)
-                        .forEach {
-                            OrderItem(it, it == component.order) { onSelect(it) }
-                        }
-                    //region Split list to 2 lists by selected item and display selected item even if collapsed
-                    //           ..list of remaining choices to..
-                    val (first, second, displaySelectedSpecially) = remember {
-                        derivedStateOf {
-                            val remaining = Order.values().drop(collapsedCount)
-                            val index = remaining.indexOf(component.order)
-                            if (index != -1) {
-                                Triple(
-                                    remaining.subList(0, index),
-                                    remaining.subList(index + 1, remaining.size),
-                                    true
+                    ExposedDropdownMenuBox(
+                        expanded = expanded,
+                        onExpandedChange = { expanded = it },
+//                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        TextField(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .menuAnchor(),
+                            readOnly = true,
+                            singleLine = true,
+                            value = stringResource(component.order.descriptionId),
+                            onValueChange = {},
+//                            label = { Text(stringResource(R.string.order)) },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+                            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                        )
+                        ExposedDropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            // FIXME: there's no way to make it fill max width
+                            // there was one, but I lost it :-(
+                            modifier = Modifier.exposedDropdownSize()
+                        ) {
+                            Order.values().forEach {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(it.descriptionId)) },
+                                    onClick = {
+                                        component.order = it
+                                        expanded = false
+                                    },
+                                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                                 )
-                            } else {
-                                Triple(remaining, emptyList(), false)
                             }
                         }
-                    }.value
-
-                    OrderSelectionList(first, component.order, expanded, onSelect)
-                    // Animate exit only if collapsed
-                    if (expanded) {
-                        if (displaySelectedSpecially) OrderItem(component.order, true, onClick = {})
-                    } else AnimatedVisibility(
-                        visible = displaySelectedSpecially,
-                        enter = fadeIn(initialAlpha = 1f), // Disable
-                        // Placing an if with "fadeOut(1f)" here (and adding expanded to if below) results
-                        // in visual glitches, so it is lifted out
-                        exit = fadeOut(spring(stiffness = Spring.StiffnessMedium)) + shrinkVertically(
-                            shrinkTowards = Alignment.Top
-                        ),
-                    ) {
-                        // item holds the selected order at the time of selecting
-                        // so if user wants to select other order, it will collapse as expected by user
-                        // otherwise (without item) it will collapse with the new selection.
-                        // Also this prevents some glitches, for example, it could replace one order with
-                        // selection (or with recently selected order) (I have no reproduce steps)
-                        var item by remember { mutableStateOf(component.order) }
-                        if (displaySelectedSpecially) item = component.order
-                        OrderItem(item, true, onClick = {})
                     }
-                    if (second.isNotEmpty()) OrderSelectionList(
-                        second,
-                        component.order,
-                        expanded,
-                        onSelect
-                    )
+
                     ItemSelectionCheckbox(
                         checked = component.orderAscending,
                         enabled = component.order.supportsAscending,
                         text = stringResource(R.string.order_ascending)
                     ) {
                         component.orderAscending = !component.orderAscending
-                    }
-                    //endregion
-                    TextButton(onClick = { expanded = !expanded }) {
-                        val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
-                        Icon(
-                            Icons.Default.ExpandMore, null, modifier = Modifier
-                                .padding(start = 4.dp, end = 12.dp)
-                                .rotate(rotation)
-                        )
-                        Text(
-                            stringResource(if (!expanded) R.string.expand else R.string.collapse),
-                            modifier = Modifier.weight(1f)
-                        )
                     }
                 }
             }
@@ -259,26 +225,33 @@ fun Search(
                     AnimatedVisibility(visible = preferences.safeModeEnabled) {
                         Text(stringResource(R.string.search_safe_mode))
                     }
-                    key(null) {
-                        ItemSelectionRadioButton(
-                            selected = component.rating.size == 0,
-                            text = stringResource(R.string.any),
-                            enabled = !preferences.safeModeEnabled
-                        ) {
-                            component.rating.clear()
-                        }
-                    }
-                    for (v in Rating.values()) {
-                        ItemSelectionCheckbox(
-                            checked = v in component.rating,
-                            text = stringResource(v.descriptionId),
-                            enabled = !preferences.safeModeEnabled
-                        ) {
-                            when (v) {
-                                in component.rating -> component.rating.remove(v)
-                                else -> component.rating.add(v)
-                            }
-                            if (component.rating.size == Rating.values().size) component.rating.clear()
+                    FlowRow(mainAxisSpacing = 4.dp, crossAxisSpacing = 2.dp) {
+                        for (v in Rating.values()) {
+                            val selected = v in component.rating
+                            FilterChip(
+                                selected = selected,
+                                onClick = {
+                                    if (selected)
+                                        component.rating.remove(v)
+                                    else
+                                        component.rating.add(v)
+                                    // Do not force any behavior: users are free to select all
+                                    // or select none as it is the same
+                                },
+                                label = { Text(stringResource(v.descriptionId)) },
+                                enabled = !preferences.safeModeEnabled,
+                                leadingIcon = if (selected) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Filled.Done,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                        )
+                                    }
+                                } else {
+                                    null
+                                }
+                            )
                         }
                     }
                 }
@@ -337,29 +310,6 @@ fun Search(
                 // and minus magic 4 dp because 80 dp is too much
                 Spacer(Modifier.height(76.dp))
             }
-        }
-    }
-}
-
-@Composable
-fun OrderSelectionList(
-    items: List<Order>,
-    selectedItem: Order,
-    expanded: Boolean,
-    onSelect: (Order) -> Unit
-) {
-    AnimatedVisibility(
-        visible = expanded,
-        enter = fadeIn() + expandVertically(expandFrom = Alignment.Top),
-        exit = fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top)
-    ) {
-        Column {
-            items
-                .forEach {
-                    OrderItem(it, it == selectedItem) {
-                        onSelect(it)
-                    }
-                }
         }
     }
 }
