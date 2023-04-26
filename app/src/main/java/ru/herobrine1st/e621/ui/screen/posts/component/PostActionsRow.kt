@@ -27,13 +27,18 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Comment
 import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -89,27 +94,18 @@ fun PostActionsRow(
                     .offset(y = 2.dp)
             )
         }
-
-        // Implementation is trivial, but there is a private constant and I don't want to copy (and therefore update) it myself
-        // also I don't want to copy code at all
-        val outerContentAlpha = LocalContentAlpha.current
         IconButton(
             onClick = onAddToFavourites,
             enabled = isAuthorized && favouriteState !is FavouriteState.InFly
         ) {
-            Crossfade(targetState = favouriteState) {
-                val contentAlpha =
-                    if (isAuthorized && favouriteState !is FavouriteState.InFly) outerContentAlpha
-                    else ContentAlpha.disabled
-                CompositionLocalProvider(LocalContentAlpha provides contentAlpha) {
-                    if (it.isFavourite) Icon(
-                        Icons.Filled.Favorite,
-                        contentDescription = stringResource(R.string.remove_from_favourites)
-                    ) else Icon(
-                        Icons.Filled.FavoriteBorder,
-                        contentDescription = stringResource(R.string.add_to_favourites)
-                    )
-                }
+            Crossfade(targetState = favouriteState.isFavourite) {
+                if (it) Icon(
+                    Icons.Filled.Favorite,
+                    contentDescription = stringResource(R.string.remove_from_favourites)
+                ) else Icon(
+                    Icons.Filled.FavoriteBorder,
+                    contentDescription = stringResource(R.string.add_to_favourites)
+                )
             }
         }
         IconButton(onClick = { /*TODO*/ }) {

@@ -26,16 +26,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
-import androidx.compose.material.*
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
@@ -48,15 +50,14 @@ import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
-import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.e621.util.normalizeTagForUI
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun Posts(
     mainScaffoldState: MainScaffoldState,
@@ -73,24 +74,39 @@ fun Posts(
         // (I want to show how many posts are skipped due to blacklist, like hidden items on github)
         onRefresh = { posts.refresh() }
     )
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
-    MainScaffold(
-        state = mainScaffoldState,
-        title = { Text(stringResource(R.string.posts)) },
-        appBarActions = {
-            IconButton(onClick = {
-                component.onOpenSearch()
-            }) {
-                Icon(
-                    imageVector = Icons.Filled.Search,
-                    contentDescription = stringResource(R.string.search),
-                    tint = ActionBarIconColor
-                )
-            }
-        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(R.string.posts))
+                },
+                actions = {
+                    IconButton(onClick = {
+                        component.onOpenSearch()
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = stringResource(R.string.search),
+                        )
+                    }
+                    ActionBarMenu(
+                        onNavigateToSettings = mainScaffoldState.goToSettings,
+                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                    )
+                },
+                scrollBehavior = scrollBehavior
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) {
         Box(
             Modifier
+                .padding(it)
                 .pullRefresh(pullRefreshState)
                 .fillMaxSize()
         ) {
@@ -116,6 +132,7 @@ fun Posts(
                                     Icon(Icons.Outlined.Error, contentDescription = null)
                                     Text(stringResource(R.string.unknown_error))
                                 }
+
                                 LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
                             }
                         }
@@ -155,7 +172,7 @@ fun Posts(
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Post(
     post: Post,
@@ -165,8 +182,7 @@ fun Post(
     onAddToFavourites: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit
 ) {
-    Card(
-        elevation = 4.dp,
+    ElevatedCard(
         shape = shape,
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -213,15 +229,23 @@ fun Post(
                     }
                 }
                 visibleTags.forEach {
-                    Chip(onClick = { /*TODO*/ }) {
-                        Text(it.normalizeTagForUI())
-                    }
+                    InputChip(
+                        selected = false,
+                        onClick = { /*TODO*/ },
+                        label = {
+                            Text(it.normalizeTagForUI())
+                        }
+                    )
                 }
                 // TODO use SubcomposeLayout to fill two lines of chips
                 if (!expandTags && post.tags.reduced.size > 6) {
-                    Chip(onClick = { expandTags = true }) {
-                        Text("...")
-                    }
+                    InputChip(
+                        selected = false,
+                        onClick = { expandTags = true },
+                        label = {
+                            Text("...")
+                        }
+                    )
                 }
             }
             Divider(Modifier.padding(horizontal = 8.dp))
