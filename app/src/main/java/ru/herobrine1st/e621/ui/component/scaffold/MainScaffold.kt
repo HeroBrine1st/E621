@@ -33,6 +33,11 @@ import androidx.compose.ui.Modifier
 
 
 @Composable
+@Deprecated(
+    level = DeprecationLevel.WARNING,
+    message = "To be replaced with fine-tuned/M3 components at call site",
+    replaceWith = ReplaceWith("")
+)
 @OptIn(ExperimentalMaterial3Api::class)
 fun MainScaffold(
     state: MainScaffoldState,

@@ -6,7 +6,7 @@ import androidx.compose.runtime.remember
 import ru.herobrine1st.e621.util.PreviewUtils
 
 class MainScaffoldState(
-    val snackbarHostState: SnackbarHostState,
+    val snackbarHostState: SnackbarHostState, // TODO maybe every screen should have its own snackbar?
     val goToSettings: () -> Unit,
     val openBlacklistDialog: () -> Unit
 )

@@ -49,25 +49,37 @@ import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent.LoginState
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.Base
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Home(
     mainScaffoldState: MainScaffoldState,
     component: HomeComponent
 ) {
-    MainScaffold(
-        state = mainScaffoldState,
-        title = { Text(stringResource(R.string.app_name)) }
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(stringResource(R.string.app_name))
+                },
+                actions = {
+                    ActionBarMenu(
+                        onNavigateToSettings = mainScaffoldState.goToSettings,
+                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                    )
+                }
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+        }
     ) {
-        Base {
+        Base(Modifier.padding(it)) {
             Button(
                 onClick = component::navigateToSearch,
-                colors = ButtonDefaults.filledTonalButtonColors(),
-                elevation = ButtonDefaults.filledTonalButtonElevation(),
                 modifier = Modifier
-                    .padding(4.dp)
                     .fillMaxWidth()
             ) {
                 Text(text = stringResource(R.string.search))
@@ -88,30 +100,31 @@ fun Home(
                             FilledTonalButton(
                                 onClick = component::logout,
                                 modifier = Modifier
-                                    .padding(4.dp)
                                     .fillMaxWidth()
                             ) {
                                 Text(text = stringResource(R.string.login_logout))
                             }
                             Spacer(modifier = Modifier.height(8.dp))
-                            FilledTonalButton(
+                            Button(
                                 onClick = component::navigateToFavourites,
                                 modifier = Modifier
-                                    .padding(4.dp)
                                     .fillMaxWidth()
                             ) {
                                 Text(text = stringResource(R.string.favourites))
                             }
                         }
+
                         LoginState.NoAuth -> AuthorizationMenu { u, p, cb ->
                             component.login(u, p, cb)
                         }
+
                         LoginState.IOError -> {
                             Text(stringResource(R.string.network_error))
                             Button(onClick = component::checkAuthorization) {
                                 Text(stringResource(R.string.retry))
                             }
                         }
+
                         LoginState.InternalServerError -> {
                             Text(stringResource(R.string.internal_server_error))
                             Button(
@@ -120,6 +133,7 @@ fun Home(
                                 Text(stringResource(R.string.retry))
                             }
                         }
+
                         LoginState.APITemporarilyUnavailable -> {
                             Text(stringResource(R.string.api_temporarily_unavailable))
                             Button(
@@ -128,10 +142,11 @@ fun Home(
                                 Text(stringResource(R.string.retry))
                             }
                         }
+
                         LoginState.UnknownAPIError -> {
                             Text(stringResource(R.string.unknown_api_error))
                             Row {
-                                ElevatedButton(onClick = component::checkAuthorization) {
+                                Button(onClick = component::checkAuthorization) {
                                     Text(stringResource(R.string.retry))
                                 }
                                 Spacer(Modifier.size(8.dp))
@@ -213,13 +228,12 @@ fun AuthorizationMenu(
         keyboardActions = KeyboardActions { login() }
     )
     Spacer(modifier = Modifier.height(8.dp))
-    OutlinedButton(
+    Button(
         onClick = {
             login()
         },
         enabled = canLogin && !isLoggingIn,
         modifier = Modifier
-            .padding(4.dp)
             .fillMaxWidth(),
         contentPadding = PaddingValues(0.dp),
     ) {
