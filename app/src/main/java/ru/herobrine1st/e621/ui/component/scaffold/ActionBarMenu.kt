@@ -20,21 +20,22 @@
 
 package ru.herobrine1st.e621.ui.component.scaffold
 
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material.DropdownMenu
-import androidx.compose.material.DropdownMenuItem
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Block
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 
 @Composable
@@ -44,12 +45,14 @@ fun MenuAction(
     onClick: () -> Unit,
 ) {
     DropdownMenuItem(
-        onClick = onClick,
-        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp)
-    ) {
-        Icon(icon, null, modifier = Modifier.padding(end = 8.dp))
-        Text(text)
-    }
+        text = {
+            Text(text)
+        },
+        leadingIcon = {
+            Icon(icon, null)
+        },
+        onClick = onClick
+    )
 }
 
 /**
@@ -62,7 +65,7 @@ fun ActionBarMenu(
 ) {
     var openMenu by remember { mutableStateOf(false) }
 
-    androidx.compose.material3.IconButton(onClick = { openMenu = !openMenu }) {
+    IconButton(onClick = { openMenu = !openMenu }) {
         Icon(
             Icons.Default.MoreVert,
             contentDescription = stringResource(R.string.appbar_morevert)
