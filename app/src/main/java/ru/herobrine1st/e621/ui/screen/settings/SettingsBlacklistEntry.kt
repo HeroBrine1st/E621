@@ -53,7 +53,7 @@ fun SettingsBlacklistEntry(
                             applying = false
                         }
                     },
-                    enabled = !applying && component.query.isNotEmpty(),
+                    enabled = !applying && component.query.isNotBlank(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Crossfade(component.id) { id ->
