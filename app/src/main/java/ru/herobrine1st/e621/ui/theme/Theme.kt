@@ -20,13 +20,17 @@
 
 package ru.herobrine1st.e621.ui.theme
 
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.material3.darkColorScheme
+import androidx.compose.material3.dynamicDarkColorScheme
+import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 
 private val DarkColorPalette = darkColors(
     primary = Purple200,
@@ -58,13 +62,22 @@ fun E621Theme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable (
         LightColorPalette
     }
 
+    val dynamicColor = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val m3ColorScheme = when {
+        dynamicColor && darkTheme -> dynamicDarkColorScheme(LocalContext.current)
+        dynamicColor && !darkTheme -> dynamicLightColorScheme(LocalContext.current)
+        darkTheme -> darkColorScheme()
+        else -> lightColorScheme()
+    }
+
+
     MaterialTheme(
         colors = colors,
         typography = Typography,
         shapes = Shapes,
     ) {
         androidx.compose.material3.MaterialTheme(
-            colorScheme = if (darkTheme) darkColorScheme() else lightColorScheme()
+            colorScheme = m3ColorScheme
         ) {
             content()
         }
