@@ -24,16 +24,13 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material.Checkbox
-import androidx.compose.material.CheckboxDefaults
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import ru.herobrine1st.e621.ui.theme.disabledText
+import androidx.compose.ui.semantics.Role
 
 @Composable
 fun ItemSelectionCheckbox(
@@ -50,7 +47,8 @@ fun ItemSelectionCheckbox(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 enabled = enabled,
-                onValueChange = onCheckedChange
+                onValueChange = onCheckedChange,
+                role = Role.Checkbox
             )
             .fillMaxWidth()
     ) {
@@ -58,12 +56,9 @@ fun ItemSelectionCheckbox(
             enabled = enabled,
             checked = checked,
             onCheckedChange = onCheckedChange,
-            colors = CheckboxDefaults.colors(checkedColor = MaterialTheme.colors.primary)
         )
-
         Text(
-            text = text,
-            color = if (enabled) Color.Unspecified else MaterialTheme.colors.disabledText
+            text = text
         )
     }
 }

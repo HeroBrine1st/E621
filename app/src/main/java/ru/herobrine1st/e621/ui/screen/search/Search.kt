@@ -27,12 +27,12 @@ import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,7 +50,7 @@ import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberPreviewMainScaffoldState
 import ru.herobrine1st.e621.util.PreviewUtils
@@ -59,7 +59,7 @@ import ru.herobrine1st.e621.util.getPreviewStackNavigator
 import ru.herobrine1st.e621.util.normalizeTagForUI
 
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Search(
     mainScaffoldState: MainScaffoldState,
@@ -104,18 +104,40 @@ fun Search(
         )
     }
 
-    MainScaffold(
-        state = mainScaffoldState,
-        title = { Text(stringResource(R.string.search)) },
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(R.string.search))
+                },
+                actions = {
+                    ActionBarMenu(
+                        onNavigateToSettings = mainScaffoldState.goToSettings,
+                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                    )
+                }
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+        },
         floatingActionButton = {
-            FloatingActionButton(onClick = component::proceed) {
-                Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
-            }
+            ExtendedFloatingActionButton(
+                text = {
+                    Text(stringResource(R.string.search))
+                },
+                icon = {
+                    Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
+                },
+                onClick = component::proceed
+            )
         }
-    ) {
+    ) { paddingValues ->
         LazyColumn(
-            modifier = Modifier.padding(horizontal = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)
+            modifier = Modifier
+                .padding(paddingValues)
+                .padding(horizontal = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             item {}
             item("tags") {
@@ -123,13 +145,15 @@ fun Search(
                     FlowRow(mainAxisSpacing = 4.dp) {
                         component.tags.forEachIndexed { index, tag ->
                             key(tag) {
-                                Chip(
-                                    onClick = {
-                                        component.currentlyModifiedTagIndex = index
+                                // TODO place it in text field
+                                //      https://firebasestorage.googleapis.com/v0/b/design-spec/o/projects%2Fm3%2Fimages%2Fkzhfok2g-chip_extra-backspace_3P.mp4?alt=media
+                                InputChip(
+                                    selected = false,
+                                    onClick = { component.currentlyModifiedTagIndex = index },
+                                    label = {
+                                        Text(tag.normalizeTagForUI())
                                     }
-                                ) {
-                                    Text(tag.normalizeTagForUI())
-                                }
+                                )
                             }
                         }
                     }
@@ -309,9 +333,9 @@ fun Search(
             }
             item("size placeholder for fab") {
                 // FAB size is 56 dp, plus spacing of fab (16 dp * 2 because we want symmetry)
-                // minus spacing between items (4 dp)
-                // and minus magic 4 dp because 84 dp is too much
-                Spacer(Modifier.height(80.dp))
+                // minus spacing between items (8 dp)
+                // and minus magic 4 dp because 80 dp is too much
+                Spacer(Modifier.height(76.dp))
             }
         }
     }
