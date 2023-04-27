@@ -136,4 +136,6 @@
     <string name="file_type">Тип файла</string>
     <string name="file_type_invert_selection">Исключить</string>
     <string name="wiki_page_not_found">К сожалению, данной вики-страницы не существует. Возможно, она еще не была создана.</string>
+    <string name="screen_settings_blacklist_entry">Запись чёрного списка</string>
+    <string name="create_new_fab">Создать</string>
 </resources>

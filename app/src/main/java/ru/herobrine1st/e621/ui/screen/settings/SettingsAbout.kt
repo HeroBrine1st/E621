@@ -23,36 +23,58 @@ package ru.herobrine1st.e621.ui.screen.settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberPreviewMainScaffoldState
 import ru.herobrine1st.e621.util.PreviewUtils
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsAbout(
     mainScaffoldState: MainScaffoldState,
     navigateToLicense: () -> Unit,
     navigateToOssLicenses: () -> Unit,
 ) {
-    MainScaffold(
-        state = mainScaffoldState,
-        title = { Text(stringResource(R.string.about)) },
-    ) {
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(R.string.about))
+                },
+                actions = {
+                    ActionBarMenu(
+                        onNavigateToSettings = mainScaffoldState.goToSettings,
+                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                    )
+                },
+                scrollBehavior = scrollBehavior
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) { paddingValues ->
+        LazyColumn(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            contentPadding = paddingValues
+        ) {
             item {} // "padding"
             item {
-                Card(Modifier.padding(horizontal = 8.dp)) {
+                ElevatedCard(Modifier.padding(horizontal = 8.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
@@ -67,7 +89,7 @@ fun SettingsAbout(
                         Column {
                             Text(
                                 stringResource(R.string.app_name),
-                                style = MaterialTheme.typography.subtitle1
+                                style = MaterialTheme.typography.titleLarge
                             )
                             Spacer(modifier = Modifier.size(2.dp))
                             Text(
@@ -75,15 +97,14 @@ fun SettingsAbout(
                                     R.string.app_description,
                                     BuildConfig.DEEP_LINK_BASE_URL
                                 ),
-                                Modifier.alpha(ContentAlpha.medium),
-                                style = MaterialTheme.typography.caption
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
                     }
                 }
             }
             item {
-                Card(
+                ElevatedCard(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .fillMaxWidth()
@@ -95,7 +116,7 @@ fun SettingsAbout(
                     ) {
                         Text(
                             stringResource(R.string.disclaimer),
-                            style = MaterialTheme.typography.h6
+                            style = MaterialTheme.typography.titleLarge
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(stringResource(R.string.non_affiliation_disclaimer))
@@ -103,7 +124,7 @@ fun SettingsAbout(
                 }
             }
             item {
-                Card(
+                ElevatedCard(
                     modifier = Modifier
                         .padding(horizontal = 8.dp)
                         .fillMaxWidth()
@@ -115,7 +136,7 @@ fun SettingsAbout(
                     ) {
                         Text(
                             stringResource(R.string.license_word),
-                            style = MaterialTheme.typography.h6
+                            style = MaterialTheme.typography.titleLarge
                         )
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(stringResource(R.string.license_brief))

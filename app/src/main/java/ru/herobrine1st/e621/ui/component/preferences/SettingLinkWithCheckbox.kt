@@ -20,10 +20,7 @@
 
 package ru.herobrine1st.e621.ui.component.preferences
 
-import androidx.compose.material.Checkbox
-import androidx.compose.material.CheckboxColors
-import androidx.compose.material.CheckboxDefaults
-import androidx.compose.material.MaterialTheme
+import androidx.compose.material3.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,9 +33,6 @@ fun SettingLinkWithCheckbox(
     icon: ImageVector? = null,
     subtitle: String? = null,
     enabled: Boolean = true,
-    checkboxColors: CheckboxColors = CheckboxDefaults.colors(
-        checkedColor = MaterialTheme.colors.primary,
-    ),
     onCheckedChange: (Boolean) -> Unit,
     onClick: () -> Unit
 ) {
@@ -55,8 +49,7 @@ fun SettingLinkWithCheckbox(
         Checkbox(
             checked = checked,
             enabled = enabled,
-            onCheckedChange = onCheckedChange,
-            colors = checkboxColors
+            onCheckedChange = onCheckedChange
         )
     }
 }

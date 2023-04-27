@@ -1,21 +1,55 @@
 package ru.herobrine1st.e621.ui.screen.settings
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material.Text
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import com.mikepenz.aboutlibraries.ui.compose.LibrariesContainer
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsLicenses(mainScaffoldState: MainScaffoldState) {
-    MainScaffold(
-        state = mainScaffoldState,
-        title = { Text(stringResource(R.string.oss_licenses)) },
-    ) {
-        LibrariesContainer(Modifier.fillMaxSize())
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(R.string.oss_licenses))
+                },
+                actions = {
+                    ActionBarMenu(
+                        onNavigateToSettings = mainScaffoldState.goToSettings,
+                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                    )
+                },
+                scrollBehavior = scrollBehavior
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+        }
+    ) { paddingValues ->
+//        Box(
+//            Modifier
+//
+//        ) {
+        LibrariesContainer(
+            Modifier
+                .padding(paddingValues)
+                .nestedScroll(scrollBehavior.nestedScrollConnection)
+                .fillMaxSize()
+        )
+//        }
     }
 }

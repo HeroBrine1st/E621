@@ -24,55 +24,76 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.outlined.RemoveCircleOutline
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistComponent
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
-import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsBlacklist(
     mainScaffoldState: MainScaffoldState,
     component: SettingsBlacklistComponent
 ) {
     val entries by component.entriesFlow.collectAsState()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
-    MainScaffold(
-        state = mainScaffoldState,
-        title = { Text(stringResource(R.string.blacklist)) },
-        appBarActions = {
-            if (component.isUpdating || entries == null) {
-                CircularProgressIndicator(color = ActionBarIconColor)
-            }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(R.string.blacklist))
+                },
+                actions = {
+                    if (component.isUpdating) {
+                        CircularProgressIndicator(color = LocalContentColor.current)
+                    }
+                    ActionBarMenu(
+                        onNavigateToSettings = mainScaffoldState.goToSettings,
+                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                    )
+                },
+                scrollBehavior = scrollBehavior
+            )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = {
-                component.createNewEntry()
-            }) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add))
-            }
-
-        }
-    ) {
-        Crossfade(entries) { entries ->
+            ExtendedFloatingActionButton(
+                text = { Text(stringResource(R.string.create_new_fab)) },
+                icon = {
+                    Icon(
+                        Icons.Default.Add,
+                        contentDescription = stringResource(R.string.create_new_fab)
+                    )
+                },
+                onClick = component::createNewEntry
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) { paddingValues ->
+        Crossfade(entries, modifier = Modifier.padding(paddingValues)) { entries ->
             when (entries) {
                 null -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
+
                 else -> LazyColumn(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth()
@@ -107,7 +128,7 @@ fun SettingsBlacklist(
                                     enabled = enabled
                                 ) {
                                     Icon(
-                                        Icons.Default.Remove,
+                                        Icons.Outlined.RemoveCircleOutline,
                                         contentDescription = stringResource(R.string.remove)
                                     )
                                 }
@@ -135,16 +156,18 @@ fun SettingsBlacklist(
                                             }
                                         )
                                     },
-                                    enabled = enabled,
-                                    colors = SwitchDefaults.colors(
-                                        checkedThumbColor = MaterialTheme.colors.primary,
-                                        uncheckedThumbColor = MaterialTheme.colors.onSurface
-                                    )
+                                    enabled = enabled
                                 )
                             }
                         }
                         if (i < entries.size - 1)
                             Divider(Modifier.padding(horizontal = 8.dp))
+                    }
+                    item("size placeholder for fab") {
+                        // FAB size is 56 dp, plus spacing of fab (16 dp * 2 because we want symmetry)
+                        // minus spacing between items (8 dp)
+                        // and minus magic 4 dp because 80 dp is too much
+                        Spacer(Modifier.height(76.dp))
                     }
                 }
             }

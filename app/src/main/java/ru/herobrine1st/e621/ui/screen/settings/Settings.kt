@@ -21,11 +21,17 @@
 package ru.herobrine1st.e621.ui.screen.settings
 
 import android.app.Activity
-import androidx.compose.foundation.layout.Column
-import androidx.compose.material.Text
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
@@ -35,13 +41,14 @@ import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.component.preferences.SettingLink
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 import ru.herobrine1st.e621.ui.dialog.AlertDialog
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
 import ru.herobrine1st.e621.ui.screen.settings.component.ProxyDialog
 import ru.herobrine1st.e621.util.restart
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Settings(
     mainScaffoldState: MainScaffoldState,
@@ -56,89 +63,112 @@ fun Settings(
     var showSafeModeDisclaimer by remember { mutableStateOf(false) }
     var showProxySettingsDialog by remember { mutableStateOf(false) }
 
-    // UI
-    MainScaffold(
-        state = mainScaffoldState,
-        title = { Text(stringResource(R.string.settings)) },
-    ) {
-        Column {
-            SettingLinkWithSwitch(
-                checked = preferences.blacklistEnabled,
-                title = stringResource(R.string.setting_blacklist),
-                subtitle = stringResource(R.string.setting_blacklist_subtitle),
-                icon = Icons.Default.Block,
-                onCheckedChange = { enabled ->
-                    coroutineScope.launch {
-                        context.updatePreferences {
-                            blacklistEnabled = enabled
-                        }
-                    }
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    androidx.compose.material3.Text(stringResource(R.string.settings))
                 },
-                onClick = onNavigateToBlacklistSettings
-            )
-
-            SettingSwitch(
-                checked = preferences.privacyModeEnabled,
-                title = stringResource(R.string.privacy_mode),
-                subtitle = stringResource(R.string.privacy_mode_subtitle),
-                icon = Icons.Default.Shield,
-                onCheckedChange = { enabled: Boolean ->
-                    coroutineScope.launch {
-                        context.updatePreferences {
-                            privacyModeEnabled = enabled
-                        }
-                        if (!preferences.privacyModeDisclaimerShown && enabled)
-                            showPrivacyModeDialog = true
-                    }
-                }
-            )
-
-            SettingSwitch(
-                checked = preferences.safeModeEnabled,
-                title = stringResource(R.string.settings_safe_mode),
-                subtitle = stringResource(R.string.settings_safe_mode_shortdesc),
-                icon = Icons.Default.Explicit,
-                onCheckedChange = { enabled: Boolean ->
-                    if (!enabled && !preferences.safeModeDisclaimerShown) showSafeModeDisclaimer =
-                        true
-                    else coroutineScope.launch {
-                        context.updatePreferences {
-                            safeModeEnabled = enabled
-                        }
-                    }
-                }
-            )
-
-            SettingLinkWithSwitch(
-                checked = preferences.hasProxy() && preferences.proxy.enabled,
-                title = stringResource(
-                    R.string.proxy_server
-                ),
-                subtitle = if (preferences.hasProxy()) with(preferences.proxy) {
-                    "${type.toString().lowercase()}://$hostname:$port"
-                } else "",
-                icon = Icons.Default.Public,
-                onCheckedChange = {
-                    if (!preferences.hasProxy() && it) showProxySettingsDialog = true
-                    else coroutineScope.launch {
-                        context.updatePreferences {
-                            proxy = proxy.toBuilder().apply {
-                                enabled = it
-                            }.build()
-                        }
-                        (context as Activity).restart()
-                    }
+                actions = {
+                    ActionBarMenu(
+                        onNavigateToSettings = mainScaffoldState.goToSettings,
+                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                    )
                 },
-                onClick = {
-                    showProxySettingsDialog = true
-                }
+                scrollBehavior = scrollBehavior
             )
-
-            SettingLink(
-                title = stringResource(R.string.about),
-                icon =  Icons.Default.Copyright,
-                onClick = onNavigateToAbout
-            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+        },
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+    ) { paddingValues ->
+        LazyColumn(contentPadding = paddingValues) {
+            item {
+                SettingLinkWithSwitch(
+                    checked = preferences.blacklistEnabled,
+                    title = stringResource(R.string.setting_blacklist),
+                    subtitle = stringResource(R.string.setting_blacklist_subtitle),
+                    icon = Icons.Default.Block,
+                    onCheckedChange = { enabled ->
+                        coroutineScope.launch {
+                            context.updatePreferences {
+                                blacklistEnabled = enabled
+                            }
+                        }
+                    },
+                    onClick = onNavigateToBlacklistSettings
+                )
+            }
+            item {
+                SettingSwitch(
+                    checked = preferences.privacyModeEnabled,
+                    title = stringResource(R.string.privacy_mode),
+                    subtitle = stringResource(R.string.privacy_mode_subtitle),
+                    icon = Icons.Default.Shield,
+                    onCheckedChange = { enabled: Boolean ->
+                        coroutineScope.launch {
+                            context.updatePreferences {
+                                privacyModeEnabled = enabled
+                            }
+                            if (!preferences.privacyModeDisclaimerShown && enabled)
+                                showPrivacyModeDialog = true
+                        }
+                    }
+                )
+            }
+            item {
+                SettingSwitch(
+                    checked = preferences.safeModeEnabled,
+                    title = stringResource(R.string.settings_safe_mode),
+                    subtitle = stringResource(R.string.settings_safe_mode_shortdesc),
+                    icon = Icons.Default.Explicit,
+                    onCheckedChange = { enabled: Boolean ->
+                        if (!enabled && !preferences.safeModeDisclaimerShown) showSafeModeDisclaimer =
+                            true
+                        else coroutineScope.launch {
+                            context.updatePreferences {
+                                safeModeEnabled = enabled
+                            }
+                        }
+                    }
+                )
+            }
+            item {
+                SettingLinkWithSwitch(
+                    checked = preferences.hasProxy() && preferences.proxy.enabled,
+                    title = stringResource(
+                        R.string.proxy_server
+                    ),
+                    subtitle = if (preferences.hasProxy()) with(preferences.proxy) {
+                        "${type.toString().lowercase()}://$hostname:$port"
+                    } else "",
+                    icon = Icons.Default.Public,
+                    onCheckedChange = {
+                        if (!preferences.hasProxy() && it) showProxySettingsDialog = true
+                        else coroutineScope.launch {
+                            context.updatePreferences {
+                                proxy = proxy.toBuilder().apply {
+                                    enabled = it
+                                }.build()
+                            }
+                            (context as Activity).restart()
+                        }
+                    },
+                    onClick = {
+                        showProxySettingsDialog = true
+                    }
+                )
+            }
+            item {
+                SettingLink(
+                    title = stringResource(R.string.about),
+                    icon = Icons.Default.Copyright,
+                    onClick = onNavigateToAbout
+                )
+            }
         }
     }
     if (showPrivacyModeDialog) {

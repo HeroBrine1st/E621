@@ -4,10 +4,14 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Button
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,9 +21,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistEntryComponent
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsBlacklistEntry(
     mainScaffoldState: MainScaffoldState,
@@ -28,11 +33,25 @@ fun SettingsBlacklistEntry(
     var applying by remember { mutableStateOf(false) }
     val backdropFactor by animateFloatAsState(if (!applying) 0f else 1f)
 
-    MainScaffold(
-        state = mainScaffoldState,
-        title = { Text(stringResource(R.string.screen_settings_blacklist_entry)) }
-    ) {
-        Box {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(stringResource(R.string.screen_settings_blacklist_entry))
+                },
+                actions = {
+                    ActionBarMenu(
+                        onNavigateToSettings = mainScaffoldState.goToSettings,
+                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                    )
+                }
+            )
+        },
+        snackbarHost = {
+            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+        }
+    ) { paddingValues ->
+        Box(Modifier.padding(paddingValues)) {
             Column(modifier = Modifier.padding(horizontal = 8.dp)) {
                 OutlinedTextField(
                     value = component.query,

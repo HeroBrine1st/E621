@@ -24,12 +24,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -42,13 +40,12 @@ fun SettingTexts(
         modifier = modifier,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(title, style = MaterialTheme.typography.subtitle1)
+        Text(title, style = MaterialTheme.typography.bodyMedium)
         if (subtitle != null) {
             Spacer(modifier = Modifier.size(2.dp))
             Text(
                 subtitle,
-                Modifier.alpha(ContentAlpha.medium),
-                style = MaterialTheme.typography.caption
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }

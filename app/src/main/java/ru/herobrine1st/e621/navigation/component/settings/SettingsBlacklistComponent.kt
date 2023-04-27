@@ -1,14 +1,21 @@
 package ru.herobrine1st.e621.navigation.component.settings
 
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
+import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.push
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.runningFold
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
@@ -66,13 +73,17 @@ class SettingsBlacklistComponent(
     }
 
     fun createNewEntry() {
-        navigator.push(
-            Config.Settings.Blacklist.Entry(
+        navigator.navigate { configList ->
+            if (configList.last() is Config.Settings.Blacklist.Entry) {
+                Log.w(TAG, "Prevented duplicated config (user double clicked a button?)")
+                return@navigate configList
+            }
+            configList + Config.Settings.Blacklist.Entry(
                 id = 0,
                 query = "",
                 enabled = true
             )
-        )
+        }
     }
 
     fun deleteEntry(entry: BlacklistEntry, callback: () -> Unit) {
