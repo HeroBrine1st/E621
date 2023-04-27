@@ -23,15 +23,14 @@ package ru.herobrine1st.e621.ui.screen.settings.component
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.*
 import androidx.compose.ui.tooling.preview.Preview
@@ -41,8 +40,8 @@ import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.*
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
 fun ProxyDialog(
     getInitialProxy: () -> Proxy,
     onClose: () -> Unit,
@@ -51,102 +50,6 @@ fun ProxyDialog(
     val state = remember { ProxyDialogState(getInitialProxy()) }
     ActionDialog(
         title = stringResource(R.string.proxy_server),
-        content = {
-            ExposedDropdownMenuBox(
-                expanded = state.dropdownExpanded,
-                onExpandedChange = {
-                    state.dropdownExpanded = !state.dropdownExpanded
-                }
-            ) {
-                OutlinedTextField(
-                    readOnly = true,
-                    singleLine = true,
-                    value = state.type.toString(),
-                    onValueChange = {},
-                    label = { Text(stringResource(R.string.proxy_type)) },
-                    trailingIcon = {
-                        Icon(
-                            Icons.Filled.ArrowDropDown,
-                            null,
-                            Modifier.rotate(
-                                animateFloatAsState(if (state.dropdownExpanded) 180f else 360f).value
-                            )
-                        )
-                    },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors(
-                        backgroundColor = Color.Transparent
-                    )
-                )
-                ExposedDropdownMenu(
-                    expanded = state.dropdownExpanded,
-                    onDismissRequest = {
-                        state.dropdownExpanded = false
-                    }
-                ) {
-                    ProxyType.values().forEach { type ->
-                        DropdownMenuItem(
-                            onClick = {
-                                state.type = type
-                                state.dropdownExpanded = false
-                            }, content = {
-                                Text(type.toString())
-                            }
-                        )
-                    }
-                }
-            }
-            OutlinedTextField(
-                value = state.hostname,
-                onValueChange = {
-                    state.hostname = it
-                },
-                singleLine = true,
-                label = { Text(stringResource(R.string.proxy_address)) }
-            )
-            OutlinedTextField(
-                value = if (state.port >= 0) state.port.toString() else "",
-                onValueChange = {
-                    val port = it.toIntOrNull()
-                    if (port != null && port >= 0) state.port = it.toInt()
-                },
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    autoCorrect = false,
-                    keyboardType = KeyboardType.Number,
-                    imeAction = ImeAction.None
-                ),
-                singleLine = true,
-                label = { Text(stringResource(R.string.proxy_port)) }
-            )
-            OutlinedTextField(
-                value = state.username,
-                onValueChange = {
-                    state.username = it
-                },
-                singleLine = true,
-                label = { Text(stringResource(R.string.proxy_username)) }
-            )
-            OutlinedTextField(
-                value = state.password,
-                visualTransformation = if (state.showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                onValueChange = {
-                    state.password = it
-                },
-                singleLine = true,
-                label = { Text(stringResource(R.string.proxy_password)) },
-                trailingIcon = {
-                    IconButton(onClick = { state.showPassword = !state.showPassword }) {
-                        Crossfade(state.showPassword) { showPassword ->
-                            Icon(
-                                imageVector = if (showPassword) Icons.Default.VisibilityOff
-                                else Icons.Default.Visibility,
-                                contentDescription = null
-                            )
-                        }
-                    }
-                }
-            )
-        },
         actions = {
             TextButton(onClick = onClose) {
                 Text(stringResource(R.string.close))
@@ -156,7 +59,99 @@ fun ProxyDialog(
             }
         },
         onDismissRequest = onClose
-    )
+    ) {
+        ExposedDropdownMenuBox(
+            expanded = state.dropdownExpanded,
+            onExpandedChange = {
+                state.dropdownExpanded = !state.dropdownExpanded
+            }
+        ) {
+            OutlinedTextField(
+                readOnly = true,
+                singleLine = true,
+                value = state.type.toString(),
+                onValueChange = {},
+                label = { Text(stringResource(R.string.proxy_type)) },
+                trailingIcon = {
+                    Icon(
+                        Icons.Filled.ArrowDropDown,
+                        null,
+                        Modifier.rotate(
+                            animateFloatAsState(if (state.dropdownExpanded) 180f else 360f).value
+                        )
+                    )
+                }
+            )
+            ExposedDropdownMenu(
+                expanded = state.dropdownExpanded,
+                onDismissRequest = {
+                    state.dropdownExpanded = false
+                }
+            ) {
+                ProxyType.values().forEach { type ->
+                    DropdownMenuItem(
+                        onClick = {
+                            state.type = type
+                            state.dropdownExpanded = false
+                        }, text = {
+                            Text(type.toString())
+                        }
+                    )
+                }
+            }
+        }
+        OutlinedTextField(
+            value = state.hostname,
+            onValueChange = {
+                state.hostname = it
+            },
+            singleLine = true,
+            label = { Text(stringResource(R.string.proxy_address)) }
+        )
+        OutlinedTextField(
+            value = if (state.port >= 0) state.port.toString() else "",
+            onValueChange = {
+                val port = it.toIntOrNull()
+                if (port != null && port >= 0) state.port = it.toInt()
+            },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
+                autoCorrect = false,
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.None
+            ),
+            singleLine = true,
+            label = { Text(stringResource(R.string.proxy_port)) }
+        )
+        OutlinedTextField(
+            value = state.username,
+            onValueChange = {
+                state.username = it
+            },
+            singleLine = true,
+            label = { Text(stringResource(R.string.proxy_username)) }
+        )
+        OutlinedTextField(
+            value = state.password,
+            visualTransformation = if (state.showPassword) VisualTransformation.None else PasswordVisualTransformation(),
+            onValueChange = {
+                state.password = it
+            },
+            singleLine = true,
+            label = { Text(stringResource(R.string.proxy_password)) },
+            trailingIcon = {
+                IconButton(onClick = { state.showPassword = !state.showPassword }) {
+                    Crossfade(state.showPassword) { showPassword ->
+                        Icon(
+                            imageVector = if (showPassword) Icons.Default.VisibilityOff
+                            else Icons.Default.Visibility,
+                            contentDescription = null
+                        )
+                    }
+                }
+            }
+        )
+    }
 }
 
 @Preview

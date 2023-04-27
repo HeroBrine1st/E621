@@ -21,51 +21,50 @@
 package ru.herobrine1st.e621.ui.dialog
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Card
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 
+// Clone of AlertDialog (that one with slots), but with more than 2 action buttons
+// and dedicated to actions in its content field
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActionDialog(
     title: String,
-    actions: @Composable RowScope.() -> Unit,
-    properties: DialogProperties = DialogProperties(),
+    actions: @Composable (() -> Unit),
     onDismissRequest: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit
+    content: @Composable (ColumnScope.() -> Unit)
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = properties) {
-        Card(
-            elevation = 8.dp,
-            shape = RoundedCornerShape(12.dp)
+    AlertDialog(onDismissRequest = onDismissRequest) {
+        Surface(
+            shape = AlertDialogDefaults.shape,
+            color = AlertDialogDefaults.containerColor,
+            tonalElevation = AlertDialogDefaults.TonalElevation,
         ) {
             Column(
-                modifier = Modifier.padding(
-                    start = 12.dp,
-                    end = 12.dp,
-                    top = 12.dp
-                ),
+                modifier = Modifier.padding(all = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
                     text = title,
-                    style = MaterialTheme.typography.h6,
-                    modifier = Modifier.align(Alignment.Start)
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                content()
-                Row(
+                    style = MaterialTheme.typography.headlineSmall,
                     modifier = Modifier
-                        .padding(bottom = 8.dp)
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.End,
-                    verticalAlignment = Alignment.CenterVertically
+                        .align(Alignment.Start)
+                )
+                Spacer(Modifier.height(16.dp))
+                content()
+                Spacer(Modifier.height(24.dp))
+                com.google.accompanist.flowlayout.FlowRow(
+                    mainAxisSpacing = 8.dp,
+                    crossAxisSpacing = 12.dp,
+                    modifier = Modifier.align(Alignment.End)
                 ) {
                     actions()
                 }

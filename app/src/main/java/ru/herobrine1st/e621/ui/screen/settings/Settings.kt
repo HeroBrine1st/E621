@@ -24,9 +24,13 @@ import android.app.Activity
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.*
@@ -43,7 +47,6 @@ import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
-import ru.herobrine1st.e621.ui.dialog.AlertDialog
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
 import ru.herobrine1st.e621.ui.screen.settings.component.ProxyDialog
 import ru.herobrine1st.e621.util.restart
@@ -69,7 +72,7 @@ fun Settings(
         topBar = {
             TopAppBar(
                 title = {
-                    androidx.compose.material3.Text(stringResource(R.string.settings))
+                    Text(stringResource(R.string.settings))
                 },
                 actions = {
                     ActionBarMenu(
@@ -172,17 +175,45 @@ fun Settings(
         }
     }
     if (showPrivacyModeDialog) {
-        AlertDialog(stringResource(R.string.privacy_mode_longdesc)) {
-            showPrivacyModeDialog = false
-            coroutineScope.launch {
-                context.updatePreferences {
-                    privacyModeDisclaimerShown = true
+        AlertDialog(
+            onDismissRequest = {
+                showPrivacyModeDialog = false
+            },
+            icon = {
+                Icon(
+                    Icons.Default.Warning,
+                    contentDescription = stringResource(R.string.warning)
+                )
+            },
+            title = {
+                Text(stringResource(R.string.warning))
+            },
+            text = {
+                Text(stringResource(R.string.privacy_mode_longdesc))
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    showPrivacyModeDialog = false
+                    coroutineScope.launch {
+                        context.updatePreferences {
+                            privacyModeDisclaimerShown = true
+                        }
+                    }
+                }) {
+                    Text(stringResource(R.string.i_understand))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    showPrivacyModeDialog = false
+                }) {
+                    Text(stringResource(R.string.dialog_dismiss))
                 }
             }
-        }
+        )
     } else if (showSafeModeDisclaimer) {
         DisclaimerDialog(
-            text = stringResource(R.string.settings_safe_mode_disclaimer),
+            text = { Text(stringResource(R.string.settings_safe_mode_disclaimer)) },
             onApply = {
                 showSafeModeDisclaimer = false
                 coroutineScope.launch {
@@ -191,7 +222,8 @@ fun Settings(
                         safeModeDisclaimerShown = true
                     }
                 }
-            }, onDismissRequest = {
+            },
+            onDismiss = {
                 showSafeModeDisclaimer = false
             }
         )

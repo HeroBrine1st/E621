@@ -21,10 +21,17 @@
 package ru.herobrine1st.e621.ui.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -37,7 +44,6 @@ import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.MessageQuote
 import ru.herobrine1st.e621.api.MessageText
 import ru.herobrine1st.e621.api.parseBBCode
-import ru.herobrine1st.e621.ui.theme.disabledText
 
 @Composable
 fun RenderBB(text: String) {
@@ -70,7 +76,7 @@ fun RenderBB(data: MessageData<*>) {
                         .width(4.dp)
                         .fillMaxHeight()
                         .clip(RoundedCornerShape(4.dp))
-                        .background(MaterialTheme.colors.disabledText)
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
                 )
                 Spacer(Modifier.width(4.dp))
                 RenderBB(

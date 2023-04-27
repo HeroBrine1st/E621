@@ -118,6 +118,8 @@ dependencies {
 
     // Jetpack Compose (Apache 2.0)
     implementation("androidx.compose.ui:ui:1.4.2")
+    // PullRefresh is not implemented in m3
+    // also many libraries use colors from m2
     implementation("androidx.compose.material:material:1.4.2")
     implementation("androidx.compose.material3:material3:1.1.0-rc01")
     implementation("androidx.compose.ui:ui-tooling-preview:1.4.2")

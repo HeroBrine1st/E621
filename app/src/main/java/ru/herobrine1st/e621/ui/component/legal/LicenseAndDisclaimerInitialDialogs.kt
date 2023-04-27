@@ -21,17 +21,17 @@
 package ru.herobrine1st.e621.ui.component.legal
 
 import android.widget.Toast
-import androidx.compose.material.Icon
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.OpenInBrowser
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.ui.dialog.ActionDialog
 
 @Composable
 fun LicenseAndDisclaimerInitialDialogs(
@@ -46,26 +46,18 @@ fun LicenseAndDisclaimerInitialDialogs(
     var showNonAffiliationDisclaimerDialog by remember { mutableStateOf(false) }
 
     if (showLicenseDialog) {
-        val uriHandler = LocalUriHandler.current
-        val licenseUrl = stringResource(R.string.license_url)
-        ActionDialog(
-            title = stringResource(R.string.license_word),
+        AlertDialog(
             onDismissRequest = {
                 Toast.makeText(context, R.string.explicitly_click_button, Toast.LENGTH_SHORT).show()
             },
-            actions = {
-                TextButton(
-                    onClick = {
-                        uriHandler.openUri(licenseUrl)
-                    }
-                ) {
-                    Text(stringResource(R.string.license_name_short))
-                    Icon(
-                        Icons.Default.OpenInBrowser,
-                        contentDescription = stringResource(R.string.open_in_browser)
-                    )
-                }
-                TextButton(
+            title = {
+                Text(stringResource(R.string.license_word))
+            },
+            text = {
+                Text(stringResource(R.string.license_brief))
+            },
+            confirmButton = {
+                Button(
                     onClick = {
                         showLicenseDialog = false
                         showNonAffiliationDisclaimerDialog = true
@@ -74,18 +66,21 @@ fun LicenseAndDisclaimerInitialDialogs(
                     Text(stringResource(R.string.i_understand))
                 }
             }
-        ) {
-            Text(stringResource(R.string.license_brief))
-        }
+        )
     }
     if (showNonAffiliationDisclaimerDialog) {
-        ActionDialog(
-            title = stringResource(R.string.disclaimer),
+        AlertDialog(
             onDismissRequest = {
                 Toast.makeText(context, R.string.explicitly_click_button, Toast.LENGTH_SHORT).show()
             },
-            actions = {
-                TextButton(
+            title = {
+                Text(stringResource(R.string.disclaimer))
+            },
+            text = {
+                Text(stringResource(R.string.non_affiliation_disclaimer))
+            },
+            confirmButton = {
+                Button(
                     onClick = {
                         showNonAffiliationDisclaimerDialog = false
                         onCompletion()
@@ -94,8 +89,6 @@ fun LicenseAndDisclaimerInitialDialogs(
                     Text(stringResource(R.string.i_understand))
                 }
             }
-        ) {
-            Text(stringResource(R.string.non_affiliation_disclaimer))
-        }
+        )
     }
 }

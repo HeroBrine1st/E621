@@ -20,66 +20,45 @@
 
 package ru.herobrine1st.e621.ui.dialog
 
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import ru.herobrine1st.e621.R
 
 @Composable
 fun DisclaimerDialog(
-    title: String = stringResource(R.string.disclaimer),
-    applyButtonEnabled: Boolean = true,
+    text: @Composable () -> Unit,
     onApply: () -> Unit,
-    onDismissRequest: () -> Unit,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    ActionDialog(
-        title = title,
-        actions = {
-            // Place button to the start so it can't be clicked intuitively
-            TextButton(
-                onClick = onApply,
-                enabled = applyButtonEnabled,
-                colors = ButtonDefaults.textButtonColors(
-                    contentColor = Color.Red
-                )
-            ) {
-                Text(stringResource(R.string.disclaimer_agree))
-            }
-            Spacer(Modifier.weight(1f))
-            TextButton(
-                onClick = onDismissRequest
-            ) {
-                Text(stringResource(R.string.close))
-            }
-        },
-        onDismissRequest = onDismissRequest
-    ) {
-        content()
-    }
-}
-
-@Composable
-fun DisclaimerDialog(
-    text: String,
-    title: String = stringResource(R.string.disclaimer),
-    applyButtonEnabled: Boolean = true,
-    onApply: () -> Unit,
-    onDismissRequest: () -> Unit,
-) {
-    DisclaimerDialog(
-        title = title,
-        applyButtonEnabled = applyButtonEnabled,
-        onApply = onApply,
-        onDismissRequest = onDismissRequest,
-        content = {
-            Text(text)
+    onDismiss: () -> Unit,
+    icon: @Composable () -> Unit = {
+        Icon(Icons.Default.Warning, contentDescription = stringResource(R.string.warning))
+    },
+    title: @Composable () -> Unit = {
+        Text(stringResource(R.string.disclaimer))
+    },
+    confirmButton: @Composable () -> Unit = {
+        Button(onClick = onApply) {
+            Text(stringResource(R.string.i_understand))
         }
+    },
+    dismissButton: @Composable () -> Unit = {
+        FilledTonalButton(onClick = onDismiss) {
+            Text(stringResource(R.string.dialog_dismiss))
+        }
+    }
+) {
+    AlertDialog(
+        icon = icon,
+        title = title,
+        text = text,
+        confirmButton = confirmButton,
+        dismissButton = dismissButton,
+        onDismissRequest = onDismiss
     )
 }

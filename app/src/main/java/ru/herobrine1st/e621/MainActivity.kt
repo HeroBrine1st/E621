@@ -26,11 +26,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.material.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
@@ -38,24 +39,36 @@ import com.arkivanov.decompose.defaultComponentContext
 import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
 import com.google.android.exoplayer2.ExoPlayer
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponentImpl
-import ru.herobrine1st.e621.preference.*
+import ru.herobrine1st.e621.preference.LocalPreferences
+import ru.herobrine1st.e621.preference.PreferencesSerializer
+import ru.herobrine1st.e621.preference.dataStore
+import ru.herobrine1st.e621.preference.getPreferencesFlow
+import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.Navigator
 import ru.herobrine1st.e621.ui.component.legal.LicenseAndDisclaimerInitialDialogs
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
-import ru.herobrine1st.e621.ui.theme.ActionBarIconColor
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.ui.theme.snackbar.LocalSnackbar
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarController
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarMessage
-import ru.herobrine1st.e621.util.*
+import ru.herobrine1st.e621.util.AuthenticatorImpl
+import ru.herobrine1st.e621.util.ExceptionReporter
+import ru.herobrine1st.e621.util.FavouritesCache
+import ru.herobrine1st.e621.util.ProxySelectorImpl
+import ru.herobrine1st.e621.util.ProxyWithAuth
+import ru.herobrine1st.e621.util.lazy
 import java.net.Authenticator
 import java.net.Proxy
 import java.net.ProxySelector
@@ -137,29 +150,14 @@ class MainActivity : ComponentActivity() {
                     LocalSnackbar provides snackbarAdapter,
                     LocalPreferences provides preferences
                 ) {
-                    Box(Modifier.background(MaterialTheme.colors.background)) {
-                        // TODO replace with StackAnimation which is aware of previous and current component
-                        //      so it can place corresponding appbars
-                        TopAppBar(
-                            title = {},
-                            actions = {
-                                IconButton(onClick = {}) {
-                                    Icon(
-                                        Icons.Default.MoreVert,
-                                        contentDescription = null,
-                                        tint = ActionBarIconColor
-                                    )
-                                }
-                            },
-                            backgroundColor = MaterialTheme.colors.primarySurface,
-                            modifier = Modifier.align(Alignment.TopStart)
-                        )
-
+                    Box(Modifier.background(MaterialTheme.colorScheme.background)) {
                         Navigator(rootComponent, snackbarHostState)
 
                         // weak TO/DO: move SnackbarHost here, as animation should not include SnackbarHost
                         // scaffold places snackbar according to FAB and BottomBar,
                         // so it is not possible to calculate it from here
+
+                        // or simply separate snackbar states. It is simple and easy.
                     }
 
                     val dialog by rootComponent.dialogSlot.subscribeAsState()

@@ -23,11 +23,25 @@ package ru.herobrine1st.e621.ui.component.post
 import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -35,7 +49,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import coil.compose.AsyncImagePainter
-import coil.compose.AsyncImagePainter.State.*
+import coil.compose.AsyncImagePainter.State.Empty
+import coil.compose.AsyncImagePainter.State.Error
+import coil.compose.AsyncImagePainter.State.Loading
 import com.google.accompanist.placeholder.PlaceholderHighlight
 import com.google.accompanist.placeholder.material.fade
 import com.google.accompanist.placeholder.material.placeholder
@@ -48,7 +64,6 @@ import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "PostImage"
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun PostImage(
     file: NormalizedFile,
@@ -97,18 +112,20 @@ fun PostImage(
             },
             contentScale = if (aspectRatio > 0) ContentScale.Crop else ContentScale.Fit
         )
-        if (actualPostFileType != null && actualPostFileType.isNotImage) Chip( // TODO
+        if (actualPostFileType != null && actualPostFileType.isNotImage) AssistChip( // TODO
             modifier = Modifier
                 .align(Alignment.TopStart)
                 .offset(x = 10.dp, y = 10.dp),
-            colors = ChipDefaults.outlinedChipColors(
-                backgroundColor = MaterialTheme.colors.surface.copy(alpha = 0.3f)
+            colors = AssistChipDefaults.assistChipColors(
+                disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
             ),
             enabled = false,
-            onClick = {}
-        ) {
-            Text(actualPostFileType.extension)
-        }
+            onClick = {},
+            border = null,
+            label = {
+                Text(actualPostFileType.extension)
+            }
+        )
         when (painterState) {
             is Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Icon(Icons.Outlined.Error, contentDescription = null)

@@ -141,4 +141,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="wiki_page_not_found">"There\'s no such wiki page&lt;br /&gt;It may not have been created yet"</string>
     <string name="screen_settings_blacklist_entry">Blacklist entry</string>
     <string name="create_new_fab">New</string>
+    <string name="dialog_dismiss">Dismiss</string>
 </resources>
