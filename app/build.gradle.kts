@@ -169,6 +169,7 @@ dependencies {
     val accompanistVersion = "0.30.0"
     implementation("com.google.accompanist:accompanist-flowlayout:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
 
     // Retrofit (Apache 2.0)
     implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
