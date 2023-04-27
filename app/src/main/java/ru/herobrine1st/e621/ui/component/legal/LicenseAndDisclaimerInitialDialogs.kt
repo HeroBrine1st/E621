@@ -22,7 +22,6 @@ package ru.herobrine1st.e621.ui.component.legal
 
 import android.widget.Toast
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Copyright
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -53,9 +52,6 @@ fun LicenseAndDisclaimerInitialDialogs(
         AlertDialog(
             onDismissRequest = {
                 Toast.makeText(context, R.string.explicitly_click_button, Toast.LENGTH_SHORT).show()
-            },
-            icon = {
-                Icon(Icons.Default.Copyright, contentDescription = null)
             },
             title = {
                 Text(stringResource(R.string.license_word))
