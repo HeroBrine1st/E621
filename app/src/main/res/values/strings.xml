@@ -62,9 +62,9 @@
     <string name="favourites_of">Favourites of</string>
     <string name="user">User</string>
     <string name="favourites">Favourites</string>
-    <string name="privacy_mode">Privacy mode</string>
-    <string name="privacy_mode_subtitle">Don\'t let server know you opened non-favourite post</string>
-    <string name="privacy_mode_longdesc">Privacy mode is not the panacea if you want total privacy and confidentiality. Searches will still be executed on server-side.</string>
+    <string name="data_saver_mode">Data saver mode</string>
+    <string name="data_saver_mode_subtitle">Make less API requests</string>
+    <string name="data_saver_mode_long_description">"This feature is work in progress. Right now it tries to make less API requests, and it is usable because of hard limit: 2 requests per second. Speaking exactly, it disables post re-fetching on open and disables automatic comments fetching."</string>
     <string name="warning">Warning</string>
     <string name="pause">Pause</string>
     <string name="resume">Resume</string>

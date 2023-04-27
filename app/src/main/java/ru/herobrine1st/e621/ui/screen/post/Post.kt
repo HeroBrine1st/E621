@@ -87,7 +87,7 @@ fun Post(
 
     val coroutineScope = rememberCoroutineScope()
 
-    var loadComments by remember { mutableStateOf(!preferences.privacyModeEnabled || component.openComments) } // Do not make excessive API calls (user preference)
+    var loadComments by remember { mutableStateOf(!preferences.dataSaverModeEnabled || component.openComments) } // Do not make excessive API calls (user preference)
 
     if (post == null) {
         Column(

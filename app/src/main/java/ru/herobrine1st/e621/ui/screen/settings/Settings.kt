@@ -62,7 +62,7 @@ fun Settings(
 
     // State
     val preferences = LocalPreferences.current
-    var showPrivacyModeDialog by remember { mutableStateOf(false) }
+    var showDataSaverModeDialog by remember { mutableStateOf(false) }
     var showSafeModeDisclaimer by remember { mutableStateOf(false) }
     var showProxySettingsDialog by remember { mutableStateOf(false) }
 
@@ -107,17 +107,20 @@ fun Settings(
             }
             item {
                 SettingSwitch(
-                    checked = preferences.privacyModeEnabled,
-                    title = stringResource(R.string.privacy_mode),
-                    subtitle = stringResource(R.string.privacy_mode_subtitle),
-                    icon = Icons.Default.Shield,
-                    onCheckedChange = { enabled: Boolean ->
-                        coroutineScope.launch {
-                            context.updatePreferences {
-                                privacyModeEnabled = enabled
+                    checked = preferences.dataSaverModeEnabled,
+                    title = stringResource(R.string.data_saver_mode),
+                    subtitle = stringResource(R.string.data_saver_mode_subtitle),
+                    // TODO propagate all parameters as composables and use cross-fade
+                    icon = Icons.Default.DataSaverOff,
+                    onCheckedChange = { checked: Boolean ->
+                        if (preferences.dataSaverDisclaimerShown) {
+                            coroutineScope.launch {
+                                context.updatePreferences {
+                                    dataSaverModeEnabled = checked
+                                }
                             }
-                            if (!preferences.privacyModeDisclaimerShown && enabled)
-                                showPrivacyModeDialog = true
+                        } else if (checked) {
+                            showDataSaverModeDialog = true
                         }
                     }
                 )
@@ -174,10 +177,10 @@ fun Settings(
             }
         }
     }
-    if (showPrivacyModeDialog) {
+    if (showDataSaverModeDialog) {
         AlertDialog(
             onDismissRequest = {
-                showPrivacyModeDialog = false
+                showDataSaverModeDialog = false
             },
             icon = {
                 Icon(
@@ -189,14 +192,15 @@ fun Settings(
                 Text(stringResource(R.string.warning))
             },
             text = {
-                Text(stringResource(R.string.privacy_mode_longdesc))
+                Text(stringResource(R.string.data_saver_mode_long_description))
             },
             confirmButton = {
                 TextButton(onClick = {
-                    showPrivacyModeDialog = false
+                    showDataSaverModeDialog = false
                     coroutineScope.launch {
                         context.updatePreferences {
-                            privacyModeDisclaimerShown = true
+                            dataSaverDisclaimerShown = true
+                            dataSaverModeEnabled = true
                         }
                     }
                 }) {
@@ -205,7 +209,7 @@ fun Settings(
             },
             dismissButton = {
                 TextButton(onClick = {
-                    showPrivacyModeDialog = false
+                    showDataSaverModeDialog = false
                 }) {
                     Text(stringResource(R.string.dialog_dismiss))
                 }

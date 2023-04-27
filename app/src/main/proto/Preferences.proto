@@ -6,8 +6,8 @@ import "Proxy.proto";
 
 message Preferences {
   optional bool blacklist_enabled = 1 [default = true];
-  optional bool privacy_mode_enabled = 2 [default = false];
-  optional bool privacy_mode_disclaimer_shown = 3 [default = false];
+  optional bool data_saver_mode_enabled = 2 [default = false];
+  optional bool data_saver_disclaimer_shown = 3 [default = false];
   optional bool show_remaining_time_media = 4 [default = true];
   optional bool mute_sound_on_media = 5 [default = true];
   optional AuthorizationCredentials auth = 6;

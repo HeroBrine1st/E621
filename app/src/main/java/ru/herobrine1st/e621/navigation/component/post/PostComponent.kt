@@ -35,8 +35,12 @@ import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.MediaItem
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.SearchOptions
@@ -48,8 +52,6 @@ import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.screen.post.logic.PostCommentsSource
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
-import ru.herobrine1st.e621.util.FavouritesCache
-import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
 import java.io.IOException
 
@@ -66,7 +68,6 @@ class PostComponent(
     applicationContext: Context,
     snackbarAdapter: SnackbarAdapter,
     exceptionReporter: ExceptionReporter,
-    favouritesCache: FavouritesCache,
     private val exoPlayer: ExoPlayer,
     val api: API
 ) : ComponentContext by componentContext {
@@ -97,17 +98,13 @@ class PostComponent(
         lifecycle.doOnResume {
             // TODO preference to update on resume
             lifecycleScope.launch {
-                val isPrivacyModeEnabled =
-                    applicationContext.getPreferencesFlow { it.privacyModeEnabled }
+                val isDataSaverEnabled =
+                    applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }
                         .first()
                 val currentPost = post
                 val id = post?.id ?: postId
                 if (currentPost == null // Nothing to show
-                    || !isPrivacyModeEnabled
-                    || favouritesCache.isFavourite(currentPost).let {
-                        it == FavouriteState.Determined.FAVOURITE // Post is favourite
-                                || it is FavouriteState.InFly && !it.isFavourite // Post is going to be favourite
-                    }
+                    || !isDataSaverEnabled
                 ) {
                     isLoadingPost = true
                     try {

@@ -118,7 +118,6 @@ class RootComponentImpl(
                     applicationContext,
                     snackbarAdapterProvider.value,
                     exceptionReporterProvider.value,
-                    favouritesCacheProvider.value,
                     exoPlayerProvider.value,
                     apiProvider.value
                 )

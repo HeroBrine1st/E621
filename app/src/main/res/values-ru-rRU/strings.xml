@@ -62,9 +62,9 @@
     <string name="favourites_of">Сохранил в избранное</string>
     <string name="user">Пользователь</string>
     <string name="favourites">Сохранённые</string>
-    <string name="privacy_mode">Режим приватности</string>
-    <string name="privacy_mode_subtitle">Не давать серверу знать об открытии несохранённого поста</string>
-    <string name="privacy_mode_longdesc">Режим приватности - не панацея для полной приватности и конфиденциальности. Поиск всё ещё будет выполняться на стороне сервера.</string>
+    <string name="data_saver_mode">Режим приватности</string>
+    <string name="data_saver_mode_subtitle">Не давать серверу знать об открытии несохранённого поста</string>
+    <string name="data_saver_mode_long_description">Режим приватности - не панацея для полной приватности и конфиденциальности. Поиск всё ещё будет выполняться на стороне сервера.</string>
     <string name="warning">Внимание</string>
     <string name="pause">Пауза</string>
     <string name="resume">Продолжить</string>
