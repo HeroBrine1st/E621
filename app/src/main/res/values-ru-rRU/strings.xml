@@ -62,9 +62,9 @@
     <string name="favourites_of">Сохранил в избранное</string>
     <string name="user">Пользователь</string>
     <string name="favourites">Сохранённые</string>
-    <string name="data_saver_mode">Режим приватности</string>
-    <string name="data_saver_mode_subtitle">Не давать серверу знать об открытии несохранённого поста</string>
-    <string name="data_saver_mode_long_description">Режим приватности - не панацея для полной приватности и конфиденциальности. Поиск всё ещё будет выполняться на стороне сервера.</string>
+    <string name="data_saver_mode">Экономия данных</string>
+    <string name="data_saver_mode_subtitle">Делать меньше запросов к API</string>
+    <string name="data_saver_mode_long_description">Эта функция находится в стадии разработки. Прямо сейчас она пытается сокращать запросы к API, что полезно из-за жесткого ограничения: 2 запроса в секунду. Точнее говоря, он отключает повторную загрузку поста при его открытии и отключает автоматическую загрузку комментариев.</string>
     <string name="warning">Внимание</string>
     <string name="pause">Пауза</string>
     <string name="resume">Продолжить</string>
