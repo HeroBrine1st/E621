@@ -25,7 +25,6 @@ import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.*
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -34,14 +33,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
-import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,8 +46,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInParent
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.*
 import androidx.paging.LoadState
@@ -67,9 +65,8 @@ import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.*
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffold
+import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
-import ru.herobrine1st.e621.ui.component.scaffold.eraseSnackbarHostState
 import ru.herobrine1st.e621.ui.screen.post.component.GoingToFullscreenAnimation
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
@@ -79,7 +76,7 @@ import java.util.*
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Post(
     mainScaffoldState: MainScaffoldState,
@@ -89,11 +86,6 @@ fun Post(
     val preferences = LocalPreferences.current
 
     val coroutineScope = rememberCoroutineScope()
-
-    val drawerState = rememberBottomDrawerState(
-        initialValue = if (component.openComments) BottomDrawerValue.Expanded // Opened works here
-        else BottomDrawerValue.Closed
-    )
 
     var loadComments by remember { mutableStateOf(!preferences.privacyModeEnabled || component.openComments) } // Do not make excessive API calls (user preference)
 
@@ -109,7 +101,7 @@ fun Post(
 
     var fullscreenState by remember { mutableStateOf(FullscreenState.CLOSE) }
 
-    var imagePositionInParent by remember { mutableStateOf(Offset.Unspecified) }
+    var imagePositionInRoot by remember { mutableStateOf(Offset.Unspecified) }
 
     val media = remember {
         movableContentOf { file: NormalizedFile, post: Post, modifier: Modifier ->
@@ -121,301 +113,278 @@ fun Post(
         }
     }
 
-    Box {
-        CommentsBottomDrawer(
-            drawerState = drawerState,
-            commentsFlow = component.commentsFlow,
-            post = post,
-            loadComments = loadComments,
-        ) {
-            MainScaffold(
-                state = mainScaffoldState.eraseSnackbarHostState(),
-                title = { Text(stringResource(R.string.post)) },
-            ) {
-                BoxWithConstraints {
-                    LazyColumn(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        userScrollEnabled = fullscreenState == FullscreenState.CLOSE
-                    ) {
-                        item("media") {
-                            val sample = post.selectSample()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val bottomSheetState = rememberStandardBottomSheetState(
+        initialValue = SheetValue.Hidden,
+        skipHiddenState = false
+    )
+    val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
+        bottomSheetState = bottomSheetState,
+        snackbarHostState = mainScaffoldState.snackbarHostState
+    )
 
-                            // "Open to fullscreen" behavior
-                            // It is obvious that this code is bad from its size (it is not all, the
-                            // second part is below, and also in another file)
-                            // It is not really fullscreen - appbar is still visible
-                            // Still VIP, maybe Window should be used
-                            // Or navigation should handle this. As AndroidX Compose Navigation is
-                            // not flexible, I look at Decompose
-                            Box(
-                                Modifier
-                                    // This box will be empty if image is gone to fullscreen
-                                    .aspectRatio(sample.aspectRatio)
-                                    .fillMaxWidth()
-                                    .clickable(
-                                        enabled = fullscreenState == FullscreenState.CLOSE
-                                                && !post.file.type.isVideo,
-                                        indication = null, // The animation is the indication
-                                        interactionSource = remember { MutableInteractionSource() }
-                                    ) {
-                                        fullscreenState = FullscreenState.OPEN
-                                    }
-                                    .onGloballyPositioned {
-                                        imagePositionInParent = it.positionInParent()
-                                    }
-                            ) {
-                                if (fullscreenState == FullscreenState.CLOSE)
-                                    media(sample, post, Modifier.fillMaxWidth())
-                            }
-                        }
-                        // TODO visually connect description to image and add elevation only at bottom
-                        // (it should look great according to my imagination)
-                        // P.s. it is not possible with vanilla compose in compose stage; should draw manually
-                        item("description") {
-                            Column(
-                                modifier = Modifier
-                                    .padding(8.dp)
-                                    .fillMaxWidth()
-
-                            ) {
-                                Text(
-                                    stringResource(R.string.description),
-                                    style = MaterialTheme.typography.h6
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                                CollapsibleColumn(
-                                    collapsedHeight = this@BoxWithConstraints.maxHeight * DESCRIPTION_COLLAPSED_HEIGHT_FRACTION,
-                                    button = { expanded, onClick ->
-                                        TextButton(
-                                            onClick = onClick,
-                                            modifier = Modifier.fillMaxWidth()
-                                        ) {
-                                            // TODO expose animation state from CollapsibleColumn and use it here
-                                            val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
-                                            Icon(
-                                                Icons.Default.ExpandMore, null, modifier = Modifier
-                                                    .padding(start = 4.dp, end = 12.dp)
-                                                    .rotate(rotation)
-                                            )
-                                            Crossfade(expanded) { state ->
-                                                Text(
-                                                    stringResource(if (!state) R.string.expand else R.string.collapse),
-                                                    modifier = Modifier.weight(1f)
-                                                )
-                                            }
-                                            Spacer(Modifier.weight(1f))
-                                        }
-                                    }
-                                ) {
-                                    RenderBB(post.description)
-                                }
-                            }
-                            Divider()
-                        }
-                        item("comments") {
-                            Column(Modifier
-                                .fillMaxWidth()
-                                .clickable(enabled = post.commentCount != 0) {
-                                    coroutineScope.launch {
-                                        loadComments = true
-                                        drawerState.open()
-                                    }
-                                }
-                                .padding(horizontal = BASE_PADDING_HORIZONTAL)
-                            ) {
-                                Text(
-                                    stringResource(R.string.comments),
-                                    style = MaterialTheme.typography.h6
-                                )
-                                Spacer(Modifier.width(4.dp))
-                                if (post.commentCount == 0) {
-                                    Text(stringResource(R.string.no_comments_found))
-                                } else if (loadComments) {
-                                    val comments = component.commentsFlow.collectAsLazyPagingItems()
-                                    when (comments.loadState.refresh) {
-                                        is LoadState.Loading -> {
-                                            PostCommentPlaceholder()
-                                        }
-
-                                        is LoadState.NotLoading -> {
-                                            if (comments.itemSnapshotList.isEmpty()) {
-                                                Text(stringResource(R.string.no_comments_found))
-                                            } else {
-                                                val comment = comments.peek(0)
-                                                if (comment != null) PostComment(comment)
-                                                else Text(stringResource(R.string.no_comments_found))
-                                            }
-                                        }
-
-                                        is LoadState.Error -> Text(stringResource(R.string.comments_load_failed))
-                                    }
-                                } else {
-                                    Text(stringResource(R.string.click_to_load))
-                                }
-                                Spacer(Modifier.height(8.dp))
-                            }
-                            Divider()
-                        }
-                        item("uploaded") {
-                            // TODO place more information here
-                            Text(
-                                stringResource(
-                                    R.string.uploaded_relative_date,
-                                    DateUtils.getRelativeTimeSpanString(
-                                        post.createdAt.toEpochSecond() * 1000,
-                                        System.currentTimeMillis(),
-                                        SECOND_IN_MILLIS
-                                    )
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = BASE_PADDING_HORIZONTAL)
-                            )
-                        }
-                        // Move tags to another screen?
-                        tags(
-                            post,
-                            onModificationClick = { tag, exclude ->
-                                component.handleTagModification(tag, exclude)
-                            },
-                            onWikiClick = {
-                                component.handleWikiClick(it)
-                            }
+    BoxWithConstraints {
+        BottomSheetScaffold(
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(stringResource(R.string.post))
+                    },
+                    actions = {
+                        ActionBarMenu(
+                            onNavigateToSettings = mainScaffoldState.goToSettings,
+                            onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
                         )
-                    }
-                    // TODO move out of scaffold
-                    GoingToFullscreenAnimation(
-                        isFullscreen = fullscreenState == FullscreenState.OPEN,
-                        contentAspectRatio = post.selectSample().aspectRatio,
-                        getContentPositionRelativeToParent = { imagePositionInParent },
-                        assumeTranslatedComponentIsInFullscreenContainerCentered = true,
-                        onExit = {
-                            fullscreenState = FullscreenState.CLOSE
-                        },
-                        componentBackground = {
-                            Surface(
-                                color = Color.Black,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .clickable(
-                                        indication = null, // The animation is the indication
-                                        interactionSource = remember { MutableInteractionSource() }
-                                    ) {
-                                        fullscreenState = FullscreenState.CLOSING
-                                    }
-                            ) {}
-                        }
-                    ) {
-                        Zoomable(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            media(post.selectSample(), post, Modifier.fillMaxSize())
-                        }
-                    }
+                    },
+                    scrollBehavior = scrollBehavior
+                )
+            },
+            sheetContent = {
+                CommentsBottomSheetContent(
+                    commentsFlow = component.commentsFlow,
+                    post = post,
+                    loadComments = loadComments
+                )
+            },
+            sheetPeekHeight = maxHeight * 0.5f,
+            scaffoldState = bottomSheetScaffoldState,
+            modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        ) { _ ->
+            // PaddingValues purposely unused because it clutters screen if applied via modifier
+            // and lags if applied via contentPadding
+            // while has no top padding, so useless
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                userScrollEnabled = fullscreenState == FullscreenState.CLOSE
+            ) {
+                item("media") {
+                    val sample = post.selectSample()
 
-                    BackHandler(fullscreenState == FullscreenState.OPEN) {
-                        fullscreenState = FullscreenState.CLOSING
+                    // "Open to fullscreen" behavior
+                    // It is obvious that this code is bad from its size (it is not all, the
+                    // second part is below, and also in another file)
+                    // It is not really fullscreen - appbar is still visible
+                    // Still VIP, maybe Window should be used
+                    // Or navigation should handle this. As AndroidX Compose Navigation is
+                    // not flexible, I look at Decompose
+                    Box(
+                        Modifier
+                            // This box will be empty if image is gone to fullscreen
+                            .aspectRatio(sample.aspectRatio)
+                            .fillMaxWidth()
+                            .clickable(
+                                enabled = fullscreenState == FullscreenState.CLOSE
+                                        && !post.file.type.isVideo,
+                                indication = null, // The animation is the indication
+                                interactionSource = remember { MutableInteractionSource() }
+                            ) {
+                                fullscreenState = FullscreenState.OPEN
+                            }
+                            .onGloballyPositioned {
+                                imagePositionInRoot = it.positionInRoot()
+                            }
+                    ) {
+                        if (fullscreenState == FullscreenState.CLOSE)
+                            media(sample, post, Modifier.fillMaxWidth())
                     }
                 }
+                // TODO visually connect description to image and add elevation only at bottom
+                // (it should look great according to my imagination)
+                // P.s. it is not possible with vanilla compose in compose stage; should draw manually
+                item("description") {
+                    Column(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth()
+
+                    ) {
+                        Text(
+                            stringResource(R.string.description),
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        CollapsibleColumn(
+                            collapsedHeight = this@BoxWithConstraints.maxHeight * DESCRIPTION_COLLAPSED_HEIGHT_FRACTION,
+                            button = { expanded, onClick ->
+                                TextButton(
+                                    onClick = onClick,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    // TODO expose animation state from CollapsibleColumn and use it here
+                                    val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
+                                    Icon(
+                                        Icons.Default.ExpandMore, null, modifier = Modifier
+                                            .padding(start = 4.dp, end = 12.dp)
+                                            .rotate(rotation)
+                                    )
+                                    Crossfade(expanded) { state ->
+                                        Text(
+                                            stringResource(if (!state) R.string.expand else R.string.collapse),
+                                            modifier = Modifier.weight(1f)
+                                        )
+                                    }
+                                    Spacer(Modifier.weight(1f))
+                                }
+                            }
+                        ) {
+                            RenderBB(post.description)
+                        }
+                    }
+                    Divider()
+                }
+                item("comments") {
+                    Column(Modifier
+                        .fillMaxWidth()
+                        .clickable(enabled = post.commentCount != 0) {
+                            coroutineScope.launch {
+                                loadComments = true
+                                bottomSheetState.partialExpand()
+                            }
+                        }
+                        .padding(horizontal = BASE_PADDING_HORIZONTAL)
+                    ) {
+                        Text(
+                            stringResource(R.string.comments),
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Spacer(Modifier.width(4.dp))
+                        if (post.commentCount == 0) {
+                            Text(stringResource(R.string.no_comments_found))
+                        } else if (loadComments) {
+                            val comments = component.commentsFlow.collectAsLazyPagingItems()
+                            when (comments.loadState.refresh) {
+                                is LoadState.Loading -> {
+                                    PostCommentPlaceholder()
+                                }
+
+                                is LoadState.NotLoading -> {
+                                    if (comments.itemSnapshotList.isEmpty()) {
+                                        Text(stringResource(R.string.no_comments_found))
+                                    } else {
+                                        val comment = comments.peek(0)
+                                        if (comment != null) PostComment(comment)
+                                        else Text(stringResource(R.string.no_comments_found))
+                                    }
+                                }
+
+                                is LoadState.Error -> Text(stringResource(R.string.comments_load_failed))
+                            }
+                        } else {
+                            Text(stringResource(R.string.click_to_load))
+                        }
+                        Spacer(Modifier.height(8.dp))
+                    }
+                    Divider()
+                }
+                item("uploaded") {
+                    // TODO place more information here
+                    Text(
+                        stringResource(
+                            R.string.uploaded_relative_date,
+                            DateUtils.getRelativeTimeSpanString(
+                                post.createdAt.toEpochSecond() * 1000,
+                                System.currentTimeMillis(),
+                                SECOND_IN_MILLIS
+                            )
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = BASE_PADDING_HORIZONTAL)
+                    )
+                }
+                // Move tags to another screen?
+                tags(
+                    post,
+                    onModificationClick = { tag, exclude ->
+                        component.handleTagModification(tag, exclude)
+                    },
+                    onWikiClick = {
+                        component.handleWikiClick(it)
+                    }
+                )
+            }
+        }
+        GoingToFullscreenAnimation(
+            isFullscreen = fullscreenState == FullscreenState.OPEN,
+            contentAspectRatio = post.selectSample().aspectRatio,
+            getContentPositionRelativeToParent = { imagePositionInRoot },
+            assumeTranslatedComponentIsInFullscreenContainerCentered = true,
+            onExit = {
+                fullscreenState = FullscreenState.CLOSE
+            },
+            componentBackground = {
+                Surface(
+                    color = Color.Black,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .clickable(
+                            indication = null, // The animation is the indication
+                            interactionSource = remember { MutableInteractionSource() }
+                        ) {
+                            fullscreenState = FullscreenState.CLOSING
+                        }
+                ) {}
+            }
+        ) {
+            Zoomable(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                media(post.selectSample(), post, Modifier.fillMaxSize())
             }
         }
 
-        SnackbarHost(
-            hostState = mainScaffoldState.snackbarHostState,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        BackHandler(fullscreenState == FullscreenState.OPEN) {
+            fullscreenState = FullscreenState.CLOSING
+        }
+    }
+
+    BackHandler(enabled = bottomSheetState.currentValue != SheetValue.Hidden) {
+        coroutineScope.launch {
+            bottomSheetState.hide()
+        }
     }
 }
 
-@OptIn(ExperimentalMaterialApi::class)
 @Composable
-fun CommentsBottomDrawer(
-    drawerState: BottomDrawerState,
+fun CommentsBottomSheetContent(
     commentsFlow: Flow<PagingData<CommentData>>,
     post: Post,
-    loadComments: Boolean,
-    content: @Composable () -> Unit
+    loadComments: Boolean
 ) {
 
     val commentsLazyListState = rememberLazyListState()
-    val coroutineScope = rememberCoroutineScope()
 
-    val isExpanded // = drawerState.isExpanded
-            by remember(drawerState) {
-                derivedStateOf {
-                    drawerState.progress.fraction == 1f && drawerState.progress.to == BottomDrawerValue.Expanded
-                }
-            }
-
-    // TODO use progress fraction to animate that
-    val shapeSize by animateDpAsState(if (isExpanded) 0.dp else 8.dp)
-    val drawerElevation by animateDpAsState(if (isExpanded) 0.dp else DrawerDefaults.Elevation)
-    val topAppBarElevation by animateDpAsState(if (isExpanded) AppBarDefaults.TopAppBarElevation else DrawerDefaults.Elevation)
-
-    val isGesturesEnabled by remember(drawerState, commentsLazyListState) {
-        derivedStateOf {
-            !drawerState.isClosed // Do not allow opening by gesture
-                    // Disable closing while scrolling
-                    && commentsLazyListState.firstVisibleItemIndex == 0
-                    && commentsLazyListState.firstVisibleItemScrollOffset == 0
-        }
+    if (!loadComments) {
+        Box(Modifier.fillMaxSize()) // Set size so that drawer won't auto-expand when opened
+        return
     }
 
-    BottomDrawer(
-        drawerState = drawerState,
-        drawerElevation = drawerElevation,
-        gesturesEnabled = isGesturesEnabled,
-        drawerShape = RoundedCornerShape(shapeSize),
-        scrimColor = Color.Transparent,
-        drawerContent = {
-            // Do not load comments while drawer is closed
-            if (!loadComments) {
-                Box(Modifier.fillMaxSize()) // Set size so that drawer won't auto-expand when opened
-                return@BottomDrawer
-            }
-            val comments = commentsFlow.collectAsLazyPagingItems()
-            // TODO use scaffold here, maybe even MainScaffold
-            TopAppBar(
-                title = {
-                    Text(stringResource(R.string.comments))
-                },
-                elevation = topAppBarElevation
-            )
-            LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                state = commentsLazyListState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item {}
-                // TODO manage placeholders with Jetpack Paging
-                if (comments.loadState.refresh is LoadState.Loading) {
-                    items(count = post.commentCount) {
-                        PostCommentPlaceholder(modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL))
-                    }
-                    return@LazyColumn
-                }
-                endOfPagePlaceholder(comments.loadState.prepend)
-                items(comments, key = { it.id }) { comment ->
-                    if (comment == null) return@items
-                    if (comment.isHidden) return@items
-                    PostComment(
-                        comment,
-                        modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
-                    )
-                }
-                endOfPagePlaceholder(comments.loadState.append)
-                item {}
-            }
-        }
+    val comments = commentsFlow.collectAsLazyPagingItems()
+
+    LazyColumn(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        state = commentsLazyListState,
+        modifier = Modifier
+            .fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        content()
-    }
-
-    BackHandler(enabled = drawerState.isOpen) {
-        coroutineScope.launch {
-            drawerState.close()
-            commentsLazyListState.scrollToItem(0)
+        item {}
+        // TODO manage placeholders with Jetpack Paging
+        if (comments.loadState.refresh is LoadState.Loading) {
+            items(count = post.commentCount) {
+                PostCommentPlaceholder(modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL))
+            }
+            return@LazyColumn
         }
+        endOfPagePlaceholder(comments.loadState.prepend)
+        items(comments, key = { it.id }) { comment ->
+            if (comment == null) return@items
+            if (comment.isHidden) return@items
+            PostComment(
+                comment,
+                modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
+            )
+        }
+        endOfPagePlaceholder(comments.loadState.append)
+        item {}
     }
 }
 
@@ -460,15 +429,15 @@ private fun LazyListScope.tags(
                 .background(
                     brush = Brush.verticalGradient(
                         listOf(
-                            MaterialTheme.colors.background,
-                            MaterialTheme.colors.background.copy(alpha = 0f)
+                            MaterialTheme.colorScheme.background,
+                            MaterialTheme.colorScheme.background.copy(alpha = 0f)
                         )
                     )
                 )
         ) {
             Text(
                 stringResource(titleId),
-                style = MaterialTheme.typography.h6,
+                style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.weight(1f)
             )
         }

@@ -21,10 +21,16 @@
 package ru.herobrine1st.e621.ui.screen.post.component
 
 import android.text.format.DateUtils
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,7 +66,7 @@ fun PostComment(
                     0L,
                     DateUtils.FORMAT_ABBREV_ALL
                 ).toString(),
-                color = MaterialTheme.colors.onBackground.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
             )
@@ -92,7 +98,7 @@ fun PostCommentPlaceholder(modifier: Modifier = Modifier, lines: Int = 2) {
             Spacer(Modifier.width(2.dp))
             Text(
                 text = "1 day ago",
-                color = MaterialTheme.colors.onBackground.copy(alpha = 0.5f),
+                color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
                 modifier = Modifier.placeholder(true, highlight = PlaceholderHighlight.shimmer())
