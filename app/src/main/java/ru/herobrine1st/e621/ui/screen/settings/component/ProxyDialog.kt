@@ -63,7 +63,7 @@ fun ProxyDialog(
         ExposedDropdownMenuBox(
             expanded = state.dropdownExpanded,
             onExpandedChange = {
-                state.dropdownExpanded = !state.dropdownExpanded
+                state.dropdownExpanded = it
             }
         ) {
             OutlinedTextField(
@@ -80,13 +80,15 @@ fun ProxyDialog(
                             animateFloatAsState(if (state.dropdownExpanded) 180f else 360f).value
                         )
                     )
-                }
+                },
+                modifier = Modifier.menuAnchor()
             )
             ExposedDropdownMenu(
                 expanded = state.dropdownExpanded,
                 onDismissRequest = {
                     state.dropdownExpanded = false
-                }
+                },
+                modifier = Modifier.exposedDropdownSize()
             ) {
                 ProxyType.values().forEach { type ->
                     DropdownMenuItem(
