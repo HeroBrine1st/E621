@@ -52,6 +52,23 @@ fun Navigator(
     val preferences = LocalPreferences.current
     val navigation = rootComponent.navigation
 
+    val mainScaffoldState = rememberMainScaffoldState(
+        snackbarHostState = snackbarHostState,
+        goToSettings = {
+            navigation.navigate { stack ->
+                if (stack.any { it is Config.Settings }) stack
+                else stack + Config.Settings
+            }
+        },
+        openBlacklistDialog = {
+            rootComponent.dialogNavigation.navigate {
+                // Usually it is not possible to click appbar while dialog is open
+                // so it is safe to omit checks
+                RootComponent.DialogConfig.BlacklistToggles
+            }
+        }
+    )
+
     Children(
         stack = rootComponent.stack,
         modifier = Modifier.fillMaxSize(),
@@ -59,21 +76,6 @@ fun Navigator(
             fade() + reducedSlide(1 / 16f)
         )
     ) { child: Child.Created<*, RootComponent.Child> ->
-        val mainScaffoldState = rememberMainScaffoldState(
-            snackbarHostState = snackbarHostState,
-            goToSettings = {
-                navigation.navigate { stack ->
-                    if (stack.any { it is Config.Settings }) stack
-                    else stack + Config.Settings
-                }
-            }
-        ) {
-            rootComponent.dialogNavigation.navigate {
-                // Usually it is not possible to click appbar while dialog is open
-                // so it is safe to omit checks
-                RootComponent.DialogConfig.BlacklistToggles
-            }
-        }
         when (val instance: RootComponent.Child = child.instance) {
             is Home -> Home(
                 mainScaffoldState = mainScaffoldState,
@@ -87,7 +89,6 @@ fun Navigator(
             )
             is Post -> Post(
                 mainScaffoldState = mainScaffoldState,
-                // TODO move it under component
                 component = instance.component,
             )
             is Settings -> Settings(
