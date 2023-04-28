@@ -15,8 +15,8 @@ plugins {
     id("com.mikepenz.aboutlibraries.plugin")
 }
 
-val kotlinVersion = "1.8.10"
-val composeCompilerVersion = "1.4.4"
+val kotlinVersion = "1.8.20"
+val composeCompilerVersion = "1.4.6"
 val protobufVersion = "3.22.2"
 val okHttpVersion = "4.10.0"
 val retrofitVersion = "2.9.0"
