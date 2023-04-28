@@ -24,15 +24,7 @@ import android.app.Activity
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -46,7 +38,7 @@ import ru.herobrine1st.e621.ui.component.preferences.SettingLink
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
 import ru.herobrine1st.e621.ui.screen.settings.component.ProxyDialog
 import ru.herobrine1st.e621.util.restart
@@ -54,7 +46,7 @@ import ru.herobrine1st.e621.util.restart
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Settings(
-    mainScaffoldState: MainScaffoldState,
+    screenSharedState: ScreenSharedState,
     onNavigateToBlacklistSettings: () -> Unit, onNavigateToAbout: () -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -76,15 +68,15 @@ fun Settings(
                 },
                 actions = {
                     ActionBarMenu(
-                        onNavigateToSettings = mainScaffoldState.goToSettings,
-                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                        onNavigateToSettings = screenSharedState.goToSettings,
+                        onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
                     )
                 },
                 scrollBehavior = scrollBehavior
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+            SnackbarHost(hostState = screenSharedState.snackbarHostState)
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->

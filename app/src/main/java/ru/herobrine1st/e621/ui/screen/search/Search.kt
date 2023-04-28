@@ -50,8 +50,8 @@ import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
-import ru.herobrine1st.e621.ui.component.scaffold.rememberPreviewMainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
+import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
 import ru.herobrine1st.e621.util.PreviewUtils
 import ru.herobrine1st.e621.util.getPreviewComponentContext
 import ru.herobrine1st.e621.util.getPreviewStackNavigator
@@ -61,7 +61,7 @@ import ru.herobrine1st.e621.util.normalizeTagForUI
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Search(
-    mainScaffoldState: MainScaffoldState,
+    screenSharedState: ScreenSharedState,
     component: SearchComponent
 ) {
     val preferences = LocalPreferences.current
@@ -113,15 +113,15 @@ fun Search(
                 },
                 actions = {
                     ActionBarMenu(
-                        onNavigateToSettings = mainScaffoldState.goToSettings,
-                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                        onNavigateToSettings = screenSharedState.goToSettings,
+                        onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
                     )
                 },
                 scrollBehavior = scrollBehavior
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+            SnackbarHost(hostState = screenSharedState.snackbarHostState)
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
@@ -330,7 +330,7 @@ fun Search(
 fun SearchPreview() {
     CompositionLocalProvider(LocalPreferences provides Preferences.getDefaultInstance()) {
         Search(
-            mainScaffoldState = rememberPreviewMainScaffoldState(),
+            screenSharedState = rememberScreenPreviewSharedState(),
             component = SearchComponent(
                 getPreviewComponentContext(),
                 getPreviewStackNavigator(),

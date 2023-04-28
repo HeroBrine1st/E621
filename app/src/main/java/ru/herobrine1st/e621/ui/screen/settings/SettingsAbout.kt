@@ -35,14 +35,14 @@ import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
-import ru.herobrine1st.e621.ui.component.scaffold.rememberPreviewMainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
+import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
 import ru.herobrine1st.e621.util.PreviewUtils
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsAbout(
-    mainScaffoldState: MainScaffoldState,
+    screenSharedState: ScreenSharedState,
     navigateToLicense: () -> Unit,
     navigateToOssLicenses: () -> Unit,
 ) {
@@ -56,15 +56,15 @@ fun SettingsAbout(
                 },
                 actions = {
                     ActionBarMenu(
-                        onNavigateToSettings = mainScaffoldState.goToSettings,
-                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                        onNavigateToSettings = screenSharedState.goToSettings,
+                        onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
                     )
                 },
                 scrollBehavior = scrollBehavior
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+            SnackbarHost(hostState = screenSharedState.snackbarHostState)
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->
@@ -165,5 +165,5 @@ fun SettingsAbout(
 @Composable
 @OptIn(PreviewUtils::class)
 fun SettingsAbout() {
-    SettingsAbout(rememberPreviewMainScaffoldState(), {}, {})
+    SettingsAbout(rememberScreenPreviewSharedState(), {}, {})
 }

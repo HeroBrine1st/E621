@@ -51,7 +51,7 @@ import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.isFavourite
@@ -60,7 +60,7 @@ import ru.herobrine1st.e621.util.normalizeTagForUI
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun Posts(
-    mainScaffoldState: MainScaffoldState,
+    screenSharedState: ScreenSharedState,
     component: PostListingComponent,
     isAuthorized: Boolean, // TODO move to component
 ) {
@@ -92,15 +92,15 @@ fun Posts(
                         )
                     }
                     ActionBarMenu(
-                        onNavigateToSettings = mainScaffoldState.goToSettings,
-                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                        onNavigateToSettings = screenSharedState.goToSettings,
+                        onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
                     )
                 },
                 scrollBehavior = scrollBehavior
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+            SnackbarHost(hostState = screenSharedState.snackbarHostState)
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) {

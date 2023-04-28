@@ -66,7 +66,7 @@ import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.*
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.screen.post.component.GoingToFullscreenAnimation
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
@@ -79,7 +79,7 @@ private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Post(
-    mainScaffoldState: MainScaffoldState,
+    screenSharedState: ScreenSharedState,
     component: PostComponent
 ) {
     val post = component.post
@@ -120,7 +120,7 @@ fun Post(
     )
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = bottomSheetState,
-        snackbarHostState = mainScaffoldState.snackbarHostState
+        snackbarHostState = screenSharedState.snackbarHostState
     )
 
     BoxWithConstraints {
@@ -132,8 +132,8 @@ fun Post(
                     },
                     actions = {
                         ActionBarMenu(
-                            onNavigateToSettings = mainScaffoldState.goToSettings,
-                            onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                            onNavigateToSettings = screenSharedState.goToSettings,
+                            onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
                         )
                     },
                     scrollBehavior = scrollBehavior

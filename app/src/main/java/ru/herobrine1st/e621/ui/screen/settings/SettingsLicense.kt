@@ -25,12 +25,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -40,14 +35,14 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
-import ru.herobrine1st.e621.ui.component.scaffold.rememberPreviewMainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
+import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
 import ru.herobrine1st.e621.util.PreviewUtils
 import ru.herobrine1st.e621.util.readRawResourceString
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsLicense(mainScaffoldState: MainScaffoldState) {
+fun SettingsLicense(screenSharedState: ScreenSharedState) {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     Scaffold(
         topBar = {
@@ -57,15 +52,15 @@ fun SettingsLicense(mainScaffoldState: MainScaffoldState) {
                 },
                 actions = {
                     ActionBarMenu(
-                        onNavigateToSettings = mainScaffoldState.goToSettings,
-                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                        onNavigateToSettings = screenSharedState.goToSettings,
+                        onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
                     )
                 },
                 scrollBehavior = scrollBehavior
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+            SnackbarHost(hostState = screenSharedState.snackbarHostState)
         }
     ) { paddingValues ->
         Box(
@@ -88,4 +83,4 @@ fun SettingsLicense(mainScaffoldState: MainScaffoldState) {
 @Composable
 @Preview
 @OptIn(PreviewUtils::class)
-private fun SettingsLicensePreview() = SettingsLicense(rememberPreviewMainScaffoldState())
+private fun SettingsLicensePreview() = SettingsLicense(rememberScreenPreviewSharedState())

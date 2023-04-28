@@ -39,13 +39,13 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistComponent
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
-import ru.herobrine1st.e621.ui.component.scaffold.MainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsBlacklist(
-    mainScaffoldState: MainScaffoldState,
+    screenSharedState: ScreenSharedState,
     component: SettingsBlacklistComponent
 ) {
     val entries by component.entriesFlow.collectAsState()
@@ -62,8 +62,8 @@ fun SettingsBlacklist(
                         CircularProgressIndicator(color = LocalContentColor.current)
                     }
                     ActionBarMenu(
-                        onNavigateToSettings = mainScaffoldState.goToSettings,
-                        onOpenBlacklistDialog = mainScaffoldState.openBlacklistDialog
+                        onNavigateToSettings = screenSharedState.goToSettings,
+                        onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
                     )
                 },
                 scrollBehavior = scrollBehavior
@@ -82,7 +82,7 @@ fun SettingsBlacklist(
             )
         },
         snackbarHost = {
-            SnackbarHost(hostState = mainScaffoldState.snackbarHostState)
+            SnackbarHost(hostState = screenSharedState.snackbarHostState)
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) { paddingValues ->

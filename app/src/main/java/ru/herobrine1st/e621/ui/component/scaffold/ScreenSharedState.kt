@@ -5,7 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import ru.herobrine1st.e621.util.PreviewUtils
 
-class MainScaffoldState(
+class ScreenSharedState(
     val snackbarHostState: SnackbarHostState, // TODO maybe every screen should have its own snackbar?
     val goToSettings: () -> Unit,
     val openBlacklistDialog: () -> Unit
@@ -15,13 +15,13 @@ class MainScaffoldState(
  * @param goToSettings called when user click "Settings". Should prohibit multiple Settings configurations in backstack.
  */
 @Composable
-fun rememberMainScaffoldState(
+fun rememberScreenSharedState(
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
     goToSettings: () -> Unit,
     openBlacklistDialog: () -> Unit
-): MainScaffoldState {
+): ScreenSharedState {
     return remember {
-        MainScaffoldState(
+        ScreenSharedState(
             snackbarHostState,
             goToSettings,
             openBlacklistDialog
@@ -29,20 +29,9 @@ fun rememberMainScaffoldState(
     }
 }
 
-@Deprecated(
-    level = DeprecationLevel.WARNING,
-    message = "Should be replaced with snackbarHost = {}",
-    replaceWith = ReplaceWith("")
-)
-@Composable
-fun MainScaffoldState.eraseSnackbarHostState() = rememberMainScaffoldState(
-    goToSettings = goToSettings,
-    openBlacklistDialog = openBlacklistDialog
-)
-
 @PreviewUtils
 @Composable
-fun rememberPreviewMainScaffoldState() =
-    rememberMainScaffoldState(
+fun rememberScreenPreviewSharedState() =
+    rememberScreenSharedState(
         goToSettings = {}
     ) {}

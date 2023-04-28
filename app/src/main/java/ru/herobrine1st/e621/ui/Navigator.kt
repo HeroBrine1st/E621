@@ -36,7 +36,7 @@ import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.*
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.animation.reducedSlide
-import ru.herobrine1st.e621.ui.component.scaffold.rememberMainScaffoldState
+import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenSharedState
 import ru.herobrine1st.e621.ui.screen.WikiScreen
 import ru.herobrine1st.e621.ui.screen.home.Home
 import ru.herobrine1st.e621.ui.screen.post.Post
@@ -52,7 +52,7 @@ fun Navigator(
     val preferences = LocalPreferences.current
     val navigation = rootComponent.navigation
 
-    val mainScaffoldState = rememberMainScaffoldState(
+    val sharedState = rememberScreenSharedState(
         snackbarHostState = snackbarHostState,
         goToSettings = {
             navigation.navigate { stack ->
@@ -78,21 +78,21 @@ fun Navigator(
     ) { child: Child.Created<*, RootComponent.Child> ->
         when (val instance: RootComponent.Child = child.instance) {
             is Home -> Home(
-                mainScaffoldState = mainScaffoldState,
+                screenSharedState = sharedState,
                 component = instance.component
             )
-            is Search -> Search(mainScaffoldState, instance.component)
+            is Search -> Search(sharedState, instance.component)
             is PostListing -> Posts(
-                mainScaffoldState,
+                sharedState,
                 instance.component,
                 preferences.hasAuth()
             )
             is Post -> Post(
-                mainScaffoldState = mainScaffoldState,
+                screenSharedState = sharedState,
                 component = instance.component,
             )
             is Settings -> Settings(
-                mainScaffoldState = mainScaffoldState,
+                screenSharedState = sharedState,
                 onNavigateToBlacklistSettings = {
                     navigation.push(Config.Settings.Blacklist)
                 },
@@ -102,15 +102,15 @@ fun Navigator(
             )
             is Settings.Blacklist ->
                 SettingsBlacklist(
-                    mainScaffoldState = mainScaffoldState,
+                    screenSharedState = sharedState,
                     component = instance.component
                 )
             is Settings.Blacklist.Entry -> SettingsBlacklistEntry(
-                mainScaffoldState,
+                sharedState,
                 instance.component
             )
             is Settings.About -> SettingsAbout(
-                mainScaffoldState = mainScaffoldState,
+                screenSharedState = sharedState,
                 navigateToLicense = {
                     navigation.push(Config.Settings.License)
                 },
@@ -118,9 +118,9 @@ fun Navigator(
                     navigation.push(Config.Settings.AboutLibraries)
                 }
             )
-            is Settings.License -> SettingsLicense(mainScaffoldState)
-            is Settings.AboutLibraries -> SettingsLicenses(mainScaffoldState)
-            is Wiki -> WikiScreen(mainScaffoldState, instance.component)
+            is Settings.License -> SettingsLicense(sharedState)
+            is Settings.AboutLibraries -> SettingsLicenses(sharedState)
+            is Wiki -> WikiScreen(sharedState, instance.component)
         }
     }
 }
