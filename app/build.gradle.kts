@@ -85,11 +85,12 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = composeCompilerVersion
     }
-    packagingOptions {
+    packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -110,6 +111,7 @@ configurations.all {
         force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
     }
 }
+
 @Suppress("SpellCheckingInspection")
 dependencies {
     // Android core
@@ -219,6 +221,21 @@ ksp {
 
 kapt {
     correctErrorTypes = true
+}
+
+// KAPT and KSP use gradle JDK version for that
+// KAPT requires 11, while android is still using 1.8
+// Use narrow class names to minimize impact on other tasks
+tasks.withType<com.google.devtools.ksp.gradle.KspTaskJvm>().configureEach {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask>().configureEach {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
 }
 
 fun getCommitIndexNumber(revision: String = "HEAD"): Int {
