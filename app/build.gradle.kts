@@ -167,7 +167,6 @@ dependencies {
 
     // G Accompanist (Apache 2.0)
     val accompanistVersion = "0.30.0"
-    implementation("com.google.accompanist:accompanist-flowlayout:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
 

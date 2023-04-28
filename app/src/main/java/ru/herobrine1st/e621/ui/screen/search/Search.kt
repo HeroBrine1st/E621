@@ -40,7 +40,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.flowlayout.FlowRow
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.model.FileType
@@ -58,7 +57,7 @@ import ru.herobrine1st.e621.util.getPreviewStackNavigator
 import ru.herobrine1st.e621.util.normalizeTagForUI
 
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun Search(
     screenSharedState: ScreenSharedState,
@@ -145,7 +144,7 @@ fun Search(
             item {}
             item("tags") {
                 SettingCard(title = stringResource(R.string.tags)) {
-                    FlowRow(mainAxisSpacing = 4.dp) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         component.tags.forEachIndexed { index, tag ->
                             key(tag) {
                                 // TODO place it in text field
@@ -235,7 +234,11 @@ fun Search(
                     AnimatedVisibility(visible = preferences.safeModeEnabled) {
                         Text(stringResource(R.string.search_safe_mode))
                     }
-                    FlowRow(mainAxisSpacing = 4.dp, crossAxisSpacing = 2.dp) {
+
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        // TODO crossAxisSpacing = 2.dp
+                    ) {
                         for (v in Rating.values()) {
                             val selected = v in component.rating
                             FilterChip(
