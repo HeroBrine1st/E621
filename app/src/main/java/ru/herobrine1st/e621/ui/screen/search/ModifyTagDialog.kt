@@ -22,10 +22,7 @@ package ru.herobrine1st.e621.ui.screen.search
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,6 +38,7 @@ import ru.herobrine1st.e621.ui.dialog.ActionDialog
 import ru.herobrine1st.e621.util.normalizeTagForUI
 import ru.herobrine1st.e621.util.runIf
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModifyTagDialog(
     initialTag: String? = null,
