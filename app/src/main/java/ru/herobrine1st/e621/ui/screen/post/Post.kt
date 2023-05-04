@@ -22,6 +22,7 @@ package ru.herobrine1st.e621.ui.screen.post
 
 import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
+import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.*
@@ -54,7 +55,6 @@ import androidx.compose.ui.unit.*
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
@@ -69,12 +69,12 @@ import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.screen.post.component.GoingToFullscreenAnimation
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
-import ru.herobrine1st.e621.ui.screen.post.component.PostCommentPlaceholder
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.util.normalizeTagForUI
 import java.util.*
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
+private const val TAG = "Post Screen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -248,26 +248,44 @@ fun Post(
                             style = MaterialTheme.typography.headlineSmall
                         )
                         Spacer(Modifier.width(4.dp))
+                        // TODO crossfade it
+                        //      do not forget that placeholder has its own animation, so that
+                        //      crossfade should not be triggered on transition from loading to success
                         if (post.commentCount == 0) {
                             Text(stringResource(R.string.no_comments_found))
                         } else if (loadComments) {
                             val comments = component.commentsFlow.collectAsLazyPagingItems()
-                            when (comments.loadState.refresh) {
+
+                            val commentState = when (comments.loadState.refresh) {
                                 is LoadState.Loading -> {
-                                    PostCommentPlaceholder()
+                                    CommentsLoadingState.Showable.Loading
                                 }
 
                                 is LoadState.NotLoading -> {
-                                    if (comments.itemSnapshotList.isEmpty()) {
-                                        Text(stringResource(R.string.no_comments_found))
-                                    } else {
-                                        val comment = comments.peek(0)
-                                        if (comment != null) PostComment(comment)
-                                        else Text(stringResource(R.string.no_comments_found))
-                                    }
+                                    if (comments.itemSnapshotList.isEmpty()) CommentsLoadingState.Empty
+                                    else comments.peek(0)
+                                        ?.let { CommentsLoadingState.Showable.Success(it) }
+                                        ?: run {
+                                            Log.w(
+                                                TAG,
+                                                "itemSnapshotList is not empty but first item is not a show-able comment"
+                                            )
+                                            // It is not possible, but !! on UI thread is bad imho
+                                            // so fall back gently
+                                            CommentsLoadingState.Failed
+                                        }
                                 }
 
-                                is LoadState.Error -> Text(stringResource(R.string.comments_load_failed))
+                                is LoadState.Error -> CommentsLoadingState.Failed
+                            }
+                            when (commentState) {
+                                CommentsLoadingState.Empty -> Text(stringResource(R.string.no_comments_found))
+                                CommentsLoadingState.Failed -> Text(stringResource(R.string.comments_load_failed))
+                                is CommentsLoadingState.Showable ->
+                                    PostComment(
+                                        commentState.commentData,
+                                        placeholder = commentState.commentData === CommentData.PLACEHOLDER
+                                    )
                             }
                         } else {
                             Text(stringResource(R.string.click_to_load))
@@ -367,24 +385,29 @@ fun CommentsBottomSheetContent(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {}
-        // TODO manage placeholders with Jetpack Paging
-        if (comments.loadState.refresh is LoadState.Loading) {
-            items(count = post.commentCount) {
-                PostCommentPlaceholder(modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL))
-            }
-            return@LazyColumn
-        }
         endOfPagePlaceholder(comments.loadState.prepend)
         items(
-            count = comments.itemCount,
-            key = comments.itemKey { it.id }
+            count = if (comments.loadState.refresh is LoadState.Loading)
+                post.commentCount // count is known before even initialization of PagingSource, why the fuck Paging 3 does not give a way to provide it before request starts?
+            else
+                comments.itemCount,
+            key = { index ->
+                val comment = if (index >= comments.itemCount) null
+                else comments[index]
+                return@items comment?.id ?: "index key $index"
+            }
             // contentType is purposely ignored as all items are of the same type and additional calls to Paging library are not needed
         ) { index ->
-            val comment = comments[index] ?: return@items
-            if (comment.isHidden) return@items
+            val comment =
+            // Because there is a fucking check and a fucking throw
+            // TODO migrate away from Paging 3
+                // (I think I will postpone it until workarounds are causing lags)
+                if (index >= comments.itemCount) CommentData.PLACEHOLDER
+                else comments[index] ?: CommentData.PLACEHOLDER
             PostComment(
                 comment,
-                modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL)
+                modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
+                placeholder = comment === CommentData.PLACEHOLDER
             )
         }
         endOfPagePlaceholder(comments.loadState.append)
@@ -499,4 +522,24 @@ enum class FullscreenState {
     OPEN,
     CLOSE,
     CLOSING
+}
+
+private sealed interface CommentsLoadingState {
+    @Suppress("SpellCheckingInspection") // idk how to name it
+    sealed interface Showable : CommentsLoadingState {
+        val commentData: CommentData
+
+        data class Success(override val commentData: CommentData) : Showable
+
+        object Loading : Showable {
+            override val commentData: CommentData
+                get() = CommentData.PLACEHOLDER
+        }
+    }
+
+    object Empty : CommentsLoadingState
+
+    object Failed : CommentsLoadingState
+
+
 }

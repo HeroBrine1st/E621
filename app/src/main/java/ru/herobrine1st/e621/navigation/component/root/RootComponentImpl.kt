@@ -116,7 +116,6 @@ class RootComponentImpl(
                     context,
                     navigation,
                     applicationContext,
-                    snackbarAdapterProvider.value,
                     exceptionReporterProvider.value,
                     exoPlayerProvider.value,
                     apiProvider.value

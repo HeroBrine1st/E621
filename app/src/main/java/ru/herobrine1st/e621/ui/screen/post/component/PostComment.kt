@@ -34,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -49,16 +50,28 @@ import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 fun PostComment(
     commentData: CommentData,
     modifier: Modifier = Modifier,
+    placeholder: Boolean = false,
 ) {
     Column(
         modifier = modifier
             .fillMaxWidth()
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            CommentAvatar(commentData.author.avatarUrl, Modifier.size(24.dp))
+            CommentAvatar(
+                commentData.author.avatarUrl,
+                Modifier.size(24.dp),
+                placeholder = placeholder
+            )
             Spacer(Modifier.width(4.dp))
-            Text(text = commentData.author.displayName, fontWeight = FontWeight.Medium, fontSize = 12.sp)
-
+            Text(
+                text = commentData.author.displayName,
+                fontWeight = FontWeight.Medium,
+                fontSize = 12.sp,
+                modifier = Modifier.placeholder(
+                    placeholder,
+                    highlight = PlaceholderHighlight.shimmer()
+                )
+            )
             Spacer(Modifier.width(2.dp))
             Text(
                 text = DateUtils.getRelativeTimeSpanString(
@@ -70,13 +83,24 @@ fun PostComment(
                 color = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.5f),
                 fontWeight = FontWeight.Normal,
                 fontSize = 12.sp,
+                modifier = Modifier.placeholder(
+                    placeholder,
+                    highlight = PlaceholderHighlight.shimmer()
+                )
             )
             Spacer(Modifier.weight(1f))
-            Text(text = commentData.score.toString())
-
+            Text(
+                text = commentData.score.toString(),
+                Modifier.placeholder(placeholder, highlight = PlaceholderHighlight.shimmer())
+            )
         }
         Spacer(Modifier.height(4.dp))
-        SelectionContainer {
+        SelectionContainer(
+            modifier = Modifier
+                .alpha(if (commentData.isHidden) 0.75f else 1f)
+                .fillMaxWidth()
+                .placeholder(placeholder, highlight = PlaceholderHighlight.fade())
+        ) {
             RenderBB(commentData.message)
         }
     }

@@ -30,7 +30,6 @@ import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.parseCommentAvatarsAndGetCommentCount
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
-import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import java.io.IOException
 import kotlin.math.ceil
@@ -38,7 +37,6 @@ import kotlin.properties.Delegates
 
 class PostCommentsSource(
     private val api: API,
-    private val snackbar: SnackbarAdapter,
     private val exceptionReporter: ExceptionReporter,
     private val postId: Int
 ) : PagingSource<Int, CommentData>() {

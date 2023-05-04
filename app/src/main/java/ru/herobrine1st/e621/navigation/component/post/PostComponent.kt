@@ -50,7 +50,6 @@ import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.screen.post.logic.PostCommentsSource
-import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.InstanceBase
 import java.io.IOException
@@ -66,13 +65,12 @@ class PostComponent(
     componentContext: ComponentContext,
     private val navigator: StackNavigator<Config>,
     applicationContext: Context,
-    snackbarAdapter: SnackbarAdapter,
     exceptionReporter: ExceptionReporter,
     private val exoPlayer: ExoPlayer,
     val api: API
 ) : ComponentContext by componentContext {
     private val instance = instanceKeeper.getOrCreate {
-        Instance(postId, api, snackbarAdapter, exceptionReporter)
+        Instance(postId, api, exceptionReporter)
     }
 
     private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
@@ -168,7 +166,6 @@ class PostComponent(
     class Instance(
         postId: Int,
         api: API,
-        snackbar: SnackbarAdapter,
         exceptionReporter: ExceptionReporter,
     ) : InstanceBase() {
         private val pager = Pager(
@@ -177,7 +174,7 @@ class PostComponent(
                 initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
             )
         ) {
-            PostCommentsSource(api, snackbar, exceptionReporter, postId)
+            PostCommentsSource(api, exceptionReporter, postId)
         }
 
         val commentsFlow = pager.flow.cachedIn(lifecycleScope)
