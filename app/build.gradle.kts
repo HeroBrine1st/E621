@@ -169,7 +169,7 @@ dependencies {
 
     // G Accompanist (Apache 2.0)
     val accompanistVersion = "0.30.0"
-    implementation("com.google.accompanist:accompanist-placeholder-material:$accompanistVersion")
+    implementation("com.google.accompanist:accompanist-placeholder-material3:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
 
     // Retrofit (Apache 2.0)

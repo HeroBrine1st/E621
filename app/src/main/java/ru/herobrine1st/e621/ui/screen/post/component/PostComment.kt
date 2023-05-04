@@ -35,12 +35,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.placeholder.PlaceholderHighlight
-import com.google.accompanist.placeholder.material.fade
-import com.google.accompanist.placeholder.material.placeholder
-import com.google.accompanist.placeholder.material.shimmer
+import com.google.accompanist.placeholder.material3.fade
+import com.google.accompanist.placeholder.material3.placeholder
+import com.google.accompanist.placeholder.material3.shimmer
 import ru.herobrine1st.e621.ui.component.RenderBB
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 
@@ -82,6 +83,7 @@ fun PostComment(
 }
 
 @Composable
+@Preview
 fun PostCommentPlaceholder(modifier: Modifier = Modifier, lines: Int = 2) {
     Column(
         modifier = modifier

@@ -176,7 +176,7 @@ fun Search(
                     ExposedDropdownMenuBox(
                         expanded = expanded,
                         onExpandedChange = { expanded = it },
-//                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth()
                     ) {
                         TextField(
                             modifier = Modifier
@@ -202,7 +202,7 @@ fun Search(
                             onDismissRequest = { expanded = false },
                             // FIXME: there's no way to make it fill max width
                             // there was one, but I lost it :-(
-                            modifier = Modifier.exposedDropdownSize()
+                            modifier = Modifier.exposedDropdownSize(matchTextFieldWidth = true)
                         ) {
                             Order.values().forEach {
                                 DropdownMenuItem(

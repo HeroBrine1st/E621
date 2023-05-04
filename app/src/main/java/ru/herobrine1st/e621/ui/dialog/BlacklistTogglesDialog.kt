@@ -57,8 +57,8 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.placeholder.PlaceholderHighlight
-import com.google.accompanist.placeholder.material.placeholder
-import com.google.accompanist.placeholder.material.shimmer
+import com.google.accompanist.placeholder.material3.placeholder
+import com.google.accompanist.placeholder.material3.shimmer
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
