@@ -67,7 +67,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemsIndexed
+import androidx.paging.compose.itemKey
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
@@ -162,8 +162,12 @@ fun Posts(
                         }
                     }
                 }
-                itemsIndexed(posts, key = { _, post -> post.id }) { index, post ->
-                    if (post == null) return@itemsIndexed
+                items(
+                    count = posts.itemCount,
+                    key = posts.itemKey { post -> post.id },
+                    // contentType is purposely ignored as all items are of the same type and additional calls to Paging library are not needed
+                ) { index ->
+                    val post = posts[index] ?: return@items
                     Post(
                         post = post,
                         // Remove unwanted visual glitch on first post (white corners stick out a mile)
@@ -182,11 +186,14 @@ fun Posts(
                             component.onOpenPost(post, openComments)
                         }
                     )
+
                 }
                 endOfPagePlaceholder(posts.loadState.append)
             }
             // FIXME indicator is shown for a moment after navigating back
             // Related: https://issuetracker.google.com/issues/177245496
+            // (but the actual cause is absence of a "None" state like in Coil, which indicates
+            // that no request is in fly but no data available hence no loading and no indicator)
             PullRefreshIndicator(
                 refreshing = posts.loadState.refresh is LoadState.Loading,
                 state = pullRefreshState,

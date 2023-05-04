@@ -147,7 +147,7 @@ dependencies {
     // Jetpack Paging
     val pagingVersion = "3.1.1"
     implementation("androidx.paging:paging-runtime:$pagingVersion") // Apache 2.0
-    implementation("androidx.paging:paging-compose:1.0.0-alpha18") // Apache 2.0
+    implementation("androidx.paging:paging-compose:1.0.0-alpha19") // Apache 2.0
 
     // Coroutine Image Loader (Apache 2.0)
     val coilVersion = "2.3.0"

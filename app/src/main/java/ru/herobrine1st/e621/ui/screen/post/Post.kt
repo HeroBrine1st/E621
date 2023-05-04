@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.*
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.items
+import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
@@ -375,8 +375,12 @@ fun CommentsBottomSheetContent(
             return@LazyColumn
         }
         endOfPagePlaceholder(comments.loadState.prepend)
-        items(comments, key = { it.id }) { comment ->
-            if (comment == null) return@items
+        items(
+            count = comments.itemCount,
+            key = comments.itemKey { it.id }
+            // contentType is purposely ignored as all items are of the same type and additional calls to Paging library are not needed
+        ) { index ->
+            val comment = comments[index] ?: return@items
             if (comment.isHidden) return@items
             PostComment(
                 comment,
