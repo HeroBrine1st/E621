@@ -64,7 +64,7 @@ android {
         release {
             isMinifyEnabled = true
             proguardFiles(
-                getDefaultProguardFile("proguard-android.txt"),
+                getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
                 "intellij-idea-does-not-like-these-proguard-rules.pro"
             )
@@ -72,6 +72,7 @@ android {
         debug {
             applicationIdSuffix = ".debug"
         }
+        // Also good for testing proguard configs
         create("profileable") {
             initWith(getByName("release"))
             matchingFallbacks.add("release")
