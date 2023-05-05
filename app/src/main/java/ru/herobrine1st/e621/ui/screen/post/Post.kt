@@ -381,7 +381,7 @@ fun CommentsBottomSheetContent(
         horizontalAlignment = Alignment.CenterHorizontally,
         state = commentsLazyListState,
         modifier = Modifier
-            .fillMaxWidth(),
+            .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         item {}
