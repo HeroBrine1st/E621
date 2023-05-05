@@ -70,7 +70,7 @@ android {
             )
         }
         debug {
-            applicationIdSuffix = ".test"
+            applicationIdSuffix = ".debug"
         }
     }
     compileOptions {
