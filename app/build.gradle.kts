@@ -72,6 +72,13 @@ android {
         debug {
             applicationIdSuffix = ".debug"
         }
+        create("benchmark") {
+            initWith(getByName("release"))
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += listOf("release")
+            isDebuggable = false
+            proguardFiles("benchmark-rules.pro")
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
@@ -177,6 +184,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
+
+    // Baseline profile installation
+    implementation("androidx.profileinstaller:profileinstaller:1.3.1")
 
     // Other libraries
     implementation("com.google.android.exoplayer:exoplayer:2.18.6") // Apache 2.0
