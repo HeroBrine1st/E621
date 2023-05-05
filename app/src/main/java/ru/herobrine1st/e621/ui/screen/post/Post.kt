@@ -39,6 +39,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
+import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -370,49 +371,69 @@ fun CommentsBottomSheetContent(
 
     val commentsLazyListState = rememberLazyListState()
 
-    if (!loadComments) {
-        Box(Modifier.fillMaxSize()) // Set size so that drawer won't auto-expand when opened
-        return
-    }
-
-    val comments = commentsFlow.collectAsLazyPagingItems()
-
-    LazyColumn(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        state = commentsLazyListState,
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp)
+    Box(
+        Modifier.fillMaxSize()
     ) {
-        item {}
-        endOfPagePlaceholder(comments.loadState.prepend)
-        items(
-            count = if (comments.loadState.refresh is LoadState.Loading)
-                post.commentCount // count is known before even initialization of PagingSource, why the fuck Paging 3 does not give a way to provide it before request starts?
-            else
-                comments.itemCount,
-            key = { index ->
-                val comment = if (index >= comments.itemCount) null
-                else comments[index]
-                return@items comment?.id ?: "index key $index"
+        if (!loadComments) return@Box
+
+        val comments = commentsFlow.collectAsLazyPagingItems()
+        Crossfade(comments.loadState.refresh is LoadState.Error) {
+            if (it) Column(
+                Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // Not very good
+                // I'm a bad UI designer, I know
+                Icon(Icons.Outlined.Error, contentDescription = null)
+                Text(stringResource(R.string.comments_load_failed))
+                Button(onClick = {
+                    comments.retry()
+                }) {
+                    Text(stringResource(R.string.retry))
+                }
             }
-            // contentType is purposely ignored as all items are of the same type and additional calls to Paging library are not needed
-        ) { index ->
-            val comment =
-            // Because there is a fucking check and a fucking throw
-            // TODO migrate away from Paging 3
-                // (I think I will postpone it until workarounds are causing lags)
-                if (index >= comments.itemCount) CommentData.PLACEHOLDER
-                else comments[index] ?: CommentData.PLACEHOLDER
-            PostComment(
-                comment,
-                modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
-                placeholder = comment === CommentData.PLACEHOLDER
-            )
+            else LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                state = commentsLazyListState,
+                modifier = Modifier
+                    .fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                item {}
+                endOfPagePlaceholder(comments.loadState.prepend)
+                items(
+                    // count is known before even initialization of PagingSource, why the fuck Paging 3 does not give a way to provide it before request starts?
+                    count = if (comments.loadState.refresh is LoadState.Loading) post.commentCount
+                    else comments.itemCount,
+                    key = { index ->
+                        val comment = if (index >= comments.itemCount) null
+                        else comments[index]
+                        return@items comment?.id ?: "index key $index"
+                    }
+                    // contentType is purposely ignored as all items are of the same type and additional calls to Paging library are not needed
+                ) { index ->
+                    val comment =
+                    // Because there is a fucking check and a fucking throw
+                    // TODO migrate away from Paging 3
+                        // (I think I will postpone it until workarounds are causing lags)
+                        if (index >= comments.itemCount) CommentData.PLACEHOLDER
+                        else comments[index] ?: CommentData.PLACEHOLDER
+                    PostComment(
+                        comment,
+                        modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
+                        placeholder = comment === CommentData.PLACEHOLDER
+                    )
+                }
+                endOfPagePlaceholder(comments.loadState.append)
+                item {}
+            }
         }
-        endOfPagePlaceholder(comments.loadState.append)
-        item {}
+
+
     }
+
+
 }
 
 private fun LazyListScope.tags(
