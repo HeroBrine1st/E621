@@ -70,7 +70,15 @@ android {
             )
         }
         debug {
-            applicationIdSuffix = ".test"
+            applicationIdSuffix = ".debug"
+        }
+        create("profileable") {
+            initWith(getByName("release"))
+            matchingFallbacks.add("release")
+
+            proguardFiles("profileable-rules.pro")
+            applicationIdSuffix = ".profileable"
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -167,7 +175,6 @@ dependencies {
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     kapt("com.google.dagger:hilt-android-compiler:$hiltVersion") // Not included in binary result
 
-
     // G Accompanist (Apache 2.0)
     val accompanistVersion = "0.30.0"
     implementation("com.google.accompanist:accompanist-placeholder-material3:$accompanistVersion")
@@ -177,6 +184,11 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
     implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
     implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
+
+    // Profiling
+    "profileableImplementation"("androidx.compose.runtime:runtime-tracing:1.0.0-alpha03")
+    "profileableImplementation"("androidx.tracing:tracing-perfetto:1.0.0-alpha15")
+    "profileableImplementation"("androidx.tracing:tracing-perfetto-binary:1.0.0-alpha15")
 
     // Other libraries
     implementation("com.google.android.exoplayer:exoplayer:2.18.6") // Apache 2.0
