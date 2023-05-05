@@ -27,7 +27,6 @@ import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
-import ru.herobrine1st.e621.util.JsonSerializable
 import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
@@ -49,7 +48,7 @@ data class PostsSearchOptions(
     val favouritesOf: String? = null, // "favorited_by" in api
     val fileType: FileType? = null,
     val fileTypeInvert: Boolean = false
-) : SearchOptions, JsonSerializable {
+) : SearchOptions {
     // TODO randomSeed or something like that for Order.RANDOM
 
     private fun compileToQuery(): String {

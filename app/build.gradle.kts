@@ -19,7 +19,8 @@ val kotlinVersion = "1.8.20"
 val composeCompilerVersion = "1.4.6"
 val protobufVersion = "3.22.2"
 val okHttpVersion = "4.10.0"
-val retrofitVersion = "2.9.0"
+val retrofitVersion =
+    "2.9.0" // https://github.com/square/retrofit/issues/3880 , do not forget to remove rules after update
 
 val applicationId = "ru.herobrine1st.e621"
 val versionCode = getCommitIndexNumber()
