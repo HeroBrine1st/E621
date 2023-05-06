@@ -151,6 +151,7 @@ class PostListingComponent(
                     FavouriteState.Determined.fromBoolean(!wasFavourite.isFavourite)
                 )
             } catch (e: ApiException) {
+                // TODO this can also occur when post is already (un)favourite
                 favouritesCache.setFavourite(post.id, wasFavourite)
                 snackbar.enqueueMessage(R.string.unknown_api_error, SnackbarDuration.Long)
                 Log.e(TAG, "An API exception occurred", e)
