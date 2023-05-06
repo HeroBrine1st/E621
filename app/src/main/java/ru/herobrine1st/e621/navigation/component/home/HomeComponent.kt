@@ -29,9 +29,11 @@ import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
@@ -54,7 +56,7 @@ interface IHomeComponentInstanceMethods {
     val state: HomeComponent.LoginState
 
     fun login(login: String, apiKey: String, callback: (HomeComponent.LoginState) -> Unit = {})
-    fun logout()
+    fun logout(callback: () -> Unit = {})
     fun checkAuthorization()
 }
 
@@ -169,9 +171,10 @@ class HomeComponent private constructor(
             }
         }
 
-        override fun logout() {
+        override fun logout(callback: () -> Unit) {
             lifecycleScope.launch {
                 authorizationRepository.logout()
+                callback()
             }
         }
 
@@ -202,7 +205,6 @@ class HomeComponent private constructor(
                         "An error occurred while authenticating in API (${res.code()} ${res.message()})"
                     )
                     withContext(Dispatchers.IO) {
-                        @Suppress("BlockingMethodInNonBlockingContext") // Debug
                         Log.d(TAG, res.errorBody()!!.string())
                     }
                 }

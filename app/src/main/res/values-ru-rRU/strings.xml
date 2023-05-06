@@ -45,7 +45,7 @@
     <string name="add_entry_to_blacklist">Добавление записи в чёрный список</string>
     <string name="unsaved_changes">Несохранённые изменения</string>
     <string name="unsaved_changes_message">Вы точно хотите выйти? Ваши изменения будут потеряны.</string>
-    <string name="cancel">Отмена</string>
+    <string name="cancel">Отменить</string>
     <string name="leave_discard_changes">Выйти</string>
     <string name="blacklist_enabled">Включен</string>
     <string name="blacklist_disabled">Выключен</string>
@@ -139,4 +139,6 @@
     <string name="screen_settings_blacklist_entry">Запись чёрного списка</string>
     <string name="create_new_fab">Создать</string>
     <string name="dialog_dismiss">Закрыть</string>
+    <string name="login_logout_confirmation_dialog_title">Подтверждение выхода из аккаунта</string>
+    <string name="login_logout_confirmation_dialog_text">Вы уверены, что хотите выйти из аккаунта?</string>
 </resources>

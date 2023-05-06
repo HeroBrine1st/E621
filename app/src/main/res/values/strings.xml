@@ -142,4 +142,6 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="screen_settings_blacklist_entry">Blacklist entry</string>
     <string name="create_new_fab">New</string>
     <string name="dialog_dismiss">Dismiss</string>
+    <string name="login_logout_confirmation_dialog_title">Confirm logout</string>
+    <string name="login_logout_confirmation_dialog_text">Are you sure you want to logout?</string>
 </resources>

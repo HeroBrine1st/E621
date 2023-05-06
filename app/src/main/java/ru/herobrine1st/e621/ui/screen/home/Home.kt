@@ -57,6 +57,8 @@ fun Home(
     screenSharedState: ScreenSharedState,
     component: HomeComponent
 ) {
+    var showLogoutConfirmation by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -96,8 +98,11 @@ fun Home(
                     when (state) {
                         LoginState.Loading -> CircularProgressIndicator()
                         is LoginState.Authorized -> {
+
                             FilledTonalButton(
-                                onClick = component::logout,
+                                onClick = {
+                                    showLogoutConfirmation = true
+                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                             ) {
@@ -111,6 +116,8 @@ fun Home(
                             ) {
                                 Text(text = stringResource(R.string.favourites))
                             }
+
+
                         }
 
                         LoginState.NoAuth -> AuthorizationMenu { u, p, cb ->
@@ -150,7 +157,9 @@ fun Home(
                                 }
                                 Spacer(Modifier.size(8.dp))
                                 FilledTonalButton(
-                                    onClick = component::logout,
+                                    onClick = {
+                                        showLogoutConfirmation = true
+                                    },
                                     colors = ButtonDefaults.elevatedButtonColors(
                                         containerColor = MaterialTheme.colorScheme.errorContainer,
                                         contentColor = MaterialTheme.colorScheme.onErrorContainer
@@ -165,9 +174,39 @@ fun Home(
             }
         }
     }
+
+    if (showLogoutConfirmation) AlertDialog(
+        onDismissRequest = {
+            showLogoutConfirmation = false
+        },
+        title = {
+            Text(stringResource(R.string.login_logout_confirmation_dialog_title))
+        },
+        text = {
+            Text(stringResource(R.string.login_logout_confirmation_dialog_text))
+        },
+        confirmButton = {
+            var isLoading by remember { mutableStateOf(false) }
+            Button(onClick = {
+                isLoading = true
+                component.logout {
+                    isLoading = false
+                    showLogoutConfirmation = false
+                }
+            }, enabled = !isLoading) {
+                Text(stringResource(R.string.login_logout))
+            }
+        },
+        dismissButton = {
+            FilledTonalButton(onClick = {
+                showLogoutConfirmation = false
+            }) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AuthorizationMenu(
     onLogin: (username: String, password: String, onSuccess: (LoginState) -> Unit) -> Unit
