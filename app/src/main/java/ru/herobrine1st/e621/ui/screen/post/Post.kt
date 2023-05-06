@@ -116,7 +116,7 @@ fun Post(
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val bottomSheetState = rememberStandardBottomSheetState(
-        initialValue = SheetValue.Hidden,
+        initialValue = if (component.openComments) SheetValue.PartiallyExpanded else SheetValue.Hidden,
         skipHiddenState = false
     )
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
