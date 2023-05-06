@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.navigation.component
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,11 +28,16 @@ import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.preference.dataStore
@@ -58,8 +62,7 @@ class BlacklistTogglesDialogComponent(
         }
     }
 
-    val entriesFlow: StateFlow<List<ToggleableBlacklistEntry>?>
-        get() = instance.entriesFlow
+    val entriesFlow by instance::entriesFlow
 
     fun applyChanges(callback: () -> Unit) = instance.applyChanges(callback)
 
@@ -77,22 +80,18 @@ class BlacklistTogglesDialogComponent(
     // To avoid merging states from StateKeeper and from SQLite
     private class Instance(private val blacklistRepository: BlacklistRepository) : InstanceBase() {
         val entriesFlow = blacklistRepository.getEntriesFlow()
+            .flowOn(Dispatchers.IO)
             .map { list -> list.map { it.asToggleable() } }
-            .stateIn(
+            .flowOn(Dispatchers.Default)
+            .shareIn(
                 lifecycleScope,
                 SharingStarted.Eagerly,
-                null
+                replay = 1
             )
 
         fun applyChanges(callback: () -> Unit) {
             lifecycleScope.launch {
-                val entries = entriesFlow.value ?: kotlin.run {
-                    Log.e(
-                        TAG,
-                        "Illegal call to applyChanges(): data isn't even downloaded from database"
-                    )
-                    throw IllegalStateException()
-                }
+                val entries = entriesFlow.first()
                 entries.filter { it.isChanged }.map { it.toEntry() }.let {
                     blacklistRepository.updateEntries(it)
                 }
