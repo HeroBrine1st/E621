@@ -27,6 +27,8 @@ import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.*
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -77,7 +79,7 @@ import java.util.*
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 private const val TAG = "Post Screen"
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun Post(
     screenSharedState: ScreenSharedState,
@@ -249,48 +251,66 @@ fun Post(
                             style = MaterialTheme.typography.headlineSmall
                         )
                         Spacer(Modifier.width(4.dp))
-                        // TODO crossfade it
-                        //      do not forget that placeholder has its own animation, so that
-                        //      crossfade should not be triggered on transition from loading to success
-                        if (post.commentCount == 0) {
-                            Text(stringResource(R.string.no_comments_found))
-                        } else if (loadComments) {
-                            val comments = component.commentsFlow.collectAsLazyPagingItems()
 
-                            val commentState = when (comments.loadState.refresh) {
-                                is LoadState.Loading -> {
-                                    CommentsLoadingState.Showable.Loading
-                                }
-
-                                is LoadState.NotLoading -> {
-                                    if (comments.itemSnapshotList.isEmpty()) CommentsLoadingState.Empty
-                                    else comments.peek(0)
-                                        ?.let { CommentsLoadingState.Showable.Success(it) }
-                                        ?: run {
-                                            Log.w(
-                                                TAG,
-                                                "itemSnapshotList is not empty but first item is not a show-able comment"
-                                            )
-                                            // It is not possible, but !! on UI thread is bad imho
-                                            // so fall back gently
-                                            CommentsLoadingState.Failed
-                                        }
-                                }
-
-                                is LoadState.Error -> CommentsLoadingState.Failed
+                        val commentState = when {
+                            post.commentCount == 0 -> {
+                                CommentsLoadingState.Empty
                             }
-                            when (commentState) {
+
+                            loadComments -> {
+                                // Cannot hoist comments: there's no disable for automatic download
+                                val comments = component.commentsFlow.collectAsLazyPagingItems()
+                                when (comments.loadState.refresh) {
+                                    is LoadState.Loading -> {
+                                        CommentsLoadingState.Showable.Loading
+                                    }
+
+                                    is LoadState.NotLoading -> {
+                                        if (comments.itemSnapshotList.isEmpty()) CommentsLoadingState.Empty
+                                        else comments.peek(0)
+                                            ?.let { CommentsLoadingState.Showable.Success(it) }
+                                            ?: run {
+                                                Log.w(
+                                                    TAG,
+                                                    "itemSnapshotList is not empty but first item is not a show-able comment"
+                                                )
+                                                // It is not possible, but !! on UI thread is bad imho
+                                                // so fall back gently
+                                                CommentsLoadingState.Failed
+                                            }
+                                    }
+
+                                    is LoadState.Error -> CommentsLoadingState.Failed
+                                }
+
+                            }
+
+                            else -> {
+                                CommentsLoadingState.NotLoading
+                            }
+                        }
+                        val transition = updateTransition(
+                            targetState = commentState,
+                            label = "Comment Animation"
+                        )
+                        transition.AnimatedContent(contentKey = { it.index }, transitionSpec = {
+                            fadeIn(animationSpec = tween(220)) with
+                                    fadeOut(animationSpec = tween(90))
+                        }) { state ->
+                            when (state) {
                                 CommentsLoadingState.Empty -> Text(stringResource(R.string.no_comments_found))
                                 CommentsLoadingState.Failed -> Text(stringResource(R.string.comments_load_failed))
                                 is CommentsLoadingState.Showable ->
                                     PostComment(
-                                        commentState.commentData,
-                                        placeholder = commentState.commentData === CommentData.PLACEHOLDER
+                                        state.commentData,
+                                        placeholder = state.commentData === CommentData.PLACEHOLDER,
+                                        animateTextChange = true
                                     )
+
+                                CommentsLoadingState.NotLoading -> Text(stringResource(R.string.click_to_load))
                             }
-                        } else {
-                            Text(stringResource(R.string.click_to_load))
                         }
+
                         Spacer(Modifier.height(8.dp))
                     }
                     Divider()
@@ -546,21 +566,36 @@ enum class FullscreenState {
 }
 
 private sealed interface CommentsLoadingState {
+    // To be used as content key for animation
+    val index: Int
+
     @Suppress("SpellCheckingInspection") // idk how to name it
     sealed interface Showable : CommentsLoadingState {
+        override val index: Int
+            get() = 2
         val commentData: CommentData
 
         data class Success(override val commentData: CommentData) : Showable
 
         object Loading : Showable {
-            override val commentData: CommentData
-                get() = CommentData.PLACEHOLDER
+            override val commentData by CommentData.Companion::PLACEHOLDER
         }
     }
 
-    object Empty : CommentsLoadingState
+    object NotLoading : CommentsLoadingState {
+        override val index: Int
+            get() = 0
+    }
 
-    object Failed : CommentsLoadingState
+    object Empty : CommentsLoadingState {
+        override val index: Int
+            get() = 1
+    }
+
+    object Failed : CommentsLoadingState {
+        override val index: Int
+            get() = 3
+    }
 
 
 }

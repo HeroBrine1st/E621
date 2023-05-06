@@ -21,6 +21,12 @@
 package ru.herobrine1st.e621.ui.screen.post.component
 
 import android.text.format.DateUtils
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.with
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -45,11 +51,13 @@ import com.google.accompanist.placeholder.material3.shimmer
 import ru.herobrine1st.e621.ui.component.RenderBB
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun PostComment(
     commentData: CommentData,
     modifier: Modifier = Modifier,
     placeholder: Boolean = false,
+    animateTextChange: Boolean = false,
 ) {
     Column(
         modifier = modifier
@@ -100,7 +108,15 @@ fun PostComment(
                 .fillMaxWidth()
                 .placeholder(placeholder, highlight = PlaceholderHighlight.fade())
         ) {
-            RenderBB(commentData.message)
+            if (animateTextChange) AnimatedContent(
+                targetState = commentData.message,
+                transitionSpec = {
+                    fadeIn(animationSpec = tween(220)) with
+                            fadeOut(animationSpec = tween(90))
+                }
+            ) {
+                RenderBB(it)
+            } else RenderBB(commentData.message)
         }
     }
 }
