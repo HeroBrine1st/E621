@@ -20,6 +20,8 @@
 
 package ru.herobrine1st.e621.ui.dialog
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -35,8 +37,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.unit.dp
 
 // Clone of AlertDialog (that one with slots), but with more than 2 action buttons
@@ -50,32 +54,59 @@ fun ActionDialog(
     content: @Composable (ColumnScope.() -> Unit)
 ) {
     AlertDialog(onDismissRequest = onDismissRequest) {
-        Surface(
-            shape = AlertDialogDefaults.shape,
-            color = AlertDialogDefaults.containerColor,
-            tonalElevation = AlertDialogDefaults.TonalElevation,
-        ) {
-            Column(
-                modifier = Modifier.padding(all = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier
-                        .align(Alignment.Start)
-                )
-                Spacer(Modifier.height(16.dp))
-                content()
-                Spacer(Modifier.height(24.dp))
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    // TODO crossAxisSpacing = 12.dp (foundation 1.5.0)
-                    modifier = Modifier.align(Alignment.End)
+        // Fix size change
+        // ComposeView uses first measured size as min and max constrains for next measurements
+        // Ignore minimum constraints, allowing dialog to properly reduce its size
+        Layout(
+            content = {
+                Surface(
+                    shape = AlertDialogDefaults.shape,
+                    color = AlertDialogDefaults.containerColor,
+                    tonalElevation = AlertDialogDefaults.TonalElevation,
                 ) {
-                    actions()
+                    Column(
+                        modifier = Modifier.padding(all = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.headlineSmall,
+                            modifier = Modifier
+                                .align(Alignment.Start)
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        content()
+                        Spacer(Modifier.height(24.dp))
+                        FlowRow(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            // TODO crossAxisSpacing = 12.dp (foundation 1.5.0)
+                            modifier = Modifier.align(Alignment.End)
+                        ) {
+                            actions()
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onDismissRequest
+            )
+        ) { measurables, constraints ->
+            // This layout causes "Prior agent invocations in this VM" in logs
+            // Many of them, about 20-30 maximum observed
+            val constraintsWithoutMinimumHeight = constraints.copy(minHeight = 0)
+            val placeables = measurables.map { it.measure(constraintsWithoutMinimumHeight) }
+            val width = placeables.maxOf { it.width }
+            val height = placeables.maxOf { it.height }.coerceAtLeast(constraints.minHeight)
+
+            return@Layout layout(width, height) {
+                // Align to center
+                placeables.forEach {
+                    it.place((width - it.width) / 2, (height - it.height) / 2)
                 }
             }
         }
+
     }
 }
