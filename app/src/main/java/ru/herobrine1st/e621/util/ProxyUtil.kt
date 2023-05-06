@@ -23,7 +23,13 @@ package ru.herobrine1st.e621.util
 import android.util.Log
 import ru.herobrine1st.e621.preference.proto.ProxyOuterClass
 import java.io.IOException
-import java.net.*
+import java.net.Authenticator
+import java.net.InetSocketAddress
+import java.net.PasswordAuthentication
+import java.net.Proxy
+import java.net.ProxySelector
+import java.net.SocketAddress
+import java.net.URI
 
 class ProxyWithAuth(proxy: ProxyOuterClass.Proxy) : Proxy(
     when (proxy.type) {
@@ -50,7 +56,9 @@ class AuthenticatorImpl(private val proxies: List<ProxyWithAuth>) : Authenticato
         if (requestorType != RequestorType.PROXY) return null
         if (proxies.isEmpty()) return null
 
-        Log.d("Authenticator", "$requestorType $requestingSite $requestingHost $requestingPort")
+        debug {
+            Log.d("Authenticator", "$requestorType $requestingSite $requestingHost $requestingPort")
+        }
         return proxies.find {
             val address = it.address() as InetSocketAddress
             requestingHost == address.hostName && requestingPort == address.port
