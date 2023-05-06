@@ -42,9 +42,12 @@ import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
@@ -213,6 +216,8 @@ fun Post(
     onAddToFavourites: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit
 ) {
+    var showRemoveFromFavouritesConfirmation by remember { mutableStateOf(false) }
+
     ElevatedCard(
         shape = shape,
         modifier = Modifier.fillMaxWidth()
@@ -285,11 +290,42 @@ fun Post(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
-                onAddToFavourites
+                onAddToFavourites = {
+                    if (favouriteState.isFavourite)
+                        showRemoveFromFavouritesConfirmation = true
+                    else onAddToFavourites()
+                }
             ) {
                 openPost(true)
             }
         }
     }
+
+    if (showRemoveFromFavouritesConfirmation) AlertDialog(
+        onDismissRequest = {
+            showRemoveFromFavouritesConfirmation = false
+        },
+        title = {
+            Text(stringResource(R.string.remove_from_favourites_confirmation_dialog_title))
+        },
+        text = {
+            Text(stringResource(R.string.remove_from_favourites_confirmation_dialog_text))
+        },
+        confirmButton = {
+            Button(onClick = {
+                onAddToFavourites()
+                showRemoveFromFavouritesConfirmation = false
+            }) {
+                Text(stringResource(R.string.remove))
+            }
+        },
+        dismissButton = {
+            FilledTonalButton(onClick = {
+                showRemoveFromFavouritesConfirmation = false
+            }) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }
 
