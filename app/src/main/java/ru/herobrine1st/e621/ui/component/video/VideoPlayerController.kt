@@ -27,6 +27,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -48,6 +49,7 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -58,10 +60,12 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
 import kotlinx.coroutines.delay
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import kotlin.math.roundToLong
 
 @Composable
@@ -102,8 +106,18 @@ fun VideoPlayerController(
                 Alignment.Center
             )
         ) {
-            IconButton(
-                onClick = { togglePlay(!willPlayWhenReady) }
+            // After migration to Media3 IconButton got indication
+            // white there was no indication before (it was a bug, because code after fix below was literally the same)
+            Box(
+                modifier = Modifier
+                    .minimumInteractiveComponentSize()
+                    .clickable(
+                        onClick = { togglePlay(!willPlayWhenReady) },
+                        role = Role.Button,
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null
+                    ),
+                contentAlignment = Alignment.Center
             ) {
                 Crossfade(targetState = willPlayWhenReady) {
                     when (it) {
@@ -111,9 +125,11 @@ fun VideoPlayerController(
                             Icons.Default.Pause,
                             contentDescription = stringResource(R.string.pause),
                             tint = Color.White,
+                            // Looks like those buttons are bigger than they were
                             modifier = Modifier.size(48.dp)
                         )
-
+                        // Particularly this icon is completely different, like it is not only bigger
+                        // but spacing between two rectangles is unproportionally bigger too
                         false -> Icon(
                             Icons.Default.PlayArrow,
                             contentDescription = stringResource(R.string.resume),
