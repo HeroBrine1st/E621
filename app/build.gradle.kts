@@ -191,6 +191,12 @@ dependencies {
     "profileableImplementation"("androidx.tracing:tracing-perfetto:1.0.0-alpha15")
     "profileableImplementation"("androidx.tracing:tracing-perfetto-binary:1.0.0-alpha15")
 
+    // Jetpack Media3
+    implementation("androidx.media3:media3-exoplayer:1.0.1")
+    implementation("androidx.media3:media3-ui:1.0.1")
+    implementation("androidx.media3:media3-datasource-okhttp:1.0.1")
+    implementation("androidx.media3:media3-session:1.0.1")
+
     // Other libraries
     implementation("com.google.android.exoplayer:exoplayer:2.18.6") // Apache 2.0
     implementation("org.jsoup:jsoup:1.15.4") // Expat License

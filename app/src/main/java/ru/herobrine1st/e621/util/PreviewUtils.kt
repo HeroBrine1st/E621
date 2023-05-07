@@ -21,9 +21,12 @@
 package ru.herobrine1st.e621.util
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import com.arkivanov.decompose.DefaultComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.navigation.config.Config
 
 @RequiresOptIn(message = "This should only be used in previews")
@@ -32,11 +35,30 @@ annotation class PreviewUtils
 
 @Composable
 @PreviewUtils
-fun getPreviewComponentContext() = DefaultComponentContext(LifecycleRegistry())
+fun getPreviewComponentContext(): DefaultComponentContext {
+    val lifecycleRegistry = LifecycleRegistry()
+    val coroutineScope = rememberCoroutineScope()
+    DisposableEffect(lifecycleRegistry) {
+        coroutineScope.launch {
+            lifecycleRegistry.onCreate()
+            lifecycleRegistry.onStart()
+            lifecycleRegistry.onResume()
+        }
+        onDispose {
+            coroutineScope.launch {
+                lifecycleRegistry.onPause()
+                lifecycleRegistry.onStop()
+                lifecycleRegistry.onDestroy()
+            }
+        }
+
+    }
+    return DefaultComponentContext(lifecycleRegistry)
+}
 
 @Composable
 @PreviewUtils
-fun getPreviewStackNavigator() = object: StackNavigator<Config> {
+fun getPreviewStackNavigator() = object : StackNavigator<Config> {
     override fun navigate(
         transformer: (stack: List<Config>) -> List<Config>,
         onComplete: (newStack: List<Config>, oldStack: List<Config>) -> Unit
