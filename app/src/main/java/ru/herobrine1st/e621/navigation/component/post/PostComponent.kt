@@ -29,23 +29,26 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.MediaItem
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.await
+import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.selectSample
+import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
@@ -64,10 +67,10 @@ class PostComponent(
     initialPost: Post?,
     componentContext: ComponentContext,
     private val navigator: StackNavigator<Config>,
-    applicationContext: Context,
+    private val applicationContext: Context,
     exceptionReporter: ExceptionReporter,
-    private val exoPlayer: ExoPlayer,
-    val api: API
+    val api: API,
+    private val mediaOkHttpClientProvider: Lazy<OkHttpClient>,
 ) : ComponentContext by componentContext {
     private val instance = instanceKeeper.getOrCreate {
         Instance(postId, api, exceptionReporter)
@@ -84,6 +87,33 @@ class PostComponent(
 
     // TODO move to another component (it should be overlay component)
     val commentsFlow get() = instance.commentsFlow
+
+    private lateinit var videoPlayerComponent: VideoPlayerComponent
+    private var latestPlayedFile: NormalizedFile? = null
+
+    fun getVideoPlayerComponent(file: NormalizedFile): VideoPlayerComponent {
+        assert(file.type.isVideo) {
+            "File is not video"
+        }
+        // This function can be called in a result of scrolling down and back
+        // also recomposition can occur when navigating back, i.e. components are destroyed
+        if (latestPlayedFile == file) {
+            return videoPlayerComponent
+        }
+        latestPlayedFile = file
+        val url = file.urls.first()
+        if (::videoPlayerComponent.isInitialized) {
+            videoPlayerComponent.setUrl(url)
+        } else {
+            videoPlayerComponent = VideoPlayerComponent(
+                url = url,
+                applicationContext = applicationContext,
+                componentContext = childContext("VIDEO_COMPONENT"),
+                mediaOkHttpClient = mediaOkHttpClientProvider.value
+            )
+        }
+        return videoPlayerComponent
+    }
 
     init {
 //        stateKeeper.register(STATE_KEY) {
@@ -129,17 +159,14 @@ class PostComponent(
 //        }
         lifecycle.doOnDestroy {
             lifecycleScope.cancel()
-            exoPlayer.clearMediaItems()
         }
     }
 
     private fun setMediaItem() {
         assert(post != null) { "setMediaItem should be called only after post loading" }
-        assert(exoPlayer.mediaItemCount == 0)
         val post = post!!
         if (post.file.type.isVideo) {
-            exoPlayer.setMediaItem(MediaItem.fromUri(post.files.first { it.type.isVideo }.urls.first()))
-            exoPlayer.prepare()
+            getVideoPlayerComponent(post.selectSample())
         }
 
     }

@@ -111,7 +111,10 @@ fun Post(
             PostMediaContainer(
                 file = file,
                 contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
-                modifier = modifier
+                modifier = modifier,
+                getVideoPlayerComponent = {
+                    component.getVideoPlayerComponent(file)
+                }
             )
         }
     }

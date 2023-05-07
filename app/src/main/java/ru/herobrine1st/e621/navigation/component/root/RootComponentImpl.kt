@@ -21,13 +21,17 @@
 package ru.herobrine1st.e621.navigation.component.root
 
 import android.content.Context
+import android.os.StatFs
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.SlotNavigation
 import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
-import com.google.android.exoplayer2.ExoPlayer
+import com.arkivanov.essenty.instancekeeper.InstanceKeeper
+import com.arkivanov.essenty.instancekeeper.getOrCreate
+import okhttp3.Cache
+import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
@@ -44,6 +48,7 @@ import ru.herobrine1st.e621.navigation.config.Config.*
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
+import java.io.File
 
 class RootComponentImpl(
     private val applicationContext: Context,
@@ -53,7 +58,6 @@ class RootComponentImpl(
     private val favouritesCacheProvider: Lazy<FavouritesCache>,
     private val exceptionReporterProvider: Lazy<ExceptionReporter>,
     private val blacklistRepositoryProvider: Lazy<BlacklistRepository>,
-    private val exoPlayerProvider: Lazy<ExoPlayer>,
     componentContext: ComponentContext
 ) : RootComponent, ComponentContext by componentContext {
 
@@ -71,6 +75,8 @@ class RootComponentImpl(
         childFactory = ::createDialogChild
         // handleBackButton = false - dialogs handle it themselves
     )
+
+    private val instance = instanceKeeper.getOrCreate { Instance(applicationContext) }
 
     private fun createChild(
         configuration: Config,
@@ -117,8 +123,8 @@ class RootComponentImpl(
                     navigation,
                     applicationContext,
                     exceptionReporterProvider.value,
-                    exoPlayerProvider.value,
-                    apiProvider.value
+                    apiProvider.value,
+                    instance.mediaOkHttpClientProvider
                 )
             )
             is Settings -> Child.Settings(SettingsComponent(context))
@@ -175,4 +181,31 @@ class RootComponentImpl(
                 )
             )
         }
+
+    // Used to save instances for DI into components
+    private class Instance(val applicationContext: Context) : InstanceKeeper.Instance {
+        val mediaOkHttpClientProvider = lazy {
+            val cacheDir = File(applicationContext.cacheDir, "video").apply { mkdirs() }
+            val size = (StatFs(cacheDir.absolutePath).let {
+                it.blockCountLong * it.blockSizeLong
+            } * DISK_CACHE_PERCENTAGE).toLong()
+                .coerceIn(
+                    MIN_DISK_CACHE_SIZE_BYTES,
+                    MAX_DISK_CACHE_SIZE_BYTES
+                )
+            OkHttpClient.Builder()
+                .cache(Cache(cacheDir, size))
+                .build()
+        }
+
+        override fun onDestroy() {
+
+        }
+
+        companion object {
+            const val DISK_CACHE_PERCENTAGE = 0.05
+            const val MIN_DISK_CACHE_SIZE_BYTES = 10L * 1024 * 1024
+            const val MAX_DISK_CACHE_SIZE_BYTES = 1024L * 1024 * 1024
+        }
+    }
 }

@@ -52,14 +52,14 @@ import ru.herobrine1st.e621.util.debug
 const val CONTROLS_TIMEOUT_MS = 7500L
 
 class VideoPlayerComponent(
-    mediaItem: MediaItem,
+    url: String,
     applicationContext: Context,
     mediaOkHttpClient: OkHttpClient,
-    componentContent: ComponentContext,
+    componentContext: ComponentContext,
     private val controlsTimeoutMs: Long = CONTROLS_TIMEOUT_MS
-) : ComponentContext by componentContent, Player.Listener, Lifecycle.Callbacks {
+) : ComponentContext by componentContext, Player.Listener, Lifecycle.Callbacks {
     private val instance = instanceKeeper.getOrCreate {
-        Instance(mediaItem, applicationContext, mediaOkHttpClient)
+        Instance(applicationContext, mediaOkHttpClient)
     }
 
     private val lifecycleScope = LifecycleScope()
@@ -153,6 +153,7 @@ class VideoPlayerComponent(
                 showRemainingInsteadOfTotalTime = it.showRemainingTimeMedia
             }
             .launchIn(lifecycleScope)
+        setUrl(url)
     }
 
     override fun onResume() {
@@ -169,7 +170,8 @@ class VideoPlayerComponent(
     }
 
     override fun onPause() {
-        playWhenReady = false
+        if (!instance.destroyed)
+            playWhenReady = false
     }
 
     override fun onDestroy() {
@@ -231,9 +233,13 @@ class VideoPlayerComponent(
         val speed: Float
     )
 
+    fun setUrl(url: String) {
+        player.setMediaItem(MediaItem.fromUri(url))
+        player.prepare()
+    }
+
     @androidx.annotation.OptIn(UnstableApi::class)
     private class Instance(
-        mediaItem: MediaItem,
         applicationContext: Context,
         mediaOkHttpClient: OkHttpClient
     ) : InstanceBase(), Player.Listener {
@@ -249,14 +255,13 @@ class VideoPlayerComponent(
             .apply {
                 repeatMode = Player.REPEAT_MODE_ALL
             }
-
-        init {
-            player.setMediaItem(mediaItem)
-            player.prepare()
-        }
+        var destroyed = false
+            private set
 
         override fun onDestroy() {
             super.onDestroy()
+            // https://github.com/arkivanov/Decompose/issues/383
+            destroyed = true
             player.release()
         }
     }

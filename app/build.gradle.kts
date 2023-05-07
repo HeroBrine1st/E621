@@ -195,10 +195,9 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.0.1")
     implementation("androidx.media3:media3-ui:1.0.1")
     implementation("androidx.media3:media3-datasource-okhttp:1.0.1")
-    implementation("androidx.media3:media3-session:1.0.1")
+//    implementation("androidx.media3:media3-session:1.0.1")
 
     // Other libraries
-    implementation("com.google.android.exoplayer:exoplayer:2.18.6") // Apache 2.0
     implementation("org.jsoup:jsoup:1.15.4") // Expat License
     implementation("com.mikepenz:aboutlibraries-compose:10.6.2") // Apache 2.0
 

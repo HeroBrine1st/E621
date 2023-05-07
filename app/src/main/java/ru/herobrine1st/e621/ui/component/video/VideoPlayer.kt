@@ -42,7 +42,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
@@ -134,7 +133,7 @@ private fun Preview() {
     MaterialTheme {
         VideoPlayer(
             component = VideoPlayerComponent(
-                MediaItem.fromUri("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4"),
+                "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
                 LocalContext.current.applicationContext,
                 remember { OkHttpClient() },
                 getPreviewComponentContext(),

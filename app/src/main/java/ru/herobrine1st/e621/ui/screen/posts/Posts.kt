@@ -223,14 +223,20 @@ fun Post(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            PostMediaContainer(
-                file = post.normalizedSample,
-                contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
-                modifier = Modifier.clickable {
-                    openPost(false)
-                },
-                post = post
-            )
+            if (post.normalizedSample.type.isVideo) {
+                Text(stringResource(R.string.assertion_failed, "API_RETURNED_VIDEO_SAMPLE"))
+            } else
+                PostMediaContainer(
+                    file = post.normalizedSample,
+                    contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
+                    modifier = Modifier.clickable {
+                        openPost(false)
+                    },
+                    post = post,
+                    getVideoPlayerComponent = {
+                        throw RuntimeException("Normalized sample is a video, which is not possible")
+                    }
+                )
             // FIXME UI jank in both FlowRow and PostActionsRow
             // This issue is somehow related to Text, but quick test shows that removing Text
             // does not help while removing both FlowRow and PostActionsRow make scrolling smooth

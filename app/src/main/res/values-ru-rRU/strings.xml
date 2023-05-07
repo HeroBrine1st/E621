@@ -143,4 +143,5 @@
     <string name="login_logout_confirmation_dialog_text">Вы уверены, что хотите выйти из аккаунта?</string>
     <string name="remove_from_favourites_confirmation_dialog_title">Подтверждение удаления</string>
     <string name="remove_from_favourites_confirmation_dialog_text">Вы уверены, что хотите удалить этот пост из избранного? Возможно, вы не сможете полностью отменить это действие!</string>
+    <string name="assertion_failed">Обнаружено неожиданное поведение. Пожалуйста, расскаэжите об этой ошибке разработчикам. Код ошибки: %s</string>
 </resources>

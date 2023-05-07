@@ -37,7 +37,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.lifecycleScope
 import com.arkivanov.decompose.defaultComponentContext
 import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
-import com.google.android.exoplayer2.ExoPlayer
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.catch
@@ -99,9 +98,6 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var exceptionReporterProvider: Provider<ExceptionReporter>
 
-    @Inject
-    lateinit var exoPlayerProvider: Provider<ExoPlayer>
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -125,10 +121,9 @@ class MainActivity : ComponentActivity() {
             authorizationRepositoryProvider = authorizationRepositoryProvider.lazy(),
             apiProvider = apiProvider.lazy(),
             snackbarAdapterProvider = lazyOf(snackbarAdapter),
-            blacklistRepositoryProvider = blacklistRepositoryProvider.lazy(),
             favouritesCacheProvider = favouritesCacheProvider.lazy(),
             exceptionReporterProvider = exceptionReporterProvider.lazy(),
-            exoPlayerProvider = exoPlayerProvider.lazy(),
+            blacklistRepositoryProvider = blacklistRepositoryProvider.lazy(),
             componentContext = defaultComponentContext()
         )
 
