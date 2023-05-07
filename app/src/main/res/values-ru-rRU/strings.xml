@@ -53,15 +53,15 @@
     <string name="score_up">Лайк</string>
     <string name="score_down">Дизлайк</string>
     <string name="comments">Комментарии</string>
-    <string name="add_to_favourites">Сохранить</string>
+    <string name="add_to_favourites">Добавить в избранное</string>
     <string name="share">Поделиться</string>
-    <string name="remove_from_favourites">Удалить</string>
+    <string name="remove_from_favourites">Удалить из избранного</string>
     <string name="expand">Развернуть</string>
     <string name="collapse">Свернуть</string>
     <string name="post">Пост</string>
-    <string name="favourites_of">Сохранил в избранное</string>
+    <string name="favourites_of">Избранное пользователя</string>
     <string name="user">Пользователь</string>
-    <string name="favourites">Сохранённые</string>
+    <string name="favourites">Избранное</string>
     <string name="data_saver_mode">Экономия данных</string>
     <string name="data_saver_mode_subtitle">Делать меньше запросов к API</string>
     <string name="data_saver_mode_long_description">Эта функция находится в стадии разработки. Прямо сейчас она пытается сокращать запросы к API, что полезно из-за жесткого ограничения: 2 запроса в секунду. Точнее говоря, он отключает повторную загрузку поста при его открытии и отключает автоматическую загрузку комментариев.</string>
@@ -142,5 +142,5 @@
     <string name="login_logout_confirmation_dialog_title">Подтверждение выхода из аккаунта</string>
     <string name="login_logout_confirmation_dialog_text">Вы уверены, что хотите выйти из аккаунта?</string>
     <string name="remove_from_favourites_confirmation_dialog_title">Подтверждение удаления</string>
-    <string name="remove_from_favourites_confirmation_dialog_text">Вы уверены, что хотите удалить этот пост из сохранённых постов? Возможно, вы не сможете полностью отменить это действие!</string>
+    <string name="remove_from_favourites_confirmation_dialog_text">Вы уверены, что хотите удалить этот пост из избранного? Возможно, вы не сможете полностью отменить это действие!</string>
 </resources>
