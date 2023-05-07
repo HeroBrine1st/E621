@@ -33,9 +33,9 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.preference.updatePreferences
-import ru.herobrine1st.e621.ui.component.video.VideoPlayer
-import ru.herobrine1st.e621.ui.component.video.VideoPlayerState
-import ru.herobrine1st.e621.ui.component.video.rememberVideoPlayerState
+import ru.herobrine1st.e621.ui.component.video.legacy.VideoPlayer
+import ru.herobrine1st.e621.ui.component.video.legacy.VideoPlayerState
+import ru.herobrine1st.e621.ui.component.video.legacy.rememberVideoPlayerState
 import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "PostVideo"

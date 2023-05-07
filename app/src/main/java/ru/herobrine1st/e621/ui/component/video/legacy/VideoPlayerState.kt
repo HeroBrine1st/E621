@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.component.video
+package ru.herobrine1st.e621.ui.component.video.legacy
 
 import android.os.Bundle
 import android.util.Log
