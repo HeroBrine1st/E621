@@ -110,7 +110,7 @@ class VideoPlayerComponent(
             _showRemainingInsteadOfTotalTime = v
             lifecycleScope.launch {
                 dataStore.updatePreferences {
-                    showRemainingInsteadOfTotalTime = v
+                    showRemainingTimeMedia = v
                 }
             }
         }
