@@ -15,5 +15,6 @@ message Preferences {
   optional bool safe_mode_disclaimer_shown = 8 [default = false];
   optional bool license_and_non_affiliation_disclaimer_shown = 9 [default = false];
   optional Proxy proxy = 10;
+  optional bool autoplay_on_post_open = 11 [default = true];
 }
 

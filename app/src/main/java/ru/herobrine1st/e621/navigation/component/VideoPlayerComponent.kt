@@ -45,6 +45,7 @@ import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.preference.dataStore
+import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.debug
@@ -171,9 +172,13 @@ class VideoPlayerComponent(
 
             PlaybackSavedState.UNCHANGED -> {}
             PlaybackSavedState.EMPTY -> {
-                // TODO preference
-                // implement as applicationContext.getPreferencesFlow {...}.limit(1).collect { playWhenReady = it }
-                playWhenReady = true
+                dataStore.getPreferencesFlow { it.autoplayOnPostOpen }
+                    .take(1)
+                    .onEach {
+                        if (lifecycle.state == Lifecycle.State.RESUMED)
+                            playWhenReady = it
+                    }
+                    .launchIn(lifecycleScope)
             }
         }
 

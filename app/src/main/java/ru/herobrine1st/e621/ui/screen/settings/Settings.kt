@@ -161,6 +161,21 @@ fun Settings(
                 )
             }
             item {
+                SettingSwitch(
+                    checked = preferences.autoplayOnPostOpen,
+                    title = stringResource(R.string.settings_autoplay_video_on_post_open),
+                    subtitle = stringResource(R.string.settings_autoplay_video_on_post_open_shortdesc),
+                    icon = Icons.Default.PlayCircleOutline,
+                    onCheckedChange = {
+                        coroutineScope.launch {
+                            context.updatePreferences {
+                                autoplayOnPostOpen = it
+                            }
+                        }
+                    }
+                )
+            }
+            item {
                 SettingLink(
                     title = stringResource(R.string.about),
                     icon = Icons.Default.Copyright,
