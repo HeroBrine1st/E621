@@ -158,20 +158,33 @@ class VideoPlayerComponent(
 
     override fun onResume() {
         debug {
-            Log.d(TAG, "Setting playWhenReady = true")
+            Log.d(TAG, "Restoring state: ${instance.playbackSavedState}")
         }
         if (!player.availableCommands.contains(Player.COMMAND_PLAY_PAUSE)) Log.w(
             TAG,
             "playWhenReady modified while command is not available"
         )
-        // TODO preference
-        // implement as applicationContext.getPreferencesFlow {...}.limit(1).collect { playWhenReady = it }
-        playWhenReady = true
+        when (instance.playbackSavedState) {
+            PlaybackSavedState.PAUSED -> {
+                playWhenReady = true
+            }
+
+            PlaybackSavedState.UNCHANGED -> {}
+            PlaybackSavedState.EMPTY -> {
+                // TODO preference
+                // implement as applicationContext.getPreferencesFlow {...}.limit(1).collect { playWhenReady = it }
+                playWhenReady = true
+            }
+        }
+
     }
 
     override fun onPause() {
-        if (!instance.destroyed)
+        if (!instance.destroyed) {
+            instance.playbackSavedState =
+                if (playWhenReady) PlaybackSavedState.PAUSED else PlaybackSavedState.UNCHANGED
             playWhenReady = false
+        }
     }
 
     override fun onDestroy() {
@@ -255,6 +268,9 @@ class VideoPlayerComponent(
             .apply {
                 repeatMode = Player.REPEAT_MODE_ALL
             }
+
+        var playbackSavedState = PlaybackSavedState.EMPTY
+
         var destroyed = false
             private set
 
@@ -268,5 +284,11 @@ class VideoPlayerComponent(
 
     companion object {
         private const val TAG = "VideoPlayerComponent"
+    }
+
+    enum class PlaybackSavedState {
+        PAUSED,
+        UNCHANGED,
+        EMPTY
     }
 }
