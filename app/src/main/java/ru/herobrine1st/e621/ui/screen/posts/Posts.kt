@@ -224,7 +224,12 @@ fun Post(
     ) {
         Column {
             if (post.normalizedSample.type.isVideo) {
-                Text(stringResource(R.string.assertion_failed, "API_RETURNED_VIDEO_SAMPLE"))
+                Text(
+                    stringResource(
+                        R.string.assertion_failed,
+                        "API_RETURNED_VIDEO_SAMPLE_${post.id}"
+                    )
+                )
             } else
                 PostMediaContainer(
                     file = post.normalizedSample,
