@@ -206,7 +206,8 @@ fun VideoPlayerController(
             }
 
             Text(
-                DateUtils.formatElapsedTime(if (showRemaining) contentDurationSeconds - contentPositionSeconds else contentDurationSeconds),
+                (if (showRemaining) "-" else "") +
+                        DateUtils.formatElapsedTime(if (showRemaining) contentDurationSeconds - contentPositionSeconds else contentDurationSeconds),
                 color = Color.White,
                 modifier = Modifier
                     .toggleable(
