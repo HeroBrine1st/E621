@@ -24,6 +24,7 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.LinkOff
@@ -104,9 +105,11 @@ fun WikiScreen(screenSharedState: ScreenSharedState, component: WikiComponent) {
                 }
 
                 is WikiState.Success -> {
-                    LazyColumn(Modifier.fillMaxSize()) {
-                        items(state.parsed) {
-                            RenderBB(it)
+                    SelectionContainer {
+                        LazyColumn(Modifier.fillMaxSize()) {
+                            items(state.parsed) {
+                                RenderBB(it)
+                            }
                         }
                     }
                 }
