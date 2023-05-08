@@ -114,13 +114,14 @@ data class MessageQuote(
 
 /**
  * Handle:
- * 1. ``[tag]``
+ * 1. ``[tag]``, including ``[tag,attr]``, ``[tag=attr]`` and ``[tag,attr=attr]``
  * 2. ``[/tag]``
  * 3. ``[[link]]``
  * 4. ``[[link|text]]``
  */
 @Suppress("KDocUnresolvedReference")
-val pattern = Regex("""\[(?:([^\[\]/]+)|/([^\[\]/]+)|\[([^\[\]/]+)(?:\|([^\[\]/]+))?)]""")
+val pattern =
+    Regex("""\[(?:([^=\[\]/,]+)(?:,([^=\[\]/]+))?(?:=([^\[\]/]+))?|/([^\[\]/]+)|\[([^\[\]/]+)(?:\|([^\[\]/]+))?)]""")
 
 // "name":/user/show/0 said:
 // "name":/users/0 said:
@@ -165,10 +166,20 @@ private fun parseBBCodeInternal(
             output += parseBBCodeInternal(input, openingTag, match.range.last + 1).also {
                 start = it.second
             }.first
+            debug {
+                val attribute = match.groupValues[2]
+                val otherAttribute = match.groupValues[3]
+                if (attribute != "" || otherAttribute != "") {
+                    Log.w(
+                        TAG,
+                        "Attributes \"$attribute\" and/or \"$otherAttribute\" of $openingTag is unused"
+                    )
+                }
+            }
             continue
         }
 
-        val closingTag = match.groupValues[2]
+        val closingTag = match.groupValues[4]
         if (closingTag != "") {
             if (closingTag == currentTag) {
                 tagClosed = true
