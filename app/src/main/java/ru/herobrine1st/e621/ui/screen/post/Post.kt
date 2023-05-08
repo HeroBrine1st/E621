@@ -445,7 +445,8 @@ fun CommentsBottomSheetContent(
                     PostComment(
                         comment,
                         modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
-                        placeholder = comment === CommentData.PLACEHOLDER
+                        placeholder = comment === CommentData.PLACEHOLDER,
+                        animateTextChange = true
                     )
                 }
                 endOfPagePlaceholder(comments.loadState.append)
