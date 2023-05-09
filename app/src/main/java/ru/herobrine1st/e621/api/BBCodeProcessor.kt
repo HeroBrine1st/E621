@@ -149,7 +149,6 @@ private sealed interface DTextTag {
                 add(MessageText("[/$name]"))
             }
         }
-
     }
 
     companion object {
@@ -181,12 +180,11 @@ private sealed interface DTextTag {
  * Handle:
  * 1. ``[tag]``, including ``[tag,attr]``, ``[tag=attr]`` and ``[tag,attr=attr]``
  * 2. ``[/tag]``
- * 3. ``[[link]]``
- * 4. ``[[link|text]]``
+ * 3. ``[[link]]`` and ``[[link|text]]``
  */
 @Suppress("KDocUnresolvedReference")
 val pattern =
-    Regex("""\[(?:([^=\[\]/,]+)(?:,([^=\[\]/]+))?(?:=([^\[\]/]+))?|/([^\[\]/]+)|\[([^\[\]/]+)(?:\|([^\[\]/]+))?)]""")
+    Regex("""\[(?:([^=\[\]/,]+)(?:,([^=\[\]/]+))?(?:=([^\[\]/]+))?|/([^\[\]/]+)|\[([^\[\]/|]+)(?:\|([^\[\]/]+))?])]""")
 
 // "name":/user/show/0 said:
 // "name":/users/0 said:
@@ -245,6 +243,7 @@ private fun parseBBCodeInternal(
                 // Just go to catchall
             }
         }
+
 
         // Catchall, as not all groups are used
         output += MessageText(AnnotatedString(match.groupValues[0]))
