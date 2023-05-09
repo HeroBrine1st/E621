@@ -274,6 +274,7 @@ private fun parseBBCodeInternal(
                     }
                 }.toAnnotatedString()
             ) else MessageText(hyper.ifBlank { link })
+            continue
         }
         Log.w(TAG, "Catchall triggered on `${match.groupValues[0]}`")
         output += MessageText(AnnotatedString(match.groupValues[0]))
