@@ -34,8 +34,13 @@ import kotlinx.coroutines.withContext
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.*
+import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.ApiException
+import ru.herobrine1st.e621.api.MessageData
+import ru.herobrine1st.e621.api.NotFoundException
+import ru.herobrine1st.e621.api.getWikiPage
 import ru.herobrine1st.e621.api.model.WikiPage
+import ru.herobrine1st.e621.api.parseBBCode
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
@@ -98,6 +103,8 @@ class WikiComponent(
 
     // provided object is mutated!
     private suspend fun WikiState.Success.parseWikiPage(): WikiState.Success {
+        // it may be true after configuration change
+        if (isParsed) return this
         return withContext(Dispatchers.Default) {
             this@parseWikiPage.setParsed(parseBBCode(this@parseWikiPage.result.body))
             return@withContext this@parseWikiPage
@@ -115,7 +122,6 @@ sealed interface WikiState : Parcelable {
     class Success(val result: WikiPage) : WikiState {
         @IgnoredOnParcel
         // MessageData is not parcelable and should not be
-
         lateinit var parsed: List<MessageData<*>>
             private set
 
@@ -124,6 +130,7 @@ sealed interface WikiState : Parcelable {
             parsed = v
         }
 
+        val isParsed get() = ::parsed.isInitialized
     }
 
     @Parcelize

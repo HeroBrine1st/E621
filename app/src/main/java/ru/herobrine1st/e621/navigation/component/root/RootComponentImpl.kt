@@ -61,6 +61,8 @@ class RootComponentImpl(
     componentContext: ComponentContext
 ) : RootComponent, ComponentContext by componentContext {
 
+    private val instance = instanceKeeper.getOrCreate { Instance(applicationContext) }
+
     override val navigation = StackNavigation<Config>()
     override val stack = childStack(
         source = navigation,
@@ -75,8 +77,6 @@ class RootComponentImpl(
         childFactory = ::createDialogChild
         // handleBackButton = false - dialogs handle it themselves
     )
-
-    private val instance = instanceKeeper.getOrCreate { Instance(applicationContext) }
 
     private fun createChild(
         configuration: Config,
