@@ -1,14 +1,19 @@
 package ru.herobrine1st.e621
 
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.UrlAnnotation
+import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.text.withStyle
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import ru.herobrine1st.e621.api.BOLD
 import ru.herobrine1st.e621.api.ITALIC
+import ru.herobrine1st.e621.api.LINK
 import ru.herobrine1st.e621.api.MessageQuote
 import ru.herobrine1st.e621.api.MessageText
+import ru.herobrine1st.e621.api.WIKI_PAGE_STRING_ANNOTATION_TAG
 import ru.herobrine1st.e621.api.parseBBCode
 
 
@@ -193,4 +198,30 @@ class BBCodeParserTest {
         val text = res[0] as MessageText
         assertEquals(input, text.text.text)
     }
+
+    @OptIn(ExperimentalTextApi::class)
+    fun testLink(link: String, hyperlink: String = "") {
+        require(link.isNotBlank()) { "Link should not be blank. It is an error in test." }
+        val input = if (hyperlink.isNotBlank()) "[[$link|$hyperlink]]" else "[[$link]]"
+        val res = parseBBCode(input)
+        assertEquals(1, res.size)
+        assertTrue(res[0] is MessageText)
+        val text = res[0] as MessageText
+        assertEquals(hyperlink.ifBlank { link }, text.text.text)
+        assertEquals(AnnotatedString.Builder().apply {
+            withAnnotation(UrlAnnotation("${BuildConfig.DEEP_LINK_BASE_URL}/wiki_pages/show_or_new?title=$link")) {
+                withAnnotation(WIKI_PAGE_STRING_ANNOTATION_TAG, link) {
+                    withStyle(LINK) {
+                        append(hyperlink.ifBlank { link })
+                    }
+                }
+            }
+        }.toAnnotatedString(), text.text)
+    }
+
+    @Test
+    fun `Test link`() = testLink("test")
+
+    @Test
+    fun `Test hyperlink`() = testLink("test", "hyperlink")
 }
