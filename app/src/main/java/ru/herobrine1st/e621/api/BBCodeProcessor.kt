@@ -52,6 +52,8 @@ val LINK = SpanStyle(
     textDecoration = TextDecoration.Underline
 )
 
+const val WIKI_PAGE_STRING_ANNOTATION_TAG = "WIKI_PAGE"
+
 @Immutable
 sealed interface MessageData<T : MessageData<T>> {
     fun isEmpty(): Boolean
@@ -264,7 +266,7 @@ private fun parseBBCodeInternal(
             output += if (handleLinks) MessageText(
                 AnnotatedString.Builder().apply {
                     withAnnotation(UrlAnnotation("${BuildConfig.DEEP_LINK_BASE_URL}/wiki_pages/show_or_new?title=$link")) {
-                        withAnnotation("WIKI_PAGE", link) {
+                        withAnnotation(WIKI_PAGE_STRING_ANNOTATION_TAG, link) {
                             withStyle(LINK) {
                                 append(hyper.ifBlank { link })
                             }

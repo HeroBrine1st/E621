@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,25 +44,26 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.MessageQuote
 import ru.herobrine1st.e621.api.MessageText
+import ru.herobrine1st.e621.api.WIKI_PAGE_STRING_ANNOTATION_TAG
 import ru.herobrine1st.e621.api.parseBBCode
 
 @Composable
-fun RenderBB(text: String) {
-    val parsed = remember(text) { parseBBCode(text) }
+fun RenderBB(text: String, onWikiLinkClick: ((String) -> Unit)? = null) {
+    val parsed = remember(text) { parseBBCode(text, handleLinks = onWikiLinkClick != null) }
     RenderBB(parsed)
 }
 
 @Composable
-fun RenderBB(data: List<MessageData<*>>) {
+fun RenderBB(data: List<MessageData<*>>, onWikiLinkClick: ((String) -> Unit)? = null) {
     Column {
         data.forEach {
-            RenderBB(it)
+            RenderBB(it, onWikiLinkClick = onWikiLinkClick)
         }
     }
 }
 
 @Composable
-fun RenderBB(data: MessageData<*>) {
+fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((String) -> Unit)? = null) {
     when (data) {
         is MessageQuote -> {
             data.author?.let {
@@ -84,6 +86,22 @@ fun RenderBB(data: MessageData<*>) {
                 )
             }
         }
-        is MessageText -> Text(data.text)
+
+        is MessageText -> {
+            if (onWikiLinkClick == null)
+                Text(data.text)
+            else {
+                val text = data.text
+                ClickableText(text = text) { index ->
+                    text.getStringAnnotations(
+                        tag = WIKI_PAGE_STRING_ANNOTATION_TAG,
+                        start = index,
+                        end = index
+                    ).firstOrNull()?.let {
+                        onWikiLinkClick(it.item)
+                    }
+                }
+            }
+        }
     }
 }

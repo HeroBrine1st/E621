@@ -158,7 +158,8 @@ class RootComponentImpl(
                     context,
                     apiProvider.value,
                     snackbarAdapterProvider.value,
-                    exceptionReporterProvider.value
+                    exceptionReporterProvider.value,
+                    navigation
                 )
             )
         }
