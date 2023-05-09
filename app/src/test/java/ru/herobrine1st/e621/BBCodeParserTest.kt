@@ -3,8 +3,13 @@ package ru.herobrine1st.e621
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.withStyle
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
-import ru.herobrine1st.e621.api.*
+import ru.herobrine1st.e621.api.BOLD
+import ru.herobrine1st.e621.api.ITALIC
+import ru.herobrine1st.e621.api.MessageQuote
+import ru.herobrine1st.e621.api.MessageText
+import ru.herobrine1st.e621.api.parseBBCode
 
 
 class BBCodeParserTest {
@@ -103,7 +108,8 @@ class BBCodeParserTest {
     // Also this test.. ehh.. tests carriage return support - because e6 API uses \r\n as newlines
     @Test
     fun testQuoteSimple() {
-        val res = parseBBCode("[quote]\"name\":/user/show/0 said:\r\nSome text\r\n[b]Some another text[/b]\r\n[/quote]")
+        val res =
+            parseBBCode("[quote]\"name\":/user/show/0 said:\r\nSome text\r\n[b]Some another text[/b]\r\n[/quote]")
         assertEquals(1, res.size)
 
         val quote = res[0] as MessageQuote
@@ -124,14 +130,16 @@ class BBCodeParserTest {
 
     @Test
     fun testQuoteComplicated() {
-        val res = parseBBCode("""
+        val res = parseBBCode(
+            """
             [b]Bold text[/b] Normal text
             [quote]"name":/user/show/0 said:
             Some text
             [b]Some another text[/b]
             [/quote]
             [b]Bold text[/b] Normal text
-            """.trimIndent())
+            """.trimIndent()
+        )
         assertEquals(3, res.size)
         val text = res[0] as MessageText
         assertEquals(
@@ -173,5 +181,16 @@ class BBCodeParserTest {
                 .toAnnotatedString(),
             text2.text
         )
+    }
+
+    @Test
+    fun `Test invalid tag`() {
+        @Suppress("SpellCheckingInspection")
+        val input = """[invalidtag]Text[/invalidtag]"""
+        val res = parseBBCode(input)
+        assertEquals(1, res.size)
+        assertTrue(res[0] is MessageText)
+        val text = res[0] as MessageText
+        assertEquals(input, text.text.text)
     }
 }
