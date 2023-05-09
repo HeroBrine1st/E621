@@ -21,14 +21,12 @@
 package ru.herobrine1st.e621.api
 
 import android.util.Log
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
-import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.util.accumulate
 import ru.herobrine1st.e621.util.debug
 
@@ -68,11 +66,6 @@ sealed class BBCodeTag(val name: String) {
 sealed interface MessageData<T : MessageData<T>> {
     fun isEmpty(): Boolean
 
-    // For cases where full message does not fit (for example, when there's no MessageText at all but preview required)
-    // Rare case, but should implement fallback
-    @StringRes
-    fun getDescription(): Int
-
     fun stylize(tag: BBCodeTag): T
 }
 
@@ -85,7 +78,6 @@ data class MessageText(
     val text: AnnotatedString,
 ) : MessageData<MessageText> {
     override fun isEmpty() = text.isEmpty()
-    override fun getDescription(): Int = R.string.message_text
     override fun stylize(tag: BBCodeTag) = MessageText(tag.stylize(text))
 
     fun trim() = MessageText(text.trim() as AnnotatedString)
@@ -102,7 +94,6 @@ data class MessageQuote(
     val data: List<MessageData<*>>
 ) : MessageData<MessageQuote> {
     override fun isEmpty(): Boolean = data.isEmpty()
-    override fun getDescription(): Int = R.string.message_quote
     override fun stylize(tag: BBCodeTag): MessageQuote = this
 
     @Immutable
