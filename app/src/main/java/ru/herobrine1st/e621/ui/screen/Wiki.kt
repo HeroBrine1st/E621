@@ -108,7 +108,7 @@ fun WikiScreen(screenSharedState: ScreenSharedState, component: WikiComponent) {
                     SelectionContainer {
                         LazyColumn(Modifier.fillMaxSize()) {
                             items(state.parsed) {
-                                RenderBB(it)
+                                RenderBB(it, onWikiLinkClick = component::handleLinkClick)
                             }
                         }
                     }

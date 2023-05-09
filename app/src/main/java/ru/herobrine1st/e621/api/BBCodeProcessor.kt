@@ -21,14 +21,19 @@
 package ru.herobrine1st.e621.api
 
 import android.util.Log
-import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.UrlAnnotation
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.text.withStyle
-import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.BuildConfig
+import ru.herobrine1st.e621.api.DTextTag.Companion.stylizeNullable
 import ru.herobrine1st.e621.util.accumulate
 import ru.herobrine1st.e621.util.debug
 
@@ -42,38 +47,16 @@ val ITALIC = SpanStyle(
     fontStyle = FontStyle.Italic
 )
 
-// TODO replace it with something more suitable
-// We're using functional programming, after all (I'm kidding xD, I cannot remove data classes)
-sealed class BBCodeTag(val name: String) {
-    abstract fun stylize(s: AnnotatedString): AnnotatedString
+val LINK = SpanStyle(
+    color = Color.Blue,
+    textDecoration = TextDecoration.Underline
+)
 
-    object Bold : BBCodeTag("b") {
-        override fun stylize(s: AnnotatedString) = AnnotatedString.Builder().apply {
-            withStyle(BOLD) {
-                append(s)
-            }
-        }.toAnnotatedString()
-    }
-
-    object Italic : BBCodeTag("i") {
-        override fun stylize(s: AnnotatedString) = AnnotatedString.Builder().apply {
-            withStyle(ITALIC) {
-                append(s)
-            }
-        }.toAnnotatedString()
-    }
-}
+const val WIKI_PAGE_STRING_ANNOTATION_TAG = "WIKI_PAGE"
 
 @Immutable
 sealed interface MessageData<T : MessageData<T>> {
     fun isEmpty(): Boolean
-
-    // For cases where full message does not fit (for example, when there's no MessageText at all but preview required)
-    // Rare case, but should implement fallback
-    @StringRes
-    fun getDescription(): Int
-
-    fun stylize(tag: BBCodeTag): T
 }
 
 /**
@@ -84,9 +67,10 @@ sealed interface MessageData<T : MessageData<T>> {
 data class MessageText(
     val text: AnnotatedString,
 ) : MessageData<MessageText> {
+
+    constructor(text: String) : this(AnnotatedString(text))
+
     override fun isEmpty() = text.isEmpty()
-    override fun getDescription(): Int = R.string.message_text
-    override fun stylize(tag: BBCodeTag) = MessageText(tag.stylize(text))
 
     fun trim() = MessageText(text.trim() as AnnotatedString)
 }
@@ -102,8 +86,6 @@ data class MessageQuote(
     val data: List<MessageData<*>>
 ) : MessageData<MessageQuote> {
     override fun isEmpty(): Boolean = data.isEmpty()
-    override fun getDescription(): Int = R.string.message_quote
-    override fun stylize(tag: BBCodeTag): MessageQuote = this
 
     @Immutable
     data class Author(
@@ -112,65 +94,160 @@ data class MessageQuote(
     )
 }
 
+private sealed interface DTextTag {
+    val name: String
+
+    /**
+     * Stylize provided data by this tag. This function should usually be called last in every
+     * recursion frame (i.e. before "return").
+     *
+     * @param data list of parsed [MessageData]
+     * @return styled list of [MessageData]
+     */
+    fun stylize(data: List<MessageData<*>>): List<MessageData<*>>
+
+    sealed class Styled(override val name: String, private val style: SpanStyle) : DTextTag {
+        override fun stylize(data: List<MessageData<*>>): List<MessageData<*>> {
+            return data.map {
+                (it as? MessageText)?.text?.let { text ->
+                    MessageText(AnnotatedString.Builder().apply {
+                        withStyle(style) {
+                            append(text)
+                        }
+                    }.toAnnotatedString())
+                } ?: it
+            }
+        }
+    }
+
+    object Bold : Styled("b", BOLD)
+    object Italic : Styled("i", ITALIC)
+
+    object Quote : DTextTag {
+        override val name: String = "quote"
+
+        override fun stylize(data: List<MessageData<*>>): List<MessageData<*>> {
+            val collapsed = data.collapseMessageTexts().toMutableList()
+            val first = collapsed[0]
+            val author: MessageQuote.Author?
+            if (first is MessageText) {
+                val header = parseQuoteHeader(first.text.text)
+                if (header != null) {
+                    author = header.first
+                    val startIndex = header.second
+                    collapsed[0] = MessageText(
+                        first.text.subSequence(startIndex, first.text.length)
+                            .trim() as AnnotatedString
+                    )
+                } else author = null
+            } else author = null
+            return listOf(MessageQuote(author, collapsed))
+        }
+    }
+
+    class Unknown(
+        override val name: String,
+        val commaAttribute: String,
+        val property: String
+    ) : DTextTag {
+        override fun stylize(data: List<MessageData<*>>): List<MessageData<*>> {
+            val startingTag =
+                "[$name" +
+                        (if (commaAttribute.isNotBlank()) ",$commaAttribute" else "") +
+                        (if (property.isNotBlank()) "=$property" else "") +
+                        "]"
+            return buildList(capacity = data.size + 2) {
+                add(MessageText(startingTag))
+                addAll(data)
+                add(MessageText("[/$name]"))
+            }
+        }
+    }
+
+    companion object {
+        /**
+         * Get instance by name and attributes.
+         *
+         * Typical tag looks like this:
+         *
+         * `[name,commaAttribute=property]`
+         *
+         * Where only name is mandatory.
+         */
+        fun fromName(
+            name: String,
+            commaAttribute: String,
+            property: String
+        ): DTextTag = when (name) {
+            "b" -> Bold
+            "i" -> Italic
+            "quote" -> Quote
+            else -> Unknown(name, commaAttribute, property)
+        }
+
+        fun DTextTag?.stylizeNullable(data: List<MessageData<*>>) = this?.stylize(data) ?: data
+    }
+}
+
 /**
  * Handle:
- * 1. ``[tag]``
+ * 1. ``[tag]``, including ``[tag,attr]``, ``[tag=attr]`` and ``[tag,attr=attr]``
  * 2. ``[/tag]``
- * 3. ``[[link]]``
- * 4. ``[[link|text]]``
+ * 3. ``[[link]]`` and ``[[link|text]]``
  */
 @Suppress("KDocUnresolvedReference")
-val pattern = Regex("""\[(?:([^\[\]/]+)|/([^\[\]/]+)|\[([^\[\]/]+)(?:\|([^\[\]/]+))?)]""")
+val pattern =
+    Regex("""\[(?:([^=\[\]/,]+)(?:,([^=\[\]/]+))?(?:=([^\[\]/]+))?|/([^\[\]/]+)|\[([^\[\]/|]+)(?:\|([^\[\]/]+))?])]""")
 
 // "name":/user/show/0 said:
 // "name":/users/0 said:
 // name said:
 val quotePattern = Regex("""(?:"?([^"\n]+)"?:/user(?:s|/show)/(\d+)|(\S+)) said:\r?\n""")
 
-fun parseBBCode(input: String): List<MessageData<*>> {
-    val (parsed, end) = parseBBCodeInternal(input, null, 0)
+fun parseBBCode(input: String, handleLinks: Boolean = true): List<MessageData<*>> {
+    val (parsed, end) = parseBBCodeInternal(input, null, 0, handleLinks = handleLinks)
     assert(end == input.length) {
         "Parser hasn't reached end of string: expected ${input.length}, actual $end"
     }
     return parsed.collapseMessageTexts()
 }
 
+@OptIn(ExperimentalTextApi::class)
 private fun parseBBCodeInternal(
     input: String,
-    currentTag: String?,
-    initialStart: Int
+    currentTag: DTextTag?,
+    initialStart: Int,
+    handleLinks: Boolean = true
 ): Pair<List<MessageData<*>>, Int> {
-    assert(currentTag != "")
     val output = mutableListOf<MessageData<*>>()
     var start = initialStart
-
-    val quoteAuthor = when (currentTag) {
-        "quote" -> parseQuoteHeader(input, start)
-            ?.also { start = it.second }
-            ?.first
-        else -> null
-    }
 
     var tagClosed = false
 
     while (start < input.length) {
         val match: MatchResult = pattern.find(input, startIndex = start) ?: break
         if (match.range.first > start) { // Include text ([tag] -> recurse -> include_this_text[\tag])
-            output += MessageText(AnnotatedString(input.substring(start, match.range.first)))
+            output += MessageText(input.substring(start, match.range.first))
         }
         start = match.range.last + 1
 
         val openingTag = match.groupValues[1]
         if (openingTag != "") {
-            output += parseBBCodeInternal(input, openingTag, match.range.last + 1).also {
+            val attribute = match.groupValues[2]
+            val property = match.groupValues[3]
+            output += parseBBCodeInternal(
+                input,
+                DTextTag.fromName(openingTag, attribute, property),
+                match.range.last + 1
+            ).also {
                 start = it.second
             }.first
             continue
         }
 
-        val closingTag = match.groupValues[2]
+        val closingTag = match.groupValues[4]
         if (closingTag != "") {
-            if (closingTag == currentTag) {
+            if (closingTag == currentTag?.name) {
                 tagClosed = true
                 break
             } else {
@@ -178,12 +255,28 @@ private fun parseBBCodeInternal(
                     Log.d(TAG, "Invalid closing tag found at indexes ${match.range}")
                     Log.d(TAG, input)
                 }
-                output += MessageText(AnnotatedString("[/$closingTag]"))
+                output += MessageText(AnnotatedString(match.groupValues[0]))
+                continue
             }
-            continue
         }
 
-        // Catchall, as not all groups are used
+        val link = match.groupValues[5]
+        if (link != "") {
+            val hyper = match.groupValues[6]
+            output += if (handleLinks) MessageText(
+                AnnotatedString.Builder().apply {
+                    withAnnotation(UrlAnnotation("${BuildConfig.DEEP_LINK_BASE_URL}/wiki_pages/show_or_new?title=$link")) {
+                        withAnnotation(WIKI_PAGE_STRING_ANNOTATION_TAG, link) {
+                            withStyle(LINK) {
+                                append(hyper.ifBlank { link })
+                            }
+                        }
+                    }
+                }.toAnnotatedString()
+            ) else MessageText(hyper.ifBlank { link })
+            continue
+        }
+        Log.w(TAG, "Catchall triggered on `${match.groupValues[0]}`")
         output += MessageText(AnnotatedString(match.groupValues[0]))
     }
 
@@ -191,31 +284,11 @@ private fun parseBBCodeInternal(
         output.add(MessageText(AnnotatedString(input.substring(start))))
         start = input.length
     }
-
-    val stylizedOutput = when (currentTag) {
-        null -> output
-        "b" -> output.map { it.stylize(BBCodeTag.Bold) }
-        "i" -> output.map { it.stylize(BBCodeTag.Italic) }
-        "quote" -> listOf(MessageQuote(quoteAuthor, output.collapseMessageTexts()))
-        else -> {
-            debug {
-                Log.w(TAG, "Unknown/invalid tag $currentTag found near index $initialStart")
-                Log.w(TAG, input)
-            }
-            buildList(output.size + 2) {
-                // Enclose in tag
-                add(MessageText(AnnotatedString("[$currentTag]")))
-                addAll(output)
-                add(MessageText(AnnotatedString("[/$currentTag]")))
-            }
-        }
-    }
-
-    return stylizedOutput to start
+    return currentTag.stylizeNullable(output) to start
 }
 
-private fun parseQuoteHeader(input: String, initialStart: Int): Pair<MessageQuote.Author, Int>? {
-    val match = quotePattern.matchAt(input, index = initialStart) ?: return null
+private fun parseQuoteHeader(input: String): Pair<MessageQuote.Author, Int>? {
+    val match = quotePattern.matchAt(input, index = 0) ?: return null
     return MessageQuote.Author(
         match.groupValues[1].ifEmpty { match.groupValues[3] },
         match.groupValues[2].ifEmpty { "-1" }.toInt()

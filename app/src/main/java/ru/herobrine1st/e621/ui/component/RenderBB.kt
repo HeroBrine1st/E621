@@ -21,6 +21,9 @@
 package ru.herobrine1st.e621.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -33,35 +36,45 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.MessageQuote
 import ru.herobrine1st.e621.api.MessageText
+import ru.herobrine1st.e621.api.WIKI_PAGE_STRING_ANNOTATION_TAG
 import ru.herobrine1st.e621.api.parseBBCode
 
 @Composable
-fun RenderBB(text: String) {
-    val parsed = remember(text) { parseBBCode(text) }
+fun RenderBB(text: String, onWikiLinkClick: ((String) -> Unit)? = null) {
+    val parsed = remember(text) { parseBBCode(text, handleLinks = onWikiLinkClick != null) }
     RenderBB(parsed)
 }
 
 @Composable
-fun RenderBB(data: List<MessageData<*>>) {
+fun RenderBB(data: List<MessageData<*>>, onWikiLinkClick: ((String) -> Unit)? = null) {
     Column {
         data.forEach {
-            RenderBB(it)
+            RenderBB(it, onWikiLinkClick = onWikiLinkClick)
         }
     }
 }
 
 @Composable
-fun RenderBB(data: MessageData<*>) {
+fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((String) -> Unit)? = null) {
     when (data) {
         is MessageQuote -> {
             data.author?.let {
@@ -84,6 +97,88 @@ fun RenderBB(data: MessageData<*>) {
                 )
             }
         }
-        is MessageText -> Text(data.text)
+
+        is MessageText -> {
+            if (onWikiLinkClick != null) {
+                val text = data.text
+                var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                var linkPath by remember { mutableStateOf<Path?>(null) }
+                val colorScheme = MaterialTheme.colorScheme
+                Text(
+                    text,
+                    onTextLayout = {
+                        layoutResult = it
+                    },
+                    modifier = Modifier
+                        .pointerInput(onWikiLinkClick, text) {
+                            // Reason to not use detectTapGestures: SelectionContainer does not get tap gestures
+                            awaitEachGesture {
+                                val layoutResultNotNull =
+                                    layoutResult ?: return@awaitEachGesture
+                                val down = awaitFirstDown()
+
+                                // If there's no link at touch position, do nothing
+                                val index =
+                                    layoutResultNotNull.getOffsetForPosition(down.position)
+                                val annotations = text.getStringAnnotations(
+                                    tag = WIKI_PAGE_STRING_ANNOTATION_TAG,
+                                    start = index,
+                                    end = index
+                                )
+                                val annotation =
+                                    annotations.firstOrNull() ?: return@awaitEachGesture
+
+                                // Consume and wait for up
+                                down.consume()
+                                linkPath = layoutResultNotNull.getPathForRange(
+                                    annotation.start,
+                                    annotation.end
+                                )
+                                // TODO handle position change and move indication accordingly
+                                // also it somehow knows size of annotation (not only one word!
+                                // even spaced link is working correctly)
+                                // and cancels it if touch is out of annotated text
+                                // idk how does it know it
+                                // inspection of source code led me to NodeCoordinator's measuredSize
+                                // So, I guess, every word/annotated fragment is rendered by one
+                                // but modifier is applied to the whole layout, not word-by-word
+                                // That's a contradiction
+                                // FIXME (or that would be a feature, I don't know yet)
+                                //       selection is possible if you press long enough
+                                val up = waitForUpOrCancellation()
+
+                                linkPath = null
+                                // Cancelled or just out of bounds of annotation (described above)
+                                if (up == null) return@awaitEachGesture
+                                // Check if up event was on the same annotation
+                                val indexFinal =
+                                    layoutResultNotNull.getOffsetForPosition(up.position)
+                                val annotationsFinal = text.getStringAnnotations(
+                                    tag = WIKI_PAGE_STRING_ANNOTATION_TAG,
+                                    start = indexFinal,
+                                    end = indexFinal
+                                )
+                                val annotationFinal =
+                                    annotationsFinal.firstOrNull() ?: return@awaitEachGesture
+                                if (annotation != annotationFinal) return@awaitEachGesture
+
+                                onWikiLinkClick(annotationFinal.item)
+                            }
+                        }
+                        .drawBehind {
+                            linkPath?.let { path ->
+                                val color =
+                                    if (colorScheme.background.luminance() < 0.5f) Color(0x80ADD8E6) else Color.Blue.copy(
+                                        alpha = 0.25f
+                                    )
+
+                                drawPath(path, color = color)
+                            }
+                        }
+                )
+            } else {
+                Text(data.text)
+            }
+        }
     }
 }

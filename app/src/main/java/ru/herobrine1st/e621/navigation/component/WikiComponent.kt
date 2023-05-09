@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.statekeeper.consume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -42,6 +43,8 @@ import ru.herobrine1st.e621.api.getWikiPage
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.api.parseBBCode
 import ru.herobrine1st.e621.navigation.LifecycleScope
+import ru.herobrine1st.e621.navigation.config.Config
+import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import java.io.IOException
@@ -55,7 +58,8 @@ class WikiComponent(
     componentContext: ComponentContext,
     private val api: API,
     private val snackbarAdapter: SnackbarAdapter,
-    private val exceptionReporter: ExceptionReporter
+    private val exceptionReporter: ExceptionReporter,
+    private val stackNavigator: StackNavigator<Config>
 ) : ComponentContext by componentContext {
     private val lifecycleScope = LifecycleScope()
 
@@ -70,6 +74,15 @@ class WikiComponent(
             fetchWikiPage()
         } else {
             lifecycleScope.launch { state = restoredState.parseWikiPage() }
+        }
+    }
+
+    fun handleLinkClick(tag: String) {
+        stackNavigator.pushIndexed {
+            Config.Wiki(
+                tag = tag,
+                index = it
+            )
         }
     }
 
@@ -106,7 +119,12 @@ class WikiComponent(
         // it may be true after configuration change
         if (isParsed) return this
         return withContext(Dispatchers.Default) {
-            this@parseWikiPage.setParsed(parseBBCode(this@parseWikiPage.result.body))
+            this@parseWikiPage.setParsed(
+                parseBBCode(
+                    this@parseWikiPage.result.body,
+                    handleLinks = true
+                )
+            )
             return@withContext this@parseWikiPage
         }
     }
@@ -120,8 +138,7 @@ sealed interface WikiState : Parcelable {
 
     @Parcelize
     class Success(val result: WikiPage) : WikiState {
-        @IgnoredOnParcel
-        // MessageData is not parcelable and should not be
+        @IgnoredOnParcel // MessageData is not parcelable and should not be
         lateinit var parsed: List<MessageData<*>>
             private set
 
