@@ -21,6 +21,7 @@
 package ru.herobrine1st.e621.ui.component
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
@@ -30,15 +31,19 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.MessageData
@@ -88,19 +93,36 @@ fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((String) -> Unit)? = null) 
         }
 
         is MessageText -> {
-            if (onWikiLinkClick == null)
-                Text(data.text)
-            else {
+            if (onWikiLinkClick != null) {
                 val text = data.text
-                ClickableText(text = text) { index ->
-                    text.getStringAnnotations(
-                        tag = WIKI_PAGE_STRING_ANNOTATION_TAG,
-                        start = index,
-                        end = index
-                    ).firstOrNull()?.let {
-                        onWikiLinkClick(it.item)
-                    }
-                }
+                var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+                Text(
+                    text,
+                    onTextLayout = {
+                        layoutResult = it
+                    },
+                    modifier = Modifier
+                        // TODO hover indication via drawBehind
+                        .pointerInput(onWikiLinkClick, text) {
+                            detectTapGestures { pos ->
+                                val layoutResultNonNull =
+                                    layoutResult ?: return@detectTapGestures
+                                val index = layoutResultNonNull.getOffsetForPosition(pos)
+                                text
+                                    .getStringAnnotations(
+                                        tag = WIKI_PAGE_STRING_ANNOTATION_TAG,
+                                        start = index,
+                                        end = index
+                                    )
+                                    .firstOrNull()
+                                    ?.let {
+                                        onWikiLinkClick(it.item)
+                                    }
+                            }
+                        }
+                )
+            } else {
+                Text(data.text)
             }
         }
     }
