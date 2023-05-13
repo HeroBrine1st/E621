@@ -63,6 +63,11 @@ fun ActionDialog(
                     shape = AlertDialogDefaults.shape,
                     color = AlertDialogDefaults.containerColor,
                     tonalElevation = AlertDialogDefaults.TonalElevation,
+                    modifier = Modifier.clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {} // Fix dismiss on any click
+                    )
                 ) {
                     Column(
                         modifier = Modifier.padding(all = 24.dp),
