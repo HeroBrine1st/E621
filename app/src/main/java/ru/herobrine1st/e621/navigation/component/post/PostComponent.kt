@@ -34,6 +34,7 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
+import com.arkivanov.essenty.statekeeper.consume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -57,7 +58,7 @@ import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.InstanceBase
 import java.io.IOException
 
-//private const val STATE_KEY = "POST_COMPONENT_STATE_KEY"
+private const val POST_STATE_KEY = "POST_STATE_KEY"
 private const val TAG = "PostComponent"
 
 class PostComponent(
@@ -116,22 +117,28 @@ class PostComponent(
     }
 
     init {
-//        stateKeeper.register(STATE_KEY) {
-//            State(contentPositionMs = rememberedPositionMs)
-//        }
-//        stateKeeper.consume<State>(STATE_KEY)?.let {
-//            rememberedPositionMs = it.contentPositionMs
-//        }
-
+        stateKeeper.register(POST_STATE_KEY) {
+            post
+        }
         lifecycle.doOnResume {
-            // TODO preference to update on resume
+            // TODO behavior preference
+            // 1. Do not refresh on resume/open
+            // 2. Do refresh on open, do not refresh on resume
+            // 3. Do both
+            stateKeeper.consume<Post>(POST_STATE_KEY)?.let {
+                post = it
+                // Okay, there might be flicker
+                // idk what to do, probably should cache DataStore using StateFlow
+                // FIXME possible flicker
+                isLoadingPost = false
+                return@doOnResume
+            }
             lifecycleScope.launch {
                 val isDataSaverEnabled =
                     applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }
                         .first()
-                val currentPost = post
                 val id = post?.id ?: postId
-                if (currentPost == null // Nothing to show
+                if (post == null // Nothing to show
                     || !isDataSaverEnabled
                 ) {
                     isLoadingPost = true
@@ -149,14 +156,7 @@ class PostComponent(
                 isLoadingPost = false
                 setMediaItem()
             }
-            // Does not work, seekTo should be called after video is loaded
-//            if (rememberedPositionMs > 0)
-//                exoPlayer.seekTo(rememberedPositionMs)
         }
-//        lifecycle.doOnPause {
-//            rememberedPositionMs = exoPlayer.contentPosition
-//            exoPlayer.clearMediaItems()
-//        }
         lifecycle.doOnDestroy {
             lifecycleScope.cancel()
         }
@@ -206,9 +206,4 @@ class PostComponent(
 
         val commentsFlow = pager.flow.cachedIn(lifecycleScope)
     }
-
-//    @Parcelize
-//    private data class State(
-//        val contentPositionMs: Long
-//    ) : Parcelable
 }
