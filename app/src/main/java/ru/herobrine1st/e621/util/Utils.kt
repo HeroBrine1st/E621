@@ -45,3 +45,5 @@ inline fun <T> time(name: String, block: @Composable () -> T): T {
 fun String.normalizeTagForUI() = this.runIf(BuildConfig.HIDE_UNDERSCORES_FROM_USER) {
     replace('_', ' ')
 }
+
+fun String.normalizeTagForAPI() = this.replace(' ', '_')

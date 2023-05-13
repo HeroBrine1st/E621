@@ -50,6 +50,7 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
+import ru.herobrine1st.e621.util.normalizeTagForUI
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -129,10 +130,12 @@ fun ModifyTagDialog(
                         null -> it.name
                         else -> it.antecedentName + " → " + it.name
                     }
-                    DropdownMenuItem(text = { Text(suggestionText) }, onClick = {
-                        onTextChange(it.name)
-                        autocompleteExpanded = false
-                    })
+                    DropdownMenuItem(
+                        text = { Text(suggestionText.normalizeTagForUI()) },
+                        onClick = {
+                            onTextChange(it.name.normalizeTagForUI())
+                            autocompleteExpanded = false
+                        })
                 }
             }
         }

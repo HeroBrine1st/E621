@@ -43,6 +43,7 @@ import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
+import ru.herobrine1st.e621.util.normalizeTagForAPI
 
 const val STATE_KEY = "SEARCH_COMPONENT_STATE_KEY"
 
@@ -54,7 +55,8 @@ class SearchComponent private constructor(
     applicationContext: Context
 ) : ComponentContext by componentContext {
 
-    val tags = initialState.searchOptions.tags.toMutableStateList()
+    private val _tags = initialState.searchOptions.tags.toMutableStateList()
+    val tags: List<String> by ::_tags
 
     var order by mutableStateOf(initialState.searchOptions.order)
     var orderAscending by mutableStateOf(initialState.searchOptions.orderAscending)
@@ -67,25 +69,29 @@ class SearchComponent private constructor(
         private set
     var tagModificationText by mutableStateOf("")
 
-    val tagSuggestionFlow: Flow<List<TagSuggestion>> = snapshotFlow { tagModificationText }
-        .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
-        .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
-        // Delay is handled by interceptor
-        .combine(applicationContext.getPreferencesFlow { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
-            if (query.length < 3 || query.isBlank() || !isAutocompleteEnabled) return@combine emptyList()
-            api.getAutocompleteSuggestions(query).await().map {
-                TagSuggestion(
-                    name = it.name,
-                    postCount = it.postCount,
-                    antecedentName = it.antecedentName
-                )
+    val tagSuggestionFlow: Flow<List<TagSuggestion>> =
+        // TODO handle ~, - and ' ' with object-oriented approach
+        snapshotFlow { tagModificationText.trimStart('~', '-').normalizeTagForAPI() }
+            .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
+            .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
+            // Delay is handled by interceptor
+            .combine(applicationContext.getPreferencesFlow { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
+                if (query.length < 3 || query.isBlank() || !isAutocompleteEnabled) return@combine emptyList()
+                api.getAutocompleteSuggestions(query).await().map {
+                    TagSuggestion(
+                        name = it.name,
+                        postCount = it.postCount,
+                        antecedentName = it.antecedentName
+                    )
+                }
             }
-        }
-        // Make it 🚀 turbo reactive 🚀
-        .combine(snapshotFlow { tagModificationText }) { suggestions, query ->
-            suggestions.filter { query in it.name || it.antecedentName?.contains(query) == true }
-        }
-        .flowOn(Dispatchers.Default)
+            // Make it 🚀 turbo reactive 🚀
+            .combine(snapshotFlow {
+                tagModificationText.trimStart('~', '-').normalizeTagForAPI()
+            }) { suggestions, query ->
+                suggestions.filter { query in it.name || it.antecedentName?.contains(query) == true }
+            }
+            .flowOn(Dispatchers.Default)
 
     constructor(
         componentContext: ComponentContext,
@@ -110,7 +116,7 @@ class SearchComponent private constructor(
 
     private fun makeSearchOptions(): PostsSearchOptions =
         PostsSearchOptions(
-            tags.toList(), order, orderAscending, rating.toList(), favouritesOf
+            _tags.toList(), order, orderAscending, rating.toList(), favouritesOf
                 .ifBlank { null }, fileType, fileTypeInvert
         )
 
@@ -124,17 +130,17 @@ class SearchComponent private constructor(
     }
 
     fun openEditTagDialog(index: Int) {
-        tagModificationText = tags[index]
+        tagModificationText = _tags[index]
         tagModificationState = TagModificationState.Editing(index)
     }
 
     fun finishTagModification() {
         when (val state = tagModificationState) {
             is TagModificationState.Editing -> {
-                tags[state.index] = tagModificationText
+                _tags[state.index] = tagModificationText.normalizeTagForAPI()
             }
 
-            else -> tags.add(tagModificationText)
+            else -> _tags.add(tagModificationText.normalizeTagForAPI())
         }
         tagModificationState = TagModificationState.None
         tagModificationText = ""
@@ -146,7 +152,7 @@ class SearchComponent private constructor(
     }
 
     fun deleteCurrentlyModifiedTag() {
-        tags.removeAt((tagModificationState as TagModificationState.Editing).index)
+        _tags.removeAt((tagModificationState as TagModificationState.Editing).index)
         tagModificationState = TagModificationState.None
         tagModificationText = ""
     }
