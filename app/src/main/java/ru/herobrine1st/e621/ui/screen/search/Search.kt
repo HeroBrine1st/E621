@@ -46,6 +46,7 @@ import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
+import ru.herobrine1st.e621.navigation.component.search.SearchComponent.TagModificationState
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
@@ -75,31 +76,23 @@ fun Search(
         }
     }
 
-    if (component.currentlyModifiedTagIndex == -2) {
-        ModifyTagDialog(
-            onClose = {
-                component.currentlyModifiedTagIndex = -1
-            },
-            onApply = {
-                component.currentlyModifiedTagIndex = -1
-                component.tags.add(it)
-            }
-        )
-    } else if (component.currentlyModifiedTagIndex != -1) {
-        ModifyTagDialog(
-            initialTag = component.tags[component.currentlyModifiedTagIndex],
-            onClose = {
-                component.currentlyModifiedTagIndex = -1
-            },
-            onDelete = {
-                component.tags.removeAt(component.currentlyModifiedTagIndex)
-                component.currentlyModifiedTagIndex = -1
-            },
-            onApply = {
-                component.tags[component.currentlyModifiedTagIndex] = it
-                component.currentlyModifiedTagIndex = -1
-            }
-        )
+    when (val state = component.tagModificationState) {
+        TagModificationState.None -> {}
+        is TagModificationState.Editing, TagModificationState.AddingNew -> {
+            ModifyTagDialog(
+                component.tagModificationText,
+                onTextChange = { component.tagModificationText = it },
+                onClose = {
+                    component.cancelTagModification()
+                },
+                onDelete = if (state is TagModificationState.Editing) fun() {
+                    component.deleteCurrentlyModifiedTag()
+                } else null,
+                onApply = {
+                    component.finishTagModification()
+                }
+            )
+        }
     }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -151,7 +144,7 @@ fun Search(
                                 //      https://firebasestorage.googleapis.com/v0/b/design-spec/o/projects%2Fm3%2Fimages%2Fkzhfok2g-chip_extra-backspace_3P.mp4?alt=media
                                 InputChip(
                                     selected = false,
-                                    onClick = { component.currentlyModifiedTagIndex = index },
+                                    onClick = { component.openEditTagDialog(index) },
                                     label = {
                                         Text(tag.normalizeTagForUI())
                                     }
@@ -160,7 +153,7 @@ fun Search(
                         }
                     }
                     TextButton(
-                        onClick = { component.currentlyModifiedTagIndex = -2 },
+                        onClick = { component.openAddTagDialog() },
                         modifier = Modifier.align(Alignment.Start)
                     ) {
                         Text(stringResource(R.string.add_tag))

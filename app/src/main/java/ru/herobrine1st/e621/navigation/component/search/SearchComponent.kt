@@ -49,26 +49,24 @@ class SearchComponent private constructor(
     var fileType by mutableStateOf(initialState.searchOptions.fileType)
     var fileTypeInvert by mutableStateOf(initialState.searchOptions.fileTypeInvert)
 
-    // -2 = add new tag
-    // -1 = idle
-    // anything else = edit tag
-    var currentlyModifiedTagIndex by mutableStateOf(initialState.currentlyModifiedTagIndex)
+    var tagModificationState by mutableStateOf(initialState.tagModificationState)
+        private set
+    var tagModificationText by mutableStateOf("")
 
     constructor(
         componentContext: ComponentContext,
         navigator: StackNavigator<Config>,
-        initialPostsSearchOptions: PostsSearchOptions,
-        initialCurrentlyModifiedTagIndex: Int = -1
+        initialPostsSearchOptions: PostsSearchOptions
     ) : this(
         componentContext,
         componentContext.stateKeeper.consume(STATE_KEY)
-            ?: StateParcelable(initialPostsSearchOptions, initialCurrentlyModifiedTagIndex),
+            ?: StateParcelable(initialPostsSearchOptions),
         navigator
     )
 
     init {
         stateKeeper.register(STATE_KEY) {
-            StateParcelable(makeSearchOptions(), currentlyModifiedTagIndex)
+            StateParcelable(makeSearchOptions(), tagModificationState)
         }
     }
 
@@ -82,9 +80,54 @@ class SearchComponent private constructor(
         navigator.pushIndexed { Config.PostListing(makeSearchOptions(), index = it) }
     }
 
+    fun openAddTagDialog() {
+        tagModificationText = ""
+        tagModificationState = TagModificationState.AddingNew
+    }
+
+    fun openEditTagDialog(index: Int) {
+        tagModificationText = tags[index]
+        tagModificationState = TagModificationState.Editing(index)
+    }
+
+    fun finishTagModification() {
+        when (val state = tagModificationState) {
+            is TagModificationState.Editing -> {
+                tags[state.index] = tagModificationText
+            }
+
+            else -> tags.add(tagModificationText)
+        }
+        tagModificationState = TagModificationState.None
+        tagModificationText = ""
+    }
+
+    fun cancelTagModification() {
+        tagModificationState = TagModificationState.None
+        tagModificationText = ""
+    }
+
+    fun deleteCurrentlyModifiedTag() {
+        tags.removeAt((tagModificationState as TagModificationState.Editing).index)
+        tagModificationState = TagModificationState.None
+        tagModificationText = ""
+    }
+
     @Parcelize
     private data class StateParcelable(
         val searchOptions: PostsSearchOptions,
-        val currentlyModifiedTagIndex: Int
+        val tagModificationState: TagModificationState = TagModificationState.None
     ) : Parcelable
+
+    @Parcelize
+    sealed interface TagModificationState : Parcelable {
+        @Parcelize
+        object None : TagModificationState
+
+        @Parcelize
+        object AddingNew : TagModificationState
+
+        @Parcelize
+        class Editing(val index: Int) : TagModificationState
+    }
 }

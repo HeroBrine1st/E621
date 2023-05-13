@@ -95,9 +95,9 @@ class RootComponentImpl(
             )
             is Search -> Child.Search(
                 SearchComponent(
-                    context,
-                    navigation,
-                    configuration.initialSearch
+                    componentContext = context,
+                    navigator = navigation,
+                    initialPostsSearchOptions = configuration.initialSearch
                 )
             )
             is PostListing -> Child.PostListing(

@@ -22,51 +22,30 @@ package ru.herobrine1st.e621.ui.screen.search
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material3.*
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
-import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
-import ru.herobrine1st.e621.util.normalizeTagForUI
-import ru.herobrine1st.e621.util.runIf
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModifyTagDialog(
-    initialTag: String? = null,
+    text: String,
+    onTextChange: (String) -> Unit,
     onClose: () -> Unit,
-    onDelete: () -> Unit = {},
-    onApply: (String) -> Unit
+    onDelete: (() -> Unit)? = null,
+    onApply: () -> Unit
 ) {
-    val localInspectionMode = LocalInspectionMode.current
-    var text by rememberSaveable {
-        mutableStateOf(
-            initialTag?.normalizeTagForUI() ?: if (localInspectionMode) "test" else ""
-        )
-    }
-
-    fun apply() {
-        onApply(text.runIf(
-            BuildConfig.HIDE_UNDERSCORES_FROM_USER
-                    || BuildConfig.CONVERT_SPACES_TO_UNDERSCORES_IN_SEARCH
-        ) {
-            replace(' ', '_')
-        })
-    }
-
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
         TextButton(onClick = onClose) {
             Text(stringResource(R.string.close))
         }
-        if (initialTag != null) {
+        if (onDelete != null) {
             TextButton(
                 onClick = onDelete, colors = ButtonDefaults.textButtonColors(
                     contentColor = Color.Red
@@ -75,18 +54,18 @@ fun ModifyTagDialog(
                 Text(stringResource(R.string.remove))
             }
         }
-        TextButton(onClick = { apply() }) {
-            Text(stringResource(if (initialTag == null) R.string.add else R.string.apply))
+        TextButton(onClick = { onApply() }) {
+            Text(stringResource(if (onDelete == null) R.string.add else R.string.apply))
         }
     }, onDismissRequest = onClose) {
         OutlinedTextField(
             value = text,
-            onValueChange = { text = it },
+            onValueChange = onTextChange,
             label = { Text(stringResource(R.string.tag)) },
             singleLine = true,
             modifier = Modifier
                 .fillMaxWidth(),
-            keyboardActions = KeyboardActions { apply() }
+            keyboardActions = KeyboardActions { onApply() }
         )
         // TODO autocomplete
     }
