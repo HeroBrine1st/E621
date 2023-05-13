@@ -65,8 +65,8 @@ import ru.herobrine1st.e621.ui.theme.isLight
 
 @Composable
 fun RenderBB(text: String, onWikiLinkClick: ((String) -> Unit)? = null) {
-    val parsed = remember(text) { parseBBCode(text, handleLinks = onWikiLinkClick != null) }
-    RenderBB(parsed)
+    val parsed = remember(text) { parseBBCode(text) }
+    RenderBB(parsed, onWikiLinkClick = onWikiLinkClick)
 }
 
 @Composable
