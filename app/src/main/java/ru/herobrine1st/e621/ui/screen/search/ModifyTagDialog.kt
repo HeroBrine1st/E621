@@ -20,27 +20,47 @@
 
 package ru.herobrine1st.e621.ui.screen.search
 
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModifyTagDialog(
     text: String,
     onTextChange: (String) -> Unit,
+    suggestionsFlow: Flow<List<SearchComponent.TagSuggestion>>,
     onClose: () -> Unit,
     onDelete: (() -> Unit)? = null,
     onApply: () -> Unit
 ) {
+    var textChanged by remember { mutableStateOf(false) }
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
         TextButton(onClick = onClose) {
             Text(stringResource(R.string.close))
@@ -58,15 +78,57 @@ fun ModifyTagDialog(
             Text(stringResource(if (onDelete == null) R.string.add else R.string.apply))
         }
     }, onDismissRequest = onClose) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = onTextChange,
-            label = { Text(stringResource(R.string.tag)) },
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth(),
-            keyboardActions = KeyboardActions { onApply() }
-        )
-        // TODO autocomplete
+        var expanded by remember { mutableStateOf(false) }
+        val suggestions by produceState(emptyList<SearchComponent.TagSuggestion>()) {
+            suggestionsFlow.collect {
+                value = it
+                if (!expanded && textChanged) expanded = true
+                if (it.isEmpty()) expanded = false
+            }
+        }
+
+        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+            OutlinedTextField(
+                value = text,
+                onValueChange = {
+                    onTextChange(it)
+                    textChanged = true
+                },
+                label = { Text(stringResource(R.string.tag)) },
+                singleLine = true,
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth(),
+                keyboardActions = KeyboardActions { onApply() },
+                trailingIcon = {
+                    Icon(
+                        Icons.Filled.ArrowDropDown,
+                        null,
+                        Modifier.rotate(
+                            animateFloatAsState(if (expanded) 180f else 360f).value
+                        )
+                    )
+                },
+            )
+            ExposedDropdownMenu(
+                expanded = expanded && suggestions.isNotEmpty(),
+                onDismissRequest = { expanded = false },
+                modifier = Modifier
+                    .heightIn(max = (48 * 3).dp) // TODO it still can overlap keyboard
+                    .exposedDropdownSize(matchTextFieldWidth = true)
+            ) {
+                suggestions.forEach {
+                    val suggestionText = when (it.antecedentName) {
+                        null -> it.name
+                        else -> it.antecedentName + " → " + it.name
+                    }
+                    DropdownMenuItem(text = { Text(suggestionText) }, onClick = {
+                        onTextChange(it.name)
+                        expanded = false
+                    })
+                }
+            }
+        }
+
     }
 }

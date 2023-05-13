@@ -109,6 +109,13 @@ interface API {
         @Query("page") page: Int,
         @Query("limit") limit: Int // Default unknown. Maybe 75, but I doubt
     ): Call<List<CommentBB>>
+
+    @CheckResult
+    @GET("/tags/autocomplete.json")
+    fun getAutocompleteSuggestions(
+        @Query("search[name_matches]") query: String, // 3 or more characters required on the API side
+        @Query("expiry") expiry: Int = 7 // idk what it is, use default from site.
+    ): Call<List<TagAutocompleteSuggestion>>
 }
 
 suspend fun API.getWikiPage(tag: String): WikiPage {

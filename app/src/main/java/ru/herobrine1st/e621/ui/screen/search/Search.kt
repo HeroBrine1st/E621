@@ -40,11 +40,22 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.fasterxml.jackson.databind.node.ObjectNode
+import okhttp3.ResponseBody
+import retrofit2.Call
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
+import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
+import ru.herobrine1st.e621.api.model.PostCommentsEndpoint
+import ru.herobrine1st.e621.api.model.PostEndpoint
+import ru.herobrine1st.e621.api.model.PostVoteEndpoint
+import ru.herobrine1st.e621.api.model.PostsEndpoint
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
+import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent.TagModificationState
 import ru.herobrine1st.e621.preference.LocalPreferences
@@ -82,6 +93,7 @@ fun Search(
             ModifyTagDialog(
                 component.tagModificationText,
                 onTextChange = { component.tagModificationText = it },
+                suggestionsFlow = component.tagSuggestionFlow,
                 onClose = {
                     component.cancelTagModification()
                 },
@@ -332,7 +344,56 @@ fun SearchPreview() {
                 getPreviewStackNavigator(),
                 PostsSearchOptions.DEFAULT.copy(
                     tags = listOf("asdlkfjaskldjfasdf", "asddl;kfjaslkdjfas;", "test")
-                )
+                ),
+                api = object : API {
+                    override fun getUser(name: String, credentials: String?): Call<ObjectNode> =
+                        error("Not yet implemented")
+
+                    override fun getPosts(
+                        tags: String?,
+                        page: Int?,
+                        limit: Int?
+                    ): Call<PostsEndpoint> = error("Not yet implemented")
+
+                    override fun getPost(id: Int): Call<PostEndpoint> = error("Not yet implemented")
+
+                    override fun getFavourites(
+                        userId: Int?,
+                        page: Int?,
+                        limit: Int?
+                    ): Call<PostsEndpoint> = error("Not yet implemented")
+
+                    override fun addToFavourites(postId: Int): Call<ResponseBody> =
+                        error("Not yet implemented")
+
+                    override fun removeFromFavourites(postId: Int): Call<Void> =
+                        error("Not yet implemented")
+
+                    override fun vote(
+                        postId: Int,
+                        score: Int,
+                        noRetractVote: Boolean
+                    ): Call<PostVoteEndpoint> = error("Not yet implemented")
+
+                    override fun getWikiPageId(title: String): Call<ResponseBody> =
+                        error("Not yet implemented")
+
+                    override fun getWikiPage(id: Int): Call<WikiPage> = error("Not yet implemented")
+
+                    override fun getCommentsForPostHTML(id: Int): Call<PostCommentsEndpoint> =
+                        error("Not yet implemented")
+
+                    override fun getCommentsForPostBBCode(
+                        id: Int,
+                        page: Int,
+                        limit: Int
+                    ): Call<List<CommentBB>> = error("Not yet implemented")
+
+                    override fun getAutocompleteSuggestions(
+                        query: String,
+                        expiry: Int
+                    ): Call<List<TagAutocompleteSuggestion>> = error("Not yet implemented")
+                }
             )
         )
     }

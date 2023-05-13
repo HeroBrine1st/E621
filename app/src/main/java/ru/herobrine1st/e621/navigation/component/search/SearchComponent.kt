@@ -24,12 +24,19 @@ import android.os.Parcelable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.toMutableStateList
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.statekeeper.consume
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.map
 import kotlinx.parcelize.Parcelize
+import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
+import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 
@@ -39,7 +46,9 @@ class SearchComponent private constructor(
     componentContext: ComponentContext,
     initialState: StateParcelable,
     private val navigator: StackNavigator<Config>,
+    private val api: API
 ) : ComponentContext by componentContext {
+
     val tags = initialState.searchOptions.tags.toMutableStateList()
 
     var order by mutableStateOf(initialState.searchOptions.order)
@@ -53,15 +62,33 @@ class SearchComponent private constructor(
         private set
     var tagModificationText by mutableStateOf("")
 
+    val tagSuggestionFlow: Flow<List<TagSuggestion>> = snapshotFlow { tagModificationText }
+        .drop(1) // Ignore first as it is a starting tag (which is either empty string or valid tag)
+        .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
+        // Delay is handled by interceptor
+        .map { query ->
+            // TODO preference
+            if (query.length < 3 || query.isBlank()) return@map emptyList()
+            api.getAutocompleteSuggestions(query).await().map {
+                TagSuggestion(
+                    name = it.name,
+                    postCount = it.postCount,
+                    antecedentName = it.antecedentName
+                )
+            }
+        }
+
     constructor(
         componentContext: ComponentContext,
         navigator: StackNavigator<Config>,
-        initialPostsSearchOptions: PostsSearchOptions
+        initialPostsSearchOptions: PostsSearchOptions,
+        api: API
     ) : this(
         componentContext,
         componentContext.stateKeeper.consume(STATE_KEY)
             ?: StateParcelable(initialPostsSearchOptions),
-        navigator
+        navigator,
+        api
     )
 
     init {
@@ -130,4 +157,10 @@ class SearchComponent private constructor(
         @Parcelize
         class Editing(val index: Int) : TagModificationState
     }
+
+    data class TagSuggestion(
+        val name: String,
+        val postCount: Int,
+        val antecedentName: String?
+    )
 }

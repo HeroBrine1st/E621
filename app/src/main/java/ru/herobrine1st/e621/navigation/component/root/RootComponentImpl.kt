@@ -97,7 +97,8 @@ class RootComponentImpl(
                 SearchComponent(
                     componentContext = context,
                     navigator = navigation,
-                    initialPostsSearchOptions = configuration.initialSearch
+                    initialPostsSearchOptions = configuration.initialSearch,
+                    api = apiProvider.value
                 )
             )
             is PostListing -> Child.PostListing(
