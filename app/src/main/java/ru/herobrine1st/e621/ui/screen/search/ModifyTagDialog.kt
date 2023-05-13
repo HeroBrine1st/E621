@@ -68,7 +68,6 @@ fun ModifyTagDialog(
         }
     }
 
-
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
         TextButton(onClick = onClose) {
             Text(stringResource(R.string.close))
@@ -88,7 +87,8 @@ fun ModifyTagDialog(
     }, onDismissRequest = onClose) {
         ExposedDropdownMenuBox(
             expanded = autocompleteExpanded,
-            onExpandedChange = { autocompleteExpanded = !autocompleteExpanded }) {
+            onExpandedChange = { autocompleteExpanded = !autocompleteExpanded }
+        ) {
             OutlinedTextField(
                 value = text,
                 onValueChange = {
@@ -134,6 +134,5 @@ fun ModifyTagDialog(
                 }
             }
         }
-
     }
 }
