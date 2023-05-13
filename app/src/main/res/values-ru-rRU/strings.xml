@@ -146,4 +146,5 @@
     <string name="assertion_failed">Обнаружено неожиданное поведение. Пожалуйста, расскаэжите об этой ошибке разработчикам. Код ошибки: %s</string>
     <string name="settings_autoplay_video_on_post_open">Автозапуск видео</string>
     <string name="settings_autoplay_video_on_post_open_shortdesc">Автоматический запуск видео при открытии поста</string>
+    <string name="post_comments_forbidden_auth_needed">Комментарии недоступны без авторизации.</string>
 </resources>

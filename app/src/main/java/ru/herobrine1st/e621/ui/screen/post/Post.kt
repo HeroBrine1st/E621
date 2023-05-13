@@ -91,7 +91,13 @@ fun Post(
 
     val coroutineScope = rememberCoroutineScope()
 
-    var loadComments by remember { mutableStateOf(!preferences.dataSaverModeEnabled || component.openComments) } // Do not make excessive API calls (user preference)
+    var loadComments by remember {
+        mutableStateOf(
+            preferences.hasAuth() // Assuming there can't be invalid credentials in preferences
+                    && (!preferences.dataSaverModeEnabled // Do not make excessive API calls on user preference
+                    || component.openComments)
+        )
+    }
 
     if (post == null) {
         Column(
@@ -242,15 +248,16 @@ fun Post(
                     Divider()
                 }
                 item("comments") {
-                    Column(Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = post.commentCount != 0) {
-                            coroutineScope.launch {
-                                loadComments = true
-                                bottomSheetState.partialExpand()
+                    Column(
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable(enabled = post.commentCount != 0 && preferences.hasAuth()) {
+                                coroutineScope.launch {
+                                    loadComments = true
+                                    bottomSheetState.partialExpand()
+                                }
                             }
-                        }
-                        .padding(horizontal = BASE_PADDING_HORIZONTAL)
+                            .padding(horizontal = BASE_PADDING_HORIZONTAL)
                     ) {
                         Text(
                             stringResource(R.string.comments),
@@ -262,6 +269,7 @@ fun Post(
                             post.commentCount == 0 -> {
                                 CommentsLoadingState.Empty
                             }
+
 
                             loadComments -> {
                                 // Cannot hoist comments: there's no disable for automatic download
@@ -288,7 +296,10 @@ fun Post(
 
                                     is LoadState.Error -> CommentsLoadingState.Failed
                                 }
+                            }
 
+                            !preferences.hasAuth() -> {
+                                CommentsLoadingState.Forbidden
                             }
 
                             else -> {
@@ -314,6 +325,7 @@ fun Post(
                                     )
 
                                 CommentsLoadingState.NotLoading -> Text(stringResource(R.string.click_to_load))
+                                CommentsLoadingState.Forbidden -> Text(stringResource(R.string.post_comments_forbidden_auth_needed))
                             }
                         }
 
@@ -604,5 +616,9 @@ private sealed interface CommentsLoadingState {
             get() = 3
     }
 
+    object Forbidden/*due to credentials absence*/ : CommentsLoadingState {
+        override val index: Int
+            get() = 4
+    }
 
 }

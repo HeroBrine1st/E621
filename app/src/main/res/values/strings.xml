@@ -149,4 +149,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="assertion_failed">Assertion failed. Please tell about this error to developers. Error code: %s</string>
     <string name="settings_autoplay_video_on_post_open">Autoplay video</string>
     <string name="settings_autoplay_video_on_post_open_shortdesc">Automatically start video on post open</string>
+    <string name="post_comments_forbidden_auth_needed">Comments are not available without authorization.</string>
 </resources>
