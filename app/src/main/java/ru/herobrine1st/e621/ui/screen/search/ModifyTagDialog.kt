@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -60,6 +61,7 @@ fun ModifyTagDialog(
     onDelete: (() -> Unit)? = null,
     onApply: () -> Unit
 ) {
+    val preferences = LocalPreferences.current
     var autocompleteExpanded by remember { mutableStateOf(false) }
     val suggestions by produceState(emptyList<SearchComponent.TagSuggestion>()) {
         suggestionsFlow.collect {
@@ -104,7 +106,7 @@ fun ModifyTagDialog(
                     .fillMaxWidth(),
                 keyboardActions = KeyboardActions { onApply() },
                 trailingIcon = {
-                    Icon(
+                    if (preferences.autocompleteEnabled) Icon(
                         Icons.Filled.ArrowDropDown,
                         null,
                         Modifier.rotate(

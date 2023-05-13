@@ -119,6 +119,21 @@ fun Settings(
             }
             item {
                 SettingSwitch(
+                    checked = preferences.autocompleteEnabled,
+                    title = stringResource(R.string.settings_search_tags_autocomplete),
+                    subtitle = stringResource(R.string.settings_search_tags_autocomplete_desc),
+                    icon = Icons.Default.Assistant,
+                    onCheckedChange = {
+                        coroutineScope.launch {
+                            context.updatePreferences {
+                                autocompleteEnabled = it
+                            }
+                        }
+                    }
+                )
+            }
+            item {
+                SettingSwitch(
                     checked = preferences.safeModeEnabled,
                     title = stringResource(R.string.settings_safe_mode),
                     subtitle = stringResource(R.string.settings_safe_mode_shortdesc),

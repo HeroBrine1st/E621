@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.navigation.component.search
 
+import android.content.Context
 import android.os.Parcelable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,13 +36,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
+import ru.herobrine1st.e621.preference.getPreferencesFlow
 
 const val STATE_KEY = "SEARCH_COMPONENT_STATE_KEY"
 
@@ -49,7 +50,8 @@ class SearchComponent private constructor(
     componentContext: ComponentContext,
     initialState: StateParcelable,
     private val navigator: StackNavigator<Config>,
-    private val api: API
+    private val api: API,
+    applicationContext: Context
 ) : ComponentContext by componentContext {
 
     val tags = initialState.searchOptions.tags.toMutableStateList()
@@ -69,9 +71,8 @@ class SearchComponent private constructor(
         .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
         .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
         // Delay is handled by interceptor
-        .map { query ->
-            // TODO preference
-            if (query.length < 3 || query.isBlank()) return@map emptyList()
+        .combine(applicationContext.getPreferencesFlow { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
+            if (query.length < 3 || query.isBlank() || !isAutocompleteEnabled) return@combine emptyList()
             api.getAutocompleteSuggestions(query).await().map {
                 TagSuggestion(
                     name = it.name,
@@ -90,13 +91,15 @@ class SearchComponent private constructor(
         componentContext: ComponentContext,
         navigator: StackNavigator<Config>,
         initialPostsSearchOptions: PostsSearchOptions,
-        api: API
+        api: API,
+        applicationContext: Context
     ) : this(
         componentContext,
         componentContext.stateKeeper.consume(STATE_KEY)
             ?: StateParcelable(initialPostsSearchOptions),
         navigator,
-        api
+        api,
+        applicationContext
     )
 
     init {
