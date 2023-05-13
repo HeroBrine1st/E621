@@ -121,8 +121,7 @@ class WikiComponent(
         return withContext(Dispatchers.Default) {
             this@parseWikiPage.setParsed(
                 parseBBCode(
-                    this@parseWikiPage.result.body,
-                    handleLinks = true
+                    this@parseWikiPage.result.body
                 )
             )
             return@withContext this@parseWikiPage

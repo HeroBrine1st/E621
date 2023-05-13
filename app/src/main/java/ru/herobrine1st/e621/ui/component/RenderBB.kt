@@ -36,6 +36,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,10 +47,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.MessageData
@@ -57,6 +60,8 @@ import ru.herobrine1st.e621.api.MessageQuote
 import ru.herobrine1st.e621.api.MessageText
 import ru.herobrine1st.e621.api.WIKI_PAGE_STRING_ANNOTATION_TAG
 import ru.herobrine1st.e621.api.parseBBCode
+import ru.herobrine1st.e621.ui.theme.LightBlue
+import ru.herobrine1st.e621.ui.theme.isLight
 
 @Composable
 fun RenderBB(text: String, onWikiLinkClick: ((String) -> Unit)? = null) {
@@ -100,17 +105,36 @@ fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((String) -> Unit)? = null) 
 
         is MessageText -> {
             if (onWikiLinkClick != null) {
-                val text = data.text
                 var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
                 var linkPath by remember { mutableStateOf<Path?>(null) }
                 val colorScheme = MaterialTheme.colorScheme
+                val isLight by remember { derivedStateOf { colorScheme.isLight } }
+
+                val text by remember(data.text) {
+                    derivedStateOf {
+                        val linkSpanStyle = SpanStyle(
+                            color = if (isLight) Color.Blue else Color.LightBlue,
+                            textDecoration = TextDecoration.Underline
+                        )
+                        AnnotatedString.Builder(data.text).apply {
+                            data.text.getStringAnnotations(
+                                WIKI_PAGE_STRING_ANNOTATION_TAG,
+                                0,
+                                data.text.length
+                            ).forEach {
+                                addStyle(linkSpanStyle, it.start, it.end)
+                            }
+                        }.toAnnotatedString()
+                    }
+                }
+
                 Text(
                     text,
                     onTextLayout = {
                         layoutResult = it
                     },
                     modifier = Modifier
-                        .pointerInput(onWikiLinkClick, text) {
+                        .pointerInput(onWikiLinkClick) {
                             // Reason to not use detectTapGestures: SelectionContainer does not get tap gestures
                             awaitEachGesture {
                                 val layoutResultNotNull =
@@ -168,10 +192,8 @@ fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((String) -> Unit)? = null) 
                         .drawBehind {
                             linkPath?.let { path ->
                                 val color =
-                                    if (colorScheme.background.luminance() < 0.5f) Color(0x80ADD8E6) else Color.Blue.copy(
-                                        alpha = 0.25f
-                                    )
-
+                                    if (isLight) Color.Blue.copy(alpha = 0.25f)
+                                    else Color.LightBlue.copy(alpha = 0.5f)
                                 drawPath(path, color = color)
                             }
                         }

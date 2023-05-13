@@ -22,14 +22,12 @@ package ru.herobrine1st.e621.api
 
 import android.util.Log
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.UrlAnnotation
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.text.withStyle
 import ru.herobrine1st.e621.BuildConfig
@@ -45,11 +43,6 @@ val BOLD = SpanStyle(
 
 val ITALIC = SpanStyle(
     fontStyle = FontStyle.Italic
-)
-
-val LINK = SpanStyle(
-    color = Color.Blue,
-    textDecoration = TextDecoration.Underline
 )
 
 const val WIKI_PAGE_STRING_ANNOTATION_TAG = "WIKI_PAGE"
@@ -204,8 +197,8 @@ val pattern =
 // name said:
 val quotePattern = Regex("""(?:"?([^"\n]+)"?:/user(?:s|/show)/(\d+)|(\S+)) said:\r?\n""")
 
-fun parseBBCode(input: String, handleLinks: Boolean = true): List<MessageData<*>> {
-    val (parsed, end) = parseBBCodeInternal(input, null, 0, handleLinks = handleLinks)
+fun parseBBCode(input: String): List<MessageData<*>> {
+    val (parsed, end) = parseBBCodeInternal(input, null, 0)
     assert(end == input.length) {
         "Parser hasn't reached end of string: expected ${input.length}, actual $end"
     }
@@ -216,8 +209,7 @@ fun parseBBCode(input: String, handleLinks: Boolean = true): List<MessageData<*>
 private fun parseBBCodeInternal(
     input: String,
     currentTag: DTextTag?,
-    initialStart: Int,
-    handleLinks: Boolean = true
+    initialStart: Int
 ): Pair<List<MessageData<*>>, Int> {
     val output = mutableListOf<MessageData<*>>()
     var start = initialStart
@@ -263,17 +255,15 @@ private fun parseBBCodeInternal(
         val link = match.groupValues[5]
         if (link != "") {
             val hyper = match.groupValues[6]
-            output += if (handleLinks) MessageText(
+            output += MessageText(
                 AnnotatedString.Builder().apply {
                     withAnnotation(UrlAnnotation("${BuildConfig.DEEP_LINK_BASE_URL}/wiki_pages/show_or_new?title=$link")) {
                         withAnnotation(WIKI_PAGE_STRING_ANNOTATION_TAG, link) {
-                            withStyle(LINK) {
-                                append(hyper.ifBlank { link })
-                            }
+                            append(hyper.ifBlank { link })
                         }
                     }
                 }.toAnnotatedString()
-            ) else MessageText(hyper.ifBlank { link })
+            )
             continue
         }
         Log.w(TAG, "Catchall triggered on `${match.groupValues[0]}`")

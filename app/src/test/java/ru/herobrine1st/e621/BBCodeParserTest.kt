@@ -10,7 +10,6 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import ru.herobrine1st.e621.api.BOLD
 import ru.herobrine1st.e621.api.ITALIC
-import ru.herobrine1st.e621.api.LINK
 import ru.herobrine1st.e621.api.MessageQuote
 import ru.herobrine1st.e621.api.MessageText
 import ru.herobrine1st.e621.api.WIKI_PAGE_STRING_ANNOTATION_TAG
@@ -211,9 +210,7 @@ class BBCodeParserTest {
         assertEquals(AnnotatedString.Builder().apply {
             withAnnotation(UrlAnnotation("${BuildConfig.DEEP_LINK_BASE_URL}/wiki_pages/show_or_new?title=$link")) {
                 withAnnotation(WIKI_PAGE_STRING_ANNOTATION_TAG, link) {
-                    withStyle(LINK) {
-                        append(hyperlink.ifBlank { link })
-                    }
+                    append(hyperlink.ifBlank { link })
                 }
             }
         }.toAnnotatedString(), text.text)
