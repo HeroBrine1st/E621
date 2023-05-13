@@ -15,7 +15,7 @@ snapshot [here](https://github.com/HeroBrine1st/E621/actions/workflows/snapshot-
 last passed workflow and see artifacts). Keep in mind that snapshot builds aren't compatible with
 release builds (they use different signing keys), but you can reinstall if you want.
 
-The roadmap to next release is heavy optimization. Animations are laggy (and not the first frame) and I still don't know why.
+The roadmap for the next release (I think it will be beta release) is [approximately this](https://github.com/users/HeroBrine1st/projects/1/views/1). It may be appended or anything, it is just an estimate of required features that may pop up in my memory before hitting "publish" button.
 
 # Features
 
@@ -37,16 +37,9 @@ read-only and has some harmless bugs.
 - [x] Safe mode on search and posts screen (i.e. you can open explicit post from your browser, but
   cannot open in through search within app), enabled by default with disclaimer on disable.
 - [ ] Autocomplete tags
-- [x] Authorization
+- [x] Authorization by API key
     - [ ] Authorization by regular username and password (I'm not sure it won't break ToS, but it is
       possible without any difficulty... I think)
-    - ~~Also I do not recommend to use it without account because of API which may not send some
-      fields on it's own, although it is rarely (but stably :/) observed even with account.~~
-      It is fixed now.  
-      The error was malformed JSON with some null-filled fields from the API. Fixed by treating
-      those fields as unfilled and then filling with empty string. Because those fields are URLs to
-      images, the images will fail to load, but, I think, you can open post and it will be loaded,
-      because error is observed only in /posts.json and /favorites.json endpoints.
 - [x] Blacklisting
     - [ ] Fancy UI to configure blacklist
     - [x] Support for extended syntax (still incubating)
