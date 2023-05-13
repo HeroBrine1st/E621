@@ -134,12 +134,9 @@ class PostComponent(
                 return@doOnResume
             }
             lifecycleScope.launch {
-                val isDataSaverEnabled =
-                    applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }
-                        .first()
                 val id = post?.id ?: postId
                 if (post == null // Nothing to show
-                    || !isDataSaverEnabled
+                    || applicationContext.getPreferencesFlow { !it.dataSaverModeEnabled }.first()
                 ) {
                     isLoadingPost = true
                     try {
