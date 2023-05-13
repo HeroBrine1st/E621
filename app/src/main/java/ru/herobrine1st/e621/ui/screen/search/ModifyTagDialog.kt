@@ -60,7 +60,15 @@ fun ModifyTagDialog(
     onDelete: (() -> Unit)? = null,
     onApply: () -> Unit
 ) {
-    var textChanged by remember { mutableStateOf(false) }
+    var autocompleteExpanded by remember { mutableStateOf(false) }
+    val suggestions by produceState(emptyList<SearchComponent.TagSuggestion>()) {
+        suggestionsFlow.collect {
+            value = it
+            autocompleteExpanded = it.isNotEmpty()
+        }
+    }
+
+
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
         TextButton(onClick = onClose) {
             Text(stringResource(R.string.close))
@@ -78,21 +86,16 @@ fun ModifyTagDialog(
             Text(stringResource(if (onDelete == null) R.string.add else R.string.apply))
         }
     }, onDismissRequest = onClose) {
-        var expanded by remember { mutableStateOf(false) }
-        val suggestions by produceState(emptyList<SearchComponent.TagSuggestion>()) {
-            suggestionsFlow.collect {
-                value = it
-                if (!expanded && textChanged) expanded = true
-                if (it.isEmpty()) expanded = false
-            }
-        }
-
-        ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = !expanded }) {
+        ExposedDropdownMenuBox(
+            expanded = autocompleteExpanded,
+            onExpandedChange = { autocompleteExpanded = !autocompleteExpanded }) {
             OutlinedTextField(
                 value = text,
                 onValueChange = {
                     onTextChange(it)
-                    textChanged = true
+                    if (!autocompleteExpanded)
+                        autocompleteExpanded =
+                            suggestions.isNotEmpty() // Popup closes on keyboard tap - open it here
                 },
                 label = { Text(stringResource(R.string.tag)) },
                 singleLine = true,
@@ -105,14 +108,16 @@ fun ModifyTagDialog(
                         Icons.Filled.ArrowDropDown,
                         null,
                         Modifier.rotate(
-                            animateFloatAsState(if (expanded) 180f else 360f).value
+                            animateFloatAsState(if (autocompleteExpanded) 180f else 360f).value
                         )
                     )
                 },
             )
             ExposedDropdownMenu(
-                expanded = expanded && suggestions.isNotEmpty(),
-                onDismissRequest = { expanded = false },
+                expanded = autocompleteExpanded && suggestions.isNotEmpty(),
+                onDismissRequest = {
+                    autocompleteExpanded = false
+                },
                 modifier = Modifier
                     .heightIn(max = (48 * 3).dp) // TODO it still can overlap keyboard
                     .exposedDropdownSize(matchTextFieldWidth = true)
@@ -124,7 +129,7 @@ fun ModifyTagDialog(
                     }
                     DropdownMenuItem(text = { Text(suggestionText) }, onClick = {
                         onTextChange(it.name)
-                        expanded = false
+                        autocompleteExpanded = false
                     })
                 }
             }

@@ -29,9 +29,12 @@ import androidx.compose.runtime.toMutableStateList
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.statekeeper.consume
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.API
@@ -63,7 +66,7 @@ class SearchComponent private constructor(
     var tagModificationText by mutableStateOf("")
 
     val tagSuggestionFlow: Flow<List<TagSuggestion>> = snapshotFlow { tagModificationText }
-        .drop(1) // Ignore first as it is a starting tag (which is either empty string or valid tag)
+        .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
         .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
         // Delay is handled by interceptor
         .map { query ->
@@ -77,6 +80,11 @@ class SearchComponent private constructor(
                 )
             }
         }
+        // Make it 🚀 turbo reactive 🚀
+        .combine(snapshotFlow { tagModificationText }) { suggestions, query ->
+            suggestions.filter { query in it.name || it.antecedentName?.contains(query) == true }
+        }
+        .flowOn(Dispatchers.Default)
 
     constructor(
         componentContext: ComponentContext,
