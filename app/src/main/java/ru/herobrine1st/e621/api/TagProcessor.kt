@@ -22,6 +22,7 @@ package ru.herobrine1st.e621.api
 
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.model.Tag
 import java.util.function.Predicate
 import java.util.regex.Pattern
 
@@ -82,7 +83,7 @@ fun createPredicateFromTag(tag: String): Predicate<Post> {
         }
     } else {
         return Predicate {
-            it.tags.all.contains(tag)
+            it.tags.all.contains(Tag(tag))
         }
     }
 }

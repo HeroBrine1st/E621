@@ -82,7 +82,7 @@ import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.isFavourite
-import ru.herobrine1st.e621.util.normalizeTagForUI
+import ru.herobrine1st.e621.util.text
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
@@ -280,7 +280,7 @@ fun Post(
                         selected = false,
                         onClick = { /*TODO*/ },
                         label = {
-                            Text(it.normalizeTagForUI())
+                            Text(it.text)
                         }
                     )
                 }

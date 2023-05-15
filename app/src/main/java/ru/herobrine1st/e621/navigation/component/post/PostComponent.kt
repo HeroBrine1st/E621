@@ -48,6 +48,7 @@ import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import ru.herobrine1st.e621.navigation.config.Config
@@ -168,21 +169,21 @@ class PostComponent(
 
     }
 
-    fun handleWikiClick(tag: String) {
+    fun handleWikiClick(tag: Tag) {
         navigator.pushIndexed {
             Config.Wiki(tag = tag, index = it)
         }
     }
 
-    fun handleTagModification(tag: String, exclude: Boolean) {
+    fun handleTagModification(tag: Tag, exclude: Boolean) {
         val searchOptions = query.toBuilder {
             if (exclude) {
-                tags.remove(tag)
+                tags.remove(tag.value)
                 if (!tags.contains("-$tag"))
                     tags.add("-$tag")
             } else
-                if (!tags.contains(tag))
-                    tags.add(tag)
+                if (!tags.contains(tag.value))
+                    tags.add(tag.value)
         }
         navigator.pushIndexed { index -> Config.Search(searchOptions, index = index) }
     }

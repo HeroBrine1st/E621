@@ -30,7 +30,6 @@ val USER_AGENT = BuildConfig.USER_AGENT_TEMPLATE
         .format(Build.VERSION.RELEASE, BuildConfig.BUILD_TYPE)
 
 
-
 // Used by me when android studio profiler is too much for my phone (i.e. always)
 @Suppress("unused")
 @Composable
@@ -41,9 +40,3 @@ inline fun <T> time(name: String, block: @Composable () -> T): T {
     return res
 }
 
-// TODO value class Tag?
-fun String.normalizeTagForUI() = this.runIf(BuildConfig.HIDE_UNDERSCORES_FROM_USER) {
-    replace('_', ' ')
-}
-
-fun String.normalizeTagForAPI() = this.replace(' ', '_')

@@ -31,7 +31,7 @@ import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
 
-sealed interface SearchOptions: Parcelable {
+sealed interface SearchOptions : Parcelable {
     @Throws(ApiException::class, IOException::class)
     suspend fun getPosts(api: API, limit: Int, page: Int): List<Post>
 
@@ -41,6 +41,7 @@ sealed interface SearchOptions: Parcelable {
 
 @Parcelize
 data class PostsSearchOptions(
+    // STOPSHIP: create "allOf", "noneOf" and "anyOf" List<Tag>
     val tags: List<String> = emptyList(),
     val order: Order = Order.NEWEST_TO_OLDEST,
     val orderAscending: Boolean = false,
@@ -114,13 +115,28 @@ data class PostsSearchOptions(
         var fileTypeInvert: Boolean = false
     ) {
         fun build() =
-            PostsSearchOptions(tags, order, orderAscending, rating, favouritesOf, fileType, fileTypeInvert)
+            PostsSearchOptions(
+                tags,
+                order,
+                orderAscending,
+                rating,
+                favouritesOf,
+                fileType,
+                fileTypeInvert
+            )
 
         companion object {
             fun from(options: SearchOptions) = when (options) {
                 is PostsSearchOptions -> with(options) {
-                    Builder(tags.toMutableList(), order, orderAscending, rating.toMutableList(), favouritesOf)
+                    Builder(
+                        tags.toMutableList(),
+                        order,
+                        orderAscending,
+                        rating.toMutableList(),
+                        favouritesOf
+                    )
                 }
+
                 is FavouritesSearchOptions -> Builder(favouritesOf = options.favouritesOf)
             }
         }
@@ -128,7 +144,8 @@ data class PostsSearchOptions(
 }
 
 @Parcelize
-data class FavouritesSearchOptions(val favouritesOf: String, private var id: Int? = null) : SearchOptions {
+data class FavouritesSearchOptions(val favouritesOf: String, private var id: Int? = null) :
+    SearchOptions {
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         id = id ?: favouritesOf.let {
             api.getUser(favouritesOf).await().get("id").asInt()

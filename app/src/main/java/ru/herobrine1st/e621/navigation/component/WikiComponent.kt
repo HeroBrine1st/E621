@@ -40,6 +40,7 @@ import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.NotFoundException
 import ru.herobrine1st.e621.api.getWikiPage
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.api.parseBBCode
 import ru.herobrine1st.e621.navigation.LifecycleScope
@@ -54,7 +55,7 @@ private const val TAG = "WikiComponent"
 private const val WIKI_STATE_TAG = "WIKI_STATE_TAG"
 
 class WikiComponent(
-    val tag: String,
+    val tag: Tag,
     componentContext: ComponentContext,
     private val api: API,
     private val snackbarAdapter: SnackbarAdapter,
@@ -77,7 +78,7 @@ class WikiComponent(
         }
     }
 
-    fun handleLinkClick(tag: String) {
+    fun handleLinkClick(tag: Tag) {
         stackNavigator.pushIndexed {
             Config.Wiki(
                 tag = tag,

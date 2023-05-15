@@ -44,13 +44,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
+import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
-import ru.herobrine1st.e621.util.normalizeTagForUI
+import ru.herobrine1st.e621.util.runIf
+import ru.herobrine1st.e621.util.text
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,7 +100,7 @@ fun ModifyTagDialog(
             OutlinedTextField(
                 value = text,
                 onValueChange = {
-                    onTextChange(it)
+                    onTextChange(it.replace(' ', '_'))
                     if (!autocompleteExpanded)
                         autocompleteExpanded =
                             suggestions.isNotEmpty() // Popup closes on keyboard tap - open it here
@@ -106,6 +111,15 @@ fun ModifyTagDialog(
                     .menuAnchor()
                     .fillMaxWidth(),
                 keyboardActions = KeyboardActions { onApply() },
+                visualTransformation = {
+                    TransformedText(
+                        text = AnnotatedString(
+                            it.text.runIf(BuildConfig.HIDE_UNDERSCORES_FROM_USER) {
+                                replace('_', ' ')
+                            }
+                        ), offsetMapping = OffsetMapping.Identity
+                    )
+                },
                 trailingIcon = {
                     if (preferences.autocompleteEnabled) Icon(
                         Icons.Filled.ArrowDropDown,
@@ -126,14 +140,15 @@ fun ModifyTagDialog(
                     .exposedDropdownSize(matchTextFieldWidth = true)
             ) {
                 suggestions.forEach {
+                    val name = it.name.text
                     val suggestionText = when (it.antecedentName) {
-                        null -> it.name
-                        else -> it.antecedentName + " → " + it.name
+                        null -> name
+                        else -> it.antecedentName.text + " → " + name
                     }
                     DropdownMenuItem(
-                        text = { Text(suggestionText.normalizeTagForUI()) },
+                        text = { Text(suggestionText) },
                         onClick = {
-                            onTextChange(it.name.normalizeTagForUI())
+                            onTextChange(name)
                             autocompleteExpanded = false
                         })
                 }

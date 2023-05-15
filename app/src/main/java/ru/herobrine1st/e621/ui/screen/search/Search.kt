@@ -55,6 +55,7 @@ import ru.herobrine1st.e621.api.model.PostEndpoint
 import ru.herobrine1st.e621.api.model.PostVoteEndpoint
 import ru.herobrine1st.e621.api.model.PostsEndpoint
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
@@ -67,7 +68,7 @@ import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedSta
 import ru.herobrine1st.e621.util.PreviewUtils
 import ru.herobrine1st.e621.util.getPreviewComponentContext
 import ru.herobrine1st.e621.util.getPreviewStackNavigator
-import ru.herobrine1st.e621.util.normalizeTagForUI
+import ru.herobrine1st.e621.util.text
 
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -159,7 +160,7 @@ fun Search(
                                     selected = false,
                                     onClick = { component.openEditTagDialog(index) },
                                     label = {
-                                        Text(tag.normalizeTagForUI())
+                                        Text(Tag(tag).text)
                                     }
                                 )
                             }
@@ -338,13 +339,18 @@ fun Search(
 @OptIn(PreviewUtils::class)
 fun SearchPreview() {
     CompositionLocalProvider(LocalPreferences provides Preferences.getDefaultInstance()) {
+
         Search(
             screenSharedState = rememberScreenPreviewSharedState(),
             component = SearchComponent(
                 getPreviewComponentContext(),
                 getPreviewStackNavigator(),
                 PostsSearchOptions.DEFAULT.copy(
-                    tags = listOf("asdlkfjaskldjfasdf", "asddl;kfjaslkdjfas;", "test")
+                    tags = @Suppress("SpellCheckingInspection") listOf(
+                        "asdlkfjaskldjfasdf",
+                        "asddlkfjaslkdjfas",
+                        "test"
+                    )
                 ),
                 api = object : API {
                     override fun getUser(name: String, credentials: String?): Call<ObjectNode> =

@@ -24,6 +24,7 @@ import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.Post as ModelPost
 
 // weak TO/DO: data objects https://youtrack.jetbrains.com/issue/KT-40218
@@ -58,7 +59,7 @@ sealed interface Config : Parcelable {
 
     @Parcelize
     data class Wiki(
-        val tag: String,
+        val tag: Tag,
         private val index: Int
     ) : Config
 

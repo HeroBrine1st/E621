@@ -28,6 +28,7 @@ import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.http.*
 import ru.herobrine1st.e621.api.model.*
+import ru.herobrine1st.e621.api.model.Tag
 
 interface API {
     @CheckResult
@@ -118,8 +119,8 @@ interface API {
     ): Call<List<TagAutocompleteSuggestion>>
 }
 
-suspend fun API.getWikiPage(tag: String): WikiPage {
-    val firstResponse = getWikiPageId(tag).awaitResponse()
+suspend fun API.getWikiPage(tag: Tag): WikiPage {
+    val firstResponse = getWikiPageId(tag.value).awaitResponse()
     if (firstResponse.raw().priorResponse == null) throw NotFoundException()
     val id = firstResponse.raw().request.url.pathSegments.last().toIntOrNull()
     if (id == null) {

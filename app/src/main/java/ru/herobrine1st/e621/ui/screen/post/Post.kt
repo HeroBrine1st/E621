@@ -64,6 +64,7 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
@@ -74,7 +75,7 @@ import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.screen.post.component.GoingToFullscreenAnimation
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
-import ru.herobrine1st.e621.util.normalizeTagForUI
+import ru.herobrine1st.e621.util.text
 import java.util.*
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
@@ -477,8 +478,8 @@ fun CommentsBottomSheetContent(
 
 private fun LazyListScope.tags(
     post: Post,
-    onModificationClick: (tag: String, exclude: Boolean) -> Unit,
-    onWikiClick: (String) -> Unit
+    onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
+    onWikiClick: (Tag) -> Unit
 ) {
     tags(R.string.artist_tags, post.tags.artist, onModificationClick, onWikiClick)
     tags(
@@ -502,9 +503,9 @@ private fun LazyListScope.tags(
 @OptIn(ExperimentalFoundationApi::class)
 private fun LazyListScope.tags(
     @StringRes titleId: Int,
-    tags: List<String>,
-    onModificationClick: (tag: String, exclude: Boolean) -> Unit,
-    onWikiClick: (String) -> Unit
+    tags: List<Tag>,
+    onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
+    onWikiClick: (Tag) -> Unit
 ) {
     if (tags.isEmpty()) return
     stickyHeader("$titleId tags") {
@@ -536,15 +537,15 @@ private fun LazyListScope.tags(
 
 @Composable
 private fun Tag(
-    tag: String,
-    onModificationClick: (tag: String, exclude: Boolean) -> Unit,
-    onWikiClick: (String) -> Unit
+    tag: Tag,
+    onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
+    onWikiClick: (Tag) -> Unit
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(start = 8.dp)
     ) {
-        Text(tag.normalizeTagForUI(), modifier = Modifier.weight(1f))
+        Text(tag.text, modifier = Modifier.weight(1f))
         IconButton( // Add
             onClick = {
                 onModificationClick(tag, false)

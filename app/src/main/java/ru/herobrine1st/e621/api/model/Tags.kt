@@ -23,6 +23,10 @@ package ru.herobrine1st.e621.api.model
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.JsonDeserializer
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
@@ -30,20 +34,44 @@ import kotlinx.parcelize.Parcelize
 @Immutable
 @JsonIgnoreProperties("invalid", "all", "reduced")
 data class Tags(
-    val general: List<String>,
-    val species: List<String>,
-    val character: List<String>,
-    val copyright: List<String>,
-    val artist: List<String>,
-    val lore: List<String>,
-    val meta: List<String>
+    // STOPSHIP not tested
+    @JsonDeserialize(using = TagListDeserializer::class) val general: List<Tag>,
+    @JsonDeserialize(using = TagListDeserializer::class) val species: List<Tag>,
+    @JsonDeserialize(using = TagListDeserializer::class) val character: List<Tag>,
+    @JsonDeserialize(using = TagListDeserializer::class) val copyright: List<Tag>,
+    @JsonDeserialize(using = TagListDeserializer::class) val artist: List<Tag>,
+    @JsonDeserialize(using = TagListDeserializer::class) val lore: List<Tag>,
+    @JsonDeserialize(using = TagListDeserializer::class) val meta: List<Tag>
 ) : Parcelable {
     @IgnoredOnParcel
     val all by lazy {
         artist + copyright + character + species + general + lore + meta
     }
+
     @IgnoredOnParcel
     val reduced by lazy {
         copyright + artist + character
+    }
+}
+
+@JvmInline
+@Parcelize
+@JsonDeserialize(using = TagDeserializer::class)
+value class Tag(val value: String) : Parcelable
+
+class TagDeserializer : JsonDeserializer<Tag>() {
+    override fun deserialize(p: JsonParser, ctx: DeserializationContext): Tag {
+        return Tag(ctx.readValue(p, String::class.java))
+    }
+}
+
+class TagListDeserializer : JsonDeserializer<List<Tag>>() {
+    override fun deserialize(p: JsonParser, ctx: DeserializationContext): List<Tag> {
+        val tree = ctx.readTree(p)
+        assert(!tree.isArray) { "Node is not an array of tags" }
+        return tree.map {
+            assert(!it.isTextual) { "Node is not a tag" }
+            Tag(it.textValue())
+        }
     }
 }

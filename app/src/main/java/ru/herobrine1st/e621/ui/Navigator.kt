@@ -1,3 +1,4 @@
+
 /*
  * This file is part of ru.herobrine1st.e621.
  *
@@ -32,7 +33,12 @@ import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.push
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.*
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Home
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Post
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.PostListing
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Search
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Settings
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Wiki
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.animation.reducedSlide
@@ -42,7 +48,12 @@ import ru.herobrine1st.e621.ui.screen.home.Home
 import ru.herobrine1st.e621.ui.screen.post.Post
 import ru.herobrine1st.e621.ui.screen.posts.Posts
 import ru.herobrine1st.e621.ui.screen.search.Search
-import ru.herobrine1st.e621.ui.screen.settings.*
+import ru.herobrine1st.e621.ui.screen.settings.Settings
+import ru.herobrine1st.e621.ui.screen.settings.SettingsAbout
+import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
+import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistEntry
+import ru.herobrine1st.e621.ui.screen.settings.SettingsLicense
+import ru.herobrine1st.e621.ui.screen.settings.SettingsLicenses
 
 @Composable
 fun Navigator(

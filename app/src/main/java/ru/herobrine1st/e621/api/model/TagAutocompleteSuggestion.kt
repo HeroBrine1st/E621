@@ -22,8 +22,8 @@ package ru.herobrine1st.e621.api.model
 
 data class TagAutocompleteSuggestion(
     val id: Int,
-    val name: String,
+    val name: Tag,
     val postCount: Int,
     val category: Int,
-    val antecedentName: String?
+    val antecedentName: Tag?
 )

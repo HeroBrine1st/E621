@@ -40,10 +40,10 @@ import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.await
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
-import ru.herobrine1st.e621.util.normalizeTagForAPI
 
 const val STATE_KEY = "SEARCH_COMPONENT_STATE_KEY"
 
@@ -71,7 +71,7 @@ class SearchComponent private constructor(
 
     val tagSuggestionFlow: Flow<List<TagSuggestion>> =
         // TODO handle ~, - and ' ' with object-oriented approach
-        snapshotFlow { tagModificationText.trimStart('~', '-').normalizeTagForAPI() }
+        snapshotFlow { tagModificationText.trimStart('~', '-').replace(' ', '_') }
             .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
             .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
             // Delay is handled by interceptor
@@ -87,9 +87,13 @@ class SearchComponent private constructor(
             }
             // Make it 🚀 turbo reactive 🚀
             .combine(snapshotFlow {
-                tagModificationText.trimStart('~', '-').normalizeTagForAPI()
+                tagModificationText.trimStart('~', '-').replace(' ', '_')
             }) { suggestions, query ->
-                suggestions.filter { query in it.name || it.antecedentName?.contains(query) == true }
+                suggestions.filter {
+                    query in it.name.value || it.antecedentName?.value?.contains(
+                        query
+                    ) == true
+                }
             }
             .flowOn(Dispatchers.Default)
 
@@ -137,10 +141,10 @@ class SearchComponent private constructor(
     fun finishTagModification() {
         when (val state = tagModificationState) {
             is TagModificationState.Editing -> {
-                _tags[state.index] = tagModificationText.normalizeTagForAPI()
+                _tags[state.index] = tagModificationText
             }
 
-            else -> _tags.add(tagModificationText.normalizeTagForAPI())
+            else -> _tags.add(tagModificationText)
         }
         tagModificationState = TagModificationState.None
         tagModificationText = ""
@@ -176,8 +180,8 @@ class SearchComponent private constructor(
     }
 
     data class TagSuggestion(
-        val name: String,
+        val name: Tag,
         val postCount: Int,
-        val antecedentName: String?
+        val antecedentName: Tag?
     )
 }

@@ -59,18 +59,19 @@ import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.MessageQuote
 import ru.herobrine1st.e621.api.MessageText
 import ru.herobrine1st.e621.api.WIKI_PAGE_STRING_ANNOTATION_TAG
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.parseBBCode
 import ru.herobrine1st.e621.ui.theme.LightBlue
 import ru.herobrine1st.e621.ui.theme.isLight
 
 @Composable
-fun RenderBB(text: String, onWikiLinkClick: ((String) -> Unit)? = null) {
+fun RenderBB(text: String, onWikiLinkClick: ((Tag) -> Unit)? = null) {
     val parsed = remember(text) { parseBBCode(text) }
     RenderBB(parsed, onWikiLinkClick = onWikiLinkClick)
 }
 
 @Composable
-fun RenderBB(data: List<MessageData<*>>, onWikiLinkClick: ((String) -> Unit)? = null) {
+fun RenderBB(data: List<MessageData<*>>, onWikiLinkClick: ((Tag) -> Unit)? = null) {
     Column {
         data.forEach {
             RenderBB(it, onWikiLinkClick = onWikiLinkClick)
@@ -79,7 +80,7 @@ fun RenderBB(data: List<MessageData<*>>, onWikiLinkClick: ((String) -> Unit)? = 
 }
 
 @Composable
-fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((String) -> Unit)? = null) {
+fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((Tag) -> Unit)? = null) {
     when (data) {
         is MessageQuote -> {
             data.author?.let {
@@ -186,7 +187,7 @@ fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((String) -> Unit)? = null) 
                                     annotationsFinal.firstOrNull() ?: return@awaitEachGesture
                                 if (annotation != annotationFinal) return@awaitEachGesture
 
-                                onWikiLinkClick(annotationFinal.item)
+                                onWikiLinkClick(Tag(annotationFinal.item))
                             }
                         }
                         .drawBehind {

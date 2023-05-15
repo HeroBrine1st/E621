@@ -41,7 +41,7 @@ import ru.herobrine1st.e621.navigation.component.WikiState
 import ru.herobrine1st.e621.ui.component.RenderBB
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
-import ru.herobrine1st.e621.util.normalizeTagForUI
+import ru.herobrine1st.e621.util.text
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -52,8 +52,7 @@ fun WikiScreen(screenSharedState: ScreenSharedState, component: WikiComponent) {
         topBar = {
             TopAppBar(
                 title = {
-                    Text(component.tag.normalizeTagForUI()
-                        .replaceFirstChar { it.titlecase() })
+                    Text(component.tag.text.replaceFirstChar { it.titlecase() })
                 },
                 actions = {
                     ActionBarMenu(
