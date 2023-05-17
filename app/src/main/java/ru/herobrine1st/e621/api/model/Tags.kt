@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize
 import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
+import ru.herobrine1st.e621.api.Tokens
 
 @Parcelize
 @Immutable
@@ -58,7 +59,12 @@ data class Tags(
 @JvmInline
 @Parcelize
 @JsonDeserialize(using = TagDeserializer::class)
-value class Tag(val value: String) : Parcelable
+value class Tag(val value: String) : Parcelable {
+    // "Alternative" is proposed by ChatGPT and should be read like "alternative tags".
+    // It is not ideal, but I couldn't figure any better
+    inline val asAlternative get() = Tokens.ALTERNATIVE + value
+    inline val asExcluded get() = Tokens.EXCLUDED + value
+}
 
 class TagDeserializer : JsonDeserializer<Tag>() {
     override fun deserialize(p: JsonParser, ctx: DeserializationContext): Tag {

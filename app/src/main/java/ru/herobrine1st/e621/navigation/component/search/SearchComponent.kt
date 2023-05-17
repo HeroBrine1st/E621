@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
+import ru.herobrine1st.e621.api.Tokens
 import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.navigation.config.Config
@@ -58,7 +59,9 @@ class SearchComponent private constructor(
 
     private val dataStore = applicationContext.dataStore
 
-    val tags = initialState.searchOptions.tags.toMutableStateList()
+    val tags = initialState.searchOptions.run {
+        allOf.map { it.value } + anyOf.map { it.asAlternative } + noneOf.map { it.asExcluded }
+    }.toMutableStateList()
 
     var order by mutableStateOf(initialState.searchOptions.order)
     var orderAscending by mutableStateOf(initialState.searchOptions.orderAscending)
@@ -121,11 +124,41 @@ class SearchComponent private constructor(
         }
     }
 
-    private fun makeSearchOptions(): PostsSearchOptions =
-        PostsSearchOptions(
-            tags.toList(), order, orderAscending, rating.toList(), favouritesOf
-                .ifBlank { null }, fileType, fileTypeInvert
+    private fun makeSearchOptions(): PostsSearchOptions {
+        val noneOf = tags.filter { it.startsWith(Tokens.EXCLUDED) }
+        val anyOf = tags.filter { it.startsWith(Tokens.ALTERNATIVE) }
+
+        val allOf = tags - noneOf.toSet() - anyOf.toSet()
+        // O(n) implementation, because lists are ordered
+        // But there would not be much items, so that it commented out because it may be erroneous..
+//        val allOf = tags.let {
+//            var noneOfIndex = 0
+//            var anyOfIndex = 0
+//            val result = mutableSetOf<Tag>()
+//            for(i in it.indices) {
+//                if(it[i] == noneOf[noneOfIndex]) {
+//                    noneOfIndex++
+//                } else if(it[i] == anyOf[anyOfIndex]) {
+//                    anyOfIndex++
+//                } else {
+//                    result += Tag(it[i])
+//                }
+//            }
+//            return@let result
+//        }
+
+        return PostsSearchOptions(
+            allOf = allOf.mapTo(mutableSetOf()) { Tag(it) },
+            noneOf = noneOf.mapTo(mutableSetOf()) { Tag(it.substring(1)) },
+            anyOf = anyOf.mapTo(mutableSetOf()) { Tag(it.substring(1)) },
+            order = order,
+            orderAscending = orderAscending,
+            rating = rating.toSet(),
+            favouritesOf = favouritesOf.ifBlank { null },
+            fileType = fileType,
+            fileTypeInvert = fileTypeInvert
         )
+    }
 
     fun proceed() {
         navigator.pushIndexed { Config.PostListing(makeSearchOptions(), index = it) }

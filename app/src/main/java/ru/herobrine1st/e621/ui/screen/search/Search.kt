@@ -357,10 +357,10 @@ fun SearchPreview() {
                 getPreviewComponentContext(),
                 getPreviewStackNavigator(),
                 PostsSearchOptions.DEFAULT.copy(
-                    tags = @Suppress("SpellCheckingInspection") listOf(
-                        "asdlkfjaskldjfasdf",
-                        "asddlkfjaslkdjfas",
-                        "test"
+                    allOf = @Suppress("SpellCheckingInspection") setOf(
+                        Tag("asdlkfjaskldjfasdf"),
+                        Tag("asddlkfjaslkdjfas"),
+                        Tag("test")
                     )
                 ),
                 api = object : API {

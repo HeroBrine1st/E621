@@ -27,6 +27,7 @@ import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
@@ -41,11 +42,12 @@ sealed interface SearchOptions : Parcelable {
 
 @Parcelize
 data class PostsSearchOptions(
-    // STOPSHIP: create "allOf", "noneOf" and "anyOf" List<Tag>
-    val tags: List<String> = emptyList(),
+    val allOf: Set<Tag> = emptySet(),
+    val noneOf: Set<Tag> = emptySet(),
+    val anyOf: Set<Tag> = emptySet(),
     val order: Order = Order.NEWEST_TO_OLDEST,
     val orderAscending: Boolean = false,
-    val rating: List<Rating> = emptyList(),
+    val rating: Set<Rating> = emptySet(),
     val favouritesOf: String? = null, // "favorited_by" in api
     val fileType: FileType? = null,
     val fileTypeInvert: Boolean = false
@@ -55,7 +57,9 @@ data class PostsSearchOptions(
     private fun compileToQuery(): String {
         val cache = mutableListOf<String>()
 
-        cache += tags
+        cache += allOf.map { it.value }
+        cache += noneOf.map { it.asExcluded }
+        cache += anyOf.map { it.asAlternative }
         cache += optimizeRatingSelection(rating)
         fileType?.extension?.let { cache += (if (fileTypeInvert) "-" else "") + "type:" + it }
         favouritesOf?.let { cache += "fav:$it" }
@@ -83,16 +87,13 @@ data class PostsSearchOptions(
     }
 
     companion object {
-        val DEFAULT =
-            PostsSearchOptions(
-                emptyList(),
-                Order.NEWEST_TO_OLDEST,
-                false,
-                emptyList(),
-                null,
-                null,
-                false
+        @Deprecated(
+            "All parameters are default", ReplaceWith(
+                "PostsSearchOptions()",
+                "ru.herobrine1st.e621.api.PostsSearchOptions"
             )
+        )
+        val DEFAULT get() = PostsSearchOptions()
 
         fun builder(
             options: SearchOptions? = null,
@@ -106,17 +107,21 @@ data class PostsSearchOptions(
     }
 
     class Builder(
-        var tags: MutableList<String> = mutableListOf(),
+        val allOf: MutableSet<Tag> = mutableSetOf(),
+        val noneOf: MutableSet<Tag> = mutableSetOf(),
+        val anyOf: MutableSet<Tag> = mutableSetOf(),
         var order: Order = Order.NEWEST_TO_OLDEST,
         var orderAscending: Boolean = false,
-        var rating: MutableList<Rating> = mutableListOf(),
+        var rating: MutableSet<Rating> = mutableSetOf(),
         var favouritesOf: String? = null,
         var fileType: FileType? = null,
         var fileTypeInvert: Boolean = false
     ) {
         fun build() =
             PostsSearchOptions(
-                tags,
+                allOf,
+                noneOf,
+                anyOf,
                 order,
                 orderAscending,
                 rating,
@@ -129,10 +134,12 @@ data class PostsSearchOptions(
             fun from(options: SearchOptions) = when (options) {
                 is PostsSearchOptions -> with(options) {
                     Builder(
-                        tags.toMutableList(),
+                        allOf.toMutableSet(),
+                        noneOf.toMutableSet(),
+                        anyOf.toMutableSet(),
                         order,
                         orderAscending,
-                        rating.toMutableList(),
+                        rating.toMutableSet(),
                         favouritesOf
                     )
                 }

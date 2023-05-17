@@ -178,12 +178,12 @@ class PostComponent(
     fun handleTagModification(tag: Tag, exclude: Boolean) {
         val searchOptions = query.toBuilder {
             if (exclude) {
-                tags.remove(tag.value)
-                if (!tags.contains("-$tag"))
-                    tags.add("-$tag")
-            } else
-                if (!tags.contains(tag.value))
-                    tags.add(tag.value)
+                allOf.remove(tag)
+                noneOf.add(tag)
+            } else {
+                allOf.add(tag)
+                noneOf.remove(tag)
+            }
         }
         navigator.pushIndexed { index -> Config.Search(searchOptions, index = index) }
     }
