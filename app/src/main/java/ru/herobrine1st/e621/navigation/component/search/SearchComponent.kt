@@ -130,7 +130,7 @@ class SearchComponent private constructor(
 
         val allOf = tags - noneOf.toSet() - anyOf.toSet()
         // O(n) implementation, because lists are ordered
-        // But there would not be much items, so that it commented out because it may be erroneous..
+        // But there won't be much items, so that it commented out because it may be erroneous..
 //        val allOf = tags.let {
 //            var noneOfIndex = 0
 //            var anyOfIndex = 0
