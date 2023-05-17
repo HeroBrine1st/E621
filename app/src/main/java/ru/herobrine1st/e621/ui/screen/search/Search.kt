@@ -33,6 +33,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -59,7 +60,6 @@ import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
-import ru.herobrine1st.e621.navigation.component.search.SearchComponent.TagModificationState
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
@@ -89,22 +89,31 @@ fun Search(
         }
     }
 
-    when (val state = component.tagModificationState) {
+    var tagModificationState by rememberSaveable {
+        mutableStateOf<TagModificationState>(
+            TagModificationState.None
+        )
+    }
+
+    when (val state = tagModificationState) {
         TagModificationState.None -> {}
         is TagModificationState.Editing, TagModificationState.AddingNew -> {
             ModifyTagDialog(
-                component.tagModificationText,
-                onTextChange = { component.tagModificationText = it },
-                suggestionsFlow = component.tagSuggestionFlow,
+                (state as? TagModificationState.Editing)?.index?.let { component.tags[it] } ?: "",
+                getSuggestionsFlow = component::tagSuggestionFlow,
                 onClose = {
-                    component.cancelTagModification()
+                    tagModificationState = TagModificationState.None
                 },
                 onDelete = if (state is TagModificationState.Editing) fun() {
-                    component.deleteCurrentlyModifiedTag()
+                    component.tags.removeAt(state.index)
                 } else null,
-                onApply = {
-                    component.finishTagModification()
+                onApply =
+                if (state is TagModificationState.Editing) fun(it: String) {
+                    component.tags[state.index] = it
+                } else fun(it: String) {
+                    component.tags.add(it)
                 }
+
             )
         }
     }
@@ -158,7 +167,9 @@ fun Search(
                                 //      https://firebasestorage.googleapis.com/v0/b/design-spec/o/projects%2Fm3%2Fimages%2Fkzhfok2g-chip_extra-backspace_3P.mp4?alt=media
                                 InputChip(
                                     selected = false,
-                                    onClick = { component.openEditTagDialog(index) },
+                                    onClick = {
+                                        tagModificationState = TagModificationState.Editing(index)
+                                    },
                                     label = {
                                         Text(Tag(tag).text)
                                     }
@@ -167,7 +178,7 @@ fun Search(
                         }
                     }
                     TextButton(
-                        onClick = { component.openAddTagDialog() },
+                        onClick = { tagModificationState = TagModificationState.AddingNew },
                         modifier = Modifier.align(Alignment.Start)
                     ) {
                         Text(stringResource(R.string.add_tag))

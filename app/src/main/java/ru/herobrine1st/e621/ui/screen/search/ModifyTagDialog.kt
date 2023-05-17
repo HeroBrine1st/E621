@@ -46,6 +46,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.OffsetMapping
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
@@ -60,17 +61,18 @@ import ru.herobrine1st.e621.util.text
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModifyTagDialog(
-    text: String,
-    onTextChange: (String) -> Unit,
-    suggestionsFlow: Flow<List<SearchComponent.TagSuggestion>>,
+    initialText: String,
+    getSuggestionsFlow: (() -> String) -> Flow<List<SearchComponent.TagSuggestion>>,
     onClose: () -> Unit,
     onDelete: (() -> Unit)? = null,
-    onApply: () -> Unit
+    onApply: (String) -> Unit
 ) {
     val preferences = LocalPreferences.current
     var autocompleteExpanded by remember { mutableStateOf(false) }
+    var textValue by remember { mutableStateOf(TextFieldValue(AnnotatedString(initialText))) }
+
     val suggestions by produceState(emptyList<SearchComponent.TagSuggestion>()) {
-        suggestionsFlow.collect {
+        getSuggestionsFlow { textValue.text }.collect {
             value = it
             autocompleteExpanded = it.isNotEmpty()
         }
@@ -89,7 +91,7 @@ fun ModifyTagDialog(
                 Text(stringResource(R.string.remove))
             }
         }
-        TextButton(onClick = { onApply() }) {
+        TextButton(onClick = { onApply(textValue.text) }) {
             Text(stringResource(if (onDelete == null) R.string.add else R.string.apply))
         }
     }, onDismissRequest = onClose) {
@@ -98,9 +100,9 @@ fun ModifyTagDialog(
             onExpandedChange = { autocompleteExpanded = !autocompleteExpanded }
         ) {
             OutlinedTextField(
-                value = text,
+                value = textValue,
                 onValueChange = {
-                    onTextChange(it.replace(' ', '_'))
+                    textValue = it
                     if (!autocompleteExpanded)
                         autocompleteExpanded =
                             suggestions.isNotEmpty() // Popup closes on keyboard tap - open it here
@@ -110,7 +112,7 @@ fun ModifyTagDialog(
                 modifier = Modifier
                     .menuAnchor()
                     .fillMaxWidth(),
-                keyboardActions = KeyboardActions { onApply() },
+                keyboardActions = KeyboardActions { onApply(textValue.text) },
                 visualTransformation = {
                     TransformedText(
                         text = AnnotatedString(
@@ -148,7 +150,7 @@ fun ModifyTagDialog(
                     DropdownMenuItem(
                         text = { Text(suggestionText) },
                         onClick = {
-                            onTextChange(name)
+                            textValue = TextFieldValue(AnnotatedString(name))
                             autocompleteExpanded = false
                         })
                 }
@@ -156,3 +158,4 @@ fun ModifyTagDialog(
         }
     }
 }
+

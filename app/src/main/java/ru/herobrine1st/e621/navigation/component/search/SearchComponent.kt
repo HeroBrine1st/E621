@@ -43,6 +43,7 @@ import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
+import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 
 const val STATE_KEY = "SEARCH_COMPONENT_STATE_KEY"
@@ -55,8 +56,9 @@ class SearchComponent private constructor(
     applicationContext: Context
 ) : ComponentContext by componentContext {
 
-    private val _tags = initialState.searchOptions.tags.toMutableStateList()
-    val tags: List<String> by ::_tags
+    private val dataStore = applicationContext.dataStore
+
+    val tags = initialState.searchOptions.tags.toMutableStateList()
 
     var order by mutableStateOf(initialState.searchOptions.order)
     var orderAscending by mutableStateOf(initialState.searchOptions.orderAscending)
@@ -65,18 +67,20 @@ class SearchComponent private constructor(
     var fileType by mutableStateOf(initialState.searchOptions.fileType)
     var fileTypeInvert by mutableStateOf(initialState.searchOptions.fileTypeInvert)
 
-    var tagModificationState by mutableStateOf(initialState.tagModificationState)
-        private set
-    var tagModificationText by mutableStateOf("")
-
-    val tagSuggestionFlow: Flow<List<TagSuggestion>> =
-        // TODO handle ~, - and ' ' with object-oriented approach
-        snapshotFlow { tagModificationText.trimStart('~', '-').replace(' ', '_') }
+    fun tagSuggestionFlow(getCurrentText: () -> String): Flow<List<TagSuggestion>> {
+        val currentTextFlow = snapshotFlow {
+            getCurrentText()
+                .trimStart('~', '-')
+                .replace(' ', '_')
+                .lowercase()
+                .trim()
+        }
+        return currentTextFlow
             .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
             .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
             // Delay is handled by interceptor
-            .combine(applicationContext.getPreferencesFlow { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
-                if (query.length < 3 || query.isBlank() || !isAutocompleteEnabled) return@combine emptyList()
+            .combine(dataStore.getPreferencesFlow { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
+                if (query.length < 3 || !isAutocompleteEnabled) return@combine emptyList()
                 api.getAutocompleteSuggestions(query).await().map {
                     TagSuggestion(
                         name = it.name,
@@ -86,9 +90,7 @@ class SearchComponent private constructor(
                 }
             }
             // Make it 🚀 turbo reactive 🚀
-            .combine(snapshotFlow {
-                tagModificationText.trimStart('~', '-').replace(' ', '_')
-            }) { suggestions, query ->
+            .combine(currentTextFlow) { suggestions, query ->
                 suggestions.filter {
                     query in it.name.value || it.antecedentName?.value?.contains(
                         query
@@ -96,6 +98,7 @@ class SearchComponent private constructor(
                 }
             }
             .flowOn(Dispatchers.Default)
+    }
 
     constructor(
         componentContext: ComponentContext,
@@ -114,13 +117,13 @@ class SearchComponent private constructor(
 
     init {
         stateKeeper.register(STATE_KEY) {
-            StateParcelable(makeSearchOptions(), tagModificationState)
+            StateParcelable(makeSearchOptions())
         }
     }
 
     private fun makeSearchOptions(): PostsSearchOptions =
         PostsSearchOptions(
-            _tags.toList(), order, orderAscending, rating.toList(), favouritesOf
+            tags.toList(), order, orderAscending, rating.toList(), favouritesOf
                 .ifBlank { null }, fileType, fileTypeInvert
         )
 
@@ -128,56 +131,10 @@ class SearchComponent private constructor(
         navigator.pushIndexed { Config.PostListing(makeSearchOptions(), index = it) }
     }
 
-    fun openAddTagDialog() {
-        tagModificationText = ""
-        tagModificationState = TagModificationState.AddingNew
-    }
-
-    fun openEditTagDialog(index: Int) {
-        tagModificationText = _tags[index]
-        tagModificationState = TagModificationState.Editing(index)
-    }
-
-    fun finishTagModification() {
-        when (val state = tagModificationState) {
-            is TagModificationState.Editing -> {
-                _tags[state.index] = tagModificationText
-            }
-
-            else -> _tags.add(tagModificationText)
-        }
-        tagModificationState = TagModificationState.None
-        tagModificationText = ""
-    }
-
-    fun cancelTagModification() {
-        tagModificationState = TagModificationState.None
-        tagModificationText = ""
-    }
-
-    fun deleteCurrentlyModifiedTag() {
-        _tags.removeAt((tagModificationState as TagModificationState.Editing).index)
-        tagModificationState = TagModificationState.None
-        tagModificationText = ""
-    }
-
     @Parcelize
     private data class StateParcelable(
-        val searchOptions: PostsSearchOptions,
-        val tagModificationState: TagModificationState = TagModificationState.None
+        val searchOptions: PostsSearchOptions
     ) : Parcelable
-
-    @Parcelize
-    sealed interface TagModificationState : Parcelable {
-        @Parcelize
-        object None : TagModificationState
-
-        @Parcelize
-        object AddingNew : TagModificationState
-
-        @Parcelize
-        class Editing(val index: Int) : TagModificationState
-    }
 
     data class TagSuggestion(
         val name: Tag,
