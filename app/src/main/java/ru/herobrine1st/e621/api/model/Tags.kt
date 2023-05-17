@@ -27,6 +27,7 @@ import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.JsonDeserializer
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize
+import com.fasterxml.jackson.databind.exc.MismatchedInputException
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
@@ -68,9 +69,17 @@ class TagDeserializer : JsonDeserializer<Tag>() {
 class TagListDeserializer : JsonDeserializer<List<Tag>>() {
     override fun deserialize(p: JsonParser, ctx: DeserializationContext): List<Tag> {
         val tree = ctx.readTree(p)
-        assert(!tree.isArray) { "Node is not an array of tags" }
+        if (!tree.isArray) throw MismatchedInputException.from(
+            p,
+            List::class.java,
+            "Node is not an array of tags"
+        )
         return tree.map {
-            assert(!it.isTextual) { "Node is not a tag" }
+            if (!it.isTextual) throw MismatchedInputException.from(
+                p,
+                Tag::class.java,
+                "Node is not a tag"
+            )
             Tag(it.textValue())
         }
     }
