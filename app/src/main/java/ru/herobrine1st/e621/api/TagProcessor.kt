@@ -92,15 +92,15 @@ fun createTagProcessor(query: String): Predicate<Post> {
     val tags = query.split(" ")
     // We should remove "-" and "~" either here or when passing to createPredicateFromTag
     // If first, creation of allOf involves adding these prefixes
-    val anyOf = tags.filter { it.startsWith("~") }
-    val nothingOf = tags.filter { it.startsWith("-") }
-    val allOf = tags - anyOf.toSet() - nothingOf.toSet()
+    val anyOf = tags.filter { it.startsWith(Tokens.ALTERNATIVE) }
+    val noneOf = tags.filter { it.startsWith(Tokens.EXCLUDED) }
+    val allOf = tags - anyOf.toSet() - noneOf.toSet()
 
     val first = anyOf.map {
-        createPredicateFromTag(it.removePrefix("~"))
+        createPredicateFromTag(it.removePrefix(Tokens.ALTERNATIVE))
     }.reduceOrNull { a, b -> a.or(b) } ?: Predicate { true }
-    val second = nothingOf.map {
-        createPredicateFromTag(it.removePrefix("-"))
+    val second = noneOf.map {
+        createPredicateFromTag(it.removePrefix(Tokens.EXCLUDED))
     }.reduceOrNull { a, b -> a.and(b) }?.negate() ?: Predicate { true }
     val third = allOf.map { createPredicateFromTag(it) }
         .reduceOrNull { a, b -> a.and(b) } ?: Predicate { true }
