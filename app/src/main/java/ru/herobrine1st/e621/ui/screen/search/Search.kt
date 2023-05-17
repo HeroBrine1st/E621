@@ -106,12 +106,14 @@ fun Search(
                 },
                 onDelete = if (state is TagModificationState.Editing) fun() {
                     component.tags.removeAt(state.index)
+                    tagModificationState = TagModificationState.None
                 } else null,
-                onApply =
-                if (state is TagModificationState.Editing) fun(it: String) {
+                onApply = if (state is TagModificationState.Editing) fun(it: String) {
                     component.tags[state.index] = it
+                    tagModificationState = TagModificationState.None
                 } else fun(it: String) {
                     component.tags.add(it)
+                    tagModificationState = TagModificationState.None
                 }
 
             )
