@@ -56,10 +56,15 @@ data class Tags(
     }
 }
 
-@JvmInline
+// FIXME replace data class with value class
+//       blocked by jackson-module-kotlin
+//       https://github.com/FasterXML/jackson-module-kotlin/issues/650
+//       https://github.com/FasterXML/jackson-module-kotlin/issues/199
+//       Data class may have serious performance or (likely) memory impact
+// Also deserializers may become useless because of support in Jackson
 @Parcelize
 @JsonDeserialize(using = TagDeserializer::class)
-value class Tag(val value: String) : Parcelable {
+data class Tag(val value: String) : Parcelable {
     // "Alternative" is proposed by ChatGPT and should be read like "alternative tags".
     // It is not ideal, but I couldn't figure any better
     inline val asAlternative get() = Tokens.ALTERNATIVE + value
