@@ -129,7 +129,12 @@ fun Post(
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val bottomSheetState = rememberStandardBottomSheetState(
-        initialValue = if (component.openComments) SheetValue.PartiallyExpanded else SheetValue.Hidden,
+        // `&& loadComments` is a fix for unauthenticated usage case
+        // Think of it as there is no point to opening comment if they're not loading
+        // (yes we can && preferences.hasAuth(), but let's go with single source of truth, ok?
+        // Auth logic may and will change sometime. Also && loadComments has less overhead - it is anyway already computed)
+        initialValue = if (component.openComments && loadComments) SheetValue.PartiallyExpanded
+        else SheetValue.Hidden,
         skipHiddenState = false
     )
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
