@@ -87,14 +87,6 @@ data class PostsSearchOptions(
     }
 
     companion object {
-        @Deprecated(
-            "All parameters are default", ReplaceWith(
-                "PostsSearchOptions()",
-                "ru.herobrine1st.e621.api.PostsSearchOptions"
-            )
-        )
-        val DEFAULT get() = PostsSearchOptions()
-
         fun builder(
             options: SearchOptions? = null,
             builder: Builder.() -> Unit

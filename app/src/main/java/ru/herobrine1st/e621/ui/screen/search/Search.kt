@@ -358,7 +358,7 @@ fun SearchPreview() {
             component = SearchComponent(
                 getPreviewComponentContext(),
                 getPreviewStackNavigator(),
-                PostsSearchOptions.DEFAULT.copy(
+                PostsSearchOptions(
                     allOf = @Suppress("SpellCheckingInspection") setOf(
                         Tag("asdlkfjaskldjfasdf"),
                         Tag("asddlkfjaslkdjfas"),

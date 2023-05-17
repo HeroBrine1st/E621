@@ -38,7 +38,7 @@ sealed interface Config : Parcelable {
     // Index is used to distinguish otherwise equal configurations
     @Parcelize
     data class Search(
-        val initialSearch: PostsSearchOptions = PostsSearchOptions.DEFAULT,
+        val initialSearch: PostsSearchOptions = PostsSearchOptions(),
         private val index: Int
     ) : Config
 
