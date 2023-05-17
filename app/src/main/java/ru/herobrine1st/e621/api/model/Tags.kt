@@ -36,7 +36,6 @@ import ru.herobrine1st.e621.api.Tokens
 @Immutable
 @JsonIgnoreProperties("invalid", "all", "reduced")
 data class Tags(
-    // STOPSHIP not tested
     @JsonDeserialize(using = TagListDeserializer::class) val general: List<Tag>,
     @JsonDeserialize(using = TagListDeserializer::class) val species: List<Tag>,
     @JsonDeserialize(using = TagListDeserializer::class) val character: List<Tag>,
