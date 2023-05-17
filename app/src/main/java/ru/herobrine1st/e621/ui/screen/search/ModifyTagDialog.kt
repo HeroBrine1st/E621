@@ -20,17 +20,13 @@
 
 package ru.herobrine1st.e621.ui.screen.search
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,7 +37,6 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -54,7 +49,6 @@ import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
-import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 import ru.herobrine1st.e621.util.runIf
 import ru.herobrine1st.e621.util.text
@@ -68,7 +62,6 @@ fun ModifyTagDialog(
     onDelete: (() -> Unit)? = null,
     onApply: (String) -> Unit
 ) {
-    val preferences = LocalPreferences.current
     var autocompleteExpanded by remember { mutableStateOf(false) }
     var textValue by remember { mutableStateOf(TextFieldValue(AnnotatedString(initialText))) }
     // suggestions open again after clicking one
@@ -133,15 +126,7 @@ fun ModifyTagDialog(
                         ), offsetMapping = OffsetMapping.Identity
                     )
                 },
-                trailingIcon = {
-                    if (preferences.autocompleteEnabled) Icon(
-                        Icons.Filled.ArrowDropDown,
-                        null,
-                        Modifier.rotate(
-                            animateFloatAsState(if (autocompleteExpanded) 180f else 360f).value
-                        )
-                    )
-                },
+                // trailingIcon = TODO circular progress indicator (move turbo-reactivity from component to produceState to properly determine loading state),
             )
             ExposedDropdownMenu(
                 expanded = autocompleteExpanded && suggestions.isNotEmpty(),
