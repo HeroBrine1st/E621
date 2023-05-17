@@ -77,7 +77,7 @@ fun createPredicateFromTag(tag: String): Predicate<Post> {
             }
         }
     } else if (tag.startsWith("rating:") || tag.startsWith("r:")) {
-        val expectedRating = Rating.byAnyName[tag.split(":")[1]]
+        val expectedRating = Rating.byAnyName[tag.substringAfter(":")]
         return Predicate {
             it.rating == expectedRating
         }
@@ -97,10 +97,10 @@ fun createTagProcessor(query: String): Predicate<Post> {
     val allOf = tags - anyOf.toSet() - noneOf.toSet()
 
     val first = anyOf.map {
-        createPredicateFromTag(it.removePrefix(Tokens.ALTERNATIVE))
+        createPredicateFromTag(it.substring(Tokens.ALTERNATIVE.length))
     }.reduceOrNull { a, b -> a.or(b) } ?: Predicate { true }
     val second = noneOf.map {
-        createPredicateFromTag(it.removePrefix(Tokens.EXCLUDED))
+        createPredicateFromTag(it.substring(Tokens.EXCLUDED.length))
     }.reduceOrNull { a, b -> a.and(b) }?.negate() ?: Predicate { true }
     val third = allOf.map { createPredicateFromTag(it) }
         .reduceOrNull { a, b -> a.and(b) } ?: Predicate { true }
