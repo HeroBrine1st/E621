@@ -45,6 +45,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
@@ -70,11 +71,14 @@ fun ModifyTagDialog(
     val preferences = LocalPreferences.current
     var autocompleteExpanded by remember { mutableStateOf(false) }
     var textValue by remember { mutableStateOf(TextFieldValue(AnnotatedString(initialText))) }
+    // suggestions open again after clicking one
+    var selectedFromSuggested by remember { mutableStateOf(false) }
 
     val suggestions by produceState(emptyList<SearchComponent.TagSuggestion>()) {
         getSuggestionsFlow { textValue.text }.collect {
             value = it
-            autocompleteExpanded = it.isNotEmpty()
+            if (!selectedFromSuggested)
+                autocompleteExpanded = it.isNotEmpty()
         }
     }
 
@@ -102,10 +106,17 @@ fun ModifyTagDialog(
             OutlinedTextField(
                 value = textValue,
                 onValueChange = {
+                    // composition may change after clicking on suggestion
+                    // so that suggestions will open again
+                    val actuallyChanged =
+                        it.text != textValue.text || it.selection != textValue.selection
                     textValue = it
-                    if (!autocompleteExpanded)
+                    if (!actuallyChanged) return@OutlinedTextField
+                    selectedFromSuggested = false
+                    if (!autocompleteExpanded) {
                         autocompleteExpanded =
                             suggestions.isNotEmpty() // Popup closes on keyboard tap - open it here
+                    }
                 },
                 label = { Text(stringResource(R.string.tag)) },
                 singleLine = true,
@@ -150,8 +161,12 @@ fun ModifyTagDialog(
                     DropdownMenuItem(
                         text = { Text(suggestionText) },
                         onClick = {
-                            textValue = TextFieldValue(AnnotatedString(name))
                             autocompleteExpanded = false
+                            selectedFromSuggested = true
+                            textValue = textValue.copy(
+                                annotatedString = AnnotatedString(name),
+                                selection = TextRange(name.length)
+                            )
                         })
                 }
             }
