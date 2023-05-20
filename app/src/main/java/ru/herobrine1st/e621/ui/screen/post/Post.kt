@@ -389,9 +389,14 @@ fun Post(
                 ) {}
             }
         ) {
-            Zoomable(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                media(post.selectSample(), post, Modifier.fillMaxSize())
-            }
+            media(
+                post.selectSample(), post,
+                Modifier
+                    .fillMaxSize()
+                    .zoomable(
+                        rememberZoomableState()
+                    )
+            )
         }
 
         BackHandler(fullscreenState == FullscreenState.OPEN) {

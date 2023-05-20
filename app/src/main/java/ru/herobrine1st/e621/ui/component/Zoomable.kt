@@ -22,15 +22,12 @@ package ru.herobrine1st.e621.ui.component
 
 import androidx.annotation.FloatRange
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
@@ -41,28 +38,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import coil.compose.AsyncImage
 import javax.annotation.CheckReturnValue
-
-/**
- * A layout composable that can be zoomed. It supports dragging zoomed image (with one and two fingers)
- * and zooming in and out (only to initial size).
- */
-@Suppress("DeprecatedCallableAddReplaceWith")
-@Composable
-@Deprecated("Use modifier instead")
-fun Zoomable(
-    modifier: Modifier = Modifier,
-    state: ZoomableState = rememberZoomableState(),
-    contentAlignment: Alignment = Alignment.TopStart,
-    propagateMinConstraints: Boolean = false,
-    content: @Composable BoxScope.() -> Unit
-) {
-    Box(
-        modifier = modifier.zoomable(state),
-        contentAlignment = contentAlignment,
-        propagateMinConstraints = propagateMinConstraints,
-        content = content,
-    )
-}
 
 fun Modifier.zoomable(state: ZoomableState) = this
     .pointerInput(Unit) {
