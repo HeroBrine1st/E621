@@ -98,16 +98,16 @@ class ZoomableState(
                         // Use new centroid as origin
                         centroid + pan
                 )
-            .coerceInSize(size, scale)
+            .coerceInSize()
     }
 
     fun onSizeChanged(intSize: IntSize) {
         size = intSize
-        translation = translation.coerceInSize(intSize, scale)
+        translation = translation.coerceInSize()
     }
 
     @CheckReturnValue
-    private fun Offset.coerceInSize(size: IntSize, @FloatRange(from = 1.0) scale: Float): Offset {
+    private fun Offset.coerceInSize(): Offset {
         // FIXME if fillMax* modifier is applied, empty space is considered as zoomable
         // so that it participate in the function below as usable space
         // and so user can zoom enough and pan the content out of bounds
