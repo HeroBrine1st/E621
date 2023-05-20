@@ -48,52 +48,29 @@ import javax.annotation.CheckReturnValue
 @Composable
 fun Zoomable(
     modifier: Modifier = Modifier,
+    state: ZoomableState = rememberZoomableState(),
     contentAlignment: Alignment = Alignment.TopStart,
     propagateMinConstraints: Boolean = false,
     content: @Composable BoxScope.() -> Unit
 ) {
-    var translation by remember { mutableStateOf(Offset.Zero) }
-    var scale by remember { mutableStateOf(1f) }
-    var size by remember { mutableStateOf(IntSize.Zero) }
-
     Box(
         modifier = modifier
-            // TODO fling gesture (inertial pan, like on G Maps, it is very satisfying)
             .pointerInput(Unit) {
                 detectTransformGestures { centroid, pan, gestureZoom, _ ->
-                    scale = (scale * gestureZoom).coerceAtLeast(1f)
-                    // I'm not a talented *mathematician*, but it seems like
-                    // I can prove this formula is right
-                    translation = (
-                            // Scale, using old centroid as origin
-                            (translation - centroid) * gestureZoom +
-                                    // Use new centroid as origin
-                                    centroid + pan
-                            )
-                        .coerceInSize(size, scale)
+                    state.handleTransformationGesture(centroid, pan, gestureZoom)
                 }
             }
             .graphicsLayer {
-                translationX = translation.x
-                translationY = translation.y
-                scaleX = scale
-                scaleY = scale
+                translationX = state.translation.x
+                translationY = state.translation.y
+                scaleX = state.scale
+                scaleY = state.scale
                 // Formula is going to be complicated without this. With this origin is (0;0)
                 // and easily manipulated without knowing size of container
                 transformOrigin = TransformOrigin(0f, 0f)
             }
             .onSizeChanged {
-                size = it
-                // FIXME if fillMax* modifier is applied, empty space is considered as zoomable
-                // so that it participate in the function below as usable space
-                // and so user can zoom enough and pan the content out of bounds
-                // while this function is trying to prevent that
-                // Possible solution: place content in its own box and move
-                // onSizeChanged and graphicsLayer there
-                // (and center that box in outer box)
-                //
-                // I gathered some user feedback and some say this is good feature.
-                translation = translation.coerceInSize(size, scale)
+                state.onSizeChanged(it)
             },
         contentAlignment = contentAlignment,
         propagateMinConstraints = propagateMinConstraints,
@@ -101,22 +78,69 @@ fun Zoomable(
     )
 }
 
-// Assumes transformOrigin is (0;0)
 
-@CheckReturnValue
-private fun Offset.coerceInSize(size: IntSize, @FloatRange(from = 1.0) scale: Float): Offset {
-    val constrainScalar = scale - 1f
-    val constrainOffset = Offset(
-        size.width * constrainScalar,
-        size.height * constrainScalar
-    )
-    return Offset(
+class ZoomableState(
+    @FloatRange(from = 1.0) val maxScale: Float = 5f
+) {
+    // TODO saveable
+    // TODO animation (use targetValue in Saver and add constructor parameters for initial values)
+    // This class assumes that transformOrigin is (0;0)
+    var translation by mutableStateOf(Offset.Zero)
+        private set
+    var scale by mutableStateOf(1f)
+        private set
+    var size by mutableStateOf(IntSize.Zero)
+        private set
+
+    fun handleTransformationGesture(centroid: Offset, pan: Offset, gestureScale: Float) {
+        // TODO fling gesture (inertial pan, like on G Maps, it is very satisfying)
+        val oldScale = scale
+        scale = (scale * gestureScale).coerceIn(minimumValue = 1f, maximumValue = maxScale)
+        // upper bound is causing floating to lower right corner when user tries to zoom beyond the limit.
+        val consumedGestureScale = if (scale != maxScale) gestureScale else scale / oldScale
+        // I'm not a talented *mathematician*, but it seems like I can prove this formula is right
+        translation = (
+                // Scale, using old centroid as origin
+                (translation - centroid) * consumedGestureScale +
+                        // Use new centroid as origin
+                        centroid + pan
+                )
+            .coerceInSize(size, scale)
+    }
+
+    fun onSizeChanged(intSize: IntSize) {
+        size = intSize
+        translation = translation.coerceInSize(intSize, scale)
+    }
+
+    @CheckReturnValue
+    private fun Offset.coerceInSize(size: IntSize, @FloatRange(from = 1.0) scale: Float): Offset {
+        // FIXME if fillMax* modifier is applied, empty space is considered as zoomable
+        // so that it participate in the function below as usable space
+        // and so user can zoom enough and pan the content out of bounds
+        // while this function is trying to prevent that
+        // Possible solution: place content in its own box and move
+        // onSizeChanged and graphicsLayer there
+        // (and center that box in outer box)
+        //
+        // I gathered some user feedback and some say this is good feature.
+
+
         // Inverted because negative values is to the right
         // and 0 is the leftmost
-        x.coerceIn(-constrainOffset.x, 0f),
-        y.coerceIn(-constrainOffset.y, 0f)
-    )
+        val constrainScalar = 1f - scale
+        val xConstrain = size.width * constrainScalar
+        val yConstrain = size.height * constrainScalar
+        return Offset(
+            x.coerceIn(xConstrain, 0f),
+            y.coerceIn(yConstrain, 0f)
+        )
+    }
 }
+
+@Composable
+fun rememberZoomableState(@FloatRange(from = 1.0) maxScale: Float = 5f) =
+    remember { ZoomableState(maxScale) }
 
 
 @Preview
