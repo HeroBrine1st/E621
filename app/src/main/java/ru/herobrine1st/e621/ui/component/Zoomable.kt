@@ -24,6 +24,7 @@ import androidx.annotation.FloatRange
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,7 +46,9 @@ import javax.annotation.CheckReturnValue
  * A layout composable that can be zoomed. It supports dragging zoomed image (with one and two fingers)
  * and zooming in and out (only to initial size).
  */
+@Suppress("DeprecatedCallableAddReplaceWith")
 @Composable
+@Deprecated("Use modifier instead")
 fun Zoomable(
     modifier: Modifier = Modifier,
     state: ZoomableState = rememberZoomableState(),
@@ -54,29 +57,31 @@ fun Zoomable(
     content: @Composable BoxScope.() -> Unit
 ) {
     Box(
-        modifier = modifier
-            .pointerInput(Unit) {
-                detectTransformGestures { centroid, pan, gestureZoom, _ ->
-                    state.handleTransformationGesture(centroid, pan, gestureZoom)
-                }
-            }
-            .graphicsLayer {
-                translationX = state.translation.x
-                translationY = state.translation.y
-                scaleX = state.scale
-                scaleY = state.scale
-                // Formula is going to be complicated without this. With this origin is (0;0)
-                // and easily manipulated without knowing size of container
-                transformOrigin = TransformOrigin(0f, 0f)
-            }
-            .onSizeChanged {
-                state.onSizeChanged(it)
-            },
+        modifier = modifier.zoomable(state),
         contentAlignment = contentAlignment,
         propagateMinConstraints = propagateMinConstraints,
         content = content,
     )
 }
+
+fun Modifier.zoomable(state: ZoomableState) = this
+    .pointerInput(Unit) {
+        detectTransformGestures { centroid, pan, gestureZoom, _ ->
+            state.handleTransformationGesture(centroid, pan, gestureZoom)
+        }
+    }
+    .graphicsLayer {
+        translationX = state.translation.x
+        translationY = state.translation.y
+        scaleX = state.scale
+        scaleY = state.scale
+        // Formula is going to be complicated without this. With this origin is (0;0)
+        // and easily manipulated without knowing size of container
+        transformOrigin = TransformOrigin(0f, 0f)
+    }
+    .onSizeChanged {
+        state.onSizeChanged(it)
+    }
 
 
 class ZoomableState(
@@ -119,9 +124,7 @@ class ZoomableState(
         // so that it participate in the function below as usable space
         // and so user can zoom enough and pan the content out of bounds
         // while this function is trying to prevent that
-        // Possible solution: place content in its own box and move
-        // onSizeChanged and graphicsLayer there
-        // (and center that box in outer box)
+        // Possible solution: add aspectRatio or size of content parameters
         //
         // I gathered some user feedback and some say this is good feature.
 
@@ -146,13 +149,15 @@ fun rememberZoomableState(@FloatRange(from = 1.0) maxScale: Float = 5f) =
 @Preview
 @Composable
 fun ZoomablePreview() {
-    Zoomable {
-        AsyncImage(
-            // This image is random-number-th image I found in my browser
-            // Guaranteed to be random
-            // https://xkcd.com/221/
-            model = "https://blog.jetbrains.com/wp-content/uploads/2023/02/DSGN-15525-Blog-Post-about-Kotlin-2.0_kotlinlang.org_.png",
-            contentDescription = "Random image from my browser"
-        )
-    }
+    AsyncImage(
+        // This image is random-number-th image I found in my browser
+        // Guaranteed to be random
+        // https://xkcd.com/221/
+        model = "https://blog.jetbrains.com/wp-content/uploads/2023/02/DSGN-15525-Blog-Post-about-Kotlin-2.0_kotlinlang.org_.png",
+        contentDescription = "Random image from my browser",
+        modifier = Modifier
+            .zoomable(rememberZoomableState())
+            .fillMaxHeight()
+
+    )
 }
