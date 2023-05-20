@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.ui.component
 
+import androidx.annotation.FloatRange
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -51,7 +52,7 @@ fun Zoomable(
     propagateMinConstraints: Boolean = false,
     content: @Composable BoxScope.() -> Unit
 ) {
-    var offset by remember { mutableStateOf(Offset.Zero) }
+    var translation by remember { mutableStateOf(Offset.Zero) }
     var scale by remember { mutableStateOf(1f) }
     var size by remember { mutableStateOf(IntSize.Zero) }
 
@@ -59,38 +60,26 @@ fun Zoomable(
         modifier = modifier
             // TODO fling gesture (inertial pan, like on G Maps, it is very satisfying)
             .pointerInput(Unit) {
-                // Warning! Math ahead!
                 detectTransformGestures { centroid, pan, gestureZoom, _ ->
-                    // Just to avoid saving old scale. Those values will be in any way saved to stack, but later.
-                    // TODO this calculations supposed to save position of finders on zoomed image
-                    //      but if you zoom enough with one finger fixed, image can sometimes move
-                    //      and that finger will point to another place on an image.
-                    //      Consider implementing a new formula from scratch together with removing
-                    //      multiplying by scale in graphicsLayer.
-                    // I think we should divide here by new scale, not old scale
-                    val centroidInAbsoluteScale = centroid / scale
-                    val panInAbsoluteScale = pan / scale
-
-                    // Lower bound of size, so that it can't be smaller than Zoomable itself
                     scale = (scale * gestureZoom).coerceAtLeast(1f)
-
-                    // Terrible math taken from reference
-                    // Rotation is not needed I think. You can just rotate your device
-                    // (if you use an emulator, just rotate your 27'' display)
-                    // (buy longer and more durable video cable if needed)
-                    // (also consider switching to VGA or DVI, as those are harder to eject)
-                    // Be aware that now [scale] is the actual scale, in response to gesture
-                    offset = ((offset + centroidInAbsoluteScale) -
-                            (centroid / scale + panInAbsoluteScale))
-                        .coercePanWithinSize(size, scale)
-
+                    // I'm not a talented *mathematician*, but it seems like
+                    // I can prove this formula is right
+                    translation = (
+                            // Scale, using old centroid as origin
+                            (translation - centroid) * gestureZoom +
+                                    // Use new centroid as origin
+                                    centroid + pan
+                            )
+                        .coerceInSize(size, scale)
                 }
             }
             .graphicsLayer {
-                translationX = -offset.x * scale
-                translationY = -offset.y * scale
+                translationX = translation.x
+                translationY = translation.y
                 scaleX = scale
                 scaleY = scale
+                // Formula is going to be complicated without this. With this origin is (0;0)
+                // and easily manipulated without knowing size of container
                 transformOrigin = TransformOrigin(0f, 0f)
             }
             .onSizeChanged {
@@ -104,7 +93,7 @@ fun Zoomable(
                 // (and center that box in outer box)
                 //
                 // I gathered some user feedback and some say this is good feature.
-                offset = offset.coercePanWithinSize(size, scale)
+                translation = translation.coerceInSize(size, scale)
             },
         contentAlignment = contentAlignment,
         propagateMinConstraints = propagateMinConstraints,
@@ -112,21 +101,20 @@ fun Zoomable(
     )
 }
 
-// Assumes transformOrigin is (0;0) and offset is non-scaled, so it is private
+// Assumes transformOrigin is (0;0)
+
 @CheckReturnValue
-private fun Offset.coercePanWithinSize(size: IntSize, scale: Float): Offset {
-    // Think of it as (scale - 1f) / scale (as offset is multiplied by scale later)
-    // This makes sense if you imagine Zoomable as a window from which you see the [content]
-    // So that you don't want to pan more than zoomed size of image (which is size of Zoomable times scale)
-    // minus actual size of Zoomable
-    val constrainScalar = 1 - 1f / scale
+private fun Offset.coerceInSize(size: IntSize, @FloatRange(from = 1.0) scale: Float): Offset {
+    val constrainScalar = scale - 1f
     val constrainOffset = Offset(
         size.width * constrainScalar,
         size.height * constrainScalar
     )
     return Offset(
-        x.coerceIn(0f, constrainOffset.x),
-        y.coerceIn(0f, constrainOffset.y)
+        // Inverted because negative values is to the right
+        // and 0 is the leftmost
+        x.coerceIn(-constrainOffset.x, 0f),
+        y.coerceIn(-constrainOffset.y, 0f)
     )
 }
 
@@ -139,7 +127,7 @@ fun ZoomablePreview() {
             // This image is random-number-th image I found in my browser
             // Guaranteed to be random
             // https://xkcd.com/221/
-            model = "https://kotlinlang.org/assets/images/index/banners/kotlin_2.0_blog.jpg",
+            model = "https://blog.jetbrains.com/wp-content/uploads/2023/02/DSGN-15525-Blog-Post-about-Kotlin-2.0_kotlinlang.org_.png",
             contentDescription = "Random image from my browser"
         )
     }
