@@ -85,14 +85,22 @@ fun Modifier.zoomable(state: ZoomableState) = this
 
 
 class ZoomableState(
-    @FloatRange(from = 1.0) val maxScale: Float = 5f
+    @FloatRange(from = 1.0) val maxScale: Float = 5f,
+    initialScale: Float = 1f,
+    initialTranslation: Offset = Offset.Zero
 ) {
+
+    init {
+        require(initialScale >= 1f) { "Initial scale should be equal or more than 1, got $initialScale" }
+        // It's the caller responsibility to check initialTranslation. Check above is here only because application will anyway crash.
+    }
+
     // TODO saveable
     // TODO animation (use targetValue in Saver and add constructor parameters for initial values)
     // This class assumes that transformOrigin is (0;0)
-    var translation by mutableStateOf(Offset.Zero)
+    var translation by mutableStateOf(initialTranslation)
         private set
-    var scale by mutableStateOf(1f)
+    var scale by mutableStateOf(initialScale)
         private set
     var size by mutableStateOf(IntSize.Zero)
         private set
@@ -142,8 +150,12 @@ class ZoomableState(
 }
 
 @Composable
-fun rememberZoomableState(@FloatRange(from = 1.0) maxScale: Float = 5f) =
-    remember { ZoomableState(maxScale) }
+fun rememberZoomableState(
+    @FloatRange(from = 1.0) maxScale: Float = 5f,
+    initialScale: Float = 1f,
+    initialTranslation: Offset = Offset.Zero
+) =
+    remember { ZoomableState(maxScale, initialScale, initialTranslation) }
 
 
 @Preview
