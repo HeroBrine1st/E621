@@ -382,15 +382,15 @@ fun Post(
             media(
                 file, post,
                 Modifier
-                    .fillMaxSize()
-                    .background(Color.Black)
                     .zoomable(
                         rememberZoomableState(
                             maxScale = maxScale,
                             initialScale = initialScale,
                             initialTranslation = initialTranslation
                         )
-                    ),
+                    )
+                    .background(Color.Black)
+                    .fillMaxSize(),
                 matchHeightConstraintsFirst
             )
         }
