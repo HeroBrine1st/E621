@@ -69,7 +69,8 @@ fun PostImage(
     file: NormalizedFile,
     contentDescription: String?,
     modifier: Modifier = Modifier,
-    actualPostFileType: FileType? = null
+    actualPostFileType: FileType? = null,
+    matchHeightConstraintsFirst: Boolean = false
 ) {
     val aspectRatio = file.aspectRatio
     val url = file.urls.firstNotNullOfOrNull { it.toHttpUrlOrNull() }
@@ -92,11 +93,13 @@ fun PostImage(
             }
         }
     }
-
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
-            .aspectRatio(aspectRatio.takeIf { it > 0 } ?: 1f)
+            .aspectRatio(
+                ratio = aspectRatio.takeIf { it > 0 } ?: 1f,
+                matchHeightConstraintsFirst = matchHeightConstraintsFirst
+            )
     ) {
         AsyncImage(
             model = url,
@@ -131,6 +134,7 @@ fun PostImage(
                 Icon(Icons.Outlined.Error, contentDescription = null)
                 Text(stringResource(R.string.unknown_error))
             }
+
             is Loading, Empty -> Crossfade(progress == null) {
                 when (it) {
                     true -> CircularProgressIndicator()
@@ -144,6 +148,7 @@ fun PostImage(
                     )
                 }
             }
+
             else -> {}
         }
     }

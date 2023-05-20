@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.IntSize
 import coil.compose.AsyncImage
 import javax.annotation.CheckReturnValue
 
+const val MAX_SCALE_DEFAULT = 5f
+
 fun Modifier.zoomable(state: ZoomableState) = this
     .pointerInput(Unit) {
         detectTransformGestures { centroid, pan, gestureZoom, _ ->
@@ -54,13 +56,14 @@ fun Modifier.zoomable(state: ZoomableState) = this
         // and easily manipulated without knowing size of container
         transformOrigin = TransformOrigin(0f, 0f)
     }
+    // TODO add layout here to get size of underlying composable
     .onSizeChanged {
         state.onSizeChanged(it)
     }
 
 
 class ZoomableState(
-    @FloatRange(from = 1.0) val maxScale: Float = 5f,
+    @FloatRange(from = 1.0) val maxScale: Float = MAX_SCALE_DEFAULT,
     initialScale: Float = 1f,
     initialTranslation: Offset = Offset.Zero
 ) {
@@ -82,6 +85,8 @@ class ZoomableState(
 
     fun handleTransformationGesture(centroid: Offset, pan: Offset, gestureScale: Float) {
         // TODO fling gesture (inertial pan, like on G Maps, it is very satisfying)
+        // I've seen VelocityTracker or something like that in other implementations
+        // Animatable's snapTo can be used for gesture and animateDecay for inertia
         val oldScale = scale
         scale = (scale * gestureScale).coerceIn(minimumValue = 1f, maximumValue = maxScale)
         // upper bound is causing floating to lower right corner when user tries to zoom beyond the limit.
@@ -111,7 +116,6 @@ class ZoomableState(
         //
         // I gathered some user feedback and some say this is good feature.
 
-
         // Inverted because negative values is to the right
         // and 0 is the leftmost
         val constrainScalar = 1f - scale
@@ -126,7 +130,7 @@ class ZoomableState(
 
 @Composable
 fun rememberZoomableState(
-    @FloatRange(from = 1.0) maxScale: Float = 5f,
+    @FloatRange(from = 1.0) maxScale: Float = MAX_SCALE_DEFAULT,
     initialScale: Float = 1f,
     initialTranslation: Offset = Offset.Zero
 ) =

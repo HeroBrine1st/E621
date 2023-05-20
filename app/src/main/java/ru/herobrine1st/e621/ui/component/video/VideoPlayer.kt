@@ -57,6 +57,7 @@ fun VideoPlayer(
     modifier: Modifier = Modifier,
     aspectRatio: Float? = null,
     maxHeight: Dp = Dp.Unspecified,
+    matchHeightConstraintsFirst: Boolean = false
 ) {
     val context = LocalContext.current
 
@@ -73,7 +74,12 @@ fun VideoPlayer(
         AndroidView(
             modifier = Modifier
                 .background(Color.Black)
-                .run { if (aspectRatio != null) aspectRatio(aspectRatio) else this },
+                .run {
+                    if (aspectRatio != null) aspectRatio(
+                        aspectRatio,
+                        matchHeightConstraintsFirst
+                    ) else this
+                },
             factory = {
                 PlayerView(context).apply {
                     useController = false

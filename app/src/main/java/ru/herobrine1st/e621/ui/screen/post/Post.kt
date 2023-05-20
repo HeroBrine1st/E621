@@ -72,7 +72,6 @@ import ru.herobrine1st.e621.ui.component.*
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
-import ru.herobrine1st.e621.ui.screen.post.component.GoingToFullscreenAnimation
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.util.text
@@ -110,19 +109,20 @@ fun Post(
         return
     }
 
-    var fullscreenState by remember { mutableStateOf(FullscreenState.CLOSE) }
+    var fullscreenState by remember { mutableStateOf(FullscreenState.CLOSED) }
 
     var imagePositionInRoot by remember { mutableStateOf(Offset.Unspecified) }
 
     val media = remember {
-        movableContentOf { file: NormalizedFile, post: Post, modifier: Modifier ->
+        movableContentOf { file: NormalizedFile, post: Post, modifier: Modifier, matchHeightConstrainsFirst: Boolean ->
             PostMediaContainer(
                 file = file,
                 contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
                 modifier = modifier,
                 getVideoPlayerComponent = {
                     component.getVideoPlayerComponent(file)
-                }
+                },
+                matchHeightConstraintsFirst = matchHeightConstrainsFirst
             )
         }
     }
@@ -174,25 +174,20 @@ fun Post(
             // while has no top padding, so useless
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                userScrollEnabled = fullscreenState == FullscreenState.CLOSE
+                userScrollEnabled = fullscreenState == FullscreenState.CLOSED
             ) {
                 item("media") {
                     val sample = post.selectSample()
 
                     // "Open to fullscreen" behavior
-                    // It is obvious that this code is bad from its size (it is not all, the
-                    // second part is below, and also in another file)
-                    // It is not really fullscreen - appbar is still visible
-                    // Still VIP, maybe Window should be used
-                    // Or navigation should handle this. As AndroidX Compose Navigation is
-                    // not flexible, I look at Decompose
+                    // Currently no animation
                     Box(
                         Modifier
                             // This box will be empty if image is gone to fullscreen
                             .aspectRatio(sample.aspectRatio)
                             .fillMaxWidth()
                             .clickable(
-                                enabled = fullscreenState == FullscreenState.CLOSE
+                                enabled = fullscreenState == FullscreenState.CLOSED
                                         && !post.file.type.isVideo,
                                 indication = null, // The animation is the indication
                                 interactionSource = remember { MutableInteractionSource() }
@@ -203,8 +198,8 @@ fun Post(
                                 imagePositionInRoot = it.positionInRoot()
                             }
                     ) {
-                        if (fullscreenState == FullscreenState.CLOSE)
-                            media(sample, post, Modifier.fillMaxWidth())
+                        if (fullscreenState == FullscreenState.CLOSED)
+                            media(sample, post, Modifier.fillMaxWidth(), false)
                     }
                 }
                 // TODO visually connect description to image and add elevation only at bottom
@@ -367,40 +362,41 @@ fun Post(
                 )
             }
         }
-        GoingToFullscreenAnimation(
-            isFullscreen = fullscreenState == FullscreenState.OPEN,
-            contentAspectRatio = post.selectSample().aspectRatio,
-            getContentPositionRelativeToParent = { imagePositionInRoot },
-            assumeTranslatedComponentIsInFullscreenContainerCentered = true,
-            onExit = {
-                fullscreenState = FullscreenState.CLOSE
-            },
-            componentBackground = {
-                Surface(
-                    color = Color.Black,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clickable(
-                            indication = null, // The animation is the indication
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) {
-                            fullscreenState = FullscreenState.CLOSING
-                        }
-                ) {}
+
+        // TODO animate fullscreen enter via fullscreen zoomable
+        if (fullscreenState == FullscreenState.OPEN) {
+            val file = post.selectSample()
+            val initialTranslation: Offset
+            val initialScale: Float
+            // if image size would exceed screen height, it is true
+            val matchHeightConstraintsFirst = file.aspectRatio < maxWidth / maxHeight
+            if (!matchHeightConstraintsFirst) {
+                initialTranslation = Offset.Zero
+                initialScale = 1f
+            } else {
+                val width = constraints.maxHeight * file.aspectRatio
+                initialScale = constraints.maxWidth / width
+                initialTranslation = Offset(-(constraints.maxWidth - width) / 2, 0f)
             }
-        ) {
+            val maxScale = initialScale * MAX_SCALE_DEFAULT
             media(
-                post.selectSample(), post,
+                file, post,
                 Modifier
                     .fillMaxSize()
+                    .background(Color.Black)
                     .zoomable(
-                        rememberZoomableState()
-                    )
+                        rememberZoomableState(
+                            maxScale = maxScale,
+                            initialScale = initialScale,
+                            initialTranslation = initialTranslation
+                        )
+                    ),
+                matchHeightConstraintsFirst
             )
         }
 
         BackHandler(fullscreenState == FullscreenState.OPEN) {
-            fullscreenState = FullscreenState.CLOSING
+            fullscreenState = FullscreenState.CLOSED
         }
     }
 
@@ -479,10 +475,7 @@ fun CommentsBottomSheetContent(
                 item {}
             }
         }
-
-
     }
-
 
 }
 
@@ -591,8 +584,7 @@ private fun Tag(
 
 enum class FullscreenState {
     OPEN,
-    CLOSE,
-    CLOSING
+    CLOSED,
 }
 
 private sealed interface CommentsLoadingState {

@@ -35,7 +35,8 @@ fun PostVideo(
     file: NormalizedFile,
     modifier: Modifier = Modifier,
     aspectRatio: Float = file.aspectRatio,
-    maxHeight: Dp = Dp.Unspecified
+    maxHeight: Dp = Dp.Unspecified,
+    matchHeightConstraintsFirst: Boolean = false
 ) {
     if (aspectRatio <= 0) {
         InvalidPost(stringResource(R.string.invalid_post_server_error))
@@ -46,7 +47,8 @@ fun PostVideo(
         component = videoPlayerComponent,
         modifier = modifier,
         aspectRatio = aspectRatio,
-        maxHeight = maxHeight
+        maxHeight = maxHeight,
+        matchHeightConstraintsFirst = matchHeightConstraintsFirst
     )
 }
 

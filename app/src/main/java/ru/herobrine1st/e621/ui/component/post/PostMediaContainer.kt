@@ -14,19 +14,22 @@ fun PostMediaContainer(
     contentDescription: String?,
     getVideoPlayerComponent: () -> VideoPlayerComponent,
     modifier: Modifier = Modifier,
-    post: Post? = null
+    post: Post? = null,
+    matchHeightConstraintsFirst: Boolean = false
 ) {
     when {
         file.type.isVideo -> PostVideo(
             getVideoPlayerComponent(),
             file,
-            modifier = modifier
+            modifier = modifier,
+            matchHeightConstraintsFirst = matchHeightConstraintsFirst
         )
         file.type.isImage -> PostImage(
             file = file,
             contentDescription = contentDescription,
             modifier = modifier,
-            actualPostFileType = post?.file?.type
+            actualPostFileType = post?.file?.type,
+            matchHeightConstraintsFirst = matchHeightConstraintsFirst
         )
         else -> InvalidPost(
             text = stringResource(
