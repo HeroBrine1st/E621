@@ -42,7 +42,7 @@ import javax.annotation.CheckReturnValue
 const val MAX_SCALE_DEFAULT = 5f
 
 fun Modifier.zoomable(state: ZoomableState) = this
-    .pointerInput(Unit) {
+    .pointerInput(state) {
         detectTransformGestures { centroid, pan, gestureZoom, _ ->
             state.handleTransformationGesture(centroid, pan, gestureZoom)
         }
