@@ -21,9 +21,19 @@
 package ru.herobrine1st.e621.ui.component
 
 import androidx.annotation.FloatRange
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationEndReason
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.calculateCentroid
+import androidx.compose.foundation.gestures.calculateCentroidSize
+import androidx.compose.foundation.gestures.calculatePan
+import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.RememberObserver
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,20 +42,41 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChanged
+import androidx.compose.ui.input.pointer.util.VelocityTracker1D
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.AndroidUiDispatcher
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.util.fastAny
+import androidx.compose.ui.util.fastForEach
 import coil.compose.AsyncImage
-import javax.annotation.CheckReturnValue
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.launch
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.contract
+import kotlin.math.abs
+
 
 const val MAX_SCALE_DEFAULT = 5f
 
 fun Modifier.zoomable(state: ZoomableState) = this
     .pointerInput(state) {
-        detectTransformGestures { centroid, pan, gestureZoom, _ ->
-            state.handleTransformationGesture(centroid, pan, gestureZoom)
-        }
+        detectTransformGestures(
+            onGestureStart = state::handleGestureStart,
+            onGesture = { centroid, pan, gestureZoom, uptimeMillis ->
+                state.handleTransformationGesture(
+                    centroid,
+                    pan,
+                    gestureZoom,
+                    uptimeMillis
+                )
+            },
+            onGestureEnd = state::handleGestureEnd,
+        )
     }
     .graphicsLayer {
         translationX = state.translation.x
@@ -61,80 +92,220 @@ fun Modifier.zoomable(state: ZoomableState) = this
         state.onSizeChanged(it)
     }
 
+private suspend inline fun PointerInputScope.detectTransformGestures(
+    crossinline onGestureStart: () -> Unit = {},
+    crossinline onGesture: (centroid: Offset, pan: Offset, zoom: Float, uptimeMillis: Long) -> Unit,
+    crossinline onGestureEnd: () -> Unit = {}
+) {
+    awaitEachGesture {
+        var zoom = 1f
+        var pan = Offset.Zero
+        var pastTouchSlop = false
+        val touchSlop = viewConfiguration.touchSlop
+        awaitFirstDown(requireUnconsumed = false)
+        onGestureStart()
+        do {
+            val event = awaitPointerEvent()
+            val canceled = event.changes.fastAny { it.isConsumed }
+            if (!canceled) {
+                val zoomChange = event.calculateZoom()
+                val panChange = event.calculatePan()
+
+                if (!pastTouchSlop) {
+                    zoom *= zoomChange
+                    pan += panChange
+
+                    val centroidSize = event.calculateCentroidSize(useCurrent = false)
+                    val zoomMotion = abs(1 - zoom) * centroidSize
+                    val panMotion = pan.getDistance()
+
+                    if (zoomMotion > touchSlop || panMotion > touchSlop) {
+                        pastTouchSlop = true
+                    }
+                }
+
+                if (pastTouchSlop) {
+                    val centroid = event.calculateCentroid(useCurrent = false)
+                    if (zoomChange != 1f || panChange != Offset.Zero)
+                        onGesture(
+                            centroid,
+                            panChange,
+                            zoomChange,
+                            event.changes.fastFirst { it.positionChanged() }.uptimeMillis
+                        )
+                    event.changes.fastForEach {
+                        if (it.positionChanged()) it.consume()
+                    }
+                }
+            }
+        } while (!canceled && event.changes.fastAny { it.pressed })
+        onGestureEnd()
+    }
+}
+
+@Suppress("BanInlineOptIn")
+@OptIn(ExperimentalContracts::class)
+private inline fun <T> List<T>.fastFirst(predicate: (T) -> Boolean): T {
+    contract { callsInPlace(predicate) }
+    fastForEach { if (predicate(it)) return it }
+    throw NoSuchElementException("Collection contains no element matching the predicate.")
+}
 
 class ZoomableState(
     @FloatRange(from = 1.0) val maxScale: Float = MAX_SCALE_DEFAULT,
     initialScale: Float = 1f,
     initialTranslation: Offset = Offset.Zero
-) {
+) : RememberObserver {
+    // TODO saveable
+    // This class assumes that transformOrigin is (0;0)
 
     init {
         require(initialScale >= 1f) { "Initial scale should be equal or more than 1, got $initialScale" }
         // It's the caller responsibility to check initialTranslation. Check above is here only because application will anyway crash.
     }
 
-    // TODO saveable
-    // TODO animation (use targetValue in Saver and add constructor parameters for initial values)
-    // This class assumes that transformOrigin is (0;0)
-    var translation by mutableStateOf(initialTranslation)
-        private set
-    var scale by mutableStateOf(initialScale)
-        private set
+    private val translationAnimatable =
+        Animatable(initialTranslation, typeConverter = Offset.VectorConverter)
+    private val scaleAnimatable = Animatable(initialScale).apply { updateBounds(1f, maxScale) }
+    private val panVelocityTracker = VelocityTrackerDifferential()
+    private val coroutineScope = CoroutineScope(AndroidUiDispatcher.Main)
+
+    val translation by translationAnimatable.asState()
+    val scale by scaleAnimatable.asState()
+
     var size by mutableStateOf(IntSize.Zero)
         private set
 
-    fun handleTransformationGesture(centroid: Offset, pan: Offset, gestureScale: Float) {
-        // TODO fling gesture (inertial pan, like on G Maps, it is very satisfying)
-        // I've seen VelocityTracker or something like that in other implementations
-        // Animatable's snapTo can be used for gesture and animateDecay for inertia
+    // Dirty workaround to ignore scale gestures in pan animation
+    // TODO if user exceeds touch slop with one finger (regardless of what was done before)
+    //      and then releases, animate as well
+    private var scaleGesturePerformed = false
+
+    fun handleGestureStart() {
+        scaleGesturePerformed = false
+        panVelocityTracker.resetTracking()
+    }
+
+    fun handleTransformationGesture(
+        centroid: Offset,
+        pan: Offset,
+        gestureScale: Float,
+        timeMs: Long
+    ) {
         val oldScale = scale
-        scale = (scale * gestureScale).coerceIn(minimumValue = 1f, maximumValue = maxScale)
+        val newScale =
+            (oldScale * gestureScale).coerceIn(
+                minimumValue = scaleAnimatable.lowerBound,
+                maximumValue = scaleAnimatable.upperBound
+            )
+
         // upper bound is causing floating to lower right corner when user tries to zoom beyond the limit.
-        val consumedGestureScale = if (scale != maxScale) gestureScale else scale / oldScale
+        val consumedGestureScale = if (newScale != maxScale) gestureScale else newScale / oldScale
         // I'm not a talented *mathematician*, but it seems like I can prove this formula is right
-        translation = (
-                // Scale, using old centroid as origin
-                (translation - centroid) * consumedGestureScale +
-                        // Use new centroid as origin
-                        centroid + pan
-                )
-            .coerceInSize()
+        val newTranslation =
+            // Scale, using old centroid as origin
+            (translation - centroid) * consumedGestureScale +
+                    // Use new centroid as origin
+                    centroid + pan
+
+        panVelocityTracker.addVector(timeMs, pan)
+
+        coroutineScope.launch {
+            scaleAnimatable.snapTo(newScale)
+            setTranslationBounds()
+            translationAnimatable.snapTo(newTranslation)
+        }
+        scaleGesturePerformed = scaleGesturePerformed || gestureScale != 1f
+    }
+
+    fun handleGestureEnd() {
+        if (scaleGesturePerformed) {
+            scaleGesturePerformed = false
+            return
+        }
+        coroutineScope.launch {
+            // splineBasedDecay is magnifying vectors to one of the axes
+            // exponentialDecay doesn't do that and still feels good
+            val result = translationAnimatable.animateDecay(
+                panVelocityTracker.calculateVelocityAsOffset(),
+                exponentialDecay()
+            )
+            if (result.endReason == AnimationEndReason.BoundReached) {
+                // TODO 1. Find that bound
+                //      2. Set corresponding remaining velocity vector component to 0
+                //      3. Launch new decay using new vector
+                //      No cycle needed
+                // result.endState.velocityVector
+            }
+        }
     }
 
     fun onSizeChanged(intSize: IntSize) {
         size = intSize
-        translation = translation.coerceInSize()
+        setTranslationBounds()
     }
 
-    @CheckReturnValue
-    private fun Offset.coerceInSize(): Offset {
+    private fun setTranslationBounds() {
         // FIXME if fillMax* modifier is applied, empty space is considered as zoomable
         // so that it participate in the function below as usable space
         // and so user can zoom enough and pan the content out of bounds
         // while this function is trying to prevent that
-        // Possible solution: add aspectRatio or size of content parameters
+        // Possible solution: add aspectRatio or size of content parameters, or use Modifier.layout
+        // to get it
         //
         // I gathered some user feedback and some say this is good feature.
+
 
         // Inverted because negative values is to the right
         // and 0 is the leftmost
         val constrainScalar = 1f - scale
         val xConstrain = size.width * constrainScalar
         val yConstrain = size.height * constrainScalar
-        return Offset(
-            x.coerceIn(xConstrain, 0f),
-            y.coerceIn(yConstrain, 0f)
-        )
+        translationAnimatable.updateBounds(Offset(xConstrain, yConstrain), Offset.Zero)
+    }
+
+    override fun onRemembered() {
+        // Nothing to do
+        // Maybe check that it is remembered only once?
+    }
+
+    override fun onForgotten() {
+        coroutineScope.cancel()
+    }
+
+    override fun onAbandoned() {
+        coroutineScope.cancel()
     }
 }
+
+// Differential because centroid can jump to other finger after releasing one
+// Ignoring scale gestures will not help: pretty skilled user can pan with two fingers at constant distance between them
+class VelocityTrackerDifferential {
+    private val xVelocityTracker = VelocityTracker1D(isDataDifferential = true)
+    private val yVelocityTracker = VelocityTracker1D(isDataDifferential = true)
+
+    fun addVector(timeMillis: Long, vector: Offset) {
+        xVelocityTracker.addDataPoint(timeMillis, vector.x)
+        yVelocityTracker.addDataPoint(timeMillis, vector.y)
+    }
+
+    fun calculateVelocityAsOffset(): Offset {
+        return Offset(xVelocityTracker.calculateVelocity(), yVelocityTracker.calculateVelocity())
+    }
+
+    fun resetTracking() {
+        xVelocityTracker.resetTracking()
+        yVelocityTracker.resetTracking()
+    }
+}
+
 
 @Composable
 fun rememberZoomableState(
     @FloatRange(from = 1.0) maxScale: Float = MAX_SCALE_DEFAULT,
     initialScale: Float = 1f,
     initialTranslation: Offset = Offset.Zero
-) =
-    remember { ZoomableState(maxScale, initialScale, initialTranslation) }
+) = remember { ZoomableState(maxScale, initialScale, initialTranslation) }
 
 
 @Preview
