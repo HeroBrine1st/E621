@@ -223,6 +223,7 @@ class ZoomableState(
             scaleGesturePerformed = false
             return
         }
+        val lowerBound = translationAnimatable.lowerBound!!
         coroutineScope.launch {
             // splineBasedDecay is magnifying vectors to one of the axes
             // exponentialDecay doesn't do that and still feels good
@@ -231,11 +232,14 @@ class ZoomableState(
                 exponentialDecay()
             )
             if (result.endReason == AnimationEndReason.BoundReached) {
-                // TODO 1. Find that bound
-                //      2. Set corresponding remaining velocity vector component to 0
-                //      3. Launch new decay using new vector
-                //      No cycle needed
-                // result.endState.velocityVector
+                val velocity =
+                    result.endState.typeConverter.convertFromVector(result.endState.velocityVector)
+                val endValue = result.endState.value
+                if (endValue.x == 0f || endValue.x == lowerBound.x) {
+                    translationAnimatable.animateDecay(velocity.copy(x = 0f), exponentialDecay())
+                } else {
+                    translationAnimatable.animateDecay(velocity.copy(y = 0f), exponentialDecay())
+                }
             }
         }
     }
