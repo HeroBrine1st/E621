@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.ui.screen.search
 
+import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.KeyboardActions
@@ -52,6 +53,8 @@ import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 import ru.herobrine1st.e621.util.runIf
 import ru.herobrine1st.e621.util.text
+
+private const val TAG = "ModifyTagDialog"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,7 +91,11 @@ fun ModifyTagDialog(
                 Text(stringResource(R.string.remove))
             }
         }
-        TextButton(onClick = { onApply(textValue.text) }) {
+        TextButton(onClick = {
+            if (' ' in textValue.text)
+                Log.wtf(TAG, "Found spaces in tag, which should not be possible: ${textValue.text}")
+            onApply(textValue.text)
+        }) {
             Text(stringResource(if (onDelete == null) R.string.add else R.string.apply))
         }
     }, onDismissRequest = onClose) {
@@ -103,7 +110,8 @@ fun ModifyTagDialog(
                     // so that suggestions will open again
                     val actuallyChanged =
                         it.text != textValue.text || it.selection != textValue.selection
-                    textValue = it
+                    // Single tag in single object
+                    textValue = it.copy(text = it.text.replace(' ', '_'))
                     if (!actuallyChanged) return@OutlinedTextField
                     selectedFromSuggested = false
                     if (!autocompleteExpanded) {
@@ -149,7 +157,7 @@ fun ModifyTagDialog(
                             autocompleteExpanded = false
                             selectedFromSuggested = true
                             textValue = textValue.copy(
-                                annotatedString = AnnotatedString(name),
+                                annotatedString = AnnotatedString(it.name.value),
                                 selection = TextRange(name.length)
                             )
                         })
