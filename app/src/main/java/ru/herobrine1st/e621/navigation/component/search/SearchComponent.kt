@@ -73,7 +73,6 @@ class SearchComponent private constructor(
     fun tagSuggestionFlow(getCurrentText: () -> String): Flow<List<TagSuggestion>> {
         val currentTextFlow = snapshotFlow {
             getCurrentText()
-                .trimStart('~', '-')
                 .lowercase()
                 .trim()
         }

@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.Tokens
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 import ru.herobrine1st.e621.util.runIf
@@ -71,7 +72,14 @@ fun ModifyTagDialog(
     var selectedFromSuggested by remember { mutableStateOf(false) }
 
     val suggestions by produceState(emptyList<SearchComponent.TagSuggestion>()) {
-        getSuggestionsFlow { textValue.text }.collect {
+        getSuggestionsFlow {
+            textValue.text
+                // Assuming there's no tag starting with either of these tokens
+                // This assumption is probably true because search engine should somehow handle it otherwise
+                // TODO do it in cycle
+                .removePrefix(Tokens.ALTERNATIVE)
+                .removePrefix(Tokens.EXCLUDED)
+        }.collect {
             value = it
             if (!selectedFromSuggested)
                 autocompleteExpanded = it.isNotEmpty()
