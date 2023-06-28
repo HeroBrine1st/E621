@@ -189,7 +189,7 @@ fun Post(
                             .clickable(
                                 enabled = fullscreenState == FullscreenState.CLOSED
                                         && !post.file.type.isVideo,
-                                indication = null, // The animation is the indication
+                                indication = null,
                                 interactionSource = remember { MutableInteractionSource() }
                             ) {
                                 fullscreenState = FullscreenState.OPEN
