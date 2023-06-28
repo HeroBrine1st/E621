@@ -162,11 +162,15 @@ fun ModifyTagDialog(
                     DropdownMenuItem(
                         text = { Text(suggestionText) },
                         onClick = {
+                            val prefix = listOf(Tokens.ALTERNATIVE, Tokens.EXCLUDED).find { token ->
+                                textValue.text.startsWith(token)
+                            } ?: ""
+
                             autocompleteExpanded = false
                             selectedFromSuggested = true
                             textValue = textValue.copy(
-                                annotatedString = AnnotatedString(it.name.value),
-                                selection = TextRange(name.length)
+                                annotatedString = AnnotatedString(prefix + it.name.value),
+                                selection = TextRange(name.length + prefix.length)
                             )
                         })
                 }
