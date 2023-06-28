@@ -74,7 +74,6 @@ class SearchComponent private constructor(
         val currentTextFlow = snapshotFlow {
             getCurrentText()
                 .trimStart('~', '-')
-                .replace(' ', '_')
                 .lowercase()
                 .trim()
         }
