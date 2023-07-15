@@ -36,7 +36,7 @@ read-only and has some harmless bugs.
     * [ ] "Micro-search" (fast local search though current results)
 - [x] Safe mode on search and posts screen (i.e. you can open explicit post from your browser, but
   cannot open in through search within app), enabled by default with disclaimer on disable.
-- [ ] Autocomplete tags
+- [x] Autocomplete tags
 - [x] Authorization by API key
     - [ ] Authorization by regular username and password (I'm not sure it won't break ToS, but it is
       possible without any difficulty... I think)
