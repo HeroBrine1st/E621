@@ -57,7 +57,7 @@ interface IHomeComponentInstanceMethods {
 
     fun login(login: String, apiKey: String, callback: (HomeComponent.LoginState) -> Unit = {})
     fun logout(callback: () -> Unit = {})
-    fun checkAuthorization()
+    fun retryStoredAuth()
 }
 
 class HomeComponent private constructor(
@@ -80,7 +80,7 @@ class HomeComponent private constructor(
     }
 
     companion object {
-        const val TAG = "HomeViewModel"
+        const val TAG = "HomeComponent"
 
         operator fun invoke(
             authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
@@ -123,7 +123,7 @@ class HomeComponent private constructor(
         // So we first check auth at the start of this VM and then listen to logouts
         init {
             lifecycleScope.launch {
-                checkAuthorizationInternal()
+                tryStoredAuth()
                 authorizationRepository.getAccountFlow().collect {
                     if (it == null) // Handle logout from AuthorizationInterceptor
                         state = LoginState.NoAuth
@@ -131,42 +131,23 @@ class HomeComponent private constructor(
             }
         }
 
-        // Should not be used in this VM
+        //region Interface implementation
+
         override fun login(login: String, apiKey: String, callback: (LoginState) -> Unit) {
             if (!state.canAuthorize) throw IllegalStateException()
             lifecycleScope.launch {
-                val result = checkCredentials(
+                val result = tryCredentials(
                     AuthorizationCredentials.newBuilder()
                         .setUsername(login)
                         .setPassword(apiKey)
                         .build()
                 )
-                when (result) {
-                    is LoginState.Authorized -> {
-                        authorizationRepository.insertAccount(login, apiKey)
-                        fetchBlacklistFromAccount(result)
-                        state = result
-                    }
-                    LoginState.IOError ->
-                        snackbarAdapter.enqueueMessage(
-                            R.string.network_error,
-                            SnackbarDuration.Long
-                        )
-                    LoginState.NoAuth -> snackbarAdapter.enqueueMessage(
-                        R.string.login_unauthorized,
-                        SnackbarDuration.Long
-                    )
-                    LoginState.InternalServerError -> snackbarAdapter.enqueueMessage(
-                        R.string.internal_server_error, SnackbarDuration.Long
-                    )
-                    LoginState.APITemporarilyUnavailable -> snackbarAdapter.enqueueMessage(
-                        R.string.api_temporarily_unavailable, SnackbarDuration.Long
-                    )
-                    LoginState.UnknownAPIError -> snackbarAdapter.enqueueMessage(
-                        R.string.unknown_api_error, SnackbarDuration.Long
-                    )
-                    LoginState.Loading -> throw IllegalStateException()
-                }
+
+                if (result is LoginState.Authorized) {
+                    authorizationRepository.insertAccount(login, apiKey)
+                    fetchBlacklistFromAccount(result)
+                    state = result
+                } else handleErrorStateForUI(result)
                 callback(result)
             }
         }
@@ -178,13 +159,49 @@ class HomeComponent private constructor(
             }
         }
 
-        override fun checkAuthorization() {
+
+        override fun retryStoredAuth() {
             lifecycleScope.launch {
-                checkAuthorizationInternal()
+                tryStoredAuth()
             }
         }
 
-        private suspend fun checkCredentials(credentials: AuthorizationCredentials): LoginState {
+        //endregion
+
+        // I think this code should be moved to component
+        // and component should act as proxy between logic (this class) and UI
+        private suspend fun handleErrorStateForUI(state: LoginState) = when (state) {
+            is LoginState.Authorized -> {} // Success
+
+            LoginState.IOError -> snackbarAdapter.enqueueMessage(
+                R.string.network_error,
+                SnackbarDuration.Long
+            )
+
+            LoginState.NoAuth -> snackbarAdapter.enqueueMessage(
+                R.string.login_unauthorized,
+                SnackbarDuration.Long
+            )
+
+            LoginState.InternalServerError -> snackbarAdapter.enqueueMessage(
+                R.string.internal_server_error, SnackbarDuration.Long
+            )
+
+            LoginState.APITemporarilyUnavailable -> snackbarAdapter.enqueueMessage(
+                R.string.api_temporarily_unavailable, SnackbarDuration.Long
+            )
+
+            LoginState.UnknownAPIError -> snackbarAdapter.enqueueMessage(
+                R.string.unknown_api_error, SnackbarDuration.Long
+            )
+
+            LoginState.Loading -> throw IllegalStateException()
+        }
+
+
+        private suspend fun tryCredentials(
+            credentials: AuthorizationCredentials // too connected to data store, should probably use own type
+        ): LoginState {
             val res = try {
                 api.getUser(credentials.username, credentials.credentials)
                     .awaitResponse()
@@ -195,7 +212,6 @@ class HomeComponent private constructor(
                     "A network exception occurred while checking authorization data",
                     e
                 )
-                snackbarAdapter.enqueueMessage(R.string.network_error)
                 return LoginState.IOError
             }
             debug {
@@ -214,6 +230,7 @@ class HomeComponent private constructor(
                     val body = res.body()!!
                     LoginState.Authorized(body.get("name").asText(), body.get("id").asInt())
                 }
+
                 401 -> LoginState.NoAuth
                 503 -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
                 in 500..599 -> LoginState.InternalServerError
@@ -228,16 +245,16 @@ class HomeComponent private constructor(
         }
 
 
-        private suspend fun checkAuthorizationInternal() {
+        private suspend fun tryStoredAuth() {
             state = LoginState.Loading
             val entry = withContext(Dispatchers.Default) {
                 authorizationRepository
             }.getAccountFlow()
                 .distinctUntilChanged()
                 .first()
-            state = if (entry == null) LoginState.NoAuth else checkCredentials(entry).also {
+            state = if (entry == null) LoginState.NoAuth else tryCredentials(entry).also {
+                handleErrorStateForUI(it)
                 if (it == LoginState.NoAuth) {
-                    snackbarAdapter.enqueueMessage(R.string.login_unauthorized)
                     authorizationRepository.logout()
                 }
             }

@@ -126,7 +126,7 @@ fun Home(
 
                         LoginState.IOError -> {
                             Text(stringResource(R.string.network_error))
-                            Button(onClick = component::checkAuthorization) {
+                            Button(onClick = component::retryStoredAuth) {
                                 Text(stringResource(R.string.retry))
                             }
                         }
@@ -134,7 +134,7 @@ fun Home(
                         LoginState.InternalServerError -> {
                             Text(stringResource(R.string.internal_server_error))
                             Button(
-                                onClick = component::checkAuthorization
+                                onClick = component::retryStoredAuth
                             ) {
                                 Text(stringResource(R.string.retry))
                             }
@@ -143,7 +143,7 @@ fun Home(
                         LoginState.APITemporarilyUnavailable -> {
                             Text(stringResource(R.string.api_temporarily_unavailable))
                             Button(
-                                onClick = component::checkAuthorization
+                                onClick = component::retryStoredAuth
                             ) {
                                 Text(stringResource(R.string.retry))
                             }
@@ -152,7 +152,7 @@ fun Home(
                         LoginState.UnknownAPIError -> {
                             Text(stringResource(R.string.unknown_api_error))
                             Row {
-                                Button(onClick = component::checkAuthorization) {
+                                Button(onClick = component::retryStoredAuth) {
                                     Text(stringResource(R.string.retry))
                                 }
                                 Spacer(Modifier.size(8.dp))
