@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.ui.screen.posts.component
 
+import android.content.Intent
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -42,8 +43,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
@@ -57,6 +60,7 @@ fun PostActionsRow(
     onAddToFavourites: () -> Unit,
     onOpenComments: () -> Unit,
 ) {
+    val context = LocalContext.current
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -108,7 +112,20 @@ fun PostActionsRow(
                 )
             }
         }
-        IconButton(onClick = { /*TODO*/ }) {
+        IconButton(onClick = {
+            context.startActivity(
+                Intent.createChooser(
+                    Intent().apply {
+                        action = Intent.ACTION_SEND
+                        putExtra(
+                            Intent.EXTRA_TEXT,
+                            "${BuildConfig.DEEP_LINK_BASE_URL}/posts/${post.id}"
+                        )
+                        type = "text/uri-list" // https://www.rfc-editor.org/rfc/rfc2483#section-5
+                    }, null
+                )
+            )
+        }) {
             Icon(
                 Icons.Default.Share,
                 contentDescription = stringResource(R.string.share)
