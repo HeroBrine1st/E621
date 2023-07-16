@@ -36,19 +36,20 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
 import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.awaitResponse
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.credentials
-import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
 
@@ -60,11 +61,77 @@ interface IHomeComponentInstanceMethods {
     fun retryStoredAuth()
 }
 
-class HomeComponent private constructor(
+class HomeComponent(
+    authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
+    apiProvider: Lazy<API>,
+    private val snackbarAdapter: SnackbarAdapter,
+    blacklistRepository: BlacklistRepository,
     private val stackNavigator: StackNavigator<Config>,
-    val instance: HomeComponentInstance,
-    componentContext: ComponentContext
-) : ComponentContext by componentContext, IHomeComponentInstanceMethods by instance {
+    componentContext: ComponentContext,
+) : ComponentContext by componentContext, IHomeComponentInstanceMethods {
+
+    private val instance = instanceKeeper.getOrCreate {
+        HomeComponentInstance(
+            authorizationRepositoryProvider,
+            apiProvider,
+            blacklistRepository
+        )
+    }
+
+    private val lifecycleScope = LifecycleScope()
+
+    override val state: LoginState
+        get() = instance.state
+
+    override fun login(login: String, apiKey: String, callback: (LoginState) -> Unit) {
+        if (!state.canAuthorize) {
+            Log.wtf(TAG, "Login attempted while impossible")
+            return
+        }
+        lifecycleScope.launch {
+            val state = instance.login(
+                AuthorizationCredentials.newBuilder()
+                    .setUsername(login)
+                    .setPassword(apiKey)
+                    .build()
+            )
+            if (state is LoginState.Authorized) {
+                try {
+                    // TODO preference, dialog, idk
+                    instance.fetchBlacklistFromAccount(state)
+                } catch (e: IOException) {
+                    // TODO clarify
+                    snackbarAdapter.enqueueMessage(
+                        R.string.network_error,
+                        SnackbarDuration.Long
+                    )
+                } catch (e: SQLiteException) {
+                    snackbarAdapter.enqueueMessage(
+                        R.string.database_error_updating_blacklist,
+                        SnackbarDuration.Long
+                    )
+                }
+            } else handleErrorStateForUI(state)
+            callback(state)
+        }
+    }
+
+
+    override fun logout(callback: () -> Unit) {
+        lifecycleScope.launch {
+            instance.logout()
+            callback()
+        }
+    }
+
+    override fun retryStoredAuth() {
+        lifecycleScope.launch {
+            val state = instance.tryStoredAuth()
+            if (state != null) {
+                handleErrorStateForUI(state)
+            }
+        }
+    }
 
     fun navigateToSearch() = stackNavigator.pushIndexed { Config.Search(index = it) }
     fun navigateToFavourites() = stackNavigator.pushIndexed { index ->
@@ -79,37 +146,45 @@ class HomeComponent private constructor(
         } ?: error("Inconsistent state: state is not Authorized while is inferred to be so")
     }
 
+    private suspend fun handleErrorStateForUI(state: LoginState) = when (state) {
+        is LoginState.Authorized -> {} // Success
+
+        LoginState.IOError -> snackbarAdapter.enqueueMessage(
+            R.string.network_error,
+            SnackbarDuration.Long
+        )
+
+        LoginState.NoAuth -> snackbarAdapter.enqueueMessage(
+            R.string.login_unauthorized,
+            SnackbarDuration.Long
+        )
+
+        LoginState.InternalServerError -> snackbarAdapter.enqueueMessage(
+            R.string.internal_server_error, SnackbarDuration.Long
+        )
+
+        LoginState.APITemporarilyUnavailable -> snackbarAdapter.enqueueMessage(
+            R.string.api_temporarily_unavailable, SnackbarDuration.Long
+        )
+
+        LoginState.UnknownAPIError -> snackbarAdapter.enqueueMessage(
+            R.string.unknown_api_error, SnackbarDuration.Long
+        )
+
+        LoginState.Loading -> throw IllegalStateException()
+    }
+
     companion object {
         const val TAG = "HomeComponent"
-
-        operator fun invoke(
-            authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
-            apiProvider: Lazy<API>,
-            snackbarAdapter: SnackbarAdapter,
-            blacklistRepository: BlacklistRepository,
-            stackNavigator: StackNavigator<Config>,
-            componentContext: ComponentContext
-        ): HomeComponent {
-            val instance = componentContext.instanceKeeper.getOrCreate {
-                HomeComponentInstance(
-                    authorizationRepositoryProvider,
-                    apiProvider,
-                    snackbarAdapter,
-                    blacklistRepository
-                )
-            }
-            return HomeComponent(stackNavigator, instance, componentContext)
-        }
     }
 
     class HomeComponentInstance(
         authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
         apiProvider: Lazy<API>,
-        private val snackbarAdapter: SnackbarAdapter,
         private val blacklistRepository: BlacklistRepository
-    ) : InstanceBase(), IHomeComponentInstanceMethods {
+    ) : InstanceBase() {
 
-        override var state by mutableStateOf<LoginState>(LoginState.Loading)
+        var state by mutableStateOf<LoginState>(LoginState.Loading)
             private set
         var username: String? = null
         var id: Int? = null
@@ -131,73 +206,70 @@ class HomeComponent private constructor(
             }
         }
 
-        //region Interface implementation
-
-        override fun login(login: String, apiKey: String, callback: (LoginState) -> Unit) {
+        suspend fun login(credentials: AuthorizationCredentials): LoginState {
             if (!state.canAuthorize) throw IllegalStateException()
-            lifecycleScope.launch {
-                val result = tryCredentials(
-                    AuthorizationCredentials.newBuilder()
-                        .setUsername(login)
-                        .setPassword(apiKey)
-                        .build()
-                )
+            val result = tryCredentials(credentials)
 
-                if (result is LoginState.Authorized) {
-                    authorizationRepository.insertAccount(login, apiKey)
-                    fetchBlacklistFromAccount(result)
-                    state = result
-                } else handleErrorStateForUI(result)
-                callback(result)
+            if (result is LoginState.Authorized) {
+                authorizationRepository.insertAccount(credentials.username, credentials.password)
+                state = result
+            }
+
+            return result
+        }
+
+        suspend fun logout() = authorizationRepository.logout()
+
+        /**
+         * Fetch authorization credentials from local store and try them,
+         * returning [LoginState] or null if no credentials found.
+         *
+         * @return null if no credentials, otherwise [LoginState] indicating success or failure
+         */
+        suspend fun tryStoredAuth(): LoginState? {
+            state = LoginState.Loading
+            val entry = withContext(Dispatchers.Default) {
+                authorizationRepository
+            }.getAccountFlow()
+                .distinctUntilChanged()
+                .first()
+            return if (entry == null) null
+            else tryCredentials(entry).also {
+                if (it == LoginState.NoAuth) {
+                    authorizationRepository.logout()
+                }
+                assert(it != LoginState.Loading)
+                state = it
             }
         }
 
-        override fun logout(callback: () -> Unit) {
-            lifecycleScope.launch {
-                authorizationRepository.logout()
-                callback()
+        suspend fun fetchBlacklistFromAccount(state: LoginState.Authorized) {
+            if (blacklistRepository.count() != 0) return
+
+            // Explaining why try and throw
+            // I'm trying to separate responsibilities to component and instance
+            // So, instance is an actual executor and logic holder, - logging errors suits best here
+            // and component is a proxy between it and UI.          - showing errors suits best here
+
+            val entries = try {
+                api.getUser(name = state.username).await()
+                    .get("blacklisted_tags").asText()
+                    .split("\n")
+                    .map {
+                        BlacklistEntry(query = it, enabled = true)
+                    }
+            } catch (e: IOException) {
+                Log.e(TAG, "An error occurred while trying to fetch blacklist", e)
+                throw e
+            }
+
+            try {
+                blacklistRepository.insertEntries(entries)
+            } catch (e: SQLiteException) { // TODO should probably create DatabaseException and encapsulate the cause within, so that this code is not connected to ORM
+                Log.e(TAG, "Database error while trying to insert fetched blacklist", e)
+                throw e
             }
         }
-
-
-        override fun retryStoredAuth() {
-            lifecycleScope.launch {
-                tryStoredAuth()
-            }
-        }
-
-        //endregion
-
-        // I think this code should be moved to component
-        // and component should act as proxy between logic (this class) and UI
-        private suspend fun handleErrorStateForUI(state: LoginState) = when (state) {
-            is LoginState.Authorized -> {} // Success
-
-            LoginState.IOError -> snackbarAdapter.enqueueMessage(
-                R.string.network_error,
-                SnackbarDuration.Long
-            )
-
-            LoginState.NoAuth -> snackbarAdapter.enqueueMessage(
-                R.string.login_unauthorized,
-                SnackbarDuration.Long
-            )
-
-            LoginState.InternalServerError -> snackbarAdapter.enqueueMessage(
-                R.string.internal_server_error, SnackbarDuration.Long
-            )
-
-            LoginState.APITemporarilyUnavailable -> snackbarAdapter.enqueueMessage(
-                R.string.api_temporarily_unavailable, SnackbarDuration.Long
-            )
-
-            LoginState.UnknownAPIError -> snackbarAdapter.enqueueMessage(
-                R.string.unknown_api_error, SnackbarDuration.Long
-            )
-
-            LoginState.Loading -> throw IllegalStateException()
-        }
-
 
         private suspend fun tryCredentials(
             credentials: AuthorizationCredentials // too connected to data store, should probably use own type
@@ -205,7 +277,19 @@ class HomeComponent private constructor(
             val res = try {
                 api.getUser(credentials.username, credentials.credentials)
                     .awaitResponse()
-
+            } catch (e: ApiException) {
+                return when (e.statusCode) {
+                    401 -> LoginState.NoAuth
+                    503 -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
+                    in 500..599 -> LoginState.InternalServerError
+                    else -> {
+                        Log.w(
+                            TAG,
+                            "Unknown API error occurred while authenticating (${e.statusCode} ${e.message})"
+                        )
+                        LoginState.UnknownAPIError
+                    }
+                }
             } catch (e: IOException) {
                 Log.e(
                     TAG,
@@ -214,72 +298,10 @@ class HomeComponent private constructor(
                 )
                 return LoginState.IOError
             }
-            debug {
-                if (!res.isSuccessful) {
-                    Log.d(
-                        TAG,
-                        "An error occurred while authenticating in API (${res.code()} ${res.message()})"
-                    )
-                    withContext(Dispatchers.IO) {
-                        Log.d(TAG, res.errorBody()!!.string())
-                    }
-                }
-            }
-            return when (res.code()) {
-                in 200..299 -> {
-                    val body = res.body()!!
-                    LoginState.Authorized(body.get("name").asText(), body.get("id").asInt())
-                }
 
-                401 -> LoginState.NoAuth
-                503 -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
-                in 500..599 -> LoginState.InternalServerError
-                else -> {
-                    Log.w(
-                        TAG,
-                        "Unknown API error occurred while authenticating (${res.code()} ${res.message()})"
-                    )
-                    LoginState.UnknownAPIError
-                }
-            }
-        }
-
-
-        private suspend fun tryStoredAuth() {
-            state = LoginState.Loading
-            val entry = withContext(Dispatchers.Default) {
-                authorizationRepository
-            }.getAccountFlow()
-                .distinctUntilChanged()
-                .first()
-            state = if (entry == null) LoginState.NoAuth else tryCredentials(entry).also {
-                handleErrorStateForUI(it)
-                if (it == LoginState.NoAuth) {
-                    authorizationRepository.logout()
-                }
-            }
-            assert(state != LoginState.Loading)
-        }
-
-        private suspend fun fetchBlacklistFromAccount(state: LoginState.Authorized) {
-            if (blacklistRepository.count() != 0) return
-            val entries =
-                api.getUser(name = state.username).await()
-                    .get("blacklisted_tags").asText()
-                    .split("\n")
-                    .map {
-                        BlacklistEntry(query = it, enabled = true)
-                    }
-            try {
-                blacklistRepository.insertEntries(entries)
-            } catch (e: SQLiteException) {
-                Log.e(TAG, "SQLite Error while trying to add tag to blacklist", e)
-                snackbarAdapter.enqueueMessage(
-                    R.string.database_error_updating_blacklist,
-                    SnackbarDuration.Long
-                )
-                return
-            }
+            assert(res.code() == 200)
+            val body = res.body()!!
+            return LoginState.Authorized(body.get("name").asText(), body.get("id").asInt())
         }
     }
 
@@ -293,4 +315,6 @@ class HomeComponent private constructor(
         object NoAuth : LoginState(true)
         class Authorized(val username: String, val id: Int) : LoginState(false)
     }
+
+
 }
