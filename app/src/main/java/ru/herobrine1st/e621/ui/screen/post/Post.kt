@@ -69,6 +69,7 @@ import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.*
+import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
@@ -84,7 +85,8 @@ private const val TAG = "Post Screen"
 @Composable
 fun Post(
     screenSharedState: ScreenSharedState,
-    component: PostComponent
+    component: PostComponent,
+    isAuthorized: Boolean // TODO move to component
 ) {
     val post = component.post
     val preferences = LocalPreferences.current
@@ -201,6 +203,22 @@ fun Post(
                         if (fullscreenState == FullscreenState.CLOSED)
                             media(sample, post, Modifier.fillMaxWidth(), false)
                     }
+                }
+                item("actionbar") {
+                    val favouriteState by component.isFavouriteAsState()
+                    PostActionRow(
+                        post, favouriteState, isAuthorized,
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .fillMaxWidth(),
+                        onFavouriteChange = component::handleFavouriteChange
+                    ) {
+                        coroutineScope.launch {
+                            loadComments = true
+                            bottomSheetState.partialExpand()
+                        }
+                    }
+                    Divider()
                 }
                 // TODO visually connect description to image and add elevation only at bottom
                 // (it should look great according to my imagination)

@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.screen.posts.component
+package ru.herobrine1st.e621.ui.component.post
 
 import android.content.Intent
 import androidx.compose.animation.Crossfade
@@ -36,11 +36,17 @@ import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.Comment
 import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -52,15 +58,17 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 
 @Composable
-fun PostActionsRow(
+fun PostActionRow(
     post: Post,
     favouriteState: FavouriteState,
     isAuthorized: Boolean,
     modifier: Modifier = Modifier,
-    onAddToFavourites: () -> Unit,
+    onFavouriteChange: () -> Unit,
     onOpenComments: () -> Unit,
 ) {
     val context = LocalContext.current
+    var showRemoveFromFavouritesConfirmation by remember { mutableStateOf(false) }
+
     Row(
         modifier = modifier,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -99,7 +107,11 @@ fun PostActionsRow(
             )
         }
         IconButton(
-            onClick = onAddToFavourites,
+            onClick = {
+                if (!favouriteState.isFavourite)
+                    onFavouriteChange()
+                else showRemoveFromFavouritesConfirmation = true
+            },
             enabled = isAuthorized && favouriteState !is FavouriteState.InFly
         ) {
             Crossfade(targetState = favouriteState.isFavourite) {
@@ -132,4 +144,31 @@ fun PostActionsRow(
             )
         }
     }
+
+    if (showRemoveFromFavouritesConfirmation) AlertDialog(
+        onDismissRequest = {
+            showRemoveFromFavouritesConfirmation = false
+        },
+        title = {
+            Text(stringResource(R.string.remove_from_favourites_confirmation_dialog_title))
+        },
+        text = {
+            Text(stringResource(R.string.remove_from_favourites_confirmation_dialog_text))
+        },
+        confirmButton = {
+            Button(onClick = {
+                showRemoveFromFavouritesConfirmation = false
+                onFavouriteChange()
+            }) {
+                Text(stringResource(R.string.remove))
+            }
+        },
+        dismissButton = {
+            FilledTonalButton(onClick = {
+                showRemoveFromFavouritesConfirmation = false
+            }) {
+                Text(stringResource(R.string.cancel))
+            }
+        }
+    )
 }

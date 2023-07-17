@@ -22,8 +22,12 @@ package ru.herobrine1st.e621.navigation.component.post
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
@@ -40,6 +44,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
@@ -51,12 +56,16 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
+import ru.herobrine1st.e621.navigation.component.posts.handleFavouriteChange
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.screen.post.logic.PostCommentsSource
+import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
+import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.InstanceBase
+import ru.herobrine1st.e621.util.isFavourite
 import java.io.IOException
 
 private const val POST_STATE_KEY = "POST_STATE_KEY"
@@ -64,14 +73,16 @@ private const val TAG = "PostComponent"
 
 class PostComponent(
     val openComments: Boolean,
-    val query: SearchOptions,
+    private val query: SearchOptions,
     private val postId: Int,
     initialPost: Post?,
     componentContext: ComponentContext,
     private val navigator: StackNavigator<Config>,
     private val applicationContext: Context,
     exceptionReporter: ExceptionReporter,
-    val api: API,
+    private val api: API,
+    private val favouritesCache: FavouritesCache,
+    private val snackbarAdapter: SnackbarAdapter,
     private val mediaOkHttpClientProvider: Lazy<OkHttpClient>,
 ) : ComponentContext by componentContext {
     private val instance = instanceKeeper.getOrCreate {
@@ -86,6 +97,28 @@ class PostComponent(
 
     var isLoadingPost by mutableStateOf(initialPost != null)
         private set
+
+    @Composable
+    fun isFavouriteAsState(): State<FavouritesCache.FavouriteState> = remember {
+        // Assume two things:
+        // 1. This method is called after post is loaded
+        // 2. [post] (particularly, its id) will never change
+        favouritesCache.flow.map { cache ->
+            cache.isFavourite(post!!)
+        }
+    }.collectAsState(favouritesCache.isFavourite(post!!))
+
+    fun handleFavouriteChange() {
+        // Assume post is loaded here as well
+        lifecycleScope.launch {
+            handleFavouriteChange(
+                favouritesCache,
+                api,
+                snackbarAdapter,
+                post!!
+            )
+        }
+    }
 
     // TODO move to another component (it should be overlay component)
     val commentsFlow get() = instance.commentsFlow

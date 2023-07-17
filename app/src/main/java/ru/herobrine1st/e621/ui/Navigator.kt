@@ -92,15 +92,22 @@ fun Navigator(
                 screenSharedState = sharedState,
                 component = instance.component
             )
+
             is Search -> Search(sharedState, instance.component)
+            // There needs a centralized solution to cache preferences (particularly `hasAuth()`)
+            // Although it is said not to cache it, looks like "LocalPreferences" is cache itself
+            // So StateFlow should work too. Probably.
+            // Then `preferences.hasAuth()` can be safely moved to components.
             is PostListing -> Posts(
                 sharedState,
                 instance.component,
                 preferences.hasAuth()
             )
+
             is Post -> Post(
                 screenSharedState = sharedState,
                 component = instance.component,
+                isAuthorized = preferences.hasAuth()
             )
             is Settings -> Settings(
                 screenSharedState = sharedState,

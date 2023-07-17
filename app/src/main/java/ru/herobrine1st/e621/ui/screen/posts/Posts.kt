@@ -42,12 +42,9 @@ import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.pullrefresh.PullRefreshIndicator
 import androidx.compose.material.pullrefresh.pullRefresh
 import androidx.compose.material.pullrefresh.rememberPullRefreshState
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
@@ -76,10 +73,10 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
+import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
-import ru.herobrine1st.e621.ui.screen.posts.component.PostActionsRow
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.e621.util.text
@@ -182,8 +179,8 @@ fun Posts(
                         else MaterialTheme.shapes.medium,
                         favouriteState = favouritesCache.isFavourite(post),
                         isAuthorized = isAuthorized,
-                        onAddToFavourites = {
-                            component.handleFavouriteButtonClick(post)
+                        onFavouriteChange = {
+                            component.handleFavouriteChange(post)
                         },
                         openPost = { openComments ->
                             component.onOpenPost(post, openComments)
@@ -213,11 +210,9 @@ fun Post(
     shape: CornerBasedShape = MaterialTheme.shapes.medium,
     favouriteState: FavouriteState,
     isAuthorized: Boolean,
-    onAddToFavourites: () -> Unit,
+    onFavouriteChange: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit
 ) {
-    var showRemoveFromFavouritesConfirmation by remember { mutableStateOf(false) }
-
     ElevatedCard(
         shape = shape,
         modifier = Modifier.fillMaxWidth()
@@ -296,47 +291,16 @@ fun Post(
                 }
             }
             Divider(Modifier.padding(horizontal = 8.dp))
-            PostActionsRow(
+            PostActionRow(
                 post, favouriteState, isAuthorized,
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
-                onAddToFavourites = {
-                    if (favouriteState.isFavourite)
-                        showRemoveFromFavouritesConfirmation = true
-                    else onAddToFavourites()
-                }
+                onFavouriteChange = onFavouriteChange
             ) {
                 openPost(true)
             }
         }
     }
-
-    if (showRemoveFromFavouritesConfirmation) AlertDialog(
-        onDismissRequest = {
-            showRemoveFromFavouritesConfirmation = false
-        },
-        title = {
-            Text(stringResource(R.string.remove_from_favourites_confirmation_dialog_title))
-        },
-        text = {
-            Text(stringResource(R.string.remove_from_favourites_confirmation_dialog_text))
-        },
-        confirmButton = {
-            Button(onClick = {
-                onAddToFavourites()
-                showRemoveFromFavouritesConfirmation = false
-            }) {
-                Text(stringResource(R.string.remove))
-            }
-        },
-        dismissButton = {
-            FilledTonalButton(onClick = {
-                showRemoveFromFavouritesConfirmation = false
-            }) {
-                Text(stringResource(R.string.cancel))
-            }
-        }
-    )
 }
 

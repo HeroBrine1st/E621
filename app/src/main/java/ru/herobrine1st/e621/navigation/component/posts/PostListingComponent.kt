@@ -21,8 +21,6 @@
 package ru.herobrine1st.e621.navigation.component.posts
 
 import android.content.Context
-import android.util.Log
-import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.paging.Pager
@@ -42,13 +40,10 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.BuildConfig
-import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
-import ru.herobrine1st.e621.api.awaitSuccessfulResponse
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
@@ -61,10 +56,7 @@ import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
-import java.io.IOException
 import java.util.function.Predicate
-
-private const val TAG = "PostListingComponent"
 
 class PostListingComponent(
     private val api: API,
@@ -127,44 +119,9 @@ class PostListingComponent(
     @Composable
     fun collectFavouritesCacheAsState() = favouritesCache.flow.collectAsState()
 
-    fun handleFavouriteButtonClick(post: Post) {
+    fun handleFavouriteChange(post: Post) {
         lifecycleScope.launch {
-            val wasFavourite: FavouriteState = favouritesCache.isFavourite(post)
-            when (wasFavourite) {
-                is FavouriteState.InFly -> {
-                    Log.w(
-                        TAG,
-                        "Inconsistent state: \"favourite\" button was clicked while should be disabled"
-                    )
-                    return@launch
-                }
-                // Smart cast is not that smart
-                is FavouriteState.Determined -> {}
-            }
-            // Instant UI reaction
-            favouritesCache.setFavourite(post.id, FavouriteState.InFly(wasFavourite))
-            try {
-                if (wasFavourite.isFavourite) api.removeFromFavourites(post.id)
-                    .awaitSuccessfulResponse()
-                else api.addToFavourites(post.id).awaitSuccessfulResponse()
-                favouritesCache.setFavourite(
-                    post.id,
-                    FavouriteState.Determined.fromBoolean(!wasFavourite.isFavourite)
-                )
-            } catch (e: ApiException) {
-                // TODO this can also occur when post is already (un)favourite
-                favouritesCache.setFavourite(post.id, wasFavourite)
-                snackbar.enqueueMessage(R.string.unknown_api_error, SnackbarDuration.Long)
-                Log.e(TAG, "An API exception occurred", e)
-            } catch (e: IOException) {
-                favouritesCache.setFavourite(post.id, wasFavourite)
-                Log.e(
-                    TAG,
-                    "IO Error while while trying to (un)favorite post (id=${post.id}, wasFavourite=$wasFavourite)",
-                    e
-                )
-                snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
-            }
+            handleFavouriteChange(favouritesCache, api, snackbar, post)
         }
     }
 

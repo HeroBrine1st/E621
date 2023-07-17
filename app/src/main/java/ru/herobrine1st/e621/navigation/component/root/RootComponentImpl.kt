@@ -126,6 +126,8 @@ class RootComponentImpl(
                     applicationContext,
                     exceptionReporterProvider.value,
                     apiProvider.value,
+                    favouritesCacheProvider.value,
+                    snackbarAdapterProvider.value,
                     instance.mediaOkHttpClientProvider
                 )
             )
