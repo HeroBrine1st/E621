@@ -121,7 +121,7 @@ fun PostActionsRow(
                             Intent.EXTRA_TEXT,
                             "${BuildConfig.DEEP_LINK_BASE_URL}/posts/${post.id}"
                         )
-                        type = "text/uri-list" // https://www.rfc-editor.org/rfc/rfc2483#section-5
+                        type = "text/plain"
                     }, null
                 )
             )
