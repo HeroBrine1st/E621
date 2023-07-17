@@ -36,20 +36,37 @@ private suspend fun <T> Call<T>.awaitResponseInternal(context: CoroutineContext 
     val response = withContext(context) {
         this@awaitResponseInternal.execute()
     }
-    if (response.code() !in 200..399) { // Include redirects
-        val message = kotlin.run {
-            if (response.code() == 404) return@run "Not found"
-            val body = withContext(context) {
-                objectMapper.readValue<ObjectNode>(response.errorBody()!!.charStream())
-            }
-            body.get("message")?.asText() ?: body.toPrettyString()
-        }
 
-        Log.e("API", "Got unsuccessful response: ${response.code()} ${response.message()}")
-        Log.e("API", message)
-        throw ApiException(message, response.code())
+    // Include redirects
+    if (response.code() in 200..399) return response
+
+    // Attempt to get more readable error
+    // At cost of less readable code, of course
+
+    // Maybe it is proven to lie, maybe it is an optimization, idk
+    if (response.code() == 404) {
+        throw ApiException("Not found", 404)
     }
-    return response
+
+    // Try to get JSON with explanation
+    val body = try {
+        withContext(context) {
+            objectMapper.readValue<ObjectNode>(response.errorBody()!!.charStream())
+        }
+    } catch (t: Throwable) {
+        // Suppress, it is not the cause neither the actual error
+        throw ApiException(
+            "Got unsuccessful response with code ${response.code()} and could not get response body",
+            response.code()
+        ).apply {
+            addSuppressed(t)
+        }
+    }
+    throw ApiException(
+        body.get("message")?.asText() ?: body.toPrettyString(),
+        response.code()
+    )
+
 }
 
 suspend fun <T> Call<T>.awaitResponse(context: CoroutineContext = Dispatchers.IO): Response<T> =
