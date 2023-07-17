@@ -259,8 +259,10 @@ fun Post(
                                 }
                             }
                         ) {
-                            SelectionContainer {
+                            if (post.description.isNotBlank()) SelectionContainer {
                                 RenderBB(post.description)
+                            } else {
+                                Text(stringResource(R.string.empty_description))
                             }
                         }
                     }

@@ -149,4 +149,5 @@
     <string name="post_comments_forbidden_auth_needed">Комментарии недоступны без авторизации.</string>
     <string name="settings_search_tags_autocomplete">Подсказки тегов</string>
     <string name="settings_search_tags_autocomplete_desc">Поиск тегов на сервере по мере написания</string>
+    <string name="empty_description">Описание отсутствует</string>
 </resources>

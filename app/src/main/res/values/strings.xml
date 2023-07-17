@@ -152,4 +152,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="post_comments_forbidden_auth_needed">Comments are not available without authorization.</string>
     <string name="settings_search_tags_autocomplete">Tag completion</string>
     <string name="settings_search_tags_autocomplete_desc">Search tags on server as you type</string>
+    <string name="empty_description">There\'s no description</string>
 </resources>
