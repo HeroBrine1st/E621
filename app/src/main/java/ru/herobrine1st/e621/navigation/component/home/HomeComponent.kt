@@ -54,12 +54,14 @@ import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
 
-interface IHomeComponentInstanceMethods {
+interface IHomeComponent {
     val state: HomeComponent.LoginState
 
     fun login(login: String, apiKey: String, callback: (HomeComponent.LoginState) -> Unit = {})
     fun logout(callback: () -> Unit = {})
     fun retryStoredAuth()
+    fun navigateToSearch()
+    fun navigateToFavourites()
 }
 
 class HomeComponent(
@@ -69,7 +71,7 @@ class HomeComponent(
     blacklistRepository: BlacklistRepository,
     private val stackNavigator: StackNavigator<Config>,
     componentContext: ComponentContext,
-) : ComponentContext by componentContext, IHomeComponentInstanceMethods {
+) : ComponentContext by componentContext, IHomeComponent {
 
     private val instance = instanceKeeper.getOrCreate {
         HomeComponentInstance(
@@ -134,8 +136,8 @@ class HomeComponent(
         }
     }
 
-    fun navigateToSearch() = stackNavigator.pushIndexed { Config.Search(index = it) }
-    fun navigateToFavourites() = stackNavigator.pushIndexed { index ->
+    override fun navigateToSearch() = stackNavigator.pushIndexed { Config.Search(index = it) }
+    override fun navigateToFavourites() = stackNavigator.pushIndexed { index ->
         (state as? LoginState.Authorized)?.let {
             Config.PostListing(
                 FavouritesSearchOptions(
