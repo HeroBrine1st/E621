@@ -36,8 +36,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
+import ru.herobrine1st.e621.api.UnsafeAPIUsage
 import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.awaitResponse
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
@@ -50,6 +50,7 @@ import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.credentials
+import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
 
@@ -271,37 +272,46 @@ class HomeComponent(
             }
         }
 
+        @OptIn(UnsafeAPIUsage::class)
         private suspend fun tryCredentials(
             credentials: AuthorizationCredentials // too connected to data store, should probably use own type
         ): LoginState {
             val res = try {
-                api.getUser(credentials.username, credentials.credentials)
-                    .awaitResponse()
-            } catch (e: ApiException) {
-                return when (e.statusCode) {
-                    401 -> LoginState.NoAuth
-                    503 -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
-                    in 500..599 -> LoginState.InternalServerError
-                    else -> {
-                        Log.w(
-                            TAG,
-                            "Unknown API error occurred while authenticating (${e.statusCode} ${e.message})"
-                        )
-                        LoginState.UnknownAPIError
-                    }
-                }
+                api.getUser(credentials.username, credentials.credentials).awaitResponse()
             } catch (e: IOException) {
-                Log.e(
-                    TAG,
-                    "A network exception occurred while checking authorization data",
-                    e
-                )
+                Log.e(TAG, "A network exception occurred while checking authorization data", e)
                 return LoginState.IOError
             }
 
-            assert(res.code() == 200)
-            val body = res.body()!!
-            return LoginState.Authorized(body.get("name").asText(), body.get("id").asInt())
+            if (res.isSuccessful) {
+                val body = res.body()!!
+                return LoginState.Authorized(body.get("name").asText(), body.get("id").asInt())
+            }
+
+            debug {
+                if (!res.isSuccessful) {
+                    Log.d(
+                        TAG,
+                        "An error occurred while authenticating in API (${res.code()} ${res.message()})"
+                    )
+                    withContext(Dispatchers.IO) {
+                        Log.d(TAG, res.errorBody()!!.string())
+                    }
+                }
+            }
+
+            return when (res.code()) {
+                401 -> LoginState.NoAuth
+                503 -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
+                in 500..599 -> LoginState.InternalServerError
+                else -> {
+                    Log.w(
+                        TAG,
+                        "Unknown API error occurred while authenticating (${res.code()} ${res.message()})"
+                    )
+                    LoginState.UnknownAPIError
+                }
+            }
         }
     }
 

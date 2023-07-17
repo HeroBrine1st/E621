@@ -48,7 +48,7 @@ import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
-import ru.herobrine1st.e621.api.awaitResponse
+import ru.herobrine1st.e621.api.awaitSuccessfulResponse
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
@@ -144,8 +144,9 @@ class PostListingComponent(
             // Instant UI reaction
             favouritesCache.setFavourite(post.id, FavouriteState.InFly(wasFavourite))
             try {
-                if (wasFavourite.isFavourite) api.removeFromFavourites(post.id).awaitResponse()
-                else api.addToFavourites(post.id).awaitResponse()
+                if (wasFavourite.isFavourite) api.removeFromFavourites(post.id)
+                    .awaitSuccessfulResponse()
+                else api.addToFavourites(post.id).awaitSuccessfulResponse()
                 favouritesCache.setFavourite(
                     post.id,
                     FavouriteState.Determined.fromBoolean(!wasFavourite.isFavourite)

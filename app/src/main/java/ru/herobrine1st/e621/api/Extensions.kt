@@ -30,12 +30,26 @@ import retrofit2.Response
 import ru.herobrine1st.e621.util.objectMapper
 import kotlin.coroutines.CoroutineContext
 
-private suspend fun <T> Call<T>.awaitResponseInternal(context: CoroutineContext = Dispatchers.IO): Response<T> {
-    // Not really await, but under the hood it uses MainThreadExecutor
-    // No point in overriding it, we have Dispatchers.IO
-    val response = withContext(context) {
-        this@awaitResponseInternal.execute()
-    }
+// Not really await, but under the hood it uses MainThreadExecutor
+// No point in overriding it, we have Dispatchers.IO
+private suspend inline fun <T> Call<T>.awaitResponseInternal(
+    context: CoroutineContext = Dispatchers.IO
+): Response<T> = withContext(context) {
+    execute()
+}
+
+@UnsafeAPIUsage
+suspend fun <T> Call<T>.awaitResponse(
+    context: CoroutineContext = Dispatchers.IO
+) = awaitResponseInternal(context)
+
+/**
+ * Execute call in [context] and assert it to be successful.
+ *
+ * @throws ApiException
+ */
+suspend fun <T> Call<T>.awaitSuccessfulResponse(context: CoroutineContext = Dispatchers.IO): Response<T> {
+    val response = this.awaitResponseInternal(context)
 
     // Include redirects
     if (response.code() in 200..399) return response
@@ -66,14 +80,10 @@ private suspend fun <T> Call<T>.awaitResponseInternal(context: CoroutineContext 
         body.get("message")?.asText() ?: body.toPrettyString(),
         response.code()
     )
-
 }
 
-suspend fun <T> Call<T>.awaitResponse(context: CoroutineContext = Dispatchers.IO): Response<T> =
-    this.awaitResponseInternal(context)
-
 suspend fun <T> Call<T>.await(context: CoroutineContext = Dispatchers.IO): T {
-    val response = this.awaitResponseInternal(context)
+    val response = this.awaitSuccessfulResponse(context)
 
     val body = response.body()
     // 204 is "No Content" meaning body length is 0 bytes and is not "Null Response" :///
@@ -85,3 +95,11 @@ suspend fun <T> Call<T>.await(context: CoroutineContext = Dispatchers.IO): T {
     }
     return body!!
 }
+
+// Just a safeguard against my bad memory
+/**
+ * Indicates that no checking for status code is performed.
+ */
+@RequiresOptIn
+@Retention(AnnotationRetention.BINARY)
+annotation class UnsafeAPIUsage

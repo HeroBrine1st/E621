@@ -120,7 +120,7 @@ interface API {
 }
 
 suspend fun API.getWikiPage(tag: Tag): WikiPage {
-    val firstResponse = getWikiPageId(tag.value).awaitResponse()
+    val firstResponse = getWikiPageId(tag.value).awaitSuccessfulResponse()
     if (firstResponse.raw().priorResponse == null) throw NotFoundException()
     val id = firstResponse.raw().request.url.pathSegments.last().toIntOrNull()
     if (id == null) {
