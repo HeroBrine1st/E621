@@ -388,6 +388,7 @@ fun Post(
                         Divider()
                 }
                 item("uploaded") {
+                    Spacer(Modifier.height(8.dp))
                     // TODO place more information here
                     Text(
                         stringResource(
