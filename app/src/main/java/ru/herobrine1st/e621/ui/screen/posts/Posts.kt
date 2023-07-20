@@ -33,8 +33,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CornerBasedShape
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
@@ -48,7 +46,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
@@ -170,13 +167,6 @@ fun Posts(
                     val post = posts[index] ?: return@items
                     Post(
                         post = post,
-                        // Remove unwanted visual glitch on first post (white corners stick out a mile)
-                        shape = if (index == 0)
-                            MaterialTheme.shapes.medium.copy(
-                                topStart = CornerSize(0.dp),
-                                topEnd = CornerSize(0.dp)
-                            )
-                        else MaterialTheme.shapes.medium,
                         favouriteState = favouritesCache.isFavourite(post),
                         isAuthorized = isAuthorized,
                         onFavouriteChange = {
@@ -207,14 +197,12 @@ fun Posts(
 @Composable
 fun Post(
     post: Post,
-    shape: CornerBasedShape = MaterialTheme.shapes.medium,
     favouriteState: FavouriteState,
     isAuthorized: Boolean,
     onFavouriteChange: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit
 ) {
     ElevatedCard(
-        shape = shape,
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
