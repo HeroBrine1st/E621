@@ -180,13 +180,13 @@ class CollapsibleColumnState(
 
     internal fun setDeviceHeightPx(height: Float) {
         deviceHeightPx = height
-        updateAnimation()
+        if (animatable.lowerBound != null) updateAnimation() // Race condition
     }
 
     internal fun updateContentHeight(collapsedHeight: Float, expandedHeight: Float) {
         if (animatable.lowerBound != collapsedHeight || animatable.upperBound != expandedHeight) {
             animatable.updateBounds(collapsedHeight, expandedHeight)
-            updateAnimation()
+            if (deviceHeightPx != 0f) updateAnimation() // Race condition
             coroutineScope.launch {
                 animatable.snapTo(if (expanded) expandedHeight else collapsedHeight)
             }
