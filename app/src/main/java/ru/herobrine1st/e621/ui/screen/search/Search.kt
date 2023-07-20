@@ -115,7 +115,6 @@ fun Search(
                     component.tags.add(it)
                     tagModificationState = TagModificationState.None
                 }
-
             )
         }
     }
@@ -337,6 +336,29 @@ fun Search(
                     )
                 }
             }
+            item("parent post") {
+                SettingCard(title = stringResource(R.string.parent_post)) {
+                    OutlinedTextField(
+                        value = component.parentPostId.takeIf { it > 0 }?.toString() ?: "",
+                        onValueChange = { value ->
+                            component.parentPostId = value.toIntOrNull()?.takeIf { it > 0 }
+                                ?: return@OutlinedTextField
+                        },
+                        label = { Text(stringResource(R.string.post_id)) },
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { component.parentPostId = -1 }) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = stringResource(R.string.clear)
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
             item("size placeholder for fab") {
                 // FAB size is 56 dp, plus spacing of fab (16 dp * 2 because we want symmetry)
                 // minus spacing between items (8 dp)

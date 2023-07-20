@@ -30,11 +30,13 @@ import kotlinx.parcelize.Parcelize
 import java.time.Instant
 import java.time.OffsetDateTime
 
+typealias PostId = Int
+
 @Parcelize
 @Immutable
 @JsonIgnoreProperties("preview", "flags")
 data class Post(
-    val id: Int,
+    val id: PostId,
     val createdAt: OffsetDateTime,
     val updatedAt: OffsetDateTime?,
     val file: File,

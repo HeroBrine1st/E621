@@ -26,6 +26,7 @@ import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.util.debug
@@ -50,7 +51,8 @@ data class PostsSearchOptions(
     val rating: Set<Rating> = emptySet(),
     val favouritesOf: String? = null, // "favorited_by" in api
     val fileType: FileType? = null,
-    val fileTypeInvert: Boolean = false
+    val fileTypeInvert: Boolean = false,
+    val parent: PostId = -1
 ) : SearchOptions {
     // TODO randomSeed or something like that for Order.RANDOM
 
@@ -64,6 +66,7 @@ data class PostsSearchOptions(
         fileType?.extension?.let { cache += (if (fileTypeInvert) "-" else "") + "type:" + it }
         favouritesOf?.let { cache += "fav:$it" }
         (if (orderAscending) order.ascendingApiName else order.apiName)?.let { cache += "order:$it" }
+        if (parent > 0) cache += "parent:$parent"
 
         return cache.joinToString(" ").debug {
             Log.d(PostsSearchOptions::class.simpleName, "Built query: $this")
@@ -107,7 +110,8 @@ data class PostsSearchOptions(
         var rating: MutableSet<Rating> = mutableSetOf(),
         var favouritesOf: String? = null,
         var fileType: FileType? = null,
-        var fileTypeInvert: Boolean = false
+        var fileTypeInvert: Boolean = false,
+        var parent: PostId = -1
     ) {
         fun build() =
             PostsSearchOptions(
@@ -119,7 +123,8 @@ data class PostsSearchOptions(
                 rating,
                 favouritesOf,
                 fileType,
-                fileTypeInvert
+                fileTypeInvert,
+                parent
             )
 
         companion object {
