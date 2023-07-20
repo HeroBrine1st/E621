@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -75,15 +76,16 @@ fun CollapsibleColumn(
 ) {
     val density = LocalDensity.current
     val collapsedHeightPx = with(density) { collapsedHeight.toPx() }
-    val coroutineScope = rememberCoroutineScope()
 
     SubcomposeLayout { constraints ->
-        // Measurements (obvious)
         val contentMeasured = subcompose(CollapsibleColumnSlot.CONTENT, content).map {
             it.measure(constraints)
         }
+
         val contentHeightPx = contentMeasured.sumOf { it.height }.toFloat()
         val collapsedContentHeightPx = contentHeightPx.coerceAtMost(collapsedHeightPx)
+        state.updateContentHeight(collapsedContentHeightPx, contentHeightPx)
+
         // Effectively `contentHeightPx > collapsedHeightPx`, but slightly faster (i think)
         val buttonMeasured = if (contentHeightPx != collapsedContentHeightPx) {
             subcompose(CollapsibleColumnSlot.BUTTON) {
@@ -92,22 +94,6 @@ fun CollapsibleColumn(
                 }
             }.map { it.measure(constraints) }
         } else emptyList()
-
-        // (Re)initialize animatable
-        // FIXME may leave layout in inconsistent state in some cases when some sizes change
-        // e.g. already expanded and `content` gets bigger
-        // fix is usage of 0f..1f range on animatable
-        if (state.lowerBound != collapsedContentHeightPx || state.upperBound != contentHeightPx)
-            state.updateBounds(
-                collapsedContentHeightPx,
-                contentHeightPx
-            )
-
-        // Actual animation
-        val target = if (state.expanded) contentHeightPx else collapsedContentHeightPx
-        if (state.targetHeight != target) coroutineScope.launch {
-            state.animateTo(target)
-        }
 
         val totalHeight = state.currentHeight.toInt() + buttonMeasured.sumOf { it.height }
         layout(constraints.maxWidth, totalHeight) {
@@ -139,8 +125,9 @@ fun rememberCollapsibleColumnState(expandedInitial: Boolean = false): Collapsibl
     val configuration = LocalConfiguration.current
     val density = LocalDensity.current
 
+    val coroutineScope = rememberCoroutineScope()
     val state = remember {
-        CollapsibleColumnState(expandedInitial)
+        CollapsibleColumnState(expandedInitial, coroutineScope)
     }
 
     LaunchedEffect(configuration.screenHeightDp, density) {
@@ -166,40 +153,25 @@ private fun Preview() {
 
 
 class CollapsibleColumnState(
-    expandedInitial: Boolean = false
+    expandedInitial: Boolean = false,
+    private val coroutineScope: CoroutineScope
 ) {
-    // I don't know if it should be in CollapsibleColumn for the sake of performance
-    // or here for the sake of simplicity (state holder holds everything)
-    // (not even speaking it is not library so this class is not needed at all)
-    // TODO replace it with 0..1f range so that it could also be used with transparency
-    // Use linear animation and map it to spring/etc separately for color and height ?
-    // (also it will remove workaround with bounds)
     private val animatable = Animatable(if (expandedInitial) Float.POSITIVE_INFINITY else 0f)
     private var deviceHeightPx = 0f
 
-    var expanded by mutableStateOf(expandedInitial)
-//    Unneeded public methods
-//    fun expand() {
-//        expanded = true
-//    }
-//
-//    fun collapse() {
-//        expanded = false
-//    }
-//
-//    val isRunning get() = animatable.isRunning
-//    val value get() =
+    private var _expanded by mutableStateOf(expandedInitial)
 
-    internal fun setDeviceHeightPx(height: Float) {
-        deviceHeightPx = height
-    }
+    var expanded
+        get() = _expanded
+        set(v) {
+            _expanded = v
+            handleChange()
+        }
 
-    internal fun updateBounds(lower: Float, upper: Float) = animatable.updateBounds(lower, upper)
-    internal val lowerBound get() = animatable.lowerBound
-    internal val upperBound get() = animatable.upperBound
-    internal suspend fun animateTo(value: Float) {
+    private fun handleChange() = coroutineScope.launch {
+        val value = if (expanded) animatable.upperBound!! else animatable.lowerBound!!
         animatable.animateTo(
-            value,
+            targetValue = value,
             animationSpec = tween(
                 durationMillis = (abs(value - animatable.value) * MS_PER_SCREEN / deviceHeightPx)
                     .roundToInt()
@@ -208,8 +180,20 @@ class CollapsibleColumnState(
         )
     }
 
+    internal fun setDeviceHeightPx(height: Float) {
+        deviceHeightPx = height
+    }
+
+    internal fun updateContentHeight(collapsedHeight: Float, expandedHeight: Float) {
+        if (animatable.lowerBound != collapsedHeight || animatable.upperBound != expandedHeight) {
+            animatable.updateBounds(collapsedHeight, expandedHeight)
+            coroutineScope.launch {
+                animatable.snapTo(if (expanded) expandedHeight else collapsedHeight)
+            }
+        }
+    }
+
     internal val currentHeight get() = animatable.value
-    internal val targetHeight get() = animatable.targetValue
 }
 
 enum class CollapsibleColumnSlot {
