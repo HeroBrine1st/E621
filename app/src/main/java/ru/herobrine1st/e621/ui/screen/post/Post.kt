@@ -104,7 +104,7 @@ fun Post(
 
     if (post == null) {
         Column(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             CircularProgressIndicator()
@@ -171,16 +171,16 @@ fun Post(
             sheetPeekHeight = maxHeight * 0.5f,
             scaffoldState = bottomSheetScaffoldState,
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-        ) { paddingValues ->
+        ) { _ ->
             if (preferences.safeModeEnabled && post.rating.isNotSafe) {
-                Box(
-                    contentAlignment = Alignment.Center,
-                    modifier = Modifier.padding(paddingValues)
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.Explicit, contentDescription = null)
-                        Text(stringResource(R.string.safe_mode_blocks_post))
-                    }
+                    Spacer(Modifier.weight(1f))
+                    Icon(Icons.Default.Explicit, contentDescription = null)
+                    Text(stringResource(R.string.safe_mode_blocks_post))
+                    Spacer(Modifier.weight(1f))
                 }
                 return@BottomSheetScaffold
             }
