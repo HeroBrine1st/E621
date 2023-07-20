@@ -32,6 +32,8 @@ enum class Rating(@StringRes val descriptionId: Int, val apiName: String) {
     @JsonValue
     val shortName = apiName.substring(0, 1)
 
+    inline val isNotSafe get() = this != SAFE
+
     companion object {
         val byAnyName: Map<String, Rating> = HashMap<String, Rating>().apply {
             values().forEach {

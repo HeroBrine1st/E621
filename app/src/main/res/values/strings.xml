@@ -155,4 +155,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="empty_description">There\'s no description</string>
     <string name="parent_post">Parent post</string>
     <string name="post_id">Post id</string>
+    <string name="safe_mode_blocks_post">Can\'t show this post: its rating is incompatible with safe mode.</string>
 </resources>

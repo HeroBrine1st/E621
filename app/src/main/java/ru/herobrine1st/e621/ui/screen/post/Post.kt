@@ -40,6 +40,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.Error
@@ -170,7 +171,20 @@ fun Post(
             sheetPeekHeight = maxHeight * 0.5f,
             scaffoldState = bottomSheetScaffoldState,
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
-        ) { _ ->
+        ) { paddingValues ->
+            if (preferences.safeModeEnabled && post.rating.isNotSafe) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier.padding(paddingValues)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.Explicit, contentDescription = null)
+                        Text(stringResource(R.string.safe_mode_blocks_post))
+                    }
+                }
+                return@BottomSheetScaffold
+            }
+
             // PaddingValues purposely unused because it clutters screen if applied via modifier
             // and lags if applied via contentPadding
             // while has no top padding, so useless
