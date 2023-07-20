@@ -22,10 +22,12 @@ package ru.herobrine1st.e621.ui.component
 
 
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,6 +38,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.SubcomposeLayout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Density
@@ -43,6 +46,11 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.roundToInt
+
+private const val MS_PER_SCREEN = 500
+private const val MINIMUM_MS_FOR_ANIMATION = 250
 
 /**
  * Make [content] collapsible if its height exceeds [collapsedHeight].
@@ -127,8 +135,21 @@ fun CollapsibleColumn(
 }
 
 @Composable
-fun rememberCollapsibleColumnState(expandedInitial: Boolean = false) = remember {
-    CollapsibleColumnState(expandedInitial)
+fun rememberCollapsibleColumnState(expandedInitial: Boolean = false): CollapsibleColumnState {
+    val configuration = LocalConfiguration.current
+    val density = LocalDensity.current
+
+    val state = remember {
+        CollapsibleColumnState(expandedInitial)
+    }
+
+    LaunchedEffect(configuration.screenHeightDp, density) {
+        with(density) {
+            state.setDeviceHeightPx(configuration.screenHeightDp.dp.toPx())
+        }
+    }
+
+    return state
 }
 
 @Preview
@@ -153,7 +174,8 @@ class CollapsibleColumnState(
     // TODO replace it with 0..1f range so that it could also be used with transparency
     // Use linear animation and map it to spring/etc separately for color and height ?
     // (also it will remove workaround with bounds)
-    private val animatable = Animatable(if(expandedInitial) Float.POSITIVE_INFINITY else 0f)
+    private val animatable = Animatable(if (expandedInitial) Float.POSITIVE_INFINITY else 0f)
+    private var deviceHeightPx = 0f
 
     var expanded by mutableStateOf(expandedInitial)
 //    Unneeded public methods
@@ -168,11 +190,22 @@ class CollapsibleColumnState(
 //    val isRunning get() = animatable.isRunning
 //    val value get() =
 
+    internal fun setDeviceHeightPx(height: Float) {
+        deviceHeightPx = height
+    }
+
     internal fun updateBounds(lower: Float, upper: Float) = animatable.updateBounds(lower, upper)
     internal val lowerBound get() = animatable.lowerBound
     internal val upperBound get() = animatable.upperBound
     internal suspend fun animateTo(value: Float) {
-        animatable.animateTo(value)
+        animatable.animateTo(
+            value,
+            animationSpec = tween(
+                durationMillis = (abs(value - animatable.value) * MS_PER_SCREEN / deviceHeightPx)
+                    .roundToInt()
+                    .coerceAtLeast(MINIMUM_MS_FOR_ANIMATION)
+            )
+        )
     }
 
     internal val currentHeight get() = animatable.value
