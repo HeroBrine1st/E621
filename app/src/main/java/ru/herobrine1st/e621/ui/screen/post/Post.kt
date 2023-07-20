@@ -103,9 +103,9 @@ fun Post(
     }
 
     if (post == null) {
-        Column(
+        Box(
             modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally
+            contentAlignment = Alignment.Center
         ) {
             CircularProgressIndicator()
         }
