@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.navigation.component.search
 
 import android.content.Context
-import android.os.Parcelable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -36,7 +35,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.Tokens
@@ -47,11 +45,11 @@ import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 
-const val STATE_KEY = "SEARCH_COMPONENT_STATE_KEY"
+const val SEARCH_OPTIONS_STATE_KEY = "SEARCH_COMPONENT_OPTIONS_STATE_KEY"
 
 class SearchComponent private constructor(
     componentContext: ComponentContext,
-    initialState: StateParcelable,
+    initialSearchOptions: PostsSearchOptions,
     private val navigator: StackNavigator<Config>,
     private val api: API,
     applicationContext: Context
@@ -59,16 +57,16 @@ class SearchComponent private constructor(
 
     private val dataStore = applicationContext.dataStore
 
-    val tags = initialState.searchOptions.run {
+    val tags = initialSearchOptions.run {
         allOf.map { it.value } + anyOf.map { it.asAlternative } + noneOf.map { it.asExcluded }
     }.toMutableStateList()
 
-    var order by mutableStateOf(initialState.searchOptions.order)
-    var orderAscending by mutableStateOf(initialState.searchOptions.orderAscending)
-    val rating = initialState.searchOptions.rating.toMutableStateList()
-    var favouritesOf by mutableStateOf(initialState.searchOptions.favouritesOf ?: "")
-    var fileType by mutableStateOf(initialState.searchOptions.fileType)
-    var fileTypeInvert by mutableStateOf(initialState.searchOptions.fileTypeInvert)
+    var order by mutableStateOf(initialSearchOptions.order)
+    var orderAscending by mutableStateOf(initialSearchOptions.orderAscending)
+    val rating = initialSearchOptions.rating.toMutableStateList()
+    var favouritesOf by mutableStateOf(initialSearchOptions.favouritesOf ?: "")
+    var fileType by mutableStateOf(initialSearchOptions.fileType)
+    var fileTypeInvert by mutableStateOf(initialSearchOptions.fileTypeInvert)
 
     fun tagSuggestionFlow(getCurrentText: () -> String): Flow<List<TagSuggestion>> {
         val currentTextFlow = snapshotFlow {
@@ -104,21 +102,21 @@ class SearchComponent private constructor(
     constructor(
         componentContext: ComponentContext,
         navigator: StackNavigator<Config>,
-        initialPostsSearchOptions: PostsSearchOptions,
+        initialSearchOptions: PostsSearchOptions,
         api: API,
         applicationContext: Context
     ) : this(
         componentContext,
-        componentContext.stateKeeper.consume(STATE_KEY)
-            ?: StateParcelable(initialPostsSearchOptions),
+        componentContext.stateKeeper.consume(SEARCH_OPTIONS_STATE_KEY)
+            ?: initialSearchOptions,
         navigator,
         api,
         applicationContext
     )
 
     init {
-        stateKeeper.register(STATE_KEY) {
-            StateParcelable(makeSearchOptions())
+        stateKeeper.register(SEARCH_OPTIONS_STATE_KEY) {
+            makeSearchOptions()
         }
     }
 
@@ -161,11 +159,6 @@ class SearchComponent private constructor(
     fun proceed() {
         navigator.pushIndexed { Config.PostListing(makeSearchOptions(), index = it) }
     }
-
-    @Parcelize
-    private data class StateParcelable(
-        val searchOptions: PostsSearchOptions
-    ) : Parcelable
 
     data class TagSuggestion(
         val name: Tag,

@@ -97,7 +97,7 @@ class RootComponentImpl(
                 SearchComponent(
                     componentContext = context,
                     navigator = navigation,
-                    initialPostsSearchOptions = configuration.initialSearch,
+                    initialSearchOptions = configuration.initialSearch,
                     api = apiProvider.value,
                     applicationContext = applicationContext
                 )
