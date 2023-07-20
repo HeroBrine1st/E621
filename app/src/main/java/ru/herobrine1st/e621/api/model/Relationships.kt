@@ -27,7 +27,7 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 @Immutable
 data class Relationships(
-    val parentId: Int,
+    val parentId: Int?,
     val hasChildren: Boolean,
     val hasActiveChildren: Boolean,
     val children: List<Int>

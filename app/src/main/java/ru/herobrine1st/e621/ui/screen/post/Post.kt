@@ -368,6 +368,25 @@ fun Post(
                     }
                     Divider()
                 }
+                item("relationships") {
+                    if (post.relationships.parentId != null) TextButton(
+                        onClick = component::openParentPost,
+                        content = {
+                            Text(stringResource(R.string.parent_post))
+                            Spacer(Modifier.weight(1f))
+                        }
+                    )
+                    if (post.relationships.hasChildren) TextButton(
+                        onClick = component::openChildrenPostListing,
+                        content = {
+                            Text(stringResource(R.string.children_posts))
+                            Spacer(Modifier.weight(1f))
+                        }
+                    )
+                    // TODO pool
+                    if (post.relationships.hasChildren || post.relationships.parentId != null)
+                        Divider()
+                }
                 item("uploaded") {
                     // TODO place more information here
                     Text(

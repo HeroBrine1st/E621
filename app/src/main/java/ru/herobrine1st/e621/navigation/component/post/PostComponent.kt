@@ -49,6 +49,7 @@ import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.NormalizedFile
@@ -219,6 +220,30 @@ class PostComponent(
             }
         }
         navigator.pushIndexed { index -> Config.Search(searchOptions, index = index) }
+    }
+
+    fun openParentPost() {
+        navigator.pushIndexed { index ->
+            Config.Post(
+                id = post!!.relationships.parentId!!,
+                post = null,
+                query = PostsSearchOptions(),
+                index = index
+            )
+        }
+    }
+
+    fun openChildrenPostListing() {
+        navigator.pushIndexed { index ->
+            Config.PostListing(
+                search = PostsSearchOptions(
+                    // TODO get safe mode synchronously
+                    // (post listing has filter for safe mode)
+                    parent = post!!.id
+                ),
+                index = index
+            )
+        }
     }
 
     class Instance(

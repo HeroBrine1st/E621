@@ -153,4 +153,5 @@
     <string name="parent_post">Родительский пост</string>
     <string name="post_id">Идентификатор поста</string>
     <string name="safe_mode_blocks_post">Пост не может быть показан: его рейтинг не совместим с безопасным режимом.</string>
+    <string name="children_posts">Дочерние посты</string>
 </resources>
