@@ -200,41 +200,20 @@ fun Settings(
         }
     }
     if (showDataSaverModeDialog) {
-        AlertDialog(
-            onDismissRequest = {
+        DisclaimerDialog(
+            title = { Text(stringResource(R.string.warning)) },
+            text = { Text(stringResource(R.string.data_saver_mode_long_description)) },
+            onApply = {
                 showDataSaverModeDialog = false
-            },
-            icon = {
-                Icon(
-                    Icons.Default.Warning,
-                    contentDescription = stringResource(R.string.warning)
-                )
-            },
-            title = {
-                Text(stringResource(R.string.warning))
-            },
-            text = {
-                Text(stringResource(R.string.data_saver_mode_long_description))
-            },
-            confirmButton = {
-                TextButton(onClick = {
-                    showDataSaverModeDialog = false
-                    coroutineScope.launch {
-                        context.updatePreferences {
-                            dataSaverDisclaimerShown = true
-                            dataSaverModeEnabled = true
-                        }
+                coroutineScope.launch {
+                    context.updatePreferences {
+                        dataSaverDisclaimerShown = true
+                        dataSaverModeEnabled = true
                     }
-                }) {
-                    Text(stringResource(R.string.i_understand))
                 }
             },
-            dismissButton = {
-                TextButton(onClick = {
-                    showDataSaverModeDialog = false
-                }) {
-                    Text(stringResource(R.string.dialog_dismiss))
-                }
+            onDismiss = {
+                showDataSaverModeDialog = false
             }
         )
     } else if (showSafeModeDisclaimer) {
