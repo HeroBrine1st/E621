@@ -185,12 +185,15 @@ fun Post(
                 return@BottomSheetScaffold
             }
 
+            val lazyListState = rememberLazyListState()
+
             // PaddingValues purposely unused because it clutters screen if applied via modifier
             // and lags if applied via contentPadding
             // while has no top padding, so useless
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
-                userScrollEnabled = fullscreenState == FullscreenState.CLOSED
+                userScrollEnabled = fullscreenState == FullscreenState.CLOSED,
+                state = lazyListState
             ) {
                 item("media") {
                     val sample = post.selectSample()
@@ -238,6 +241,8 @@ fun Post(
                 // (it should look great according to my imagination)
                 // P.s. it is not possible with vanilla compose in compose stage; should draw manually
                 item("description") {
+                    val collapsibleColumnState = rememberCollapsibleColumnState()
+
                     Column(
                         modifier = Modifier
                             .padding(8.dp)
@@ -251,19 +256,35 @@ fun Post(
                         Spacer(modifier = Modifier.height(8.dp))
                         CollapsibleColumn(
                             collapsedHeight = this@BoxWithConstraints.maxHeight * DESCRIPTION_COLLAPSED_HEIGHT_FRACTION,
+                            state = collapsibleColumnState,
                             button = { expanded, onClick ->
                                 TextButton(
-                                    onClick = onClick,
+                                    onClick = {
+                                        onClick()
+                                        // was expanded and scrolled slightly past start of description
+                                        if (expanded && lazyListState.firstVisibleItemIndex == 2
+                                            && lazyListState.firstVisibleItemScrollOffset > 0
+                                        ) coroutineScope.launch {
+                                            // FIXME it's too fast
+                                            lazyListState.animateScrollToItem(2)
+                                        }
+                                    },
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
-                                    // TODO expose animation state from CollapsibleColumn and use it here
-                                    val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
+                                    val rotation: Float by animateFloatAsState(
+                                        targetValue = if (expanded) 180f else 360f,
+                                        animationSpec = collapsibleColumnState.animationSpec
+                                    )
                                     Icon(
-                                        Icons.Default.ExpandMore, null, modifier = Modifier
+                                        Icons.Default.ExpandMore, null,
+                                        modifier = Modifier
                                             .padding(start = 4.dp, end = 12.dp)
                                             .rotate(rotation)
                                     )
-                                    Crossfade(expanded) { state ->
+                                    Crossfade(
+                                        targetState = expanded,
+                                        animationSpec = collapsibleColumnState.animationSpec
+                                    ) { state ->
                                         Text(
                                             stringResource(if (!state) R.string.expand else R.string.collapse),
                                             modifier = Modifier.weight(1f)
