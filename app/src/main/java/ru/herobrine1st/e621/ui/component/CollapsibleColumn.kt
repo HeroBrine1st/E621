@@ -47,7 +47,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 import kotlin.math.roundToInt
 
 private const val MS_PER_SCREEN = 500
@@ -168,29 +167,38 @@ class CollapsibleColumnState(
             handleChange()
         }
 
+    var animationSpec = tween<Float>()
+        private set
+
     private fun handleChange() = coroutineScope.launch {
         val value = if (expanded) animatable.upperBound!! else animatable.lowerBound!!
         animatable.animateTo(
             targetValue = value,
-            animationSpec = tween(
-                durationMillis = (abs(value - animatable.value) * MS_PER_SCREEN / deviceHeightPx)
-                    .roundToInt()
-                    .coerceAtLeast(MINIMUM_MS_FOR_ANIMATION)
-            )
+            animationSpec = animationSpec
         )
     }
 
     internal fun setDeviceHeightPx(height: Float) {
         deviceHeightPx = height
+        updateAnimation()
     }
 
     internal fun updateContentHeight(collapsedHeight: Float, expandedHeight: Float) {
         if (animatable.lowerBound != collapsedHeight || animatable.upperBound != expandedHeight) {
             animatable.updateBounds(collapsedHeight, expandedHeight)
+            updateAnimation()
             coroutineScope.launch {
                 animatable.snapTo(if (expanded) expandedHeight else collapsedHeight)
             }
         }
+    }
+
+    private fun updateAnimation() {
+        animationSpec = tween(
+            durationMillis = ((animatable.upperBound!! - animatable.lowerBound!!) * MS_PER_SCREEN / deviceHeightPx)
+                .roundToInt()
+                .coerceAtLeast(MINIMUM_MS_FOR_ANIMATION)
+        )
     }
 
     internal val currentHeight get() = animatable.value
