@@ -152,7 +152,7 @@ private inline fun <T> List<T>.fastFirst(predicate: (T) -> Boolean): T {
 }
 
 class ZoomableState(
-    @FloatRange(from = 1.0) val maxScale: Float = MAX_SCALE_DEFAULT,
+    @FloatRange(from = 1.0) maxScale: Float = MAX_SCALE_DEFAULT,
     initialScale: Float = 1f,
     initialTranslation: Offset = Offset.Zero
 ) : RememberObserver {
@@ -186,27 +186,41 @@ class ZoomableState(
         panVelocityTracker.resetTracking()
     }
 
-    fun handleTransformationGesture(
+    private fun calculateTransformation(
         centroid: Offset,
         pan: Offset,
-        gestureScale: Float,
-        timeMs: Long
-    ) {
-        val oldScale = scale
-        val newScale =
-            (oldScale * gestureScale).coerceIn(
+        scaleCoefficient: Float,
+    ): Pair<Offset, Float> {
+        val scale0 = scale
+        val translation0 = translation
+
+        val scale1 =
+            (scale0 * scaleCoefficient).coerceIn(
                 minimumValue = scaleAnimatable.lowerBound,
                 maximumValue = scaleAnimatable.upperBound
             )
 
-        // upper bound is causing floating to lower right corner when user tries to zoom beyond the limit.
-        val consumedGestureScale = if (newScale != maxScale) gestureScale else newScale / oldScale
-        // I'm not a talented *mathematician*, but it seems like I can prove this formula is right
-        val newTranslation =
-            // Scale, using old centroid as origin
-            (translation - centroid) * consumedGestureScale +
-                    // Use new centroid as origin
-                    centroid + pan
+        val consumedScaleCoefficient =
+            if (scale1 != scaleAnimatable.upperBound) scaleCoefficient else scale1 / scale0
+
+        val translation1 = // Scale, using old centroid as origin
+            (translation0 - centroid) * consumedScaleCoefficient +
+                    centroid + pan // Use new centroid as origin
+
+        return translation1 to scale1
+    }
+
+    fun handleTransformationGesture(
+        centroid: Offset,
+        pan: Offset,
+        scaleCoefficient: Float,
+        timeMs: Long
+    ) {
+        val (newTranslation, newScale) = calculateTransformation(
+            centroid,
+            pan,
+            scaleCoefficient
+        )
 
         panVelocityTracker.addVector(timeMs, pan)
 
@@ -215,7 +229,7 @@ class ZoomableState(
             setTranslationBounds()
             translationAnimatable.snapTo(newTranslation)
         }
-        scaleGesturePerformed = scaleGesturePerformed || gestureScale != 1f
+        scaleGesturePerformed = scaleGesturePerformed || scaleCoefficient != 1f
     }
 
     fun handleGestureEnd() {
@@ -225,7 +239,7 @@ class ZoomableState(
         }
         val lowerBound = translationAnimatable.lowerBound!!
         coroutineScope.launch {
-            // splineBasedDecay is magnifying vectors to one of the axes
+            // splineBasedDecay magnifies vectors to one of the axes
             // exponentialDecay doesn't do that and still feels good
             val result = translationAnimatable.animateDecay(
                 panVelocityTracker.calculateVelocityAsOffset(),
