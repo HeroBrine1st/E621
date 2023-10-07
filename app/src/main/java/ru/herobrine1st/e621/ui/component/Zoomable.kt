@@ -67,14 +67,7 @@ fun Modifier.zoomable(state: ZoomableState) = this
     .pointerInput(state) {
         detectTransformGestures(
             onGestureStart = state::handleGestureStart,
-            onGesture = { centroid, pan, gestureZoom, uptimeMillis ->
-                state.handleTransformationGesture(
-                    centroid,
-                    pan,
-                    gestureZoom,
-                    uptimeMillis
-                )
-            },
+            onGesture = state::handleTransformationGesture,
             onGestureEnd = state::handleGestureEnd,
         )
     }
@@ -102,7 +95,7 @@ private suspend inline fun PointerInputScope.detectTransformGestures(
         var pan = Offset.Zero
         var pastTouchSlop = false
         val touchSlop = viewConfiguration.touchSlop
-        awaitFirstDown(requireUnconsumed = false)
+        awaitFirstDown(requireUnconsumed = false) // TODO Should probably change to true (or add a comment that it should be false)
         onGestureStart()
         do {
             val event = awaitPointerEvent()
