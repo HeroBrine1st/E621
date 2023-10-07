@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.ui.component
 
+import android.util.Log
 import androidx.annotation.FloatRange
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationEndReason
@@ -40,8 +41,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.isUnspecified
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
+import androidx.compose.ui.input.pointer.PointerEvent
+import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.PointerInputScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChanged
@@ -56,12 +61,12 @@ import coil.compose.AsyncImage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import kotlin.contracts.ExperimentalContracts
-import kotlin.contracts.contract
 import kotlin.math.abs
+import kotlin.math.pow
 
 
 const val MAX_SCALE_DEFAULT = 5f
+const val TAG = "Zoomable"
 
 fun Modifier.zoomable(state: ZoomableState) = this
     .pointerInput(state) {
@@ -91,58 +96,107 @@ private suspend inline fun PointerInputScope.detectTransformGestures(
     crossinline onGestureEnd: () -> Unit = {}
 ) {
     awaitEachGesture {
-        var zoom = 1f
-        var pan = Offset.Zero
-        var pastTouchSlop = false
-        val touchSlop = viewConfiguration.touchSlop
-        awaitFirstDown(requireUnconsumed = false) // TODO Should probably change to true (or add a comment that it should be false)
+        var cumZoom = 1f
+        var cumPan = Offset.Zero
+        var firstGestureIsTransformation = false
+        val first = awaitFirstDown()
         onGestureStart()
-        do {
-            val event = awaitPointerEvent()
-            val canceled = event.changes.fastAny { it.isConsumed }
-            if (!canceled) {
-                val zoomChange = event.calculateZoom()
-                val panChange = event.calculatePan()
 
-                if (!pastTouchSlop) {
-                    zoom *= zoomChange
-                    pan += panChange
+        forEachEventUntilReleased { event ->
+            val zoomChange = event.calculateZoom()
+            val panChange = event.calculatePan()
 
-                    val centroidSize = event.calculateCentroidSize(useCurrent = false)
-                    val zoomMotion = abs(1 - zoom) * centroidSize
-                    val panMotion = pan.getDistance()
+            if (!firstGestureIsTransformation) {
+                cumZoom *= zoomChange
+                cumPan += panChange
 
-                    if (zoomMotion > touchSlop || panMotion > touchSlop) {
-                        pastTouchSlop = true
+                val centroidSize = event.calculateCentroidSize(useCurrent = false)
+                val zoomMotion = abs(1 - cumZoom) * centroidSize
+                val panMotion = cumPan.getDistance()
+
+                if (zoomMotion > viewConfiguration.touchSlop || panMotion > viewConfiguration.touchSlop) {
+                    firstGestureIsTransformation = true
+                } else return@forEachEventUntilReleased
+            }
+            // uncomment in case of strange bugs, also remove "return" above
+            //if (pastTouchSlop) {
+            val centroid = event.calculateCentroid(useCurrent = false)
+            if (zoomChange != 1f || panChange != Offset.Zero)
+                onGesture(
+                    centroid,
+                    panChange,
+                    zoomChange,
+                    event.uptimeMillis
+                )
+            event.changes.fastForEach {
+                if (it.positionChanged()) it.consume()
+            }
+            //}
+        }
+
+        run {
+            if (!firstGestureIsTransformation) {
+                val second =
+                    this@awaitEachGesture.withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
+                        var change: PointerInputChange
+                        do {
+                            change = awaitFirstDown()
+                            if (change.uptimeMillis - first.uptimeMillis >= viewConfiguration.doubleTapMinTimeMillis)
+                                break
+                            // It does cancel this coroutine after timeout, but just in case
+                        } while (change.uptimeMillis <= first.uptimeMillis + viewConfiguration.doubleTapTimeoutMillis)
+                        change
+                    } ?: return@run // it is a simple tap
+
+                val centroid = second.position
+                var secondGestureIsScaling = false
+                cumPan = Offset.Zero
+                var lastUptimeMillis: Long = 0
+
+                if (centroid.isUnspecified) return@run // silently "return and run" (:D) if that ever occurs
+
+                this@awaitEachGesture.forEachEventUntilReleased { event ->
+                    lastUptimeMillis = event.uptimeMillis
+                    val pan = event.calculatePan()
+
+                    if (!secondGestureIsScaling) {
+                        cumPan += pan
+                        if (cumPan.getDistance() > viewConfiguration.touchSlop) {
+                            secondGestureIsScaling = true
+                        } else return@forEachEventUntilReleased
+
                     }
+                    // TODO use DPI to make this behavior similar on every phone
+                    //      but investigate whether it is required first.
+                    //      it is probably not possible to do a "objects under the finger follow the finger", but I didn't investigate it.
+                    // pow is used because a^x * a^y = a^(x+y), where a is constant.
+                    val scaleCoefficient = 1.005f.pow(pan.y)
+
+                    onGesture(centroid, Offset.Zero, scaleCoefficient, event.uptimeMillis)
                 }
 
-                if (pastTouchSlop) {
-                    val centroid = event.calculateCentroid(useCurrent = false)
-                    if (zoomChange != 1f || panChange != Offset.Zero)
-                        onGesture(
-                            centroid,
-                            panChange,
-                            zoomChange,
-                            event.changes.fastFirst { it.positionChanged() }.uptimeMillis
-                        )
-                    event.changes.fastForEach {
-                        if (it.positionChanged()) it.consume()
-                    }
+                if (!secondGestureIsScaling && lastUptimeMillis - second.uptimeMillis < viewConfiguration.longPressTimeoutMillis) {
+                    // TODO double-tap
+                    Log.d(TAG, "Double tap detected")
                 }
             }
-        } while (!canceled && event.changes.fastAny { it.pressed })
+        }
+
         onGestureEnd()
+
     }
 }
 
-@Suppress("BanInlineOptIn")
-@OptIn(ExperimentalContracts::class)
-private inline fun <T> List<T>.fastFirst(predicate: (T) -> Boolean): T {
-    contract { callsInPlace(predicate) }
-    fastForEach { if (predicate(it)) return it }
-    throw NoSuchElementException("Collection contains no element matching the predicate.")
+private suspend inline fun AwaitPointerEventScope.forEachEventUntilReleased(block: (PointerEvent) -> Unit) {
+    do {
+        val event = awaitPointerEvent()
+        if (event.changes.fastAny { it.isConsumed })
+            break
+        block(event)
+    } while (event.changes.fastAny { it.pressed })
 }
+
+val PointerEvent.uptimeMillis get() = this.changes[0].uptimeMillis
 
 class ZoomableState(
     @FloatRange(from = 1.0) maxScale: Float = MAX_SCALE_DEFAULT,
