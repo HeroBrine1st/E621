@@ -174,6 +174,10 @@ private suspend inline fun PointerInputScope.detectTransformGestures(
                     val scaleCoefficient = 1.005f.pow(pan.y)
 
                     onGesture(centroid, Offset.Zero, scaleCoefficient, event.uptimeMillis)
+
+                    event.changes.fastForEach {
+                        if (it.positionChanged()) it.consume()
+                    }
                 }
 
                 if (!secondGestureIsScaling && lastUptimeMillis - second.uptimeMillis < viewConfiguration.longPressTimeoutMillis) {
