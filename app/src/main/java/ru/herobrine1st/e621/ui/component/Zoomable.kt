@@ -120,14 +120,15 @@ private suspend inline fun PointerInputScope.detectTransformGestures(
             }
             // uncomment in case of strange bugs, also remove "return" above
             //if (pastTouchSlop) {
-            val centroid = event.calculateCentroid(useCurrent = false)
-            if (zoomChange != 1f || panChange != Offset.Zero)
+            if (zoomChange != 1f || panChange != Offset.Zero) {
+                val centroid = event.calculateCentroid(useCurrent = false)
                 onGesture(
                     centroid,
                     panChange,
                     zoomChange,
                     event.uptimeMillis
                 )
+            }
             event.changes.fastForEach {
                 if (it.positionChanged()) it.consume()
             }
