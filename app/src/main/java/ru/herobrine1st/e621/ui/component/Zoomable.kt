@@ -20,12 +20,13 @@
 
 package ru.herobrine1st.e621.ui.component
 
-import android.util.Log
 import androidx.annotation.FloatRange
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.AnimationEndReason
 import androidx.compose.animation.core.VectorConverter
+import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.calculateCentroid
@@ -63,6 +64,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.pow
+import kotlin.math.sqrt
 
 
 const val MAX_SCALE_DEFAULT = 5f
@@ -74,6 +76,7 @@ fun Modifier.zoomable(state: ZoomableState) = this
             onGestureStart = state::handleGestureStart,
             onGesture = state::handleTransformationGesture,
             onGestureEnd = state::handleGestureEnd,
+            onDoubleTap = state::onDoubleTap
         )
     }
     .graphicsLayer {
@@ -93,7 +96,8 @@ fun Modifier.zoomable(state: ZoomableState) = this
 private suspend inline fun PointerInputScope.detectTransformGestures(
     crossinline onGestureStart: () -> Unit = {},
     crossinline onGesture: (centroid: Offset, pan: Offset, zoom: Float, uptimeMillis: Long) -> Unit,
-    crossinline onGestureEnd: () -> Unit = {}
+    crossinline onGestureEnd: () -> Unit = {},
+    crossinline onDoubleTap: (position: Offset) -> Unit = {},
 ) {
     awaitEachGesture {
         var cumZoom = 1f
@@ -181,8 +185,7 @@ private suspend inline fun PointerInputScope.detectTransformGestures(
                 }
 
                 if (!secondGestureIsScaling && lastUptimeMillis - second.uptimeMillis < viewConfiguration.longPressTimeoutMillis) {
-                    // TODO double-tap
-                    Log.d(TAG, "Double tap detected")
+                    onDoubleTap(centroid)
                 }
             }
         }
@@ -206,7 +209,12 @@ val PointerEvent.uptimeMillis get() = this.changes[0].uptimeMillis
 class ZoomableState(
     @FloatRange(from = 1.0) maxScale: Float = MAX_SCALE_DEFAULT,
     initialScale: Float = 1f,
-    initialTranslation: Offset = Offset.Zero
+    initialTranslation: Offset = Offset.Zero,
+    private val zoomSteps: List<Float> = listOf(
+        1f,
+        sqrt(maxScale), // half the max zoom
+        // maxScale
+    )
 ) : RememberObserver {
     // TODO saveable
     // This class assumes that transformOrigin is (0;0)
@@ -313,6 +321,64 @@ class ZoomableState(
     fun onSizeChanged(intSize: IntSize) {
         size = intSize
         setTranslationBounds()
+    }
+
+    fun onDoubleTap(position: Offset) {
+        // This algorithm simulates user performing manual scale gesture, reusing the code written for that.
+
+        // It probably can be optimized, i.e. we can drop normalization of the scale by dropping multiplication
+        //     (or making it optional, or copying code - whatever) in calculateTransformation,
+        //     but it is not worth it, I think.
+
+        // Here, normalization is division of scale by initialScale. This algorithm requires that
+        //     scale initially is equal to 1f, and that requirement is fulfilled by normalization.
+
+        // Also, I guess, there can be some mathematical "model" for this animation, like I did once
+        //     to create exact formula for transformation (which turned out to be extremely simple,
+        //     in contrast with the formula from google's example for transformation gestures).
+        // If so, it then probably can be optimized further.
+
+        // Code cleanup is probably not possible or requires duplicating code. I already tried to
+        //     calculate initial value of [animate] by using log(initialScale, base = resultingScale).
+        //     It eliminates the need for normalization, but then it is mathematically
+        //     not possible to scale back to default (1f), probably requiring
+        //     another normalization.. you got it.
+        // One day I'll read this all with a clean head and clean it up..
+        //
+        // Now it just works.
+
+        val initialScale = scale
+        coroutineScope.launch {
+            // Take next step, go to first if nothing found
+            val stepIndex = zoomSteps.indexOfFirst { it > initialScale }.let {
+                if (it == -1) 0
+                else it % zoomSteps.size
+            }
+            val resultingScale = zoomSteps[stepIndex]
+            // Normalize: this algorithm requires that scale is 1f initially
+            val cumulativeScaleRequired = resultingScale / initialScale
+
+            animate(0f, 1f, animationSpec = tween()) { parameter, _ ->
+                val totalScale = cumulativeScaleRequired.pow(parameter)
+                // The same as `totalScale / (scale / initialScale)`. `scale / initialScale` is normalization too.
+                // Calculating "amount of relative zoom", which will be then multiplied back
+                //     and divided forth by [calculateTransformation]. That's where optimization is possible.
+                val scale = totalScale * initialScale / scale
+
+                // Reused code for human gestures follows
+                val (newTranslation, newScale) = calculateTransformation(
+                    centroid = position,
+                    pan = Offset.Zero,
+                    scaleCoefficient = scale
+                )
+
+                this@launch.launch {
+                    scaleAnimatable.snapTo(newScale)
+                    setTranslationBounds()
+                    translationAnimatable.snapTo(newTranslation)
+                }
+            }
+        }
     }
 
     private fun setTranslationBounds() {
