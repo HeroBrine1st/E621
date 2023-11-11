@@ -138,6 +138,7 @@ fun Posts(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 endOfPagePlaceholder(posts.loadState.prepend)
+                // TODO add info about pool here, getting that info from component
                 if (posts.itemCount == 0) {
                     item {
                         Spacer(Modifier.height(4.dp))

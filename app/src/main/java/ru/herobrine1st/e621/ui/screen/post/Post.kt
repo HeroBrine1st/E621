@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.*
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
@@ -67,6 +68,7 @@ import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.selectSample
+import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.*
@@ -74,6 +76,7 @@ import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
+import ru.herobrine1st.e621.ui.screen.post.component.PoolsDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.util.text
@@ -144,6 +147,16 @@ fun Post(
         bottomSheetState = bottomSheetState,
         snackbarHostState = screenSharedState.snackbarHostState
     )
+
+    val dialog by component.dialog.subscribeAsState()
+
+    when (val dialogComponent = dialog.child?.instance) {
+        is PoolsDialogComponent -> {
+            PoolsDialog(component = dialogComponent)
+        }
+
+        null -> {}
+    }
 
     BoxWithConstraints {
         BottomSheetScaffold(
@@ -383,8 +396,22 @@ fun Post(
                             Spacer(Modifier.weight(1f))
                         }
                     )
-                    // TODO pool
-                    if (post.relationships.hasChildren || post.relationships.parentId != null)
+
+                    if (post.pools.isNotEmpty()) {
+                        TextButton(
+                            onClick = component::openPools,
+                            content = {
+                                Text(
+                                    if (post.pools.size == 1)
+                                        stringResource(R.string.post_has_pool)
+                                    else stringResource(R.string.post_has_pools, post.pools.size)
+                                )
+                                Spacer(Modifier.weight(1f))
+                            }
+                        )
+                    }
+
+                    if (post.relationships.hasChildren || post.relationships.parentId != null || post.pools.isNotEmpty())
                         Divider()
                 }
                 item("uploaded") {

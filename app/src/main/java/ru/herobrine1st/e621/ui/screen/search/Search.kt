@@ -51,6 +51,7 @@ import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
+import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.PostCommentsEndpoint
 import ru.herobrine1st.e621.api.model.PostEndpoint
 import ru.herobrine1st.e621.api.model.PostVoteEndpoint
@@ -336,6 +337,8 @@ fun Search(
                     )
                 }
             }
+
+            // TODO make both chips that can be dismissed to clear a field
             item("parent post") {
                 SettingCard(title = stringResource(R.string.parent_post)) {
                     OutlinedTextField(
@@ -348,6 +351,29 @@ fun Search(
                         singleLine = true,
                         trailingIcon = {
                             IconButton(onClick = { component.parentPostId = -1 }) {
+                                Icon(
+                                    Icons.Default.Clear,
+                                    contentDescription = stringResource(R.string.clear)
+                                )
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+
+            item("pool") {
+                SettingCard(title = stringResource(R.string.search_pool)) {
+                    OutlinedTextField(
+                        value = component.poolId.takeIf { it > 0 }?.toString() ?: "",
+                        onValueChange = { value ->
+                            component.poolId = value.toIntOrNull()?.takeIf { it > 0 }
+                                ?: return@OutlinedTextField
+                        },
+                        label = { Text(stringResource(R.string.search_pool_id)) },
+                        singleLine = true,
+                        trailingIcon = {
+                            IconButton(onClick = { component.poolId = -1 }) {
                                 Icon(
                                     Icons.Default.Clear,
                                     contentDescription = stringResource(R.string.clear)
@@ -435,6 +461,8 @@ fun SearchPreview() {
                         query: String,
                         expiry: Int
                     ): Call<List<TagAutocompleteSuggestion>> = error("Not yet implemented")
+
+                    override fun getPool(poolId: Int): Call<Pool> = error("Not yet implemented")
                 },
                 applicationContext = LocalContext.current.applicationContext
             )

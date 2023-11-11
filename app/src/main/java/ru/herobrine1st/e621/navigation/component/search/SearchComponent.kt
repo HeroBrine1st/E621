@@ -68,6 +68,7 @@ class SearchComponent private constructor(
     var fileType by mutableStateOf(initialSearchOptions.fileType)
     var fileTypeInvert by mutableStateOf(initialSearchOptions.fileTypeInvert)
     var parentPostId by mutableStateOf(initialSearchOptions.parent)
+    var poolId by mutableStateOf(initialSearchOptions.poolId)
 
     fun tagSuggestionFlow(getCurrentText: () -> String): Flow<List<TagSuggestion>> {
         val currentTextFlow = snapshotFlow {
@@ -154,7 +155,8 @@ class SearchComponent private constructor(
             favouritesOf = favouritesOf.ifBlank { null },
             fileType = fileType,
             fileTypeInvert = fileTypeInvert,
-            parent = parentPostId
+            parent = parentPostId,
+            poolId = poolId
         )
     }
 

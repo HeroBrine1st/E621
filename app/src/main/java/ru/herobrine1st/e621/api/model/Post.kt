@@ -52,7 +52,7 @@ data class Post(
     @JsonProperty("fav_count")
     val favoriteCount: Int,
     val sources: List<String>,
-    val pools: List<Int>,
+    val pools: List<PoolId>,
     val relationships: Relationships,
     val approverId: Int,
     val uploaderId: Int,

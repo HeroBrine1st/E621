@@ -117,6 +117,10 @@ interface API {
         @Query("search[name_matches]") query: String, // 3 or more characters required on the API side
         @Query("expiry") expiry: Int = 7 // idk what it is, use default from site.
     ): Call<List<TagAutocompleteSuggestion>>
+
+    @CheckResult
+    @GET("/pools/{poolId}.json")
+    fun getPool(@Path("poolId") poolId: Int): Call<Pool>
 }
 
 suspend fun API.getWikiPage(tag: Tag): WikiPage {

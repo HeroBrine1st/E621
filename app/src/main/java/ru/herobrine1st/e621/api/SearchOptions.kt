@@ -25,6 +25,7 @@ import android.util.Log
 import kotlinx.parcelize.Parcelize
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
+import ru.herobrine1st.e621.api.model.PoolId
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
@@ -52,7 +53,8 @@ data class PostsSearchOptions(
     val favouritesOf: String? = null, // "favorited_by" in api
     val fileType: FileType? = null,
     val fileTypeInvert: Boolean = false,
-    val parent: PostId = -1
+    val parent: PostId = -1,
+    val poolId: PoolId = -1
 ) : SearchOptions {
     // TODO randomSeed or something like that for Order.RANDOM
 
@@ -67,6 +69,7 @@ data class PostsSearchOptions(
         favouritesOf?.let { cache += "fav:$it" }
         (if (orderAscending) order.ascendingApiName else order.apiName)?.let { cache += "order:$it" }
         if (parent > 0) cache += "parent:$parent"
+        if (poolId > 0) cache += "pool:$poolId"
 
         return cache.joinToString(" ").debug {
             Log.d(PostsSearchOptions::class.simpleName, "Built query: $this")
@@ -111,7 +114,8 @@ data class PostsSearchOptions(
         var favouritesOf: String? = null,
         var fileType: FileType? = null,
         var fileTypeInvert: Boolean = false,
-        var parent: PostId = -1
+        var parent: PostId = -1,
+        var poolId: PoolId = -1,
     ) {
         fun build() =
             PostsSearchOptions(
@@ -124,7 +128,8 @@ data class PostsSearchOptions(
                 favouritesOf,
                 fileType,
                 fileTypeInvert,
-                parent
+                parent,
+                poolId
             )
 
         companion object {
@@ -137,7 +142,11 @@ data class PostsSearchOptions(
                         order,
                         orderAscending,
                         rating.toMutableSet(),
-                        favouritesOf
+                        favouritesOf,
+                        fileType,
+                        fileTypeInvert,
+                        parent,
+                        poolId
                     )
                 }
 

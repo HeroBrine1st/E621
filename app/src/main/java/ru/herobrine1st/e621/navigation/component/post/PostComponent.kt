@@ -34,10 +34,16 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
+import com.arkivanov.decompose.router.slot.ChildSlot
+import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.childSlot
+import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigator
+import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
+import com.arkivanov.essenty.parcelable.Parcelable
 import com.arkivanov.essenty.statekeeper.consume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +52,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
@@ -53,6 +60,8 @@ import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.NormalizedFile
+import ru.herobrine1st.e621.api.model.Order
+import ru.herobrine1st.e621.api.model.PoolId
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.selectSample
@@ -91,6 +100,22 @@ class PostComponent(
     }
 
     private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+
+    private val slotNavigation = SlotNavigation<PoolsDialogConfig>()
+
+    val dialog: Value<ChildSlot<PoolsDialogConfig, PoolsDialogComponent>> = childSlot(
+        source = slotNavigation,
+        handleBackButton = true,
+        childFactory = { _, componentContext ->
+            return@childSlot PoolsDialogComponent(
+                componentContext = componentContext,
+                api = api,
+                pools = post!!.pools,
+                openPool = ::openPool,
+                close = ::closePoolDialog
+            )
+        }
+    )
 
     // private var rememberedPositionMs = -1L
     var post by mutableStateOf(initialPost)
@@ -246,6 +271,35 @@ class PostComponent(
         }
     }
 
+    fun openPools() {
+        val post = post!!
+        post.pools.singleOrNull()?.let {
+            openPool(it)
+            return
+        }
+        slotNavigation.navigate { PoolsDialogConfig }
+    }
+
+    private fun openPool(id: PoolId) {
+        closePoolDialog()
+        // TODO find a way to get posts in right order, downloading them in the same API call
+        //      because pool may be ordered differently to order:id
+        // It is known that there's a way to get order of posts, but not ordered posts themselves.
+        // If it isn't possible, user feedback is required *before* any workarounds are implemented.
+        // Particularly, there needs to find pool with that order anomaly to test hypothetical workarounds.
+        val searchOptions = PostsSearchOptions(
+            order = Order.NEWEST_TO_OLDEST,
+            orderAscending = true, // thus oldest to newest
+            poolId = id
+        )
+        Log.d(TAG, "Making search options for pool $id: $searchOptions")
+        navigator.pushIndexed { index -> Config.PostListing(searchOptions, index = index) }
+    }
+
+    private fun closePoolDialog() {
+        slotNavigation.navigate { null }
+    }
+
     class Instance(
         postId: Int,
         api: API,
@@ -263,3 +317,6 @@ class PostComponent(
         val commentsFlow = pager.flow.cachedIn(lifecycleScope)
     }
 }
+
+@Parcelize
+object PoolsDialogConfig: Parcelable

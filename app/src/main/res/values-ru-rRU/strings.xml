@@ -154,4 +154,9 @@
     <string name="post_id">Идентификатор поста</string>
     <string name="safe_mode_blocks_post">Пост не может быть показан: его рейтинг не совместим с безопасным режимом.</string>
     <string name="children_posts">Дочерние посты</string>
+    <string name="post_has_pool">Коллекция этого поста</string>
+    <string name="post_has_pools">Коллекции этого поста (%d)</string>
+    <string name="pools_dialog_select_pool">Выберите коллекцию для просмотра</string>
+    <string name="search_pool">Коллекция</string>
+    <string name="search_pool_id">Идентификатор коллекции</string>
 </resources>
