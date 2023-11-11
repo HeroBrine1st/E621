@@ -426,7 +426,10 @@ class VelocityTrackerDifferential {
     }
 
     fun calculateVelocityAsOffset(): Offset {
-        return Offset(xVelocityTracker.calculateVelocity(), yVelocityTracker.calculateVelocity())
+        return Offset(
+            xVelocityTracker.calculateVelocity(),
+            yVelocityTracker.calculateVelocity()
+        )
     }
 
     fun resetTracking() {
@@ -440,8 +443,12 @@ class VelocityTrackerDifferential {
 fun rememberZoomableState(
     @FloatRange(from = 1.0) maxScale: Float = MAX_SCALE_DEFAULT,
     initialScale: Float = 1f,
-    initialTranslation: Offset = Offset.Zero
-) = remember { ZoomableState(maxScale, initialScale, initialTranslation) }
+    initialTranslation: Offset = Offset.Zero,
+    zoomSteps: List<Float> = listOf(
+        1f,
+        sqrt(maxScale)
+    )
+) = remember { ZoomableState(maxScale, initialScale, initialTranslation, zoomSteps) }
 
 
 @Preview
