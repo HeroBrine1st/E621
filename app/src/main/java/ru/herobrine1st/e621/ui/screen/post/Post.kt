@@ -391,10 +391,10 @@ fun Post(
                             Spacer(Modifier.weight(1f))
                         }
                     )
-                    if (post.relationships.hasChildren) TextButton(
+                    if (post.relationships.hasChildren && post.relationships.children.isNotEmpty()) TextButton(
                         onClick = component::openChildrenPostListing,
                         content = {
-                            Text(stringResource(R.string.children_posts))
+                            Text(stringResource(R.string.children_posts, post.relationships.children.size))
                             Spacer(Modifier.weight(1f))
                         }
                     )

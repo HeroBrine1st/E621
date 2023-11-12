@@ -259,12 +259,24 @@ class PostComponent(
     }
 
     fun openChildrenPostListing() {
+        val post = post!!
+        post.relationships.children.singleOrNull()?.let { id ->
+            navigator.pushIndexed { it ->
+                Config.Post(
+                    id = id,
+                    post = null,
+                    query = PostsSearchOptions(),
+                    index = it
+                )
+            }
+            return
+        }
         navigator.pushIndexed { index ->
             Config.PostListing(
                 search = PostsSearchOptions(
                     // TODO get safe mode synchronously
                     // (post listing has filter for safe mode)
-                    parent = post!!.id
+                    parent = post.id
                 ),
                 index = index
             )
@@ -319,4 +331,4 @@ class PostComponent(
 }
 
 @Parcelize
-object PoolsDialogConfig: Parcelable
+object PoolsDialogConfig : Parcelable
