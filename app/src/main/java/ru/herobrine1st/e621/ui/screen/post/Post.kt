@@ -270,13 +270,15 @@ fun Post(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     // TODO expose animation state from CollapsibleColumn and use it here
-                                    val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f)
+                                    val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f,
+                                        label = "Expand-collapse button icon rotation"
+                                    )
                                     Icon(
                                         Icons.Default.ExpandMore, null, modifier = Modifier
                                             .padding(start = 4.dp, end = 12.dp)
                                             .rotate(rotation)
                                     )
-                                    Crossfade(expanded) { state ->
+                                    Crossfade(expanded, label = "Expand-collapse button text crossfade") { state ->
                                         Text(
                                             stringResource(if (!state) R.string.expand else R.string.collapse),
                                             modifier = Modifier.weight(1f)
@@ -503,7 +505,7 @@ fun CommentsBottomSheetContent(
         if (!loadComments) return@Box
 
         val comments = commentsFlow.collectAsLazyPagingItems()
-        Crossfade(comments.loadState.refresh is LoadState.Error) {
+        Crossfade(comments.loadState.refresh is LoadState.Error, label = "Comments sheet animation between error and content") {
             if (it) Column(
                 Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
