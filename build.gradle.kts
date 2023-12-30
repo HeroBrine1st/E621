@@ -8,6 +8,7 @@ plugins {
     id("com.google.protobuf") version "0.9.4" apply false // 0.9.2 is broken
     id("com.mikepenz.aboutlibraries.plugin") version "10.9.2" apply false
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21" apply false
+    id("androidx.room") version "2.6.1" apply false
 }
 
 buildscript {

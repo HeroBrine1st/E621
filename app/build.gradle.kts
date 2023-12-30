@@ -13,6 +13,7 @@ plugins {
     id("com.google.protobuf")
     id("com.mikepenz.aboutlibraries.plugin")
     kotlin("plugin.serialization")
+    id("androidx.room")
 }
 
 val kotlinVersion = "1.9.21"
@@ -235,12 +236,12 @@ protobuf {
     }
 }
 
-ksp {
-    arg("room.schemaLocation", "$projectDir/schemas")
-}
-
 kapt {
     correctErrorTypes = true
+}
+
+room {
+    schemaDirectory("$projectDir/schemas")
 }
 
 // KAPT and KSP use gradle JDK version for that
