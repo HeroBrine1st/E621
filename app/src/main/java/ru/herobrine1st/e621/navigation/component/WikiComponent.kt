@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.navigation.component
 
-import android.os.Parcelable
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.runtime.getValue
@@ -28,12 +27,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
-import com.arkivanov.essenty.statekeeper.consume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.parcelize.IgnoredOnParcel
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
@@ -67,10 +66,10 @@ class WikiComponent(
     var state by mutableStateOf<WikiState>(WikiState.Loading)
 
     init {
-        stateKeeper.register(WIKI_STATE_TAG) {
+        stateKeeper.register(key = WIKI_STATE_TAG, strategy = WikiState.serializer()) {
             state
         }
-        val restoredState = stateKeeper.consume<WikiState>(WIKI_STATE_TAG)
+        val restoredState = stateKeeper.consume(WIKI_STATE_TAG, strategy = WikiState.serializer())
         if (restoredState !is WikiState.Success) {
             fetchWikiPage()
         } else {
@@ -130,15 +129,16 @@ class WikiComponent(
     }
 }
 
-@Parcelize
-sealed interface WikiState : Parcelable {
+@Serializable
+@Polymorphic
+sealed interface WikiState {
 
-    @Parcelize
-    object Loading : WikiState
+    @Serializable
+    data object Loading : WikiState
 
-    @Parcelize
+    @Serializable
     class Success(val result: WikiPage) : WikiState {
-        @IgnoredOnParcel // MessageData is not parcelable and should not be
+        @Transient // it is a cache
         lateinit var parsed: List<MessageData<*>>
             private set
 
@@ -150,9 +150,9 @@ sealed interface WikiState : Parcelable {
         val isParsed get() = ::parsed.isInitialized
     }
 
-    @Parcelize
-    object Failure : WikiState
+    @Serializable
+    data object Failure : WikiState
 
-    @Parcelize
-    object NotFound : WikiState
+    @Serializable
+    data object NotFound : WikiState
 }

@@ -20,34 +20,35 @@
 
 package ru.herobrine1st.e621.api.model
 
-import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonProperty
-import kotlinx.parcelize.IgnoredOnParcel
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import java.time.Instant
-import java.time.OffsetDateTime
 
 typealias PostId = Int
 
-@Parcelize
 @Immutable
 @JsonIgnoreProperties("preview", "flags")
+@Serializable
 data class Post(
     val id: PostId,
-    val createdAt: OffsetDateTime,
-    val updatedAt: OffsetDateTime?,
+    val createdAt: kotlinx.datetime.Instant,
+    val updatedAt: kotlinx.datetime.Instant?,
     val file: File,
-    // preview is not applicable
+    // STOPSHIP: preview will break deserialization
+    // TODO val preview: Preview
     val sample: Sample,
     val score: Score,
     val tags: Tags,
     val lockedTags: List<String> = emptyList(),
     @JsonProperty("change_seq")
     val changeSequence: Int,
-    // val flags: Flags, // No class
+    // STOPSHIP: flags will break deserialization
+    // TODO val flags: Flags
     val rating: Rating,
     @JsonProperty("fav_count")
     val favoriteCount: Int,
@@ -58,22 +59,24 @@ data class Post(
     val uploaderId: Int,
     val description: String,
     val commentCount: Int,
-    @JsonProperty(required = false)
-    val isFavorited: Boolean = false,
+    @Suppress("SpellCheckingInspection")
+    @JsonProperty("isFavorited", required = false)
+    @SerialName("isFavorited")
+    val isFavourite: Boolean = false,
     @JsonProperty(required = false)
     val hasNotes: Boolean = false,
     val duration: Float = 0f
-) : Parcelable {
-    @IgnoredOnParcel
+) {
+    @Transient
     @JsonIgnore
     val normalizedSample = NormalizedFile(sample)
 
-    @IgnoredOnParcel
+    @Transient
     @JsonIgnore
     val normalizedFile = NormalizedFile(file)
 
-    @IgnoredOnParcel
     @JsonIgnore
+    @Transient
     val files: List<NormalizedFile> = listOf(
         normalizedFile,
         normalizedSample,

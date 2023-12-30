@@ -22,12 +22,14 @@ package ru.herobrine1st.e621.api.model
 
 import androidx.annotation.StringRes
 import com.fasterxml.jackson.annotation.JsonValue
+import kotlinx.serialization.SerialName
 import ru.herobrine1st.e621.R
 
 enum class Rating(@StringRes val descriptionId: Int, val apiName: String) {
-    SAFE(R.string.rating_safe, "safe"),
-    QUESTIONABLE(R.string.rating_questionable, "questionable"),
-    EXPLICIT(R.string.rating_explicit, "explicit");
+    // STOPSHIP: SerialNames are inferred according to @JsonValue below and aren't verified yet
+    @SerialName("s") SAFE(R.string.rating_safe, "safe"),
+    @SerialName("q") QUESTIONABLE(R.string.rating_questionable, "questionable"),
+    @SerialName("e") EXPLICIT(R.string.rating_explicit, "explicit");
 
     @JsonValue
     val shortName = apiName.substring(0, 1)
@@ -36,7 +38,7 @@ enum class Rating(@StringRes val descriptionId: Int, val apiName: String) {
 
     companion object {
         val byAnyName: Map<String, Rating> = HashMap<String, Rating>().apply {
-            values().forEach {
+            Rating.entries.forEach {
                 put(it.apiName.lowercase(), it) // lowercase just in case
                 put(it.shortName.lowercase(), it)
             }

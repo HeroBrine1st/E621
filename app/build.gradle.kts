@@ -2,7 +2,6 @@
 
 import com.android.build.api.dsl.VariantDimension
 import java.io.ByteArrayOutputStream
-import java.util.*
 
 plugins {
     id("com.android.application")
@@ -13,12 +12,13 @@ plugins {
     id("dagger.hilt.android.plugin")
     id("com.google.protobuf")
     id("com.mikepenz.aboutlibraries.plugin")
+    kotlin("plugin.serialization")
 }
 
-val kotlinVersion = "1.8.20"
-val composeCompilerVersion = "1.4.6"
-val protobufVersion = "3.22.2"
-val okHttpVersion = "4.10.0"
+val kotlinVersion = "1.9.21"
+val composeCompilerVersion = "1.5.7"
+val protobufVersion = "3.25.1"
+val okHttpVersion = "4.12.0"
 val retrofitVersion =
     "2.9.0" // https://github.com/square/retrofit/issues/3880 , do not forget to remove rules after update
 
@@ -27,12 +27,12 @@ val versionCode = getCommitIndexNumber()
 val versionName = "1.0.0-alpha-4"
 
 android {
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = this@Build_gradle.applicationId
         minSdk = 27
-        targetSdk = 33
+        targetSdk = 34
         versionCode = this@Build_gradle.versionCode
         versionName = this@Build_gradle.versionName
 
@@ -125,28 +125,28 @@ configurations.all {
 @Suppress("SpellCheckingInspection")
 dependencies {
     // Android core
-    implementation("androidx.core:core-ktx:1.10.0") // Apache 2.0
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.1") // Apache 2.0
+    implementation("androidx.core:core-ktx:1.12.0") // Apache 2.0
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2") // Apache 2.0
 
     // Jetpack Compose (Apache 2.0)
-    implementation("androidx.compose.ui:ui:1.4.3")
+    implementation("androidx.compose.ui:ui:1.5.4")
     // PullRefresh is not implemented in m3
     // also many libraries use colors from m2
-    implementation("androidx.compose.material:material:1.4.3")
-    implementation("androidx.compose.material3:material3:1.1.0-rc01")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.4.3")
-    implementation("androidx.compose.material:material-icons-extended:1.4.3")
-    implementation("androidx.activity:activity-compose:1.7.1")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-    implementation("androidx.compose.ui:ui-util:1.4.3")
+    implementation("androidx.compose.material:material:1.5.4")
+    implementation("androidx.compose.material3:material3:1.2.0-beta01")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
+    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
+    implementation("androidx.compose.ui:ui-util:1.5.4")
 
     // Decompose
-    val decomposeVersion = "2.0.0-alpha-01"
+    val decomposeVersion = "2.2.2"
     implementation("com.arkivanov.decompose:decompose:$decomposeVersion") // Apache 2.0
     implementation("com.arkivanov.decompose:extensions-compose-jetpack:$decomposeVersion")
 
     // Jetpack Room
-    val roomVersion = "2.5.1"
+    val roomVersion = "2.6.1"
     implementation("androidx.room:room-runtime:$roomVersion") // Apache 2.0
     implementation("androidx.room:room-ktx:$roomVersion") // Apache 2.0
     ksp("androidx.room:room-compiler:$roomVersion") // Not included in binary result
@@ -156,29 +156,28 @@ dependencies {
     implementation("com.google.protobuf:protobuf-javalite:$protobufVersion") // BSD 3-clause
 
     // Jetpack Paging
-    val pagingVersion = "3.1.1"
-    implementation("androidx.paging:paging-runtime:$pagingVersion") // Apache 2.0
-    implementation("androidx.paging:paging-compose:1.0.0-alpha19") // Apache 2.0
+    implementation("androidx.paging:paging-runtime:3.2.1") // Apache 2.0
+    implementation("androidx.paging:paging-compose:3.2.1") // Apache 2.0
 
     // Coroutine Image Loader (Apache 2.0)
-    val coilVersion = "2.3.0"
+    val coilVersion = "2.5.0"
     implementation("io.coil-kt:coil:$coilVersion")
     implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")
 
     // Jackson (Apache 2.0)
-    val jacksonVersion = "2.14.2"
+    val jacksonVersion = "2.16.1"
     implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
     implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
 
     // Hilt (Apache 2.0)
-    val hiltVersion = "2.45"
+    val hiltVersion = "2.50"
     implementation("com.google.dagger:hilt-android:$hiltVersion")
     kapt("com.google.dagger:hilt-android-compiler:$hiltVersion") // Not included in binary result
 
     // G Accompanist (Apache 2.0)
-    val accompanistVersion = "0.30.0"
+    val accompanistVersion = "0.32.0"
     implementation("com.google.accompanist:accompanist-placeholder-material3:$accompanistVersion")
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
 
@@ -188,35 +187,37 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
 
     // Profiling
-    "profileableImplementation"("androidx.compose.runtime:runtime-tracing:1.0.0-alpha03")
-    "profileableImplementation"("androidx.tracing:tracing-perfetto:1.0.0-alpha15")
-    "profileableImplementation"("androidx.tracing:tracing-perfetto-binary:1.0.0-alpha15")
+    "profileableImplementation"("androidx.compose.runtime:runtime-tracing:1.0.0-beta01")
+    "profileableImplementation"("androidx.tracing:tracing-perfetto:1.0.0")
+    "profileableImplementation"("androidx.tracing:tracing-perfetto-binary:1.0.0")
 
     // Jetpack Media3
-    implementation("androidx.media3:media3-exoplayer:1.0.1")
-    implementation("androidx.media3:media3-ui:1.0.1")
-    implementation("androidx.media3:media3-datasource-okhttp:1.0.1")
+    implementation("androidx.media3:media3-exoplayer:1.2.0")
+    implementation("androidx.media3:media3-ui:1.2.0")
+    implementation("androidx.media3:media3-datasource-okhttp:1.2.0")
 //    implementation("androidx.media3:media3-session:1.0.1")
 
     // Other libraries
-    implementation("org.jsoup:jsoup:1.15.4") // Expat License
-    implementation("com.mikepenz:aboutlibraries-compose:10.6.2") // Apache 2.0
+    implementation("org.jsoup:jsoup:1.17.2") // Expat License
+    implementation("com.mikepenz:aboutlibraries-compose:10.9.2") // Apache 2.0
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     // Tests
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.9.2")
-    testImplementation("androidx.compose.ui:ui-test-junit4:1.4.3")
-    testImplementation("org.mockito:mockito-core:5.2.0")
+    testImplementation("org.robolectric:robolectric:4.11.1")
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.5.4")
+    testImplementation("org.mockito:mockito-core:5.8.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:4.1.0")
+    testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
     testImplementation("androidx.test:core:1.5.0")
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
     kaptAndroidTest("com.google.dagger:hilt-android-compiler:$hiltVersion")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.4.3")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.4.3")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.4")
 }
 
 protobuf {

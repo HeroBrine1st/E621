@@ -37,10 +37,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.icons.filled.VolumeOff
-import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -184,11 +184,11 @@ fun VideoPlayerController(
                 contentAlignment = Alignment.Center // idk why this line is needed, but without it works like Column (???)
             ) {
                 LinearProgressIndicator(
-                    progress = if (contentDurationMs != 0L) getContentBufferedPositionMs().toFloat() / contentDurationMs else 0f,
+                    progress = { if (contentDurationMs != 0L) getContentBufferedPositionMs().toFloat() / contentDurationMs else 0f },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(10.dp),
-                    color = Color.Gray
+                    color = Color.Gray,
                 )
                 Slider(
                     value = contentPositionMs.toFloat(),
@@ -230,14 +230,14 @@ fun VideoPlayerController(
                 .align(Alignment.TopEnd)
                 .absoluteOffset((-8).dp, 8.dp)
         ) {
-            Crossfade(targetState = isMuted) { // Show actual state of volume
+            Crossfade(targetState = isMuted, label = "Mute crossfade") { // Show actual state of volume
                 if (it) Icon(
-                    Icons.Default.VolumeOff,
+                    Icons.AutoMirrored.Filled.VolumeOff,
                     contentDescription = stringResource(R.string.unmute_sound),
                     tint = Color.White
                 )
                 else Icon(
-                    Icons.Default.VolumeUp,
+                    Icons.AutoMirrored.Filled.VolumeUp,
                     contentDescription = stringResource(R.string.mute_sound),
                     tint = Color.White
                 )

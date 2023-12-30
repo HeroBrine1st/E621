@@ -23,9 +23,11 @@ package ru.herobrine1st.e621.api.model
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
 @Parcelize
 @Immutable
+@Serializable
 data class Score(
     val up: Int,
     val down: Int,

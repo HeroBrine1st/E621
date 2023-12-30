@@ -74,5 +74,5 @@ class FavouritesCache @Inject constructor() {
 
 fun Map<Int, FavouritesCache.FavouriteState>.isFavourite(post: Post) = this.getOrDefault(
     post.id,
-    FavouritesCache.FavouriteState.Determined.fromBoolean(post.isFavorited)
+    FavouritesCache.FavouriteState.Determined.fromBoolean(post.isFavourite)
 )

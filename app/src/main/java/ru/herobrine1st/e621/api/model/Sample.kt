@@ -26,10 +26,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.fasterxml.jackson.annotation.JsonValue
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 
 @Parcelize
 @Immutable
 @JsonIgnoreProperties("type")
+@Serializable
 data class Sample(
     val has: Boolean, // вщ не ебу что это
     val height: Int,
@@ -46,6 +48,8 @@ data class Sample(
 @Parcelize
 @Immutable
 @JsonIgnoreProperties("normalized_type")
+@Serializable
+
 data class Alternate(
     val type: AlternateType,
     val height: Int,

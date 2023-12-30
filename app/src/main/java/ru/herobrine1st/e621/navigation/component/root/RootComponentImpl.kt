@@ -40,11 +40,23 @@ import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.*
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.DialogChild
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.DialogConfig
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
-import ru.herobrine1st.e621.navigation.component.settings.*
+import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutLibrariesComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistEntryComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsLicenseComponent
 import ru.herobrine1st.e621.navigation.config.Config
-import ru.herobrine1st.e621.navigation.config.Config.*
+import ru.herobrine1st.e621.navigation.config.Config.Home
+import ru.herobrine1st.e621.navigation.config.Config.Post
+import ru.herobrine1st.e621.navigation.config.Config.PostListing
+import ru.herobrine1st.e621.navigation.config.Config.Search
+import ru.herobrine1st.e621.navigation.config.Config.Settings
+import ru.herobrine1st.e621.navigation.config.Config.Wiki
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
@@ -66,6 +78,7 @@ class RootComponentImpl(
     override val navigation = StackNavigation<Config>()
     override val stack = childStack(
         source = navigation,
+        serializer = Config.serializer(),
         initialConfiguration = Home,
         handleBackButton = true,
         childFactory = ::createChild
@@ -74,6 +87,7 @@ class RootComponentImpl(
     override val dialogNavigation = SlotNavigation<DialogConfig>()
     override val dialogSlot = childSlot(
         source = dialogNavigation,
+        serializer = DialogConfig.serializer(),
         childFactory = ::createDialogChild
         // handleBackButton = false - dialogs handle it themselves
     )

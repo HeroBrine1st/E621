@@ -29,12 +29,12 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Comment
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.outlined.Comment
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -99,7 +99,7 @@ fun PostActionRow(
         ) {
             Text(post.commentCount.toString())
             Icon(
-                Icons.Outlined.Comment,
+                Icons.AutoMirrored.Outlined.Comment,
                 contentDescription = stringResource(R.string.comments),
                 modifier = Modifier
                     .padding(start = 4.dp)

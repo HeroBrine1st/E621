@@ -44,7 +44,6 @@ import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
 import com.arkivanov.essenty.parcelable.Parcelable
-import com.arkivanov.essenty.statekeeper.consume
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -177,7 +176,7 @@ class PostComponent(
     }
 
     init {
-        stateKeeper.register(POST_STATE_KEY) {
+        stateKeeper.register(POST_STATE_KEY, strategy = Post.serializer()) {
             post
         }
         lifecycle.doOnResume {
@@ -185,7 +184,7 @@ class PostComponent(
             // 1. Do not refresh on resume/open
             // 2. Do refresh on open, do not refresh on resume
             // 3. Do both
-            stateKeeper.consume<Post>(POST_STATE_KEY)?.let {
+            stateKeeper.consume(POST_STATE_KEY, strategy = Post.serializer())?.let {
                 post = it
                 // Okay, there might be flicker
                 // idk what to do, probably should cache DataStore using StateFlow
@@ -261,7 +260,7 @@ class PostComponent(
     fun openChildrenPostListing() {
         val post = post!!
         post.relationships.children.singleOrNull()?.let { id ->
-            navigator.pushIndexed { it ->
+            navigator.pushIndexed {
                 Config.Post(
                     id = id,
                     post = null,

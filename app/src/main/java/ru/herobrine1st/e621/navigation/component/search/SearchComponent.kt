@@ -28,7 +28,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.toMutableStateList
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
-import com.arkivanov.essenty.statekeeper.consume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -109,7 +108,7 @@ class SearchComponent private constructor(
         applicationContext: Context
     ) : this(
         componentContext,
-        componentContext.stateKeeper.consume(SEARCH_OPTIONS_STATE_KEY)
+        componentContext.stateKeeper.consume(SEARCH_OPTIONS_STATE_KEY, strategy = PostsSearchOptions.serializer())
             ?: initialSearchOptions,
         navigator,
         api,
@@ -117,7 +116,7 @@ class SearchComponent private constructor(
     )
 
     init {
-        stateKeeper.register(SEARCH_OPTIONS_STATE_KEY) {
+        stateKeeper.register(SEARCH_OPTIONS_STATE_KEY, strategy = PostsSearchOptions.serializer()) {
             makeSearchOptions()
         }
     }

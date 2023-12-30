@@ -30,8 +30,8 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AlertDialogDefaults
+import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -53,7 +53,7 @@ fun ActionDialog(
     onDismissRequest: () -> Unit,
     content: @Composable (ColumnScope.() -> Unit)
 ) {
-    AlertDialog(onDismissRequest = onDismissRequest) {
+    BasicAlertDialog(onDismissRequest = onDismissRequest) {
         // Fix size change
         // ComposeView uses first measured size as min and max constrains for next measurements
         // Ignore minimum constraints, allowing dialog to properly reduce its size

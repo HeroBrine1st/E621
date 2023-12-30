@@ -21,15 +21,14 @@
 package ru.herobrine1st.e621.ui.dialog
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedContentScope
-import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.with
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,13 +43,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Undo
+import androidx.compose.material.icons.automirrored.outlined.Undo
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -76,7 +75,6 @@ import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import kotlin.math.floor
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun BlacklistTogglesDialog(
     component: BlacklistTogglesDialogComponent
@@ -131,17 +129,17 @@ fun BlacklistTogglesDialog(
                 isBlacklistEnabled,
                 transitionSpec = {
                     if (targetState > initialState) {
-                        slideIntoContainer(AnimatedContentScope.SlideDirection.Right) +
-                                fadeIn(spring(stiffness = Spring.StiffnessMedium)) with
-                                slideOutOfContainer(AnimatedContentScope.SlideDirection.Right) +
+                        slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right) +
+                                fadeIn(spring(stiffness = Spring.StiffnessMedium)) togetherWith
+                                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right) +
                                 fadeOut(spring(stiffness = Spring.StiffnessMedium))
                     } else {
-                        slideIntoContainer(AnimatedContentScope.SlideDirection.Left) + fadeIn(
+                        slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left) + fadeIn(
                             spring(
                                 stiffness = Spring.StiffnessMedium
                             )
-                        ) with
-                                slideOutOfContainer(AnimatedContentScope.SlideDirection.Left) + fadeOut(
+                        ) togetherWith
+                                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left) + fadeOut(
                             spring(stiffness = Spring.StiffnessMedium)
                         )
                     }.using(
@@ -149,7 +147,7 @@ fun BlacklistTogglesDialog(
                         // be displayed out of bounds.
                         SizeTransform(clip = false)
                     )
-                }
+                }, label = "Blacklist enabled/disabled slide"
             ) {
                 Text(
                     stringResource(if (it) R.string.blacklist_enabled else R.string.blacklist_disabled)
@@ -174,9 +172,9 @@ fun BlacklistTogglesDialog(
             AnimatedContent(
                 targetState = targetState,
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(220)) with
+                    fadeIn(animationSpec = tween(220)) togetherWith
                             fadeOut(animationSpec = tween(90))
-                }
+                }, label = "Blacklist toggles list crossfade"
             ) { state ->
                 when (state) {
                     BlacklistTogglesDialogState.Loading -> Box(
@@ -184,9 +182,9 @@ fun BlacklistTogglesDialog(
                             .fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Divider(Modifier.align(Alignment.TopCenter))
+                        HorizontalDivider(Modifier.align(Alignment.TopCenter))
                         CircularProgressIndicator()
-                        Divider(Modifier.align(Alignment.BottomCenter))
+                        HorizontalDivider(Modifier.align(Alignment.BottomCenter))
                     }
 
                     BlacklistTogglesDialogState.Empty -> Box(
@@ -197,7 +195,7 @@ fun BlacklistTogglesDialog(
                     }
 
                     BlacklistTogglesDialogState.Ready -> Column {
-                        Divider()
+                        HorizontalDivider()
                         LazyColumn {
                             val entries = blacklistEntries!!
                             item {
@@ -212,7 +210,7 @@ fun BlacklistTogglesDialog(
                                     text = stringResource(R.string.selection_all),
                                     isBlacklistUpdating = isBlacklistUpdating
                                 )
-                                Divider()
+                                HorizontalDivider()
                             }
                             itemsIndexed(entries) { i, entry ->
                                 BlacklistEntryLine(
@@ -224,10 +222,10 @@ fun BlacklistTogglesDialog(
                                     onReset = { entry.resetChanges() }
                                 )
                                 if (i < entries.size - 1)
-                                    Divider()
+                                    HorizontalDivider()
                             }
                         }
-                        Divider()
+                        HorizontalDivider()
                     }
                 }
             }
@@ -267,7 +265,7 @@ fun BlacklistEntryLine(
                 onClick = onReset
             ) {
                 Icon(
-                    Icons.Outlined.Undo,
+                    Icons.AutoMirrored.Outlined.Undo,
                     contentDescription = stringResource(R.string.cancel)
                 )
             }

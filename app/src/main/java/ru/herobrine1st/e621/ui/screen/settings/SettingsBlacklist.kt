@@ -161,7 +161,7 @@ fun SettingsBlacklist(
                             }
                         }
                         if (i < entries.size - 1)
-                            Divider(Modifier.padding(horizontal = 8.dp))
+                            HorizontalDivider(Modifier.padding(horizontal = 8.dp))
                     }
                     item("size placeholder for fab") {
                         // FAB size is 56 dp, plus spacing of fab (16 dp * 2 because we want symmetry)

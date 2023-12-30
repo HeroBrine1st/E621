@@ -20,8 +20,8 @@
 
 package ru.herobrine1st.e621.navigation.config
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Polymorphic
+import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Tag
@@ -29,26 +29,27 @@ import ru.herobrine1st.e621.api.model.Post as ModelPost
 
 // weak TO/DO: data objects https://youtrack.jetbrains.com/issue/KT-40218
 // Compose/Android is not affected tho
-@Parcelize
-sealed interface Config : Parcelable {
+@Serializable
+@Polymorphic
+sealed interface Config {
     // Can only be the first in stack
-    @Parcelize
-    object Home : Config
+    @Serializable
+    data object Home : Config
 
     // Index is used to distinguish otherwise equal configurations
-    @Parcelize
+    @Serializable
     data class Search(
         val initialSearch: PostsSearchOptions = PostsSearchOptions(),
         private val index: Int
     ) : Config
 
-    @Parcelize
+    @Serializable
     data class PostListing(
         val search: SearchOptions,
         private val index: Int
     ) : Config
 
-    @Parcelize
+    @Serializable
     data class Post(
         val id: Int,
         val post: ModelPost?,
@@ -57,7 +58,7 @@ sealed interface Config : Parcelable {
         private val index: Int
     ) : Config
 
-    @Parcelize
+    @Serializable
     data class Wiki(
         val tag: Tag,
         private val index: Int
@@ -67,11 +68,11 @@ sealed interface Config : Parcelable {
     // data class Favourites
 
     // These are used only once in a stack
-    @Parcelize
-    object Settings : Config {
-        @Parcelize
-        object Blacklist : Config {
-            @Parcelize
+    @Serializable
+    data object Settings : Config {
+        @Serializable
+        data object Blacklist : Config {
+            @Serializable
             data class Entry(
                 val id: Long,
                 val query: String,
@@ -79,13 +80,13 @@ sealed interface Config : Parcelable {
             ) : Config
         }
 
-        @Parcelize
-        object About : Config
+        @Serializable
+        data object About : Config
 
-        @Parcelize
-        object License : Config
+        @Serializable
+        data object License : Config
 
-        @Parcelize
-        object AboutLibraries : Config
+        @Serializable
+        data object AboutLibraries : Config
     }
 }

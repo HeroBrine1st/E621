@@ -25,27 +25,65 @@ import android.text.format.DateUtils.SECOND_IN_MILLIS
 import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Explicit
-import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -56,7 +94,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.*
+import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.PagingData
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -71,21 +109,26 @@ import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
-import ru.herobrine1st.e621.ui.component.*
+import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
+import ru.herobrine1st.e621.ui.component.CollapsibleColumn
+import ru.herobrine1st.e621.ui.component.MAX_SCALE_DEFAULT
+import ru.herobrine1st.e621.ui.component.RenderBB
+import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
+import ru.herobrine1st.e621.ui.component.rememberZoomableState
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
+import ru.herobrine1st.e621.ui.component.zoomable
 import ru.herobrine1st.e621.ui.screen.post.component.PoolsDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.util.text
-import java.util.*
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 private const val TAG = "Post Screen"
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Post(
     screenSharedState: ScreenSharedState,
@@ -245,7 +288,7 @@ fun Post(
                             bottomSheetState.partialExpand()
                         }
                     }
-                    Divider()
+                    HorizontalDivider()
                 }
                 // TODO visually connect description to image and add elevation only at bottom
                 // (it should look great according to my imagination)
@@ -270,7 +313,8 @@ fun Post(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     // TODO expose animation state from CollapsibleColumn and use it here
-                                    val rotation: Float by animateFloatAsState(if (expanded) 180f else 360f,
+                                    val rotation: Float by animateFloatAsState(
+                                        if (expanded) 180f else 360f,
                                         label = "Expand-collapse button icon rotation"
                                     )
                                     Icon(
@@ -278,7 +322,10 @@ fun Post(
                                             .padding(start = 4.dp, end = 12.dp)
                                             .rotate(rotation)
                                     )
-                                    Crossfade(expanded, label = "Expand-collapse button text crossfade") { state ->
+                                    Crossfade(
+                                        expanded,
+                                        label = "Expand-collapse button text crossfade"
+                                    ) { state ->
                                         Text(
                                             stringResource(if (!state) R.string.expand else R.string.collapse),
                                             modifier = Modifier.weight(1f)
@@ -295,7 +342,7 @@ fun Post(
                             }
                         }
                     }
-                    Divider()
+                    HorizontalDivider()
                 }
                 item("comments") {
                     Column(
@@ -361,7 +408,7 @@ fun Post(
                             label = "Comment Animation"
                         )
                         transition.AnimatedContent(contentKey = { it.index }, transitionSpec = {
-                            fadeIn(animationSpec = tween(220)) with
+                            fadeIn(animationSpec = tween(220)) togetherWith
                                     fadeOut(animationSpec = tween(90))
                         }) { state ->
                             when (state) {
@@ -381,7 +428,7 @@ fun Post(
 
                         Spacer(Modifier.height(8.dp))
                     }
-                    Divider()
+                    HorizontalDivider()
                 }
                 item("relationships") {
                     if (post.relationships.parentId != null) TextButton(
@@ -394,7 +441,12 @@ fun Post(
                     if (post.relationships.hasChildren && post.relationships.children.isNotEmpty()) TextButton(
                         onClick = component::openChildrenPostListing,
                         content = {
-                            Text(stringResource(R.string.children_posts, post.relationships.children.size))
+                            Text(
+                                stringResource(
+                                    R.string.children_posts,
+                                    post.relationships.children.size
+                                )
+                            )
                             Spacer(Modifier.weight(1f))
                         }
                     )
@@ -414,7 +466,7 @@ fun Post(
                     }
 
                     if (post.relationships.hasChildren || post.relationships.parentId != null || post.pools.isNotEmpty())
-                        Divider()
+                        HorizontalDivider()
                 }
                 item("uploaded") {
                     Spacer(Modifier.height(8.dp))
@@ -423,7 +475,7 @@ fun Post(
                         stringResource(
                             R.string.uploaded_relative_date,
                             DateUtils.getRelativeTimeSpanString(
-                                post.createdAt.toEpochSecond() * 1000,
+                                post.createdAt.toEpochMilliseconds(),
                                 System.currentTimeMillis(),
                                 SECOND_IN_MILLIS
                             )
@@ -658,7 +710,7 @@ private fun Tag(
             }
         ) {
             Icon(
-                Icons.Default.Help,
+                Icons.AutoMirrored.Filled.Help,
                 contentDescription = stringResource(R.string.tag_view_wiki)
             )
         }
@@ -682,27 +734,27 @@ private sealed interface CommentsLoadingState {
 
         data class Success(override val commentData: CommentData) : Showable
 
-        object Loading : Showable {
+        data object Loading : Showable {
             override val commentData by CommentData.Companion::PLACEHOLDER
         }
     }
 
-    object NotLoading : CommentsLoadingState {
+    data object NotLoading : CommentsLoadingState {
         override val index: Int
             get() = 0
     }
 
-    object Empty : CommentsLoadingState {
+    data object Empty : CommentsLoadingState {
         override val index: Int
             get() = 1
     }
 
-    object Failed : CommentsLoadingState {
+    data object Failed : CommentsLoadingState {
         override val index: Int
             get() = 3
     }
 
-    object Forbidden/*due to credentials absence*/ : CommentsLoadingState {
+    data object Forbidden/*due to credentials absence*/ : CommentsLoadingState {
         override val index: Int
             get() = 4
     }

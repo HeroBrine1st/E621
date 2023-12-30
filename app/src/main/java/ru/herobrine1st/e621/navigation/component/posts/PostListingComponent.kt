@@ -165,7 +165,7 @@ class PostListingComponent(
             else posts.filter {
                 favourites.getOrDefault(
                     it.id,
-                    FavouriteState.Determined.fromBoolean(it.isFavorited)
+                    FavouriteState.Determined.fromBoolean(it.isFavourite)
                 ) != FavouriteState.Determined.UNFAVOURITE // Show post if it is either favourite
                         || !blacklistPredicate.test(it)        //           or is not blacklisted
             }

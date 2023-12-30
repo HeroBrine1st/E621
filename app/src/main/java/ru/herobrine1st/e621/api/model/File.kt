@@ -20,23 +20,22 @@
 
 package ru.herobrine1st.e621.api.model
 
-import android.os.Parcelable
-import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonProperty
-import kotlinx.parcelize.IgnoredOnParcel
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@Parcelize
+@Serializable
 data class File(
     val width: Int,
     val height: Int,
     @JsonProperty("ext")
+    @SerialName("ext")
     val type: FileType,
     val size: Long,
     val md5: String,
     @JsonProperty(required = false) // Strange bug on API side, probably database related
     val url: String = ""
-) : Parcelable
+)
 
 data class NormalizedFile(
     val name: String,
@@ -58,7 +57,5 @@ data class NormalizedFile(
     constructor(name: String, file: Alternate) :
             this(name, file.width, file.height, file.normalizedType, 0, file.urls.filterNotNull())
 
-    @get:JsonIgnore
-    @IgnoredOnParcel
     val aspectRatio get() = width.toFloat() / height.toFloat()
 }

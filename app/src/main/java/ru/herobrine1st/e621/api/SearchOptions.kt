@@ -20,9 +20,8 @@
 
 package ru.herobrine1st.e621.api
 
-import android.os.Parcelable
 import android.util.Log
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.PoolId
@@ -34,7 +33,7 @@ import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
 
-sealed interface SearchOptions : Parcelable {
+sealed interface SearchOptions {
     @Throws(ApiException::class, IOException::class)
     suspend fun getPosts(api: API, limit: Int, page: Int): List<Post>
 
@@ -42,7 +41,8 @@ sealed interface SearchOptions : Parcelable {
         PostsSearchOptions.builder(this, builder)
 }
 
-@Parcelize
+
+@Serializable
 data class PostsSearchOptions(
     val allOf: Set<Tag> = emptySet(),
     val noneOf: Set<Tag> = emptySet(),
@@ -79,9 +79,9 @@ data class PostsSearchOptions(
     private fun optimizeRatingSelection(
         selection: Collection<Rating>,
     ): List<String> {
-        val isOptimizationRequired = selection.size > Rating.values().size / 2
+        val isOptimizationRequired = selection.size > Rating.entries.size / 2
         val minima = if (isOptimizationRequired) {
-            Rating.values().toList() - selection.toSet()
+            Rating.entries - selection.toSet()
         } else selection
         assert(minima.size <= 1)
         val prefix = if (isOptimizationRequired) "-" else ""
@@ -156,7 +156,7 @@ data class PostsSearchOptions(
     }
 }
 
-@Parcelize
+@Serializable
 data class FavouritesSearchOptions(val favouritesOf: String, private var id: Int? = null) :
     SearchOptions {
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {

@@ -26,7 +26,7 @@ import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.with
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -111,7 +111,7 @@ fun PostComment(
             if (animateTextChange) AnimatedContent(
                 targetState = commentData.message,
                 transitionSpec = {
-                    fadeIn(animationSpec = tween(220)) with
+                    fadeIn(animationSpec = tween(220)) togetherWith
                             fadeOut(animationSpec = tween(90))
                 }
             ) {
