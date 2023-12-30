@@ -135,7 +135,10 @@ fun PostImage(
                 Text(stringResource(R.string.unknown_error))
             }
 
-            is Loading, Empty -> Crossfade(progress == null) {
+            is Loading, Empty -> Crossfade(
+                progress == null,
+                label = "Crossfade between indeterminate and determinate progress indicators"
+            ) {
                 when (it) {
                     true -> CircularProgressIndicator()
                     false -> CircularProgressIndicator(
@@ -143,7 +146,8 @@ fun PostImage(
                             // Non-nullability is guaranteed by collectDownloadProgressByState,
                             // which internally uses non-nullable SharedFlow
                             targetValue = progress!!.progress,
-                            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+                            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+                            label = "Progress animation"
                         ).value
                     )
                 }
