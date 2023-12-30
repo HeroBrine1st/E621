@@ -35,9 +35,9 @@ import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
-import com.google.accompanist.placeholder.PlaceholderHighlight
-import com.google.accompanist.placeholder.material3.fade
-import com.google.accompanist.placeholder.material3.placeholder
+import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
+import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
+import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 
 @Composable
 fun CommentAvatar(

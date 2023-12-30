@@ -44,11 +44,11 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.google.accompanist.placeholder.PlaceholderHighlight
-import com.google.accompanist.placeholder.material3.fade
-import com.google.accompanist.placeholder.material3.placeholder
-import com.google.accompanist.placeholder.material3.shimmer
 import ru.herobrine1st.e621.ui.component.RenderBB
+import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
+import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
+import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
+import ru.herobrine1st.e621.ui.component.placeholder.material3.shimmer
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 
 @OptIn(ExperimentalAnimationApi::class)

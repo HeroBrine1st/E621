@@ -52,14 +52,14 @@ import coil.compose.AsyncImagePainter
 import coil.compose.AsyncImagePainter.State.Empty
 import coil.compose.AsyncImagePainter.State.Error
 import coil.compose.AsyncImagePainter.State.Loading
-import com.google.accompanist.placeholder.PlaceholderHighlight
-import com.google.accompanist.placeholder.material3.fade
-import com.google.accompanist.placeholder.material3.placeholder
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.net.collectDownloadProgressAsState
+import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
+import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
+import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "PostImage"
@@ -141,15 +141,18 @@ fun PostImage(
             ) {
                 when (it) {
                     true -> CircularProgressIndicator()
-                    false -> CircularProgressIndicator(
-                        animateFloatAsState(
+                    false -> {
+                        val progress1 by animateFloatAsState(
                             // Non-nullability is guaranteed by collectDownloadProgressByState,
                             // which internally uses non-nullable SharedFlow
                             targetValue = progress!!.progress,
                             animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
                             label = "Progress animation"
-                        ).value
-                    )
+                        )
+                        CircularProgressIndicator(
+                            progress = { progress1 },
+                        )
+                    }
                 }
             }
 

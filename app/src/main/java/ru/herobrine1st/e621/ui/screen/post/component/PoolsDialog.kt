@@ -33,11 +33,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.placeholder.PlaceholderHighlight
-import com.google.accompanist.placeholder.material3.placeholder
-import com.google.accompanist.placeholder.material3.shimmer
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
+import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
+import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
+import ru.herobrine1st.e621.ui.component.placeholder.material3.shimmer
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 
 @Composable
