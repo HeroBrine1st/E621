@@ -22,8 +22,6 @@ package ru.herobrine1st.e621.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.material.darkColors
-import androidx.compose.material.lightColors
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -56,14 +54,9 @@ fun E621Theme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composable (
         )
     }
 
-    // Many libraries still use M2 colors
-    androidx.compose.material.MaterialTheme(
-        colors = if (darkTheme) darkColors() else lightColors()
+    MaterialTheme(
+        colorScheme = colorScheme
     ) {
-        MaterialTheme(
-            colorScheme = colorScheme
-        ) {
-            content()
-        }
+        content()
     }
 }

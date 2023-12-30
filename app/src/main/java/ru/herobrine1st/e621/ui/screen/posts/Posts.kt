@@ -33,13 +33,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material.pullrefresh.PullRefreshIndicator
-import androidx.compose.material.pullrefresh.pullRefresh
-import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -51,12 +47,16 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -65,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
+import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
@@ -78,7 +79,7 @@ import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.e621.util.text
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Posts(
     screenSharedState: ScreenSharedState,
@@ -88,13 +89,31 @@ fun Posts(
     val posts = component.postsFlow.collectAsLazyPagingItems()
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
-    val pullRefreshState = rememberPullRefreshState(
-        refreshing = posts.loadState.refresh is LoadState.Loading,
-        // TODO move away from Jetpack Paging: cannot refresh from out of composable
-        // also I want to manipulate on the items in a way like it can be done with a regular list
-        // (I want to show how many posts are skipped due to blacklist, like hidden items on github)
-        onRefresh = { posts.refresh() }
-    )
+    val pullToRefreshState = rememberPullToRefreshState()
+
+    // New API is strange. Why don't just use previous interfaces: state of refreshing from
+    // user code and callback to refresh from library?
+    // Now I need to connect pullToRefreshState.isRefreshing to posts.loadState.refresh is LoadState.Loading
+    // Both are data, neither are callback
+    //region Working around strange API
+    // STOPSHIP: untested
+    if (pullToRefreshState.isRefreshing) {
+        LaunchedEffect(Unit) {
+            posts.refresh()
+        }
+    }
+
+    if(posts.loadState.refresh is LoadState.Loading) {
+        LaunchedEffect(Unit) {
+            pullToRefreshState.startRefresh()
+            // wait until it completes
+            snapshotFlow { posts.loadState.refresh is LoadState.Loading }
+                .first { !it }
+            pullToRefreshState.endRefresh()
+        }
+    }
+    //endregion
+
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
@@ -128,8 +147,8 @@ fun Posts(
         Box(
             Modifier
                 .padding(it)
-                .pullRefresh(pullRefreshState)
                 .fillMaxSize()
+                .nestedScroll(pullToRefreshState.nestedScrollConnection) // TODO probably box is redundant
         ) {
             LazyColumn(
                 // Solution from https://issuetracker.google.com/issues/177245496#comment24
@@ -185,16 +204,18 @@ fun Posts(
             // Related: https://issuetracker.google.com/issues/177245496
             // (but the actual cause is absence of a "None" state like in Coil, which indicates
             // that no request is in fly but no data available hence no loading and no indicator)
-            PullRefreshIndicator(
-                refreshing = posts.loadState.refresh is LoadState.Loading,
-                state = pullRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+//            PullRefreshIndicator(
+//                refreshing = posts.loadState.refresh is LoadState.Loading,
+//                state = pullRefreshState,
+//                modifier = Modifier.align(Alignment.TopCenter)
+//            )
+
+            PullToRefreshContainer(state = pullToRefreshState)
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Post(
     post: Post,
