@@ -26,7 +26,6 @@ import androidx.paging.PagingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.parseCommentAvatarsAndGetCommentCount
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
@@ -53,7 +52,7 @@ class PostCommentsSource(
             if (!::avatars.isInitialized) {
                 val (avatars, commentCount) = withContext(Dispatchers.Default) {
                     parseCommentAvatarsAndGetCommentCount(
-                        api.getCommentsForPostHTML(postId).await()
+                        api.getCommentsForPostHTML(postId)
                     )
                 }
                 this.avatars = avatars
@@ -72,7 +71,7 @@ class PostCommentsSource(
             val limit = params.loadSize
 
             val res =
-                api.getCommentsForPostBBCode(postId, page, limit).await().asReversed()
+                api.getCommentsForPostBBCode(postId, page, limit).asReversed()
                     .run {
                         withContext(Dispatchers.Default) {
                             map {

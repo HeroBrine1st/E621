@@ -20,20 +20,27 @@
 
 package ru.herobrine1st.e621.api.model
 
-import com.fasterxml.jackson.annotation.JsonValue
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import okhttp3.internal.toImmutableMap
 
+@Serializable
 enum class FileType(
-    @JsonValue val extension: String,
+    val extension: String,
     val isSupported: Boolean = true,
     val isImage: Boolean = false,
     val isVideo: Boolean = false,
     val weight: Byte = 0 // to sort by sample type and then by resolution
 ) {
+    @SerialName("jpg")
     JPG("jpg", isImage = true),
+    @SerialName("png")
     PNG("png", isImage = true),
+    @SerialName("gif")
     GIF("gif", isImage = true, weight = 1),
+    @SerialName("swf")
     SWF("swf", isSupported = false),
+    @SerialName("webm")
     WEBM("webm", isVideo = true, weight = 2),
     UNDEFINED("undefined", isSupported = false);
 
@@ -41,11 +48,10 @@ enum class FileType(
 
     companion object {
         val byExtension = mutableMapOf<String, FileType>().apply {
-            values()
-                .forEach { this[it.extension] = it }
+            FileType.entries.forEach { this[it.extension] = it }
         }.toImmutableMap()
 
-        fun supportedValues() = values().filter { it.isSupported }
+        fun supportedValues() = entries.filter { it.isSupported }
     }
 }
 

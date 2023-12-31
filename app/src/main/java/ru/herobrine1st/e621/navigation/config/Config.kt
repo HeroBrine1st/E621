@@ -27,8 +27,6 @@ import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.Post as ModelPost
 
-// weak TO/DO: data objects https://youtrack.jetbrains.com/issue/KT-40218
-// Compose/Android is not affected tho
 @Serializable
 @Polymorphic
 sealed interface Config {

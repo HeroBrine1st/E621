@@ -25,7 +25,6 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.essenty.lifecycle.doOnResume
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.PoolId
 import ru.herobrine1st.e621.navigation.LifecycleScope
@@ -48,7 +47,7 @@ class PoolsDialogComponent(
             lifecycleScope.launch {
                 pools.indices.forEach { index ->
                     if (_pools[index] == null) {
-                        _pools[index] = api.getPool(pools[index]).await()
+                        _pools[index] = api.getPool(pools[index])
                     }
                 }
             }

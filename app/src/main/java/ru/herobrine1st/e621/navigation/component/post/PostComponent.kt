@@ -57,7 +57,6 @@ import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
-import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.PoolId
@@ -199,7 +198,7 @@ class PostComponent(
                 ) {
                     isLoadingPost = true
                     try {
-                        post = api.getPost(id).await().post
+                        post = api.getPost(id).post
                         // Maybe reload ExoPlayer if old object contains invalid URL?
                         // exoPlayer.playbackState may help with that
                     } catch (e: IOException) {

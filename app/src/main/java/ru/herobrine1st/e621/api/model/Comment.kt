@@ -20,27 +20,28 @@
 
 package ru.herobrine1st.e621.api.model
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.datetime.Instant
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import org.jsoup.Jsoup
-import java.time.OffsetDateTime
 
-@JsonIgnoreProperties("warning_type", "warning_user_id")
+@Serializable
 data class CommentBB(
     val id: Int,
-    val createdAt: OffsetDateTime,
-    @JsonProperty("post_id")
+    val createdAt: Instant,
+    @SerialName("post_id")
     val parentPostId: Int,
     val creatorId: Int,
     val updaterId: Int,
     val body: String,
     val score: Int,
-    val updatedAt: OffsetDateTime,
+    val updatedAt: Instant,
     val doNotBumpPost: Boolean, // wtf
     val isHidden: Boolean, // okay maybe I understand it
     val isSticky: Boolean, // wtf
-    // val warningType: Unknown?,
-    // val warningUserId: Unknown?,
+    val warningType: JsonElement?, // unknown type
+    val warningUserId: JsonElement?, // unknown type
     val creatorName: String,
     val updaterName: String
 )

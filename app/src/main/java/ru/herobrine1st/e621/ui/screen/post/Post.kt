@@ -177,6 +177,8 @@ fun Post(
     }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    // STOPSHIP: on second frame, somehow it sets to PartiallyExpanded, avoiding "if" block
+    // and it is instant, like it always was an initial value
     val bottomSheetState = rememberStandardBottomSheetState(
         // `&& loadComments` is a fix for unauthenticated usage case
         // Think of it as there is no point to opening comment if they're not loading
@@ -557,7 +559,10 @@ fun CommentsBottomSheetContent(
         if (!loadComments) return@Box
 
         val comments = commentsFlow.collectAsLazyPagingItems()
-        Crossfade(comments.loadState.refresh is LoadState.Error, label = "Comments sheet animation between error and content") {
+        Crossfade(
+            comments.loadState.refresh is LoadState.Error,
+            label = "Comments sheet animation between error and content"
+        ) {
             if (it) Column(
                 Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,

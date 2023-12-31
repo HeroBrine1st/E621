@@ -20,9 +20,16 @@
 
 package ru.herobrine1st.e621.ui.screen.search
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
@@ -31,9 +38,33 @@ import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.InputChip
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -42,9 +73,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.fasterxml.jackson.databind.node.ObjectNode
-import okhttp3.ResponseBody
-import retrofit2.Call
+import de.jensklingenberg.ktorfit.Response
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
@@ -211,7 +242,9 @@ fun Search(
                                     Icons.Filled.ArrowDropDown,
                                     null,
                                     Modifier.rotate(
-                                        animateFloatAsState(if (expanded) 180f else 360f).value
+                                        animateFloatAsState(if (expanded) 180f else 360f,
+                                            label = "dropdown arrow rotation animation"
+                                        ).value
                                     )
                                 )
                             },
@@ -224,7 +257,7 @@ fun Search(
                             // there was one, but I lost it :-(
                             modifier = Modifier.exposedDropdownSize(matchTextFieldWidth = true)
                         ) {
-                            Order.values().forEach {
+                            Order.entries.forEach {
                                 DropdownMenuItem(
                                     text = { Text(stringResource(it.descriptionId)) },
                                     onClick = {
@@ -259,7 +292,7 @@ fun Search(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         // TODO crossAxisSpacing = 2.dp
                     ) {
-                        for (v in Rating.values()) {
+                        for (v in Rating.entries) {
                             val selected = v in component.rating
                             FilterChip(
                                 selected = selected,
@@ -414,55 +447,78 @@ fun SearchPreview() {
                     )
                 ),
                 api = object : API {
-                    override fun getUser(name: String, credentials: String?): Call<ObjectNode> =
+                    override suspend fun getUser(name: String): JsonObject {
                         error("Not yet implemented")
+                    }
 
-                    override fun getPosts(
+                    override suspend fun authCheck(
+                        name: String,
+                        credentials: String?
+                    ): Response<JsonObject> {
+                        error("Not yet implemented")
+                    }
+
+                    override suspend fun getPosts(
                         tags: String?,
                         page: Int?,
                         limit: Int?
-                    ): Call<PostsEndpoint> = error("Not yet implemented")
+                    ): PostsEndpoint {
+                        error("Not yet implemented")
+                    }
 
-                    override fun getPost(id: Int): Call<PostEndpoint> = error("Not yet implemented")
+                    override suspend fun getPost(id: Int): PostEndpoint {
+                        error("Not yet implemented")
+                    }
 
-                    override fun getFavourites(
+                    override suspend fun getFavourites(
                         userId: Int?,
                         page: Int?,
                         limit: Int?
-                    ): Call<PostsEndpoint> = error("Not yet implemented")
-
-                    override fun addToFavourites(postId: Int): Call<ResponseBody> =
+                    ): PostsEndpoint {
                         error("Not yet implemented")
+                    }
 
-                    override fun removeFromFavourites(postId: Int): Call<Void> =
+                    override suspend fun addToFavourites(postId: Int): Response<JsonElement> {
                         error("Not yet implemented")
+                    }
 
-                    override fun vote(
+                    override suspend fun removeFromFavourites(postId: Int): Response<Void> {
+                        error("Not yet implemented")
+                    }
+
+                    override suspend fun vote(
                         postId: Int,
                         score: Int,
                         noRetractVote: Boolean
-                    ): Call<PostVoteEndpoint> = error("Not yet implemented")
-
-                    override fun getWikiPageId(title: String): Call<ResponseBody> =
+                    ): PostVoteEndpoint {
                         error("Not yet implemented")
+                    }
 
-                    override fun getWikiPage(id: Int): Call<WikiPage> = error("Not yet implemented")
-
-                    override fun getCommentsForPostHTML(id: Int): Call<PostCommentsEndpoint> =
+                    override suspend fun getWikiPage(name: String): WikiPage {
                         error("Not yet implemented")
+                    }
 
-                    override fun getCommentsForPostBBCode(
+                    override suspend fun getCommentsForPostHTML(id: Int): PostCommentsEndpoint {
+                        error("Not yet implemented")
+                    }
+
+                    override suspend fun getCommentsForPostBBCode(
                         id: Int,
                         page: Int,
                         limit: Int
-                    ): Call<List<CommentBB>> = error("Not yet implemented")
+                    ): List<CommentBB> {
+                        error("Not yet implemented")
+                    }
 
-                    override fun getAutocompleteSuggestions(
+                    override suspend fun getAutocompleteSuggestions(
                         query: String,
                         expiry: Int
-                    ): Call<List<TagAutocompleteSuggestion>> = error("Not yet implemented")
+                    ): List<TagAutocompleteSuggestion> = emptyList()
 
-                    override fun getPool(poolId: Int): Call<Pool> = error("Not yet implemented")
+                    override suspend fun getPool(poolId: Int): Pool {
+                        error("Not yet implemented")
+                    }
+
                 },
                 applicationContext = LocalContext.current.applicationContext
             )

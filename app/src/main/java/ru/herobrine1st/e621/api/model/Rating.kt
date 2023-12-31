@@ -23,8 +23,10 @@ package ru.herobrine1st.e621.api.model
 import androidx.annotation.StringRes
 import com.fasterxml.jackson.annotation.JsonValue
 import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.R
 
+@Serializable
 enum class Rating(@StringRes val descriptionId: Int, val apiName: String) {
     // STOPSHIP: SerialNames are inferred according to @JsonValue below and aren't verified yet
     @SerialName("s") SAFE(R.string.rating_safe, "safe"),

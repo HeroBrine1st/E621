@@ -23,11 +23,11 @@ package ru.herobrine1st.e621.api.model
 import androidx.compose.runtime.Immutable
 import com.fasterxml.jackson.annotation.JsonIgnore
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import java.time.Instant
+import kotlinx.serialization.json.JsonElement
 
 typealias PostId = Int
 
@@ -36,34 +36,30 @@ typealias PostId = Int
 @Serializable
 data class Post(
     val id: PostId,
-    val createdAt: kotlinx.datetime.Instant,
-    val updatedAt: kotlinx.datetime.Instant?,
+    val createdAt: Instant,
+    val updatedAt: Instant?,
     val file: File,
-    // STOPSHIP: preview will break deserialization
-    // TODO val preview: Preview
+    val preview: JsonElement, // TODO
     val sample: Sample,
     val score: Score,
     val tags: Tags,
     val lockedTags: List<String> = emptyList(),
-    @JsonProperty("change_seq")
+    @SerialName("change_seq")
     val changeSequence: Int,
-    // STOPSHIP: flags will break deserialization
-    // TODO val flags: Flags
+    val flags: JsonElement, // TODO
     val rating: Rating,
-    @JsonProperty("fav_count")
+    @SerialName("fav_count")
     val favoriteCount: Int,
     val sources: List<String>,
     val pools: List<PoolId>,
     val relationships: Relationships,
-    val approverId: Int,
+    val approverId: Int?,
     val uploaderId: Int,
     val description: String,
     val commentCount: Int,
     @Suppress("SpellCheckingInspection")
-    @JsonProperty("isFavorited", required = false)
     @SerialName("isFavorited")
     val isFavourite: Boolean = false,
-    @JsonProperty(required = false)
     val hasNotes: Boolean = false,
     val duration: Float = 0f
 ) {
@@ -85,10 +81,11 @@ data class Post(
     ).sortedWith(compareBy({ it.type.weight }, { it.width }))
 }
 
+@Serializable
 data class PostReduced(
     val status: String,
     val flags: String,
-    @JsonProperty("file_ext")
+    @SerialName("file_ext")
     val type: FileType,
     val id: Int,
     val createdAt: Instant,

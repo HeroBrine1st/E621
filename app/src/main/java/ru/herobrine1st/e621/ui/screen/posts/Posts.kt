@@ -210,7 +210,7 @@ fun Posts(
 //                modifier = Modifier.align(Alignment.TopCenter)
 //            )
 
-            PullToRefreshContainer(state = pullToRefreshState)
+            PullToRefreshContainer(state = pullToRefreshState, modifier = Modifier.align(Alignment.TopCenter))
         }
     }
 }

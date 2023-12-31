@@ -82,7 +82,7 @@ fun PostComment(
             Spacer(Modifier.width(2.dp))
             Text(
                 text = DateUtils.getRelativeTimeSpanString(
-                    commentData.creationTime.toEpochSecond() * 1000,
+                    commentData.creationTime.toEpochMilliseconds(),
                     System.currentTimeMillis(),
                     0L,
                     DateUtils.FORMAT_ABBREV_ALL

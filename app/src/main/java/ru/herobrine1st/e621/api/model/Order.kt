@@ -22,9 +22,11 @@
 package ru.herobrine1st.e621.api.model
 
 import androidx.annotation.StringRes
+import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.R
 
 @Suppress("SpellCheckingInspection")
+@Serializable
 enum class Order(
     @StringRes val descriptionId: Int,
     val apiName: String?,

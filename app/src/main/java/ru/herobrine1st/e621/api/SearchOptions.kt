@@ -21,7 +21,9 @@
 package ru.herobrine1st.e621.api
 
 import android.util.Log
+import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.jsonPrimitive
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.PoolId
@@ -33,6 +35,11 @@ import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
 
+// STOPSHIP: Polymorphic structure is vanished at runtime
+// It is present in bytecode, but runtime throws serialization exceptions
+// STOPSHIP: This error suddenly vanished after I charged my phone
+@Serializable
+@Polymorphic
 sealed interface SearchOptions {
     @Throws(ApiException::class, IOException::class)
     suspend fun getPosts(api: API, limit: Int, page: Int): List<Post>
@@ -89,7 +96,7 @@ data class PostsSearchOptions(
     }
 
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
-        return api.getPosts(tags = compileToQuery(), page = page, limit = limit).await().posts
+        return api.getPosts(tags = compileToQuery(), page = page, limit = limit).posts
     }
 
     companion object {
@@ -157,12 +164,12 @@ data class PostsSearchOptions(
 }
 
 @Serializable
-data class FavouritesSearchOptions(val favouritesOf: String, private var id: Int? = null) :
+data class FavouritesSearchOptions(val favouritesOf: String, var id: Int? = null) :
     SearchOptions {
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         id = id ?: favouritesOf.let {
-            api.getUser(favouritesOf).await().get("id").asInt()
+            api.getUser(favouritesOf)["id"]!!.jsonPrimitive.content.toInt()
         }
-        return api.getFavourites(userId = id, page = page, limit = limit).await().posts
+        return api.getFavourites(userId = id, page = page, limit = limit).posts
     }
 }

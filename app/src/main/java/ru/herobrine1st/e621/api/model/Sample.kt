@@ -23,9 +23,9 @@ package ru.herobrine1st.e621.api.model
 import android.os.Parcelable
 import androidx.compose.runtime.Immutable
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.annotation.JsonValue
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Parcelize
@@ -45,11 +45,11 @@ data class Sample(
         FileType.byExtension[url.splitToSequence(".").lastOrNull()] ?: FileType.UNDEFINED
     }
 }
+
 @Parcelize
 @Immutable
 @JsonIgnoreProperties("normalized_type")
 @Serializable
-
 data class Alternate(
     val type: AlternateType,
     val height: Int,
@@ -65,8 +65,11 @@ data class Alternate(
 }
 
 @Suppress("unused")
-enum class AlternateType(@JsonValue val apiName: String) {
-    VIDEO("video"),
-    IMAGE("image"),
+@Serializable
+enum class AlternateType {
+    @SerialName("video")
+    VIDEO,
+    @SerialName("image")
+    IMAGE
     //maybe more
 }

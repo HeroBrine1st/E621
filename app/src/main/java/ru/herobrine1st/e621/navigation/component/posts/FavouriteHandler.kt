@@ -25,7 +25,7 @@ import androidx.compose.material3.SnackbarDuration
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.api.awaitSuccessfulResponse
+import ru.herobrine1st.e621.api.ensureSuccessful
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.FavouritesCache
@@ -59,8 +59,8 @@ suspend fun handleFavouriteChange(
     favouritesCache.setFavourite(post.id, FavouritesCache.FavouriteState.InFly(wasFavourite))
     try {
         if (wasFavourite.isFavourite) api.removeFromFavourites(post.id)
-            .awaitSuccessfulResponse()
-        else api.addToFavourites(post.id).awaitSuccessfulResponse()
+            .ensureSuccessful()
+        else api.addToFavourites(post.id).ensureSuccessful()
         favouritesCache.setFavourite(
             post.id,
             FavouritesCache.FavouriteState.Determined.fromBoolean(!wasFavourite.isFavourite)

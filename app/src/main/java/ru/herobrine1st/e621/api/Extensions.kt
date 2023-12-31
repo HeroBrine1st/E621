@@ -20,86 +20,39 @@
 
 package ru.herobrine1st.e621.api
 
-import android.util.Log
-import com.fasterxml.jackson.databind.node.ObjectNode
-import com.fasterxml.jackson.module.kotlin.readValue
+import de.jensklingenberg.ktorfit.Response
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import retrofit2.Call
-import retrofit2.Response
-import ru.herobrine1st.e621.util.objectMapper
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlin.coroutines.CoroutineContext
 
-// Not really await, but under the hood it uses MainThreadExecutor
-// No point in overriding it, we have Dispatchers.IO
-private suspend inline fun <T> Call<T>.awaitResponseInternal(
-    context: CoroutineContext = Dispatchers.IO
-): Response<T> = withContext(context) {
-    execute()
-}
+suspend fun <T> Response<T>.ensureSuccessful(context: CoroutineContext = Dispatchers.Default): T {
+    if(status.isSuccess()) return body()!!
 
-@UnsafeAPIUsage
-suspend fun <T> Call<T>.awaitResponse(
-    context: CoroutineContext = Dispatchers.IO
-) = awaitResponseInternal(context)
-
-/**
- * Execute call in [context] and assert it to be successful.
- *
- * @throws ApiException
- */
-suspend fun <T> Call<T>.awaitSuccessfulResponse(context: CoroutineContext = Dispatchers.IO): Response<T> {
-    val response = this.awaitResponseInternal(context)
-
-    // Include redirects
-    if (response.code() in 200..399) return response
-
-    // Attempt to get more readable error
-    // At cost of less readable code, of course
-
-    // Maybe it is proven to lie, maybe it is an optimization, idk
-    if (response.code() == 404) {
+    if (status == HttpStatusCode.NotFound) {
         throw ApiException("Not found", 404)
     }
 
     // Try to get JSON with explanation
     val body = try {
         withContext(context) {
-            objectMapper.readValue<ObjectNode>(response.errorBody()!!.charStream())
+            Json.decodeFromString<JsonObject>(errorBody()!!.toString())
         }
     } catch (t: Throwable) {
         // Suppress, it is not the cause neither the actual error
         throw ApiException(
-            "Got unsuccessful response with code ${response.code()} and could not get response body",
-            response.code()
+            "Got unsuccessful response $status and could not get response body",
+            code
         ).apply {
             addSuppressed(t)
         }
     }
     throw ApiException(
-        body.get("message")?.asText() ?: body.toPrettyString(),
-        response.code()
+        (body["message"] as? JsonPrimitive?)?.content ?: body.toString(),
+        code
     )
 }
-
-suspend fun <T> Call<T>.await(context: CoroutineContext = Dispatchers.IO): T {
-    val response = this.awaitSuccessfulResponse(context)
-
-    val body = response.body()
-    // 204 is "No Content" meaning body length is 0 bytes and is not "Null Response" :///
-    if (response.code() == 204 && body == null) {
-        Log.wtf(
-            "API",
-            "Response code is 204, therefore body is null, use awaitResponse() instead"
-        )
-    }
-    return body!!
-}
-
-// Just a safeguard against my bad memory
-/**
- * Indicates that no checking for status code is performed.
- */
-@RequiresOptIn
-@Retention(AnnotationRetention.BINARY)
-annotation class UnsafeAPIUsage

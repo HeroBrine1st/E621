@@ -32,7 +32,6 @@ import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import okhttp3.Cache
 import okhttp3.OkHttpClient
-import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
@@ -64,8 +63,8 @@ import java.io.File
 
 class RootComponentImpl(
     private val applicationContext: Context,
+    private val injectionCompanion: InjectionCompanion,
     private val authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
-    private val apiProvider: Lazy<API>,
     private val snackbarAdapterProvider: Lazy<SnackbarAdapter>,
     private val favouritesCacheProvider: Lazy<FavouritesCache>,
     private val exceptionReporterProvider: Lazy<ExceptionReporter>,
@@ -100,7 +99,7 @@ class RootComponentImpl(
             is Home -> Child.Home(
                 HomeComponent(
                     authorizationRepositoryProvider,
-                    apiProvider,
+                    injectionCompanion.api,
                     snackbarAdapterProvider.value,
                     blacklistRepositoryProvider.value,
                     navigation,
@@ -112,14 +111,14 @@ class RootComponentImpl(
                     componentContext = context,
                     navigator = navigation,
                     initialSearchOptions = configuration.initialSearch,
-                    api = apiProvider.value,
+                    api = injectionCompanion.api.value,
                     applicationContext = applicationContext
                 )
             )
             is PostListing -> Child.PostListing(
                 PostListingComponent(
                     componentContext = context,
-                    api = apiProvider.value,
+                    api = injectionCompanion.api.value,
                     snackbar = snackbarAdapterProvider.value,
                     favouritesCache = favouritesCacheProvider.value,
                     exceptionReporter = exceptionReporterProvider.value,
@@ -139,7 +138,7 @@ class RootComponentImpl(
                     navigation,
                     applicationContext,
                     exceptionReporterProvider.value,
-                    apiProvider.value,
+                    injectionCompanion.api.value,
                     favouritesCacheProvider.value,
                     snackbarAdapterProvider.value,
                     instance.mediaOkHttpClientProvider
@@ -174,7 +173,7 @@ class RootComponentImpl(
                 WikiComponent(
                     configuration.tag,
                     context,
-                    apiProvider.value,
+                    injectionCompanion.api.value,
                     snackbarAdapterProvider.value,
                     exceptionReporterProvider.value,
                     navigation

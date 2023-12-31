@@ -37,7 +37,6 @@ import kotlinx.coroutines.flow.flowOn
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.Tokens
-import ru.herobrine1st.e621.api.await
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
@@ -81,7 +80,7 @@ class SearchComponent private constructor(
             // Delay is handled by interceptor
             .combine(dataStore.getPreferencesFlow { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
                 if (query.length < 3 || !isAutocompleteEnabled) return@combine emptyList()
-                api.getAutocompleteSuggestions(query).await().map {
+                api.getAutocompleteSuggestions(query).map {
                     TagSuggestion(
                         name = it.name,
                         postCount = it.postCount,

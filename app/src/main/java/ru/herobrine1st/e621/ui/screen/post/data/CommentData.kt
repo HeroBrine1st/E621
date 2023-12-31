@@ -1,12 +1,12 @@
 package ru.herobrine1st.e621.ui.screen.post.data
 
 import androidx.compose.ui.text.AnnotatedString
+import kotlinx.datetime.Instant
 import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.MessageText
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.parseBBCode
-import java.time.OffsetDateTime
 
 // This package may be not the best for this classes
 // It is still WIP, as I don't know ahead of time how will I replace E621 models with my own
@@ -16,8 +16,8 @@ data class CommentData(
     val id: Int,
     val author: UserData,
     val editor: UserData,
-    val creationTime: OffsetDateTime,
-    val editTime: OffsetDateTime,
+    val creationTime: Instant,
+    val editTime: Instant,
     val score: Int,
     val isHidden: Boolean,
     val message: List<MessageData<*>>
@@ -55,8 +55,8 @@ data class CommentData(
                 displayName = "Placeholder",
                 avatarUrl = null
             ),
-            creationTime = OffsetDateTime.MIN,
-            editTime = OffsetDateTime.MIN,
+            creationTime = Instant.DISTANT_PAST,
+            editTime = Instant.DISTANT_PAST,
             score = 0,
             isHidden = false,
             message = listOf(MessageText(AnnotatedString("Placeholder\nPlaceholder")))

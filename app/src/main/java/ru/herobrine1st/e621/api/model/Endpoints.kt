@@ -20,10 +20,16 @@
 
 package ru.herobrine1st.e621.api.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class PostsEndpoint(val posts: List<Post>)
 
+@Serializable
 data class PostEndpoint(val post: Post)
 
+@Serializable
 data class PostCommentsEndpoint(val html: String, val posts: Map<Int, PostReduced>)
 
+@Serializable
 data class PostVoteEndpoint(val up: Int, val down: Int, val total: Int, val ourScore: Int)

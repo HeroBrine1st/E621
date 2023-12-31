@@ -20,121 +20,126 @@
 
 package ru.herobrine1st.e621.api
 
-import android.util.Log
 import androidx.annotation.CheckResult
 import androidx.annotation.IntRange
-import com.fasterxml.jackson.databind.node.ObjectNode
-import okhttp3.ResponseBody
-import retrofit2.Call
-import retrofit2.http.*
-import ru.herobrine1st.e621.api.model.*
+import de.jensklingenberg.ktorfit.Response
+import de.jensklingenberg.ktorfit.http.DELETE
+import de.jensklingenberg.ktorfit.http.GET
+import de.jensklingenberg.ktorfit.http.Header
+import de.jensklingenberg.ktorfit.http.POST
+import de.jensklingenberg.ktorfit.http.Path
+import de.jensklingenberg.ktorfit.http.Query
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import ru.herobrine1st.e621.api.model.CommentBB
+import ru.herobrine1st.e621.api.model.Pool
+import ru.herobrine1st.e621.api.model.PostCommentsEndpoint
+import ru.herobrine1st.e621.api.model.PostEndpoint
+import ru.herobrine1st.e621.api.model.PostVoteEndpoint
+import ru.herobrine1st.e621.api.model.PostsEndpoint
 import ru.herobrine1st.e621.api.model.Tag
+import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
+import ru.herobrine1st.e621.api.model.WikiPage
 
 interface API {
+    // TODO proper model
     @CheckResult
     @GET("/users/{name}.json")
-    fun getUser(
+    suspend fun getUser(
+        @Path("name") name: String
+    ): JsonObject
+
+    @CheckResult
+    @GET("/users/{name}.json")
+    suspend fun authCheck(
         @Path("name") name: String,
         @Header("Authorization") credentials: String? = null
-    ): Call<ObjectNode>
+    ): Response<JsonObject>
 
     @CheckResult
     @GET("/posts.json")
-    fun getPosts(
+    suspend fun getPosts(
         @Query("tags") tags: String? = null,
         @Query("page") page: Int? = null, // 1 by default
         @Query("limit") limit: Int? = null, // 250 by default
         // @Header("Authorization") credentials: String? = null
-    ): Call<PostsEndpoint>
+    ): PostsEndpoint
 
     @CheckResult
     @GET("/posts/{id}.json")
-    fun getPost(
+    suspend fun getPost(
         @Path("id") id: Int
         // @Header("Authorization") credentials: String? = null
-    ): Call<PostEndpoint>
+    ): PostEndpoint
 
     @CheckResult
     @GET("/favorites.json")
-    fun getFavourites(
+    suspend fun getFavourites(
         @Query("user_id") userId: Int? = null,
         @Query("page") page: Int? = null, // 1 by default
         @Query("limit") limit: Int? = null, // 250 by default
         // @Header("Authorization") credentials: String? = null
-    ): Call<PostsEndpoint>
+    ): PostsEndpoint
 
     @CheckResult
     @POST("/favorites.json")
-    fun addToFavourites(
+    suspend fun addToFavourites(
         @Query("post_id") postId: Int,
 //        @Header("Authorization") credentials: String
-    ): Call<ResponseBody>
+    ): Response<JsonElement>
 
     @CheckResult
     @DELETE("/favorites/{post_id}.json")
-    fun removeFromFavourites(
+    suspend fun removeFromFavourites(
         @Path("post_id") postId: Int,
 //        @Header("Authorization") credentials: String
-    ): Call<Void>
+    ): Response<Void>
 
     @CheckResult
     @POST("/posts/{post_id}/votes.json")
-    fun vote(
+    suspend fun vote(
         @Path("post_id") postId: Int,
         @IntRange(from = -1, to = 1) @Query("score") score: Int,
         @Suppress("SpellCheckingInspection") @Query("no_unvote") noRetractVote: Boolean,
 //        @Header("Authorization") credentials: String
-    ): Call<PostVoteEndpoint>
-
-    /**
-     * Redirects to another page `/wiki_pages/(\d+)` if found, else no redirect and code 200
-     */
-    @CheckResult
-    @GET("/wiki_pages/show_or_new")
-    fun getWikiPageId(@Query("title") title: String): Call<ResponseBody>
+    ): PostVoteEndpoint
 
     @CheckResult
-    @GET("/wiki_pages/{id}.json")
-    fun getWikiPage(@Path("id") id: Int): Call<WikiPage>
+    @GET("/wiki_pages/{name}.json")
+    // TODO change to Tag when it is a value class
+    suspend fun getWikiPage(@Path("name") name: String): WikiPage
 
     @CheckResult
     @GET("/posts/{post_id}/comments.json")
-    fun getCommentsForPostHTML(
+    suspend fun getCommentsForPostHTML(
         @Path("post_id") id: Int
-    ): Call<PostCommentsEndpoint>
+    ): PostCommentsEndpoint
 
     @CheckResult
     @GET("/comments.json?group_by=comment")
-    fun getCommentsForPostBBCode(
+    suspend fun getCommentsForPostBBCode(
         @Query("search[post_id]") id: Int,
         @Query("page") page: Int,
         @Query("limit") limit: Int // Default unknown. Maybe 75, but I doubt
-    ): Call<List<CommentBB>>
+    ): List<CommentBB>
 
     @CheckResult
     @GET("/tags/autocomplete.json")
-    fun getAutocompleteSuggestions(
+    suspend fun getAutocompleteSuggestions(
         @Query("search[name_matches]") query: String, // 3 or more characters required on the API side
         @Query("expiry") expiry: Int = 7 // idk what it is, use default from site.
-    ): Call<List<TagAutocompleteSuggestion>>
+    ): List<TagAutocompleteSuggestion>
 
     @CheckResult
     @GET("/pools/{poolId}.json")
-    fun getPool(@Path("poolId") poolId: Int): Call<Pool>
+    suspend fun getPool(@Path("poolId") poolId: Int): Pool
 }
 
+@Deprecated("There's an undocumented endpoint that returns wiki page in one request",
+    ReplaceWith("this.getWikiPage(tag.value)")
+)
 suspend fun API.getWikiPage(tag: Tag): WikiPage {
-    val firstResponse = getWikiPageId(tag.value).awaitSuccessfulResponse()
-    if (firstResponse.raw().priorResponse == null) throw NotFoundException()
-    val id = firstResponse.raw().request.url.pathSegments.last().toIntOrNull()
-    if (id == null) {
-        Log.e(TAG, "Invalid redirection: cannot extract ID from url")
-        Log.e(TAG, firstResponse.raw().headers.joinToString("\n") { (name, value) ->
-            "$name: $value"
-        })
-        throw ApiException("Unknown error", firstResponse.code())
-    }
-    return getWikiPage(id).await()
+    return this.getWikiPage(tag.value)
 }
 
 private const val TAG = "API"

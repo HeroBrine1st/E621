@@ -29,17 +29,17 @@ import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.jsonPrimitive
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
-import ru.herobrine1st.e621.api.UnsafeAPIUsage
-import ru.herobrine1st.e621.api.await
-import ru.herobrine1st.e621.api.awaitResponse
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
@@ -255,8 +255,9 @@ class HomeComponent(
             // and component is a proxy between it and UI.          - showing errors suits best here
 
             val entries = try {
-                api.getUser(name = state.username).await()
-                    .get("blacklisted_tags").asText()
+                api.getUser(name = state.username)["blacklisted_tags"]
+                    .let { it as JsonPrimitive }
+                    .content
                     .split("\n")
                     .map {
                         BlacklistEntry(query = it, enabled = true)
@@ -274,12 +275,11 @@ class HomeComponent(
             }
         }
 
-        @OptIn(UnsafeAPIUsage::class)
         private suspend fun tryCredentials(
             credentials: AuthorizationCredentials // too connected to data store, should probably use own type
         ): LoginState {
             val res = try {
-                api.getUser(credentials.username, credentials.credentials).awaitResponse()
+                api.authCheck(credentials.username, credentials.credentials)
             } catch (e: IOException) {
                 Log.e(TAG, "A network exception occurred while checking authorization data", e)
                 return LoginState.IOError
@@ -287,30 +287,30 @@ class HomeComponent(
 
             if (res.isSuccessful) {
                 val body = res.body()!!
-                return LoginState.Authorized(body.get("name").asText(), body.get("id").asInt())
+                return LoginState.Authorized(
+                    body["name"]!!.jsonPrimitive.content,
+                    body["id"]!!.jsonPrimitive.content.toInt()
+                )
             }
 
             debug {
                 if (!res.isSuccessful) {
                     Log.d(
                         TAG,
-                        "An error occurred while authenticating in API (${res.code()} ${res.message()})"
+                        "An error occurred while authenticating in API (${res.status})"
                     )
                     withContext(Dispatchers.IO) {
-                        Log.d(TAG, res.errorBody()!!.string())
+                        Log.d(TAG, res.errorBody()!!.toString())
                     }
                 }
             }
 
-            return when (res.code()) {
-                401 -> LoginState.NoAuth
-                503 -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
-                in 500..599 -> LoginState.InternalServerError
+            return when {
+                res.status == HttpStatusCode.Unauthorized -> LoginState.NoAuth
+                res.status == HttpStatusCode.ServiceUnavailable -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
+                res.code in 500..599 -> LoginState.InternalServerError
                 else -> {
-                    Log.w(
-                        TAG,
-                        "Unknown API error occurred while authenticating (${res.code()} ${res.message()})"
-                    )
+                    Log.w(TAG, "Unknown API error occurred while authenticating (${res.status})")
                     LoginState.UnknownAPIError
                 }
             }
@@ -319,12 +319,12 @@ class HomeComponent(
 
     // Can authorize is "can press login button"
     sealed class LoginState(val canAuthorize: Boolean) {
-        object Loading : LoginState(false)
-        object IOError : LoginState(false)
-        object InternalServerError : LoginState(false)
-        object UnknownAPIError : LoginState(false)
-        object APITemporarilyUnavailable : LoginState(false)
-        object NoAuth : LoginState(true)
+        data object Loading : LoginState(false)
+        data object IOError : LoginState(false)
+        data object InternalServerError : LoginState(false)
+        data object UnknownAPIError : LoginState(false)
+        data object APITemporarilyUnavailable : LoginState(false)
+        data object NoAuth : LoginState(true)
         class Authorized(val username: String, val id: Int) : LoginState(false)
     }
 

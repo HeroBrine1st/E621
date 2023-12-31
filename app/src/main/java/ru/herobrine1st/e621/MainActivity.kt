@@ -44,9 +44,9 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import ru.herobrine1st.e621.navigation.component.root.InjectionCompanion
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponentImpl
 import ru.herobrine1st.e621.preference.LocalPreferences
@@ -84,9 +84,6 @@ class MainActivity : ComponentActivity() {
     lateinit var snackbarAdapter: SnackbarAdapter
 
     @Inject
-    lateinit var apiProvider: Provider<API>
-
-    @Inject
     lateinit var authorizationRepositoryProvider: Provider<AuthorizationRepository>
 
     @Inject
@@ -97,6 +94,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var exceptionReporterProvider: Provider<ExceptionReporter>
+
+    @Inject
+    lateinit var injectionCompanion: InjectionCompanion
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -118,8 +118,8 @@ class MainActivity : ComponentActivity() {
 
         val rootComponent = RootComponentImpl(
             applicationContext,
+            injectionCompanion = injectionCompanion,
             authorizationRepositoryProvider = authorizationRepositoryProvider.lazy(),
-            apiProvider = apiProvider.lazy(),
             snackbarAdapterProvider = lazyOf(snackbarAdapter),
             favouritesCacheProvider = favouritesCacheProvider.lazy(),
             exceptionReporterProvider = exceptionReporterProvider.lazy(),

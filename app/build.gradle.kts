@@ -14,6 +14,7 @@ plugins {
     id("com.mikepenz.aboutlibraries.plugin")
     kotlin("plugin.serialization")
     id("androidx.room")
+    id("de.jensklingenberg.ktorfit")
 }
 
 val kotlinVersion = "1.9.21"
@@ -50,7 +51,7 @@ android {
         // Will not work if underscores are hidden (the setting above)
         buildConfigField("boolean", "CONVERT_SPACES_TO_UNDERSCORES_IN_SEARCH", "true")
         stringBuildConfigField("DATABASE_NAME", "DATABASE")
-        stringBuildConfigField("API_BASE_URL", "https://e621.net")
+        stringBuildConfigField("API_BASE_URL", "https://e621.net/")
         stringBuildConfigField("DEEP_LINK_BASE_URL", "https://e621.net")
         stringBuildConfigField(
             "USER_AGENT_TEMPLATE",
@@ -181,10 +182,18 @@ dependencies {
     val accompanistVersion = "0.32.0"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
 
-    // Retrofit (Apache 2.0)
+    // OkHttp (Apache 2.0)
     implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
-    implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
-    implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
+    //implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
+    //implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
+
+    // KTorfit
+    implementation("io.ktor:ktor-client-core:2.3.7")
+    implementation("io.ktor:ktor-client-cio:2.3.7")
+    implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:1.11.1")
+    ksp("de.jensklingenberg.ktorfit:ktorfit-ksp:1.11.1")
 
     // Profiling
     "profileableImplementation"("androidx.compose.runtime:runtime-tracing:1.0.0-beta01")
