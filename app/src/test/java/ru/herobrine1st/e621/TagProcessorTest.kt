@@ -2,13 +2,14 @@
 
 package ru.herobrine1st.e621
 
-import com.fasterxml.jackson.module.kotlin.readValue
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonNamingStrategy
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.util.objectMapper
 
 @Suppress("SpellCheckingInspection")
 val samplePost = """{
@@ -104,9 +105,15 @@ class TagProcessorTest {
         assertEquals(expect, createTagProcessor(query).test(post))
     }
 
+    @OptIn(ExperimentalSerializationApi::class)
+    private val json = Json {
+        namingStrategy = JsonNamingStrategy.SnakeCase
+        coerceInputValues = true
+    }
+
     @Before
     fun prepareSamplePost() {
-        post = objectMapper.readValue(samplePost)
+        post = json.decodeFromString(samplePost)
     }
 
     @Test
