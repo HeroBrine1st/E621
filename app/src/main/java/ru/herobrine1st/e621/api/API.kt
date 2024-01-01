@@ -132,4 +132,24 @@ interface API {
     @CheckResult
     @GET("/pools/{poolId}.json")
     suspend fun getPool(@Path("poolId") poolId: Int): Pool
+
+    //    //region Up/down votes
+//
+//    suspend fun vote(post: Post, vote: Int) {
+//        assert(vote in -1..1)
+//        val currentVote = database.voteDao().getVote(post.id) ?: 0
+//        if (vote == 0) {
+//            val score = api.vote(post.id, currentVote, false)
+//            if (score.ourScore != 0) { // API does not send user's vote with post
+//                assert(api.vote(post.id, score.ourScore, false).ourScore == 0)
+//            }
+//        } else {
+//            assert(api.vote(post.id, vote, true).ourScore == vote)
+//        }
+//        database.voteDao().insertOrUpdate(post.id, vote)
+//    }
+//
+//    suspend fun getPostVote(post: Post): Int {
+//        return database.voteDao().getVote(post.id) ?: 0
+//    }
 }

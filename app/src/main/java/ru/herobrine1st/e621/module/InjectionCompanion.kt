@@ -34,7 +34,7 @@ class InjectionCompanion @Inject constructor(
     @ApplicationContext val applicationContext: Context,
     snackbarAdapter: SnackbarAdapter
 ) {
-    private val authorizationRepositoryLazy = lazy {
+    val authorizationRepositoryLazy = lazy {
         AuthorizationRepositoryImpl(
             applicationContext
         )

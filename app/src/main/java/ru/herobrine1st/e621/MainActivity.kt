@@ -44,7 +44,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.module.InjectionCompanion
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
@@ -84,9 +83,6 @@ class MainActivity : ComponentActivity() {
     lateinit var snackbarAdapter: SnackbarAdapter
 
     @Inject
-    lateinit var authorizationRepositoryProvider: Provider<AuthorizationRepository>
-
-    @Inject
     lateinit var blacklistRepositoryProvider: Provider<BlacklistRepository>
 
     @Inject
@@ -119,7 +115,6 @@ class MainActivity : ComponentActivity() {
         val rootComponent = RootComponentImpl(
             applicationContext,
             injectionCompanion = injectionCompanion,
-            authorizationRepositoryProvider = authorizationRepositoryProvider.lazy(),
             snackbarAdapterProvider = lazyOf(snackbarAdapter),
             favouritesCacheProvider = favouritesCacheProvider.lazy(),
             exceptionReporterProvider = exceptionReporterProvider.lazy(),

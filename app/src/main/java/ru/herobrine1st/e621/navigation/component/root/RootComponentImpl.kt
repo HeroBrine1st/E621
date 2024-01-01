@@ -32,7 +32,6 @@ import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import okhttp3.Cache
 import okhttp3.OkHttpClient
-import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.module.InjectionCompanion
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
@@ -65,7 +64,6 @@ import java.io.File
 class RootComponentImpl(
     private val applicationContext: Context,
     private val injectionCompanion: InjectionCompanion,
-    private val authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
     private val snackbarAdapterProvider: Lazy<SnackbarAdapter>,
     private val favouritesCacheProvider: Lazy<FavouritesCache>,
     private val exceptionReporterProvider: Lazy<ExceptionReporter>,
@@ -99,7 +97,7 @@ class RootComponentImpl(
         return when (configuration) {
             is Home -> Child.Home(
                 HomeComponent(
-                    authorizationRepositoryProvider,
+                    injectionCompanion.authorizationRepositoryLazy,
                     injectionCompanion.apiModule.apiLazy,
                     snackbarAdapterProvider.value,
                     blacklistRepositoryProvider.value,
