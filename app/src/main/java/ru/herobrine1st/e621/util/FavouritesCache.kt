@@ -50,11 +50,11 @@ class FavouritesCache @Inject constructor() {
         sealed interface Determined : FavouriteState {
 
 
-            object UNFAVOURITE : Determined {
+            data object UNFAVOURITE : Determined {
                 override val isFavourite: Boolean = false
             }
 
-            object FAVOURITE : Determined {
+            data object FAVOURITE : Determined {
                 override val isFavourite: Boolean = true
             }
 

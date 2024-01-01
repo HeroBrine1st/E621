@@ -23,18 +23,14 @@ package ru.herobrine1st.e621.navigation.component.posts
 import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import java.io.IOException
 
 class PostsSource(
     private val api: API,
-    private val snackbar: SnackbarAdapter,
     private val exceptionReporter: ExceptionReporter,
     private val searchOptions: SearchOptions?,
 ) : PagingSource<Int, Post>() {
@@ -50,12 +46,7 @@ class PostsSource(
         }
         return try {
             val page = params.key ?: 1
-
-
-            val posts: List<Post> = withContext(Dispatchers.IO) {
-                @Suppress("BlockingMethodInNonBlockingContext") // False positive
-                searchOptions.getPosts(api, page = page, limit = params.loadSize)
-            }
+            val posts: List<Post> = searchOptions.getPosts(api, page = page, limit = params.loadSize)
             LoadResult.Page(
                 data = posts,
                 prevKey = if (page == 1) null else page - 1,

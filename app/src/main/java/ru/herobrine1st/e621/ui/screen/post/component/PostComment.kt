@@ -22,7 +22,6 @@ package ru.herobrine1st.e621.ui.screen.post.component
 
 import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -51,7 +50,6 @@ import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 import ru.herobrine1st.e621.ui.component.placeholder.material3.shimmer
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun PostComment(
     commentData: CommentData,
@@ -113,7 +111,7 @@ fun PostComment(
                 transitionSpec = {
                     fadeIn(animationSpec = tween(220)) togetherWith
                             fadeOut(animationSpec = tween(90))
-                }
+                }, label = "Text change animation"
             ) {
                 RenderBB(it)
             } else RenderBB(commentData.message)

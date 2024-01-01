@@ -27,17 +27,37 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
-import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.*
+import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.Proxy
+import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.ProxyAuth
+import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.ProxyType
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -77,7 +97,7 @@ fun ProxyDialog(
                         Icons.Filled.ArrowDropDown,
                         null,
                         Modifier.rotate(
-                            animateFloatAsState(if (state.dropdownExpanded) 180f else 360f).value
+                            animateFloatAsState(if (state.dropdownExpanded) 180f else 360f, label = "Dropdown arrow rotation animation").value
                         )
                     )
                 },
@@ -90,7 +110,7 @@ fun ProxyDialog(
                 },
                 modifier = Modifier.exposedDropdownSize()
             ) {
-                ProxyType.values().forEach { type ->
+                ProxyType.entries.forEach { type ->
                     DropdownMenuItem(
                         onClick = {
                             state.type = type
@@ -143,7 +163,7 @@ fun ProxyDialog(
             label = { Text(stringResource(R.string.proxy_password)) },
             trailingIcon = {
                 IconButton(onClick = { state.showPassword = !state.showPassword }) {
-                    Crossfade(state.showPassword) { showPassword ->
+                    Crossfade(state.showPassword, label = "Show password button crossfade") { showPassword ->
                         Icon(
                             imageVector = if (showPassword) Icons.Default.VisibilityOff
                             else Icons.Default.Visibility,
@@ -187,7 +207,7 @@ class ProxyDialogState(
 
     var type by mutableStateOf(initialType)
     var hostname by mutableStateOf(initialHostname)
-    var port by mutableStateOf(initialPort)
+    var port by mutableIntStateOf(initialPort)
     var username by mutableStateOf(initialUsername)
     var password by mutableStateOf(initialPassword)
 

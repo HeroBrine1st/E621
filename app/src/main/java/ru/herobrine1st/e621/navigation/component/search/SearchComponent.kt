@@ -22,6 +22,7 @@ package ru.herobrine1st.e621.navigation.component.search
 
 import android.content.Context
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -65,8 +66,8 @@ class SearchComponent private constructor(
     var favouritesOf by mutableStateOf(initialSearchOptions.favouritesOf ?: "")
     var fileType by mutableStateOf(initialSearchOptions.fileType)
     var fileTypeInvert by mutableStateOf(initialSearchOptions.fileTypeInvert)
-    var parentPostId by mutableStateOf(initialSearchOptions.parent)
-    var poolId by mutableStateOf(initialSearchOptions.poolId)
+    var parentPostId by mutableIntStateOf(initialSearchOptions.parent)
+    var poolId by mutableIntStateOf(initialSearchOptions.poolId)
 
     fun tagSuggestionFlow(getCurrentText: () -> String): Flow<List<TagSuggestion>> {
         val currentTextFlow = snapshotFlow {

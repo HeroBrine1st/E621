@@ -119,7 +119,7 @@ fun VideoPlayerController(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Crossfade(targetState = willPlayWhenReady) {
+                Crossfade(targetState = willPlayWhenReady, label = "Play-pause crosffade") {
                     when (it) {
                         true -> Icon(
                             Icons.Default.Pause,

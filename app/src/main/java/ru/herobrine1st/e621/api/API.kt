@@ -37,7 +37,6 @@ import ru.herobrine1st.e621.api.model.PostCommentsEndpoint
 import ru.herobrine1st.e621.api.model.PostEndpoint
 import ru.herobrine1st.e621.api.model.PostVoteEndpoint
 import ru.herobrine1st.e621.api.model.PostsEndpoint
-import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
 import ru.herobrine1st.e621.api.model.WikiPage
 
@@ -134,12 +133,3 @@ interface API {
     @GET("/pools/{poolId}.json")
     suspend fun getPool(@Path("poolId") poolId: Int): Pool
 }
-
-@Deprecated("There's an undocumented endpoint that returns wiki page in one request",
-    ReplaceWith("this.getWikiPage(tag.value)")
-)
-suspend fun API.getWikiPage(tag: Tag): WikiPage {
-    return this.getWikiPage(tag.value)
-}
-
-private const val TAG = "API"

@@ -21,14 +21,25 @@
 package ru.herobrine1st.e621.ui.screen
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.LinkOff
-import androidx.compose.material3.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,7 +82,8 @@ fun WikiScreen(screenSharedState: ScreenSharedState, component: WikiComponent) {
         Crossfade(
             targetState = component.state, modifier = Modifier
                 .padding(paddingValues)
-                .padding(horizontal = 8.dp)
+                .padding(horizontal = 8.dp),
+            label = "Wiki text crossfade"
         ) { state ->
             when (state) {
                 WikiState.Failure -> {

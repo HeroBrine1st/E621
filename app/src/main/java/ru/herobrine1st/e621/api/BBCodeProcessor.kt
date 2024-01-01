@@ -113,10 +113,10 @@ private sealed interface DTextTag {
         }
     }
 
-    object Bold : Styled("b", BOLD)
-    object Italic : Styled("i", ITALIC)
+    data object Bold : Styled("b", BOLD)
+    data object Italic : Styled("i", ITALIC)
 
-    object Quote : DTextTag {
+    data object Quote : DTextTag {
         override val name: String = "quote"
 
         override fun stylize(data: List<MessageData<*>>): List<MessageData<*>> {

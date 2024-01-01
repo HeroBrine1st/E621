@@ -114,7 +114,7 @@ fun PostActionRow(
             },
             enabled = isAuthorized && favouriteState !is FavouriteState.InFly
         ) {
-            Crossfade(targetState = favouriteState.isFavourite) {
+            Crossfade(targetState = favouriteState.isFavourite, label = "Favourite icon animation") {
                 if (it) Icon(
                     Icons.Filled.Favorite,
                     contentDescription = stringResource(R.string.remove_from_favourites)

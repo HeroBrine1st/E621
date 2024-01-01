@@ -73,7 +73,6 @@ class PostListingComponent(
     private val instance = instanceKeeper.getOrCreate {
         Instance(
             api,
-            snackbar,
             favouritesCache,
             exceptionReporter,
             searchOptions,
@@ -129,7 +128,6 @@ class PostListingComponent(
 
     private class Instance(
         api: API,
-        snackbar: SnackbarAdapter,
         favouritesCache: FavouritesCache,
         exceptionReporter: ExceptionReporter,
         searchOptions: SearchOptions,
@@ -143,7 +141,7 @@ class PostListingComponent(
                 initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
             )
         ) {
-            PostsSource(api, snackbar, exceptionReporter, searchOptions)
+            PostsSource(api, exceptionReporter, searchOptions)
         }
 
         private val blacklistPredicateFlow =
@@ -167,7 +165,7 @@ class PostListingComponent(
                     it.id,
                     FavouriteState.Determined.fromBoolean(it.isFavourite)
                 ) != FavouriteState.Determined.UNFAVOURITE // Show post if it is either favourite
-                        || !blacklistPredicate.test(it)        //           or is not blacklisted
+                        || !blacklistPredicate.test(it)    //           or is not blacklisted
             }
         }.combine(applicationContext.getPreferencesFlow { it.safeModeEnabled }) { posts, safeModeEnabled ->
             if (safeModeEnabled) posts.filter { it.rating == Rating.SAFE }

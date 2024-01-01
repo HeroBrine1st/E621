@@ -3,9 +3,24 @@ package ru.herobrine1st.e621.ui.screen.settings
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -24,7 +39,7 @@ fun SettingsBlacklistEntry(
     component: SettingsBlacklistEntryComponent
 ) {
     var applying by remember { mutableStateOf(false) }
-    val backdropFactor by animateFloatAsState(if (!applying) 0f else 1f)
+    val backdropFactor by animateFloatAsState(if (!applying) 0f else 1f, label = "Backdrop factor animation")
 
     Scaffold(
         topBar = {
@@ -68,7 +83,7 @@ fun SettingsBlacklistEntry(
                     enabled = !applying && component.query.isNotBlank(),
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Crossfade(component.id) { id ->
+                    Crossfade(component.id, label = "Button label crossfade") { id ->
                         Text(
                             when (id) {
                                 0L -> stringResource(R.string.add)

@@ -23,6 +23,8 @@ package ru.herobrine1st.e621.navigation.component
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.media3.common.AudioAttributes
@@ -128,11 +130,11 @@ class VideoPlayerComponent(
 
     var isPlaying by mutableStateOf(player.isPlaying)
         private set
-    var contentDurationMs by mutableStateOf(player.contentDuration.coerceAtLeast(0))
+    var contentDurationMs by mutableLongStateOf(player.contentDuration.coerceAtLeast(0))
         private set
 
     @get:Player.State
-    var playbackState by mutableStateOf(player.playbackState)
+    var playbackState by mutableIntStateOf(player.playbackState)
         private set
 
     private var _playWhenReady by mutableStateOf(player.playWhenReady)

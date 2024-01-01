@@ -27,7 +27,7 @@ import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import java.io.InputStream
 import java.io.OutputStream
 
-@Suppress("BlockingMethodInNonBlockingContext")
+
 object PreferencesSerializer : Serializer<Preferences> {
     override val defaultValue: Preferences
         get() = Preferences.getDefaultInstance()

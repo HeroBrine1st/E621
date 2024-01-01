@@ -38,9 +38,7 @@ data class SnackbarMessage(
 
         if (stringId != other.stringId) return false
         if (duration != other.duration) return false
-        if (!(formatArgs.contentEquals(other.formatArgs))) return false
-
-        return true
+        return formatArgs.contentEquals(other.formatArgs)
     }
 
     override fun hashCode(): Int {

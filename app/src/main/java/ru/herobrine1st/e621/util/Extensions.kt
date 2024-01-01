@@ -21,8 +21,6 @@
 package ru.herobrine1st.e621.util
 
 import android.app.Activity
-import android.os.Build
-import android.os.Bundle
 import okhttp3.Credentials
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.Tag
@@ -52,12 +50,6 @@ inline fun debug(block: () -> Unit) {
 }
 
 val AuthorizationCredentials.credentials get() = Credentials.basic(username, password)
-
-// Google are you happy now????
-inline fun <reified T> Bundle.getParcelableCompat(key: String?): T? = when {
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU -> getParcelable(key, T::class.java)
-    else -> @Suppress("DEPRECATION") getParcelable(key)
-}
 
 fun Activity.restart() {
     val intent = intent
