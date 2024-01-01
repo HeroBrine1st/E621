@@ -43,7 +43,7 @@ class ExceptionReporter(
             )
 
             is SerializationException -> snackbarAdapter.enqueueMessage(
-                R.string.jackson_deserialization_error,
+                R.string.deserialization_error,
                 SnackbarDuration.Indefinite
             )
 
