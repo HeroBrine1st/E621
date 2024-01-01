@@ -27,7 +27,6 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.util.ExceptionReporter
-import java.io.IOException
 
 class PostsSource(
     private val api: API,
@@ -52,13 +51,10 @@ class PostsSource(
                 prevKey = if (page == 1) null else page - 1,
                 nextKey = if (posts.isNotEmpty()) page + 1 else null
             )
-        } catch (e: IOException) {
-            Log.e("Posts", "Unable to load posts", e)
-            exceptionReporter.handleNetworkException(e)
-            LoadResult.Error(e)
-        } catch (e: Throwable) {
-            Log.e("Posts", "Unable to load posts", e)
-            LoadResult.Error(e)
+        } catch (t: Throwable) {
+            exceptionReporter.handleRequestException(t)
+            Log.e("Posts", "Unable to load posts", t)
+            LoadResult.Error(t)
         }
     }
 }

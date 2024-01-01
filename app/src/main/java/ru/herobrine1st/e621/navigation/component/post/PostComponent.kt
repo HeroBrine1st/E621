@@ -73,7 +73,6 @@ import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.isFavourite
-import java.io.IOException
 
 private const val POST_STATE_KEY = "POST_STATE_KEY"
 private const val TAG = "PostComponent"
@@ -201,10 +200,9 @@ class PostComponent(
                         post = api.getPost(id).post
                         // Maybe reload ExoPlayer if old object contains invalid URL?
                         // exoPlayer.playbackState may help with that
-                    } catch (e: IOException) {
-                        Log.e(TAG, "Unable to get post $id", e)
-                        exceptionReporter.handleNetworkException(e)
                     } catch (t: Throwable) {
+                        // TODO proper error state
+                        exceptionReporter.handleRequestException(t, showThrowable = true)
                         Log.e(TAG, "Unable to get post $id", t)
                     }
                 }

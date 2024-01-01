@@ -46,7 +46,6 @@ import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
-import java.io.IOException
 
 private const val TAG = "WikiComponent"
 
@@ -100,14 +99,8 @@ class WikiComponent(
                 )
                 snackbarAdapter.enqueueMessage(R.string.unknown_api_error, SnackbarDuration.Long)
                 WikiState.Failure
-            } catch (e: IOException) {
-                exceptionReporter.handleNetworkException(e)
-                WikiState.Failure
             } catch (t: Throwable) {
-                snackbarAdapter.enqueueMessage(
-                    R.string.unknown_error,
-                    SnackbarDuration.Indefinite
-                )
+                exceptionReporter.handleRequestException(t, showThrowable = true)
                 WikiState.Failure
             }
         }

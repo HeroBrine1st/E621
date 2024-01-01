@@ -30,7 +30,6 @@ import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.parseCommentAvatarsAndGetCommentCount
 import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.util.ExceptionReporter
-import java.io.IOException
 import kotlin.math.ceil
 import kotlin.properties.Delegates
 
@@ -85,13 +84,10 @@ class PostCommentsSource(
                 prevKey = if (page == firstPage) null else page + 1,
                 nextKey = if (page == 1) null else page - 1,
             )
-        } catch (e: IOException) {
-            Log.e("PostCommentsSource", "Unable to load comments", e)
-            exceptionReporter.handleNetworkException(e)
-            LoadResult.Error(e)
-        } catch (e: Throwable) {
-            Log.e("Posts", "Unable to load comments", e)
-            LoadResult.Error(e)
+        } catch (t: Throwable) {
+            Log.e("Posts", "Unable to load comments", t)
+            exceptionReporter.handleRequestException(t)
+            LoadResult.Error(t)
         }
     }
 

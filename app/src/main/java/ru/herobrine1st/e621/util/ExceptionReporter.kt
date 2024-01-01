@@ -25,34 +25,37 @@ import androidx.compose.material3.SnackbarDuration
 import kotlinx.serialization.SerializationException
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
+import java.io.IOException
 
-// This class will send deserialization errors to developers (either anonymously or with user consent, idk)
-// Right now it does nothing but logs
-// Should it handle any IOException?
 class ExceptionReporter(
-    private val snackbarAdapter: SnackbarAdapter
+    private val snackbarAdapter: SnackbarAdapter,
 ) {
-    suspend fun handleDeserializationError(exception: SerializationException) =
-        handleNetworkException(exception)
-
-    suspend fun handleNetworkException(
-        e: Throwable,
-        message: String = "Unknown network exception occurred"
+    suspend fun handleRequestException(
+        t: Throwable,
+        message: String = "Unknown request exception occurred",
+        showThrowable: Boolean = false,
     ) {
-        Log.e(TAG, message, e)
-        when (e) {
+        Log.e(TAG, message, t)
+        when (t) {
+            is IOException -> snackbarAdapter.enqueueMessage(
+                R.string.network_error,
+                SnackbarDuration.Indefinite
+            )
+
             is SerializationException -> snackbarAdapter.enqueueMessage(
                 R.string.jackson_deserialization_error,
                 SnackbarDuration.Indefinite
             )
-            else -> snackbarAdapter.enqueueMessage(
-                R.string.network_error,
+
+            else -> if (showThrowable) snackbarAdapter.enqueueMessage(
+                R.string.unknown_error,
                 SnackbarDuration.Indefinite
             )
         }
     }
 
+
     companion object {
-        const val TAG = "JacksonExceptionHandler"
+        const val TAG = "ExceptionReporter"
     }
 }
