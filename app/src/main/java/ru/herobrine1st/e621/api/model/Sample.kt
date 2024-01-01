@@ -23,7 +23,6 @@ package ru.herobrine1st.e621.api.model
 import androidx.compose.runtime.Immutable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 
 
 @Immutable
@@ -34,9 +33,7 @@ data class Sample(
     val width: Int,
     // Strange bug on API side, probably database related
     val url: String = "",
-    val alternates: Map<String, Alternate>,
-    @SerialName("type")
-    val type0: JsonElement // idk why it is ignored
+    val alternates: Map<String, Alternate>
 ) {
     val type by lazy {
         FileType.byExtension[url.splitToSequence(".").lastOrNull()] ?: FileType.UNDEFINED

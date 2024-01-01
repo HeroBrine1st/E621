@@ -30,8 +30,8 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlin.coroutines.CoroutineContext
 
-suspend fun <T> Response<T>.ensureSuccessful(context: CoroutineContext = Dispatchers.Default): T {
-    if(status.isSuccess()) return body()!!
+suspend fun <T> Response<T>.ensureSuccessful(context: CoroutineContext = Dispatchers.Default) {
+    if(status.isSuccess()) return
 
     if (status == HttpStatusCode.NotFound) {
         throw ApiException("Not found", 404)
