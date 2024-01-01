@@ -7,7 +7,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
-    id("kotlin-parcelize")
     kotlin("kapt")
     id("dagger.hilt.android.plugin")
     id("com.google.protobuf")

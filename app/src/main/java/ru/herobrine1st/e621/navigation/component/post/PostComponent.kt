@@ -43,7 +43,6 @@ import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
-import com.arkivanov.essenty.parcelable.Parcelable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -51,7 +50,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
@@ -103,6 +102,7 @@ class PostComponent(
 
     val dialog: Value<ChildSlot<PoolsDialogConfig, PoolsDialogComponent>> = childSlot(
         source = slotNavigation,
+        serializer = PoolsDialogConfig.serializer(),
         handleBackButton = true,
         childFactory = { _, componentContext ->
             return@childSlot PoolsDialogComponent(
@@ -328,5 +328,5 @@ class PostComponent(
     }
 }
 
-@Parcelize
-object PoolsDialogConfig : Parcelable
+@Serializable
+object PoolsDialogConfig

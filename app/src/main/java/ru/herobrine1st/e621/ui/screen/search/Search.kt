@@ -121,8 +121,8 @@ fun Search(
         }
     }
 
-    var tagModificationState by rememberSaveable {
-        mutableStateOf<TagModificationState>(
+    var tagModificationState by rememberSaveable(saver = TagModificationState.Saver) {
+        mutableStateOf(
             TagModificationState.None
         )
     }
