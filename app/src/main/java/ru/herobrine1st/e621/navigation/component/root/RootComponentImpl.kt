@@ -34,6 +34,7 @@ import okhttp3.Cache
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import ru.herobrine1st.e621.module.InjectionCompanion
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
@@ -99,7 +100,7 @@ class RootComponentImpl(
             is Home -> Child.Home(
                 HomeComponent(
                     authorizationRepositoryProvider,
-                    injectionCompanion.api,
+                    injectionCompanion.apiModule.apiLazy,
                     snackbarAdapterProvider.value,
                     blacklistRepositoryProvider.value,
                     navigation,
@@ -111,14 +112,14 @@ class RootComponentImpl(
                     componentContext = context,
                     navigator = navigation,
                     initialSearchOptions = configuration.initialSearch,
-                    api = injectionCompanion.api.value,
+                    api = injectionCompanion.apiModule.api,
                     applicationContext = applicationContext
                 )
             )
             is PostListing -> Child.PostListing(
                 PostListingComponent(
                     componentContext = context,
-                    api = injectionCompanion.api.value,
+                    api = injectionCompanion.apiModule.api,
                     snackbar = snackbarAdapterProvider.value,
                     favouritesCache = favouritesCacheProvider.value,
                     exceptionReporter = exceptionReporterProvider.value,
@@ -138,7 +139,7 @@ class RootComponentImpl(
                     navigation,
                     applicationContext,
                     exceptionReporterProvider.value,
-                    injectionCompanion.api.value,
+                    injectionCompanion.apiModule.api,
                     favouritesCacheProvider.value,
                     snackbarAdapterProvider.value,
                     instance.mediaOkHttpClientProvider
@@ -173,7 +174,7 @@ class RootComponentImpl(
                 WikiComponent(
                     configuration.tag,
                     context,
-                    injectionCompanion.api.value,
+                    injectionCompanion.apiModule.api,
                     snackbarAdapterProvider.value,
                     exceptionReporterProvider.value,
                     navigation

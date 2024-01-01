@@ -46,7 +46,7 @@ import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.navigation.component.root.InjectionCompanion
+import ru.herobrine1st.e621.module.InjectionCompanion
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponentImpl
 import ru.herobrine1st.e621.preference.LocalPreferences

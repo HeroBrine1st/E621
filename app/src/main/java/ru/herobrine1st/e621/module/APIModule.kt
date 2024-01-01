@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2023 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2024 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,10 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.navigation.component.root
+package ru.herobrine1st.e621.module
 
 import android.content.Context
 import android.util.Log
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.scopes.ActivityRetainedScoped
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
@@ -46,20 +44,21 @@ import kotlinx.serialization.json.JsonNamingStrategy
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
-import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
+import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.USER_AGENT
 import ru.herobrine1st.e621.util.credentials
 import java.io.File
-import javax.inject.Inject
 
-// A mid-step before dropping Hilt entirely
-@ActivityRetainedScoped
-class InjectionCompanion @Inject constructor(
-    @ApplicationContext val applicationContext: Context,
-    private val authorizationRepository: AuthorizationRepository,
-    private val authorizationNotifier: AuthorizationNotifier
+class APIModule(
+    applicationContext: Context,
+    authorizationRepositoryLazy: Lazy<AuthorizationRepository>,
+    authorizationNotifierLazy: Lazy<AuthorizationNotifier>
 ) {
+
+    private val authorizationRepository by authorizationRepositoryLazy
+    private val authorizationNotifier by authorizationNotifierLazy
+
     private val requestDelayMs = 667 // 1.5 req/s, and server limit is 2 req/s
     private val mutex = Mutex()
 
@@ -97,7 +96,7 @@ class InjectionCompanion @Inject constructor(
 
                 // Authorization interceptor
                 intercept { request ->
-                    var auth: AuthorizationCredentials? = null
+                    var auth: AuthorizationCredentialsOuterClass.AuthorizationCredentials? = null
                     if (request.headers[HttpHeaders.Authorization] == null) {
                         auth = authorizationRepository.getAccount()?.also {
                             request.header(HttpHeaders.Authorization, it.credentials)
@@ -107,7 +106,7 @@ class InjectionCompanion @Inject constructor(
                     when (call.response.status) {
                         HttpStatusCode.Unauthorized -> if (auth != null) {
                             authorizationRepository.logout()
-                            authorizationNotifier.notifyAuthorizationRevoked()
+                            authorizationNotifier .notifyAuthorizationRevoked()
                         }
 
                         HttpStatusCode.Forbidden ->
@@ -119,11 +118,13 @@ class InjectionCompanion @Inject constructor(
         }
     }
 
-    val api = lazy {
+    val apiLazy = lazy {
         Ktorfit.Builder()
             .httpClient(ktorClient)
             .baseUrl(BuildConfig.API_BASE_URL)
             .build()
             .create<API>()
     }
+
+    val api by apiLazy
 }
