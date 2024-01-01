@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.api
 
 import android.util.Log
-import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.jsonPrimitive
 import ru.herobrine1st.e621.api.model.FileType
@@ -38,8 +37,8 @@ import java.io.IOException
 // STOPSHIP: Polymorphic structure is vanished at runtime
 // It is present in bytecode, but runtime throws serialization exceptions
 // STOPSHIP: This error suddenly vanished after I charged my phone
+// STOPSHIP: it is a heisenbug that can be fixed by further inspection and/or replacement with sealed class
 @Serializable
-@Polymorphic
 sealed interface SearchOptions {
     @Throws(ApiException::class, IOException::class)
     suspend fun getPosts(api: API, limit: Int, page: Int): List<Post>
@@ -47,7 +46,6 @@ sealed interface SearchOptions {
     fun toBuilder(builder: PostsSearchOptions.Builder.() -> Unit) =
         PostsSearchOptions.builder(this, builder)
 }
-
 
 @Serializable
 data class PostsSearchOptions(

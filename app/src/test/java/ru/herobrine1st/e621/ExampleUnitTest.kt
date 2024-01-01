@@ -25,7 +25,7 @@ class ExampleUnitTest {
         )
         val str = Json.encodeToString(Config.serializer(), test)
         println(str)
-        val test2 = Json.decodeFromString<Config>(Config.serializer(), str)
+        val test2 = Json.decodeFromString(Config.serializer(), str)
         assertEquals(test, test2)
     }
 }
