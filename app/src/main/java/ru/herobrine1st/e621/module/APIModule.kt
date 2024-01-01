@@ -106,7 +106,7 @@ class APIModule(
                     when (call.response.status) {
                         HttpStatusCode.Unauthorized -> if (auth != null) {
                             authorizationRepository.logout()
-                            authorizationNotifier .notifyAuthorizationRevoked()
+                            authorizationNotifier.notifyAuthorizationRevoked()
                         }
 
                         HttpStatusCode.Forbidden ->

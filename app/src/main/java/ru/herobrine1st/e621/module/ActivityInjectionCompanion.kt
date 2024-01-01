@@ -21,32 +21,34 @@
 package ru.herobrine1st.e621.module
 
 import android.content.Context
-import dagger.hilt.android.qualifiers.ApplicationContext
-import dagger.hilt.android.scopes.ActivityRetainedScoped
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepositoryImpl
-import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.AuthorizationNotifier
-import javax.inject.Inject
+import ru.herobrine1st.e621.util.FavouritesCache
 
-// A mid-step before dropping Hilt entirely
-@ActivityRetainedScoped
-class InjectionCompanion @Inject constructor(
-    @ApplicationContext val applicationContext: Context,
-    snackbarAdapter: SnackbarAdapter
+class ActivityInjectionCompanion(
+    // TODO extract interface
+    val applicationContext: Context,
+    private val applicationInjectionCompanion: ApplicationInjectionCompanion
 ) {
     val authorizationRepositoryLazy = lazy {
-        AuthorizationRepositoryImpl(
-            applicationContext
-        )
+        AuthorizationRepositoryImpl(applicationContext)
     }
 
     private val authorizationNotifierLazy = lazy {
-        AuthorizationNotifier(snackbarAdapter)
+        AuthorizationNotifier(snackbarModule.snackbarAdapter)
     }
+
+    val favouritesCache = FavouritesCache()
 
     val apiModule = APIModule(
         applicationContext,
         authorizationRepositoryLazy,
         authorizationNotifierLazy
     )
+
+    val mediaModule = MediaModule(applicationContext)
+
+    val databaseModule by applicationInjectionCompanion::databaseModule
+    val snackbarModule by applicationInjectionCompanion::snackbarModule
+    val exceptionReporter by applicationInjectionCompanion::exceptionReporter
 }

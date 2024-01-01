@@ -20,18 +20,16 @@
 
 package ru.herobrine1st.e621.util
 
-import dagger.hilt.android.scopes.ActivityRetainedScoped
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import ru.herobrine1st.e621.api.model.Post
-import javax.inject.Inject
 
 /**
  * To synchronize many screens.
  */
-@ActivityRetainedScoped
-class FavouritesCache @Inject constructor() {
+
+class FavouritesCache {
     private val _flow = MutableStateFlow<Map<Int, FavouriteState>>(mapOf()) // id to isFavourite
 
     val flow = _flow.asStateFlow()

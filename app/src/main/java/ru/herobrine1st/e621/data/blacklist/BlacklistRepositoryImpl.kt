@@ -25,9 +25,8 @@ import ru.herobrine1st.e621.dao.BlacklistDao
 import ru.herobrine1st.e621.data.BaseRepositoryImpl
 import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.entity.BlacklistEntry
-import javax.inject.Inject
 
-class BlacklistRepositoryImpl @Inject constructor(
+class BlacklistRepositoryImpl(
     database: Database,
     private val dao: BlacklistDao
 ) : BaseRepositoryImpl(database), BlacklistRepository {

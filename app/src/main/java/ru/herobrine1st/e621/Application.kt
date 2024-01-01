@@ -27,13 +27,14 @@ import coil.ImageLoaderFactory
 import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.disk.DiskCache
-import dagger.hilt.android.HiltAndroidApp
 import okhttp3.OkHttpClient
+import ru.herobrine1st.e621.module.ApplicationInjectionCompanion
 import ru.herobrine1st.e621.net.DownloadProgressInterceptor
 
-@HiltAndroidApp
 class Application : Application(), ImageLoaderFactory {
-    override fun newImageLoader(): ImageLoader = ImageLoader.Builder(applicationContext)
+    val injectionCompanion = ApplicationInjectionCompanion(this)
+
+    override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
         .crossfade(true)
         .okHttpClient {
             OkHttpClient.Builder()
@@ -42,7 +43,7 @@ class Application : Application(), ImageLoaderFactory {
         }
         .diskCache {
             DiskCache.Builder()
-                .directory(applicationContext.cacheDir.resolve("coilCache"))
+                .directory(cacheDir.resolve("coilCache"))
                 .build()
         }
         .components {

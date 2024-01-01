@@ -25,14 +25,11 @@ import androidx.compose.material3.SnackbarDuration
 import kotlinx.serialization.SerializationException
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
-import javax.inject.Inject
-import javax.inject.Singleton
 
 // This class will send deserialization errors to developers (either anonymously or with user consent, idk)
 // Right now it does nothing but logs
 // Should it handle any IOException?
-@Singleton
-class ExceptionReporter @Inject constructor(
+class ExceptionReporter(
     private val snackbarAdapter: SnackbarAdapter
 ) {
     suspend fun handleDeserializationError(exception: SerializationException) =

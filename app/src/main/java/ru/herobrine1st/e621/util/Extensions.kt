@@ -25,7 +25,6 @@ import okhttp3.Credentials
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
-import javax.inject.Provider
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -60,8 +59,6 @@ fun Activity.restart() {
 inline fun <T> T.runIf(condition: Boolean, block: T.() -> T): T {
     return if (condition) block(this) else this
 }
-
-fun <T> Provider<T>.lazy() = lazy { get() }
 
 val Tag.text
     get() = if (BuildConfig.HIDE_UNDERSCORES_FROM_USER) value.replace('_', ' ')

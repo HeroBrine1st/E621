@@ -21,19 +21,13 @@
 package ru.herobrine1st.e621.navigation.component.root
 
 import android.content.Context
-import android.os.StatFs
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.SlotNavigation
 import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
-import com.arkivanov.essenty.instancekeeper.InstanceKeeper
-import com.arkivanov.essenty.instancekeeper.getOrCreate
-import okhttp3.Cache
-import okhttp3.OkHttpClient
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.module.InjectionCompanion
+import ru.herobrine1st.e621.module.ActivityInjectionCompanion
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
@@ -56,22 +50,12 @@ import ru.herobrine1st.e621.navigation.config.Config.PostListing
 import ru.herobrine1st.e621.navigation.config.Config.Search
 import ru.herobrine1st.e621.navigation.config.Config.Settings
 import ru.herobrine1st.e621.navigation.config.Config.Wiki
-import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
-import ru.herobrine1st.e621.util.ExceptionReporter
-import ru.herobrine1st.e621.util.FavouritesCache
-import java.io.File
 
 class RootComponentImpl(
     private val applicationContext: Context,
-    private val injectionCompanion: InjectionCompanion,
-    private val snackbarAdapterProvider: Lazy<SnackbarAdapter>,
-    private val favouritesCacheProvider: Lazy<FavouritesCache>,
-    private val exceptionReporterProvider: Lazy<ExceptionReporter>,
-    private val blacklistRepositoryProvider: Lazy<BlacklistRepository>,
+    private val injectionCompanion: ActivityInjectionCompanion,
     componentContext: ComponentContext
 ) : RootComponent, ComponentContext by componentContext {
-
-    private val instance = instanceKeeper.getOrCreate { Instance(applicationContext) }
 
     override val navigation = StackNavigation<Config>()
     override val stack = childStack(
@@ -99,8 +83,8 @@ class RootComponentImpl(
                 HomeComponent(
                     injectionCompanion.authorizationRepositoryLazy,
                     injectionCompanion.apiModule.apiLazy,
-                    snackbarAdapterProvider.value,
-                    blacklistRepositoryProvider.value,
+                    injectionCompanion.snackbarModule.snackbarAdapter,
+                    injectionCompanion.databaseModule.blacklistRepository,
                     navigation,
                     context
                 )
@@ -118,13 +102,13 @@ class RootComponentImpl(
                 PostListingComponent(
                     componentContext = context,
                     api = injectionCompanion.apiModule.api,
-                    snackbar = snackbarAdapterProvider.value,
-                    favouritesCache = favouritesCacheProvider.value,
-                    exceptionReporter = exceptionReporterProvider.value,
+                    snackbar = injectionCompanion.snackbarModule.snackbarAdapter,
+                    favouritesCache = injectionCompanion.favouritesCache,
+                    exceptionReporter = injectionCompanion.exceptionReporter,
                     searchOptions = configuration.search,
                     navigator = navigation,
                     applicationContext = applicationContext,
-                    blacklistRepository = blacklistRepositoryProvider.value
+                    blacklistRepository = injectionCompanion.databaseModule.blacklistRepository
                 )
             )
             is Post -> Child.Post(
@@ -136,18 +120,18 @@ class RootComponentImpl(
                     context,
                     navigation,
                     applicationContext,
-                    exceptionReporterProvider.value,
+                    injectionCompanion.exceptionReporter,
                     injectionCompanion.apiModule.api,
-                    favouritesCacheProvider.value,
-                    snackbarAdapterProvider.value,
-                    instance.mediaOkHttpClientProvider
+                    injectionCompanion.favouritesCache,
+                    injectionCompanion.snackbarModule.snackbarAdapter,
+                    injectionCompanion.mediaModule.mediaOkHttpClientLazy
                 )
             )
             is Settings -> Child.Settings(SettingsComponent(context))
             is Settings.Blacklist -> Child.Settings.Blacklist(
                 SettingsBlacklistComponent(
-                    blacklistRepositoryProvider.value,
-                    snackbarAdapterProvider.value,
+                    injectionCompanion.databaseModule.blacklistRepository,
+                    injectionCompanion.snackbarModule.snackbarAdapter,
                     navigation,
                     context
                 )
@@ -159,7 +143,7 @@ class RootComponentImpl(
                         configuration.id,
                         configuration.query,
                         configuration.enabled,
-                        blacklistRepositoryProvider.value,
+                        injectionCompanion.databaseModule.blacklistRepository,
                         navigation
                     )
                 )
@@ -173,8 +157,8 @@ class RootComponentImpl(
                     configuration.tag,
                     context,
                     injectionCompanion.apiModule.api,
-                    snackbarAdapterProvider.value,
-                    exceptionReporterProvider.value,
+                    injectionCompanion.snackbarModule.snackbarAdapter,
+                    injectionCompanion.exceptionReporter,
                     navigation
                 )
             )
@@ -192,37 +176,10 @@ class RootComponentImpl(
                     onClose = {
                         dialogNavigation.navigate { null }
                     },
-                    blacklistRepositoryProvider.value,
+                    injectionCompanion.databaseModule.blacklistRepository,
                     applicationContext,
                     componentContext
                 )
             )
         }
-
-    // Used to save instances for DI into components
-    private class Instance(val applicationContext: Context) : InstanceKeeper.Instance {
-        val mediaOkHttpClientProvider = lazy {
-            val cacheDir = File(applicationContext.cacheDir, "video").apply { mkdirs() }
-            val size = (StatFs(cacheDir.absolutePath).let {
-                it.blockCountLong * it.blockSizeLong
-            } * DISK_CACHE_PERCENTAGE).toLong()
-                .coerceIn(
-                    MIN_DISK_CACHE_SIZE_BYTES,
-                    MAX_DISK_CACHE_SIZE_BYTES
-                )
-            OkHttpClient.Builder()
-                .cache(Cache(cacheDir, size))
-                .build()
-        }
-
-        override fun onDestroy() {
-
-        }
-
-        companion object {
-            const val DISK_CACHE_PERCENTAGE = 0.05
-            const val MIN_DISK_CACHE_SIZE_BYTES = 10L * 1024 * 1024
-            const val MAX_DISK_CACHE_SIZE_BYTES = 1024L * 1024 * 1024
-        }
-    }
 }

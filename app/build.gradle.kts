@@ -7,8 +7,6 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
-    kotlin("kapt")
-    id("dagger.hilt.android.plugin")
     id("com.google.protobuf")
     id("com.mikepenz.aboutlibraries.plugin")
     kotlin("plugin.serialization")
@@ -37,7 +35,6 @@ android {
         versionCode = this@Build_gradle.versionCode
         versionName = this@Build_gradle.versionName
 
-        testInstrumentationRunner = "ru.herobrine1st.e621.runner.HiltTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -166,11 +163,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")
 
-    // Hilt (Apache 2.0)
-    val hiltVersion = "2.50"
-    implementation("com.google.dagger:hilt-android:$hiltVersion")
-    kapt("com.google.dagger:hilt-android-compiler:$hiltVersion") // Not included in binary result
-
     // G Accompanist (Apache 2.0)
     val accompanistVersion = "0.32.0"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
@@ -216,8 +208,6 @@ dependencies {
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    androidTestImplementation("com.google.dagger:hilt-android-testing:$hiltVersion")
-    kaptAndroidTest("com.google.dagger:hilt-android-compiler:$hiltVersion")
     debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
     debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.4")
 }
@@ -238,10 +228,6 @@ protobuf {
     }
 }
 
-kapt {
-    correctErrorTypes = true
-}
-
 room {
     schemaDirectory("$projectDir/schemas")
 }
@@ -249,17 +235,11 @@ room {
 // KAPT and KSP use gradle JDK version for that
 // KAPT requires 11, while android is still using 1.8
 // Use narrow class names to minimize impact on other tasks
-tasks.withType<com.google.devtools.ksp.gradle.KspTaskJvm>().configureEach {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask>().configureEach {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
+//tasks.withType<com.google.devtools.ksp.gradle.KspTaskJvm>().configureEach {
+//    kotlinOptions {
+//        jvmTarget = "1.8"
+//    }
+//}
 
 fun getCommitIndexNumber(revision: String = "HEAD"): Int {
     val byteArrayOutputStream = ByteArrayOutputStream()

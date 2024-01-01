@@ -27,11 +27,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
-import javax.inject.Inject
-import javax.inject.Singleton
 
-@Singleton
-class AuthorizationNotifier @Inject constructor(
+
+class AuthorizationNotifier(
     private val snackbarAdapter: SnackbarAdapter
 ) {
     private val coroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
