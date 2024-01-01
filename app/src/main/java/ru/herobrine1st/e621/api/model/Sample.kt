@@ -20,17 +20,13 @@
 
 package ru.herobrine1st.e621.api.model
 
-import android.os.Parcelable
 import androidx.compose.runtime.Immutable
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import kotlinx.parcelize.IgnoredOnParcel
-import kotlinx.parcelize.Parcelize
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
-@Parcelize
+
 @Immutable
-@JsonIgnoreProperties("type")
 @Serializable
 data class Sample(
     val has: Boolean, // вщ не ебу что это
@@ -38,25 +34,24 @@ data class Sample(
     val width: Int,
     // Strange bug on API side, probably database related
     val url: String = "",
-    val alternates: Map<String, Alternate>
-) : Parcelable {
-    @IgnoredOnParcel
+    val alternates: Map<String, Alternate>,
+    @SerialName("type")
+    val type0: JsonElement // idk why it is ignored
+) {
     val type by lazy {
         FileType.byExtension[url.splitToSequence(".").lastOrNull()] ?: FileType.UNDEFINED
     }
 }
 
-@Parcelize
+
 @Immutable
-@JsonIgnoreProperties("normalized_type")
 @Serializable
 data class Alternate(
     val type: AlternateType,
     val height: Int,
     val width: Int,
     val urls: List<String?> // yes it really may be nullable
-) : Parcelable {
-    @IgnoredOnParcel
+) {
     val normalizedType by lazy {
         urls.firstNotNullOfOrNull {
             FileType.byExtension[it?.splitToSequence(".")?.lastOrNull()]

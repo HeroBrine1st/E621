@@ -21,8 +21,6 @@
 package ru.herobrine1st.e621.api.model
 
 import androidx.compose.runtime.Immutable
-import com.fasterxml.jackson.annotation.JsonIgnore
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -32,7 +30,6 @@ import kotlinx.serialization.json.JsonElement
 typealias PostId = Int
 
 @Immutable
-@JsonIgnoreProperties("preview", "flags")
 @Serializable
 data class Post(
     val id: PostId,
@@ -64,14 +61,11 @@ data class Post(
     val duration: Float = 0f
 ) {
     @Transient
-    @JsonIgnore
     val normalizedSample = NormalizedFile(sample)
 
     @Transient
-    @JsonIgnore
     val normalizedFile = NormalizedFile(file)
 
-    @JsonIgnore
     @Transient
     val files: List<NormalizedFile> = listOf(
         normalizedFile,

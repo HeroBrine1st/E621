@@ -167,12 +167,6 @@ dependencies {
     implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")
 
-    // Jackson (Apache 2.0)
-    val jacksonVersion = "2.16.1"
-    implementation("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
-    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:$jacksonVersion")
-    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:$jacksonVersion")
-
     // Hilt (Apache 2.0)
     val hiltVersion = "2.50"
     implementation("com.google.dagger:hilt-android:$hiltVersion")

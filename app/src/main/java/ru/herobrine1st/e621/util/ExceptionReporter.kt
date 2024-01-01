@@ -22,10 +22,9 @@ package ru.herobrine1st.e621.util
 
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
-import com.fasterxml.jackson.core.JacksonException
+import kotlinx.serialization.SerializationException
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
-import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -36,16 +35,16 @@ import javax.inject.Singleton
 class ExceptionReporter @Inject constructor(
     private val snackbarAdapter: SnackbarAdapter
 ) {
-    suspend fun handleDeserializationError(exception: JacksonException) =
+    suspend fun handleDeserializationError(exception: SerializationException) =
         handleNetworkException(exception)
 
     suspend fun handleNetworkException(
-        e: IOException,
+        e: Throwable,
         message: String = "Unknown network exception occurred"
     ) {
         Log.e(TAG, message, e)
         when (e) {
-            is JacksonException -> snackbarAdapter.enqueueMessage(
+            is SerializationException -> snackbarAdapter.enqueueMessage(
                 R.string.jackson_deserialization_error,
                 SnackbarDuration.Indefinite
             )

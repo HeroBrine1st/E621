@@ -20,7 +20,7 @@
 
 package ru.herobrine1st.e621.api.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
+import kotlinx.serialization.SerialName
 import java.time.OffsetDateTime
 
 typealias PoolId = Int
@@ -35,7 +35,7 @@ data class Pool(
     val creatorName: String,
     val isActive: Boolean,
     val category: String, // probably a boolean
-    @JsonProperty(value = "post_ids")
+    @SerialName("post_ids")
     val posts: List<PostId>,
     val postCount: Int
 )

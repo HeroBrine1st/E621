@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.api.model
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -28,12 +27,11 @@ import kotlinx.serialization.Serializable
 data class File(
     val width: Int,
     val height: Int,
-    @JsonProperty("ext")
     @SerialName("ext")
     val type: FileType,
     val size: Long,
     val md5: String,
-    @JsonProperty(required = false) // Strange bug on API side, probably database related
+    // URL may be null - strange bug on API side, probably database related
     val url: String = ""
 )
 

@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.api.model
 
 import androidx.annotation.StringRes
-import com.fasterxml.jackson.annotation.JsonValue
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.R
@@ -33,16 +32,13 @@ enum class Rating(@StringRes val descriptionId: Int, val apiName: String) {
     @SerialName("q") QUESTIONABLE(R.string.rating_questionable, "questionable"),
     @SerialName("e") EXPLICIT(R.string.rating_explicit, "explicit");
 
-    @JsonValue
-    val shortName = apiName.substring(0, 1)
-
     inline val isNotSafe get() = this != SAFE
 
     companion object {
         val byAnyName: Map<String, Rating> = HashMap<String, Rating>().apply {
             Rating.entries.forEach {
                 put(it.apiName.lowercase(), it) // lowercase just in case
-                put(it.shortName.lowercase(), it)
+                put(it.apiName.substring(0, 1).lowercase(), it)
             }
         }
     }

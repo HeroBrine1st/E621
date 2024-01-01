@@ -21,34 +21,20 @@
 package ru.herobrine1st.e621.api.model
 
 import androidx.compose.runtime.Immutable
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties
-import com.fasterxml.jackson.core.JsonParser
-import com.fasterxml.jackson.databind.DeserializationContext
-import com.fasterxml.jackson.databind.JsonDeserializer
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize
-import com.fasterxml.jackson.databind.exc.MismatchedInputException
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.descriptors.PrimitiveKind
-import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
-import kotlinx.serialization.descriptors.SerialDescriptor
-import kotlinx.serialization.encoding.Decoder
-import kotlinx.serialization.encoding.Encoder
 import ru.herobrine1st.e621.api.Tokens
 
-
 @Immutable
-@JsonIgnoreProperties("all", "reduced")
 @Serializable
 data class Tags(
-    @JsonDeserialize(using = TagListDeserializer::class) val general: List<Tag>,
-    @JsonDeserialize(using = TagListDeserializer::class) val species: List<Tag>,
-    @JsonDeserialize(using = TagListDeserializer::class) val character: List<Tag>,
-    @JsonDeserialize(using = TagListDeserializer::class) val copyright: List<Tag>,
-    @JsonDeserialize(using = TagListDeserializer::class) val artist: List<Tag>,
-    @JsonDeserialize(using = TagListDeserializer::class) val lore: List<Tag>,
-    @JsonDeserialize(using = TagListDeserializer::class) val meta: List<Tag>,
-    @JsonDeserialize(using = TagListDeserializer::class) val invalid: List<Tag>
+    val general: List<Tag>,
+    val species: List<Tag>,
+    val character: List<Tag>,
+    val copyright: List<Tag>,
+    val artist: List<Tag>,
+    val lore: List<Tag>,
+    val meta: List<Tag>,
+    val invalid: List<Tag>
 ) {
     val all by lazy {
         artist + copyright + character + species + general + lore + meta + invalid
@@ -59,54 +45,11 @@ data class Tags(
     }
 }
 
-// FIXME replace data class with value class
-//       blocked by jackson-module-kotlin
-//       https://github.com/FasterXML/jackson-module-kotlin/issues/650
-//       https://github.com/FasterXML/jackson-module-kotlin/issues/199
-//       Data class may have serious performance or (likely) memory impact
-// Also deserializers may become useless because of support in Jackson
-@JsonDeserialize(using = TagDeserializer::class)
-@Serializable(with = TagSerializerForKotlinxSerialization::class) // TODO value class
-data class Tag(val value: String) {
+@JvmInline
+@Serializable
+value class Tag(val value: String) {
     // "Alternative" is proposed by ChatGPT and should be read like "alternative tags".
     // It is not ideal, but I couldn't figure any better
     inline val asAlternative get() = Tokens.ALTERNATIVE + value
     inline val asExcluded get() = Tokens.EXCLUDED + value
-}
-
-class TagSerializerForKotlinxSerialization: KSerializer<Tag> {
-    override val descriptor: SerialDescriptor
-        get() = PrimitiveSerialDescriptor("TagSerializerForKotlinxSerialization", PrimitiveKind.STRING)
-
-    override fun deserialize(decoder: Decoder) = Tag(decoder.decodeString())
-
-    override fun serialize(encoder: Encoder, value: Tag) {
-        encoder.encodeString(value.value)
-    }
-
-}
-
-class TagDeserializer : JsonDeserializer<Tag>() {
-    override fun deserialize(p: JsonParser, ctx: DeserializationContext): Tag {
-        return Tag(ctx.readValue(p, String::class.java))
-    }
-}
-
-class TagListDeserializer : JsonDeserializer<List<Tag>>() {
-    override fun deserialize(p: JsonParser, ctx: DeserializationContext): List<Tag> {
-        val tree = ctx.readTree(p)
-        if (!tree.isArray) throw MismatchedInputException.from(
-            p,
-            List::class.java,
-            "Node is not an array of tags"
-        )
-        return tree.map {
-            if (!it.isTextual) throw MismatchedInputException.from(
-                p,
-                Tag::class.java,
-                "Node is not a tag"
-            )
-            Tag(it.textValue())
-        }
-    }
 }

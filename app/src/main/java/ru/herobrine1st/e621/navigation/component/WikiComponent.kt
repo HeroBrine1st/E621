@@ -38,7 +38,6 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.NotFoundException
-import ru.herobrine1st.e621.api.getWikiPage
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.api.parseBBCode
@@ -90,7 +89,7 @@ class WikiComponent(
         state = WikiState.Loading
         lifecycleScope.launch {
             state = try {
-                WikiState.Success(api.getWikiPage(tag)).parseWikiPage()
+                WikiState.Success(api.getWikiPage(tag.value)).parseWikiPage()
             } catch (e: NotFoundException) {
                 WikiState.NotFound
             } catch (e: ApiException) {
