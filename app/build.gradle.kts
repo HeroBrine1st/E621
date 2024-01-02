@@ -193,7 +193,7 @@ dependencies {
 
     // Other libraries
     implementation("org.jsoup:jsoup:1.17.2") // Expat License
-    implementation("com.mikepenz:aboutlibraries-compose:10.9.2") // Apache 2.0
+    implementation("com.mikepenz:aboutlibraries-compose-m3:10.10.0") // Apache 2.0
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
