@@ -84,7 +84,7 @@ fun ActionDialog(
                         Spacer(Modifier.height(24.dp))
                         FlowRow(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            // TODO crossAxisSpacing = 12.dp (foundation 1.5.0)
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
                             modifier = Modifier.align(Alignment.End)
                         ) {
                             actions()
