@@ -23,12 +23,3 @@
     <fields>;
 }
 
--keep,allowobfuscation class ru.herobrine1st.e621.api.model.** {
-    <init>(...);
-}
-
--keepclassmembers class ru.herobrine1st.e621.api.model.** {
-    public *** get*();
-}
-
-
