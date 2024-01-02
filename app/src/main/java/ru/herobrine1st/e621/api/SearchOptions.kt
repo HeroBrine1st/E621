@@ -33,11 +33,6 @@ import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
-
-// STOPSHIP: Polymorphic structure is vanished at runtime
-// It is present in bytecode, but runtime throws serialization exceptions
-// STOPSHIP: This error suddenly vanished after I charged my phone
-// STOPSHIP: it is a heisenbug that can be fixed by further inspection and/or replacement with sealed class
 @Serializable
 sealed interface SearchOptions {
     @Throws(ApiException::class, IOException::class)
