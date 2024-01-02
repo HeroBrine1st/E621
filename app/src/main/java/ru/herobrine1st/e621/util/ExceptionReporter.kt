@@ -23,11 +23,12 @@ package ru.herobrine1st.e621.util
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
 import io.ktor.serialization.ContentConvertException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.yield
 import kotlinx.serialization.SerializationException
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import java.io.IOException
-import java.util.concurrent.CancellationException
 
 class ExceptionReporter(
     private val snackbarAdapter: SnackbarAdapter,
@@ -50,7 +51,7 @@ class ExceptionReporter(
             )
 
             is CancellationException -> {
-                // ignore
+                yield() // re-throw
             }
 
             else -> if (showThrowable) snackbarAdapter.enqueueMessage(
