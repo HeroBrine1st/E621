@@ -102,6 +102,7 @@ import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.common.CommentData
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Tag
@@ -122,7 +123,6 @@ import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.zoomable
 import ru.herobrine1st.e621.ui.screen.post.component.PoolsDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
-import ru.herobrine1st.e621.ui.screen.post.data.CommentData
 import ru.herobrine1st.e621.util.text
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f

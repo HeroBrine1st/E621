@@ -67,7 +67,6 @@ import ru.herobrine1st.e621.navigation.component.posts.handleFavouriteChange
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
-import ru.herobrine1st.e621.ui.screen.post.logic.PostCommentsSource
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
