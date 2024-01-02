@@ -26,6 +26,7 @@ import kotlinx.serialization.SerializationException
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import java.io.IOException
+import java.util.concurrent.CancellationException
 
 class ExceptionReporter(
     private val snackbarAdapter: SnackbarAdapter,
@@ -46,6 +47,10 @@ class ExceptionReporter(
                 R.string.deserialization_error,
                 SnackbarDuration.Indefinite
             )
+
+            is CancellationException -> {
+                // ignore
+            }
 
             else -> if (showThrowable) snackbarAdapter.enqueueMessage(
                 R.string.unknown_error,
