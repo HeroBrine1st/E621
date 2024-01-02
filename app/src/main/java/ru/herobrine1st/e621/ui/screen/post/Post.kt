@@ -78,6 +78,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
@@ -143,8 +144,12 @@ fun Post(
     var loadComments by remember {
         mutableStateOf(
             preferences.hasAuth() // Assuming there can't be invalid credentials in preferences
-                    && (!preferences.dataSaverModeEnabled // Do not make excessive API calls on user preference
-                    || component.openComments)
+                    && (
+                    // TODO automatic download is disabled due to fix below
+                    // https://issuetracker.google.com/issues/299973349
+//                    !preferences.dataSaverModeEnabled // Do not make excessive API calls on user preference
+//                    ||
+                    component.openComments)
         )
     }
 
@@ -184,12 +189,18 @@ fun Post(
         // Think of it as there is no point to opening comment if they're not loading
         // (yes we can && preferences.hasAuth(), but let's go with single source of truth, ok?
         // Auth logic may and will change sometime. Also && loadComments has less overhead - it is anyway already computed)
-
-        // It is actually ignored: https://issuetracker.google.com/issues/299973349
         initialValue = if (component.openComments && loadComments) SheetValue.PartiallyExpanded
         else SheetValue.Hidden,
         skipHiddenState = false
     )
+
+    LaunchedEffect(bottomSheetState.currentValue, loadComments) {
+        // Attempt to work https://issuetracker.google.com/issues/299973349 around
+        if(bottomSheetState.currentValue != SheetValue.Hidden && !loadComments) {
+            bottomSheetState.hide()
+        }
+    }
+
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = bottomSheetState,
         snackbarHostState = screenSharedState.snackbarHostState
