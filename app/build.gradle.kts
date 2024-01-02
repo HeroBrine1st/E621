@@ -167,13 +167,13 @@ dependencies {
 
 
     // KTorfit
-    implementation("io.ktor:ktor-client-core:2.3.7")
-    implementation("io.ktor:ktor-client-cio:2.3.7")
-    implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
-    implementation("io.ktor:ktor-client-logging:2.3.7")
-    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:1.11.1")
-    ksp("de.jensklingenberg.ktorfit:ktorfit-ksp:1.11.1")
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-android:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-client-logging:$ktorVersion")
+    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:$ktorfitVersion")
+    ksp("de.jensklingenberg.ktorfit:ktorfit-ksp:$ktorfitVersion")
 
     // Profiling
     "profileableImplementation"("androidx.compose.runtime:runtime-tracing:1.0.0-beta01")
