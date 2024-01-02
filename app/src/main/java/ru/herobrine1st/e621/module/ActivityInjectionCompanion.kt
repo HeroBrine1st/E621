@@ -20,16 +20,16 @@
 
 package ru.herobrine1st.e621.module
 
-import android.content.Context
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepositoryImpl
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.FavouritesCache
 
 class ActivityInjectionCompanion(
     // TODO extract interface
-    val applicationContext: Context,
     private val applicationInjectionCompanion: ApplicationInjectionCompanion
 ) {
+    val applicationContext by applicationInjectionCompanion::applicationContext
+
     val authorizationRepositoryLazy = lazy {
         AuthorizationRepositoryImpl(applicationContext)
     }

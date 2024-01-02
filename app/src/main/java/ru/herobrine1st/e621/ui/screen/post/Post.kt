@@ -133,7 +133,7 @@ private const val TAG = "Post Screen"
 fun Post(
     screenSharedState: ScreenSharedState,
     component: PostComponent,
-    isAuthorized: Boolean // TODO move to component
+    isAuthorized: Boolean, // TODO move to component
 ) {
     val post = component.post
     val preferences = LocalPreferences.current
@@ -177,6 +177,8 @@ fun Post(
     }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+
+
     // STOPSHIP: on second frame, somehow it sets to PartiallyExpanded, avoiding "if" block
     // and it is instant, like it always was an initial value
     val bottomSheetState = rememberStandardBottomSheetState(
@@ -548,7 +550,7 @@ fun Post(
 fun CommentsBottomSheetContent(
     commentsFlow: Flow<PagingData<CommentData>>,
     post: Post,
-    loadComments: Boolean
+    loadComments: Boolean,
 ) {
 
     val commentsLazyListState = rememberLazyListState()
@@ -622,7 +624,7 @@ fun CommentsBottomSheetContent(
 private fun LazyListScope.tags(
     post: Post,
     onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
-    onWikiClick: (Tag) -> Unit
+    onWikiClick: (Tag) -> Unit,
 ) {
     tags(R.string.artist_tags, post.tags.artist, onModificationClick, onWikiClick)
     tags(
@@ -648,7 +650,7 @@ private fun LazyListScope.tags(
     @StringRes titleId: Int,
     tags: List<Tag>,
     onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
-    onWikiClick: (Tag) -> Unit
+    onWikiClick: (Tag) -> Unit,
 ) {
     if (tags.isEmpty()) return
     stickyHeader("$titleId tags") {
@@ -682,7 +684,7 @@ private fun LazyListScope.tags(
 private fun Tag(
     tag: Tag,
     onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
-    onWikiClick: (Tag) -> Unit
+    onWikiClick: (Tag) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,

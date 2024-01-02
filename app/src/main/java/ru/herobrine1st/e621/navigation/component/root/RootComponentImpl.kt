@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.navigation.component.root
 
-import android.content.Context
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.SlotNavigation
 import com.arkivanov.decompose.router.slot.childSlot
@@ -52,7 +51,6 @@ import ru.herobrine1st.e621.navigation.config.Config.Settings
 import ru.herobrine1st.e621.navigation.config.Config.Wiki
 
 class RootComponentImpl(
-    private val applicationContext: Context,
     private val injectionCompanion: ActivityInjectionCompanion,
     componentContext: ComponentContext
 ) : RootComponent, ComponentContext by componentContext {
@@ -95,7 +93,7 @@ class RootComponentImpl(
                     navigator = navigation,
                     initialSearchOptions = configuration.initialSearch,
                     api = injectionCompanion.apiModule.api,
-                    applicationContext = applicationContext
+                    applicationContext = injectionCompanion.applicationContext
                 )
             )
             is PostListing -> Child.PostListing(
@@ -107,7 +105,7 @@ class RootComponentImpl(
                     exceptionReporter = injectionCompanion.exceptionReporter,
                     searchOptions = configuration.search,
                     navigator = navigation,
-                    applicationContext = applicationContext,
+                    applicationContext = injectionCompanion.applicationContext,
                     blacklistRepository = injectionCompanion.databaseModule.blacklistRepository
                 )
             )
@@ -119,7 +117,7 @@ class RootComponentImpl(
                     configuration.post,
                     context,
                     navigation,
-                    applicationContext,
+                    injectionCompanion.applicationContext,
                     injectionCompanion.exceptionReporter,
                     injectionCompanion.apiModule.api,
                     injectionCompanion.favouritesCache,
@@ -177,7 +175,7 @@ class RootComponentImpl(
                         dialogNavigation.navigate { null }
                     },
                     injectionCompanion.databaseModule.blacklistRepository,
-                    applicationContext,
+                    injectionCompanion.applicationContext,
                     componentContext
                 )
             )
