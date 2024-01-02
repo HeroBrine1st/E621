@@ -24,7 +24,7 @@ import android.content.Context
 import android.util.Log
 import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
+import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.cache.HttpCache
@@ -69,7 +69,7 @@ class APIModule(
 
     @OptIn(ExperimentalSerializationApi::class)
     private val ktorClient by lazy {
-        HttpClient(Android) {
+        HttpClient(CIO) {
             install(ContentNegotiation) {
                 json(Json {
                     namingStrategy = JsonNamingStrategy.SnakeCase
