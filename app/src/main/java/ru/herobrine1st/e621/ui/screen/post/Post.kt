@@ -179,13 +179,13 @@ fun Post(
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
 
-    // STOPSHIP: on second frame, somehow it sets to PartiallyExpanded, avoiding "if" block
-    // and it is instant, like it always was an initial value
     val bottomSheetState = rememberStandardBottomSheetState(
         // `&& loadComments` is a fix for unauthenticated usage case
         // Think of it as there is no point to opening comment if they're not loading
         // (yes we can && preferences.hasAuth(), but let's go with single source of truth, ok?
         // Auth logic may and will change sometime. Also && loadComments has less overhead - it is anyway already computed)
+
+        // It is actually ignored: https://issuetracker.google.com/issues/299973349
         initialValue = if (component.openComments && loadComments) SheetValue.PartiallyExpanded
         else SheetValue.Hidden,
         skipHiddenState = false
