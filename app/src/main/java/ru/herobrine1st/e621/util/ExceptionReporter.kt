@@ -38,7 +38,7 @@ class ExceptionReporter(
         message: String = "Unknown request exception occurred",
         showThrowable: Boolean = false,
     ) {
-        Log.e(TAG, message, t)
+        if(t !is CancellationException) Log.e(TAG, message, t)
         when (t) {
             is IOException -> snackbarAdapter.enqueueMessage(
                 R.string.network_error,
