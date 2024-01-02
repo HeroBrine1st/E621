@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.navigation.component.posts
 
-import android.util.Log
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import ru.herobrine1st.e621.api.API
@@ -53,7 +52,6 @@ class PostsSource(
             )
         } catch (t: Throwable) {
             exceptionReporter.handleRequestException(t)
-            Log.e("Posts", "Unable to load posts", t)
             LoadResult.Error(t)
         }
     }

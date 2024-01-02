@@ -94,9 +94,8 @@ fun Posts(
     // New API is strange. Why don't just use previous interfaces: state of refreshing from
     // user code and callback to refresh from library?
     // Now I need to connect pullToRefreshState.isRefreshing to posts.loadState.refresh is LoadState.Loading
-    // Both are data, neither are callback
+    // Both are data, neither is callback
     //region Working around strange API
-    // STOPSHIP: untested
     if (pullToRefreshState.isRefreshing) {
         LaunchedEffect(Unit) {
             posts.refresh()

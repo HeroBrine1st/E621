@@ -27,7 +27,6 @@ import ru.herobrine1st.e621.R
 
 @Serializable
 enum class Rating(@StringRes val descriptionId: Int, val apiName: String) {
-    // STOPSHIP: SerialNames are inferred according to @JsonValue below and aren't verified yet
     @SerialName("s") SAFE(R.string.rating_safe, "safe"),
     @SerialName("q") QUESTIONABLE(R.string.rating_questionable, "questionable"),
     @SerialName("e") EXPLICIT(R.string.rating_explicit, "explicit");
