@@ -30,14 +30,23 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import java.io.IOException
 
-class ExceptionReporter(
-    private val snackbarAdapter: SnackbarAdapter,
-) {
+interface ExceptionReporter {
     suspend fun handleRequestException(
         t: Throwable,
         message: String = "Unknown request exception occurred",
         @Suppress("SpellCheckingInspection") dontShowSnackbar: Boolean = false,
         showThrowable: Boolean = false
+    )
+}
+
+class ExceptionReporterImpl(
+    private val snackbarAdapter: SnackbarAdapter,
+): ExceptionReporter {
+    override suspend fun handleRequestException(
+        t: Throwable,
+        message: String,
+        dontShowSnackbar: Boolean,
+        showThrowable: Boolean
     ) {
         if(t !is CancellationException) Log.e(TAG, message, t)
         if(dontShowSnackbar) return

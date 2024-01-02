@@ -97,6 +97,7 @@ import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
+import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.PreviewUtils
 import ru.herobrine1st.e621.util.getPreviewComponentContext
 import ru.herobrine1st.e621.util.getPreviewStackNavigator
@@ -520,7 +521,16 @@ fun SearchPreview() {
                     }
 
                 },
-                exceptionReporter = TODO(),
+                exceptionReporter = object: ExceptionReporter {
+                    override suspend fun handleRequestException(
+                        t: Throwable,
+                        message: String,
+                        dontShowSnackbar: Boolean,
+                        showThrowable: Boolean,
+                    ) {
+                        // ignore
+                    }
+                },
                 applicationContext = LocalContext.current.applicationContext
             )
         )

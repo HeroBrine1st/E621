@@ -22,9 +22,10 @@ package ru.herobrine1st.e621.module
 
 import android.content.Context
 import ru.herobrine1st.e621.util.ExceptionReporter
+import ru.herobrine1st.e621.util.ExceptionReporterImpl
 
 class ApplicationInjectionCompanion(val applicationContext: Context) {
     val databaseModule = DatabaseModule(applicationContext)
     val snackbarModule = SnackbarModule()
-    val exceptionReporter = ExceptionReporter(snackbarModule.snackbarAdapter)
+    val exceptionReporter: ExceptionReporter = ExceptionReporterImpl(snackbarModule.snackbarAdapter)
 }
