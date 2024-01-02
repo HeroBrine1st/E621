@@ -17,9 +17,9 @@ plugins {
 val kotlinVersion = "1.9.21"
 val composeCompilerVersion = "1.5.7"
 val protobufVersion = "3.25.1"
-val okHttpVersion = "4.12.0"
-val retrofitVersion =
-    "2.9.0" // https://github.com/square/retrofit/issues/3880 , do not forget to remove rules after update
+
+val ktorVersion = "2.3.7"
+val ktorfitVersion = "1.11.1"
 
 val applicationId = "ru.herobrine1st.e621"
 val versionCode = getCommitIndexNumber()
@@ -51,11 +51,7 @@ android {
         stringBuildConfigField("DEEP_LINK_BASE_URL", "https://e621.net")
         stringBuildConfigField(
             "USER_AGENT_TEMPLATE",
-            "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) " +
-                    // That's zero. Workaround for their shitty protection (when on earth user-agent could be security header???)
-                    // Btw I think it is a cloudflare rule (did a source code review and didn't found that protection in ApplicationController)
-                    // TODO update to ktor
-                    "0kHttp/$okHttpVersion Retrofit/$retrofitVersion"
+            "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) Ktor/$ktorVersion Ktorfit/$ktorfitVersion"
         )
     }
 
@@ -163,15 +159,12 @@ dependencies {
     implementation("io.coil-kt:coil:$coilVersion")
     implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
     // G Accompanist (Apache 2.0)
     val accompanistVersion = "0.32.0"
     implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
 
-    // OkHttp (Apache 2.0)
-    implementation("com.squareup.okhttp3:okhttp:$okHttpVersion")
-    //implementation("com.squareup.retrofit2:retrofit:$retrofitVersion")
-    //implementation("com.squareup.retrofit2:converter-jackson:$retrofitVersion")
 
     // KTorfit
     implementation("io.ktor:ktor-client-core:2.3.7")
