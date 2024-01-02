@@ -84,6 +84,7 @@ class RootComponentImpl(
                     injectionCompanion.snackbarModule.snackbarAdapter,
                     injectionCompanion.databaseModule.blacklistRepository,
                     navigation,
+                    injectionCompanion.exceptionReporter,
                     context
                 )
             )

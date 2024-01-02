@@ -48,6 +48,7 @@ import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.credentials
 import ru.herobrine1st.e621.util.debug
@@ -70,6 +71,7 @@ class HomeComponent(
     private val snackbarAdapter: SnackbarAdapter,
     blacklistRepository: BlacklistRepository,
     private val stackNavigator: StackNavigator<Config>,
+    private val exceptionReporter: ExceptionReporter,
     componentContext: ComponentContext,
 ) : ComponentContext by componentContext, IHomeComponent {
 
@@ -102,17 +104,14 @@ class HomeComponent(
                 try {
                     // TODO preference, dialog, idk
                     instance.fetchBlacklistFromAccount(state)
-                } catch (e: IOException) {
-                    // TODO clarify
-                    snackbarAdapter.enqueueMessage(
-                        R.string.network_error,
-                        SnackbarDuration.Long
-                    )
                 } catch (e: SQLiteException) {
                     snackbarAdapter.enqueueMessage(
                         R.string.database_error_updating_blacklist,
                         SnackbarDuration.Long
                     )
+                } catch(t: Throwable) {
+                    // TODO clarify
+                    exceptionReporter.handleRequestException(t, showThrowable = true)
                 }
             } else handleErrorStateForUI(state)
             callback(state)
