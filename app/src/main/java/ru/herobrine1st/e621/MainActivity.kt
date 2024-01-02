@@ -70,7 +70,6 @@ class MainActivity : ComponentActivity() {
     class ViewModelForRetaining(application: android.app.Application) : AndroidViewModel(application) {
 
         val injectionCompanion = ActivityInjectionCompanion(
-            applicationContext = getApplication<Application>().applicationContext,
             applicationInjectionCompanion = getApplication<Application>().injectionCompanion
         )
     }
@@ -97,7 +96,6 @@ class MainActivity : ComponentActivity() {
         val injectionCompanion = viewModel.injectionCompanion
 
         val rootComponent = RootComponentImpl(
-            applicationContext,
             injectionCompanion = injectionCompanion,
             componentContext = defaultComponentContext()
         )
