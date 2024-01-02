@@ -36,6 +36,5 @@ data class WikiPage(
     val isLocked: Boolean,
     val isDeleted: Boolean,
     val otherNames: List<String>,
-    val categoryName: Int,
     val categoryId: Int
 )
