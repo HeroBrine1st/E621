@@ -54,6 +54,7 @@ android {
             "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) " +
                     // That's zero. Workaround for their shitty protection (when on earth user-agent could be security header???)
                     // Btw I think it is a cloudflare rule (did a source code review and didn't found that protection in ApplicationController)
+                    // TODO update to ktor
                     "0kHttp/$okHttpVersion Retrofit/$retrofitVersion"
         )
     }
@@ -177,6 +178,7 @@ dependencies {
     implementation("io.ktor:ktor-client-cio:2.3.7")
     implementation("io.ktor:ktor-client-content-negotiation:2.3.7")
     implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.7")
+    implementation("io.ktor:ktor-client-logging:2.3.7")
     implementation("de.jensklingenberg.ktorfit:ktorfit-lib:1.11.1")
     ksp("de.jensklingenberg.ktorfit:ktorfit-ksp:1.11.1")
 

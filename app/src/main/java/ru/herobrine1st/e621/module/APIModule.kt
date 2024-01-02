@@ -30,6 +30,10 @@ import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.cache.storage.FileStorage
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.logging.LogLevel
+import io.ktor.client.plugins.logging.Logger
+import io.ktor.client.plugins.logging.Logging
+import io.ktor.client.plugins.logging.MessageLengthLimitingLogger
 import io.ktor.client.plugins.plugin
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
@@ -48,6 +52,7 @@ import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.USER_AGENT
 import ru.herobrine1st.e621.util.credentials
+import ru.herobrine1st.e621.util.debug
 import java.io.File
 
 class APIModule(
@@ -79,6 +84,19 @@ class APIModule(
 
             install(UserAgent) {
                 agent = USER_AGENT
+            }
+
+            debug {
+                install(Logging) {
+                    logger = MessageLengthLimitingLogger(
+                        delegate = object : Logger {
+                            override fun log(message: String) {
+                                Log.d("KTor Request", message)
+                            }
+                        }
+                    )
+                    level = LogLevel.INFO
+                }
             }
         }.apply {
             plugin(HttpSend).apply {
