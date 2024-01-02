@@ -51,4 +51,8 @@ class ActivityInjectionCompanion(
     val databaseModule by applicationInjectionCompanion::databaseModule
     val snackbarModule by applicationInjectionCompanion::snackbarModule
     val exceptionReporter by applicationInjectionCompanion::exceptionReporter
+
+    fun onDestroy() {
+        apiModule.onDestroy()
+    }
 }

@@ -72,6 +72,10 @@ class MainActivity : ComponentActivity() {
         val injectionCompanion = ActivityInjectionCompanion(
             applicationInjectionCompanion = getApplication<Application>().injectionCompanion
         )
+
+        override fun onCleared() {
+            injectionCompanion.onDestroy()
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

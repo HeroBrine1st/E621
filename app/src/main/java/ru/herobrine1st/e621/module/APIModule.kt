@@ -144,4 +144,8 @@ class APIModule(
     }
 
     val api by apiLazy
+
+    fun onDestroy() {
+        ktorClient.close()
+    }
 }
