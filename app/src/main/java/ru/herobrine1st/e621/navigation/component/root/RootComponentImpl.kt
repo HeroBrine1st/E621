@@ -94,6 +94,7 @@ class RootComponentImpl(
                     navigator = navigation,
                     initialSearchOptions = configuration.initialSearch,
                     api = injectionCompanion.apiModule.api,
+                    exceptionReporter = injectionCompanion.exceptionReporter,
                     applicationContext = injectionCompanion.applicationContext
                 )
             )

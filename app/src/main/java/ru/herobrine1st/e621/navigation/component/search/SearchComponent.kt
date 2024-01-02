@@ -43,6 +43,7 @@ import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreferencesFlow
+import ru.herobrine1st.e621.util.ExceptionReporter
 
 const val SEARCH_OPTIONS_STATE_KEY = "SEARCH_COMPONENT_OPTIONS_STATE_KEY"
 
@@ -51,7 +52,8 @@ class SearchComponent private constructor(
     initialSearchOptions: PostsSearchOptions,
     private val navigator: StackNavigator<Config>,
     private val api: API,
-    applicationContext: Context
+    private val exceptionReporter: ExceptionReporter,
+    applicationContext: Context,
 ) : ComponentContext by componentContext {
 
     private val dataStore = applicationContext.dataStore
@@ -69,7 +71,7 @@ class SearchComponent private constructor(
     var parentPostId by mutableIntStateOf(initialSearchOptions.parent)
     var poolId by mutableIntStateOf(initialSearchOptions.poolId)
 
-    fun tagSuggestionFlow(getCurrentText: () -> String): Flow<List<TagSuggestion>> {
+    fun tagSuggestionFlow(getCurrentText: () -> String): Flow<Autocomplete> {
         val currentTextFlow = snapshotFlow {
             getCurrentText()
                 .lowercase()
@@ -80,21 +82,42 @@ class SearchComponent private constructor(
             .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
             // Delay is handled by interceptor
             .combine(dataStore.getPreferencesFlow { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
-                if (query.length < 3 || !isAutocompleteEnabled) return@combine emptyList()
-                api.getAutocompleteSuggestions(query).map {
+                if (query.length < 3 || !isAutocompleteEnabled) {
+                    return@combine Autocomplete.Ready(emptyList(), query)
+
+                }
+                val result = try {
+                    api.getAutocompleteSuggestions(query)
+                } catch (t: Throwable) {
+                    exceptionReporter.handleRequestException(t, dontShowSnackbar = true)
+                    return@combine Autocomplete.Error
+                }
+
+                val transformed = result.map {
                     TagSuggestion(
                         name = it.name,
                         postCount = it.postCount,
                         antecedentName = it.antecedentName
                     )
                 }
+
+                Autocomplete.Ready(transformed, query)
             }
             // Make it 🚀 turbo reactive 🚀
-            .combine(currentTextFlow) { suggestions, query ->
-                suggestions.filter {
-                    query in it.name.value || it.antecedentName?.value?.contains(
-                        query
-                    ) == true
+            .combine(currentTextFlow) { res, query ->
+                when (res) {
+                    is Autocomplete.Ready -> when (res.query) {
+                        query -> res
+                        else -> Autocomplete.Ready(
+                            res.result.filter {
+                                query in it.name.value || it.antecedentName?.value?.contains(
+                                    query
+                                ) == true
+                            },
+                            res.query
+                        )
+                    }
+                    else -> res
                 }
             }
             .flowOn(Dispatchers.Default)
@@ -105,13 +128,18 @@ class SearchComponent private constructor(
         navigator: StackNavigator<Config>,
         initialSearchOptions: PostsSearchOptions,
         api: API,
-        applicationContext: Context
+        exceptionReporter: ExceptionReporter,
+        applicationContext: Context,
     ) : this(
         componentContext,
-        componentContext.stateKeeper.consume(SEARCH_OPTIONS_STATE_KEY, strategy = PostsSearchOptions.serializer())
+        componentContext.stateKeeper.consume(
+            SEARCH_OPTIONS_STATE_KEY,
+            strategy = PostsSearchOptions.serializer()
+        )
             ?: initialSearchOptions,
         navigator,
         api,
+        exceptionReporter,
         applicationContext
     )
 
@@ -166,6 +194,13 @@ class SearchComponent private constructor(
     data class TagSuggestion(
         val name: Tag,
         val postCount: Int,
-        val antecedentName: Tag?
+        val antecedentName: Tag?,
     )
+
+    sealed interface Autocomplete {
+        data class Ready(val result: List<TagSuggestion>, val query: String) :
+            Autocomplete
+
+        data object Error : Autocomplete
+    }
 }

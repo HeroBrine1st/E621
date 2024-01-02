@@ -36,10 +36,13 @@ class ExceptionReporter(
     suspend fun handleRequestException(
         t: Throwable,
         message: String = "Unknown request exception occurred",
-        showThrowable: Boolean = false,
+        @Suppress("SpellCheckingInspection") dontShowSnackbar: Boolean = false,
+        showThrowable: Boolean = false
     ) {
         if(t !is CancellationException) Log.e(TAG, message, t)
+        if(dontShowSnackbar) return
         when (t) {
+            // TODO it suspends on queue and may block network requests in some cases (that's why "dontShowSnackbar" - to avoid suspending)
             is IOException -> snackbarAdapter.enqueueMessage(
                 R.string.network_error,
                 SnackbarDuration.Indefinite

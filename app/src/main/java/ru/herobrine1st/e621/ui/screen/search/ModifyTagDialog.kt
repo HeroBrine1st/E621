@@ -24,10 +24,14 @@ import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,7 +54,7 @@ import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Tokens
-import ru.herobrine1st.e621.navigation.component.search.SearchComponent
+import ru.herobrine1st.e621.navigation.component.search.SearchComponent.Autocomplete
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 import ru.herobrine1st.e621.util.runIf
 import ru.herobrine1st.e621.util.text
@@ -61,17 +65,17 @@ private const val TAG = "ModifyTagDialog"
 @Composable
 fun ModifyTagDialog(
     initialText: String,
-    getSuggestionsFlow: (() -> String) -> Flow<List<SearchComponent.TagSuggestion>>,
+    getSuggestionsFlow: (() -> String) -> Flow<Autocomplete>,
     onClose: () -> Unit,
     onDelete: (() -> Unit)? = null,
-    onApply: (String) -> Unit
+    onApply: (String) -> Unit,
 ) {
     var autocompleteExpanded by remember { mutableStateOf(false) }
     var textValue by remember { mutableStateOf(TextFieldValue(AnnotatedString(initialText))) }
     // suggestions open again after clicking one
     var selectedFromSuggested by remember { mutableStateOf(false) }
 
-    val suggestions by produceState(emptyList<SearchComponent.TagSuggestion>()) {
+    val autocomplete = produceState<Autocomplete>(Autocomplete.Ready(emptyList(), "")) {
         getSuggestionsFlow {
             textValue.text
                 // Assuming there's no tag starting with either of these tokens
@@ -79,12 +83,13 @@ fun ModifyTagDialog(
                 // TODO do it in cycle
                 .removePrefix(Tokens.ALTERNATIVE)
                 .removePrefix(Tokens.EXCLUDED)
-        }.collect {
-            value = it
-            if (!selectedFromSuggested)
-                autocompleteExpanded = it.isNotEmpty()
         }
-    }
+            .collect {
+                value = it
+                if (!selectedFromSuggested && it is Autocomplete.Ready)
+                    autocompleteExpanded = it.result.isNotEmpty()
+            }
+    }.value
 
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
         TextButton(onClick = onClose) {
@@ -122,9 +127,9 @@ fun ModifyTagDialog(
                     textValue = it.copy(text = it.text.replace(' ', '_'))
                     if (!actuallyChanged) return@OutlinedTextField
                     selectedFromSuggested = false
-                    if (!autocompleteExpanded) {
+                    if (!autocompleteExpanded && autocomplete is Autocomplete.Ready) {
                         autocompleteExpanded =
-                            suggestions.isNotEmpty() // Popup closes on keyboard tap - open it here
+                            autocomplete.result.isNotEmpty() // Popup closes on keyboard tap - open it here
                     }
                 },
                 label = { Text(stringResource(R.string.tag)) },
@@ -142,10 +147,17 @@ fun ModifyTagDialog(
                         ), offsetMapping = OffsetMapping.Identity
                     )
                 },
-                // trailingIcon = TODO circular progress indicator (move turbo-reactivity from component to produceState to properly determine loading state),
+                trailingIcon = {
+                    if(autocomplete is Autocomplete.Ready && autocomplete.query != textValue.text) {
+                        CircularProgressIndicator()
+                    }
+                    if(autocomplete is Autocomplete.Error) {
+                        Icon(Icons.Default.Error, contentDescription = stringResource(R.string.unknown_error))
+                    }
+                }
             )
             ExposedDropdownMenu(
-                expanded = autocompleteExpanded && suggestions.isNotEmpty(),
+                expanded = autocompleteExpanded && autocomplete is Autocomplete.Ready && autocomplete.result.isNotEmpty(),
                 onDismissRequest = {
                     autocompleteExpanded = false
                 },
@@ -153,7 +165,8 @@ fun ModifyTagDialog(
                     .heightIn(max = (48 * 3).dp) // TODO it still can overlap keyboard
                     .exposedDropdownSize(matchTextFieldWidth = true)
             ) {
-                suggestions.forEach {
+                if(autocomplete !is Autocomplete.Ready) return@ExposedDropdownMenu
+                autocomplete.result.forEach {
                     val name = it.name.text
                     val suggestionText = when (it.antecedentName) {
                         null -> name

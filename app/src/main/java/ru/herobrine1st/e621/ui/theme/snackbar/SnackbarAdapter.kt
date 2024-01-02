@@ -26,6 +26,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import kotlinx.coroutines.flow.MutableSharedFlow
 
 class SnackbarAdapter(private val snackbarSharedFlow: MutableSharedFlow<SnackbarMessage>) {
+
     suspend fun enqueueMessage(
         @StringRes resourceId: Int,
         duration: SnackbarDuration = SnackbarDuration.Long,

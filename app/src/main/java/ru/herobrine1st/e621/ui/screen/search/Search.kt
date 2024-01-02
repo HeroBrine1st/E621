@@ -520,6 +520,7 @@ fun SearchPreview() {
                     }
 
                 },
+                exceptionReporter = TODO(),
                 applicationContext = LocalContext.current.applicationContext
             )
         )
