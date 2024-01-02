@@ -126,7 +126,7 @@
     <string name="empty_results">Ого, так пусто</string>
     <string name="oss_licenses">Лицензии СПО</string>
     <string name="description">Описание</string>
-    <string name="deserialization_error">Ошибка десериализации ответа</string>
+    <string name="deserialization_error">Не удалось десериализовать ответ</string>
     <string name="proxy_server">Прокси-сервер</string>
     <string name="proxy_type">Тип</string>
     <string name="proxy_address">Адрес</string>

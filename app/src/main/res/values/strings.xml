@@ -129,7 +129,7 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="empty_results">Wow, such empty</string>
     <string name="oss_licenses">Open Source Licenses</string>
     <string name="description">Description</string>
-    <string name="deserialization_error">Cannot deserialize response</string>
+    <string name="deserialization_error">Could not deserialize response</string>
     <string name="proxy_server">Proxy server</string>
     <string name="proxy_type">Type</string>
     <string name="proxy_address">Address</string>
