@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 
 @Composable
@@ -35,7 +36,9 @@ fun SnackbarController(
     val context = LocalContext.current
 
     LaunchedEffect(snackbarMessagesFlow, snackbarHostState) {
-        snackbarMessagesFlow.collect {
+        snackbarMessagesFlow
+            .distinctUntilChanged()
+            .collect {
             snackbarHostState.showSnackbar(
                 message = context.resources.getString(it.stringId, *it.formatArgs),
                 //actionLabel = context.resources.getString(R.string.okay),
