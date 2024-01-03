@@ -23,6 +23,7 @@ package ru.herobrine1st.e621.ui.screen.search
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
@@ -36,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
@@ -72,23 +74,22 @@ fun ModifyTagDialog(
 ) {
     var autocompleteExpanded by remember { mutableStateOf(false) }
     var textValue by remember { mutableStateOf(TextFieldValue(AnnotatedString(initialText))) }
+    val query by remember {
+        derivedStateOf {
+            textValue.text
+                .removePrefix(Tokens.ALTERNATIVE)
+                .removePrefix(Tokens.EXCLUDED)
+        }
+    }
     // suggestions open again after clicking one
     var selectedFromSuggested by remember { mutableStateOf(false) }
 
     val autocomplete = produceState<Autocomplete>(Autocomplete.Ready(emptyList(), "")) {
-        getSuggestionsFlow {
-            textValue.text
-                // Assuming there's no tag starting with either of these tokens
-                // This assumption is probably true because search engine should somehow handle it otherwise
-                // TODO do it in cycle
-                .removePrefix(Tokens.ALTERNATIVE)
-                .removePrefix(Tokens.EXCLUDED)
+        getSuggestionsFlow { query }.collect {
+            value = it
+            if (!selectedFromSuggested && it is Autocomplete.Ready)
+                autocompleteExpanded = it.result.isNotEmpty()
         }
-            .collect {
-                value = it
-                if (!selectedFromSuggested && it is Autocomplete.Ready)
-                    autocompleteExpanded = it.result.isNotEmpty()
-            }
     }.value
 
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
@@ -124,7 +125,24 @@ fun ModifyTagDialog(
                     val actuallyChanged =
                         it.text != textValue.text || it.selection != textValue.selection
                     // Single tag in single object
-                    textValue = it.copy(text = it.text.replace(' ', '_'))
+                    textValue = it.copy(text = it.text.replace(' ', '_').let { query ->
+                        // sanitize input
+                        val prefix =
+                            if (query.startsWith(Tokens.ALTERNATIVE)) Tokens.ALTERNATIVE
+                            else if (query.startsWith(Tokens.EXCLUDED)) Tokens.EXCLUDED
+                            else ""
+                        prefix + query.removePrefix(prefix)
+                            .let { it1 ->
+                                // remove additional tokens
+                                var res = it1
+                                while (res.startsWith(Tokens.EXCLUDED) || res.startsWith(Tokens.ALTERNATIVE)) {
+                                    res = res.removePrefix(Tokens.ALTERNATIVE)
+                                        .removePrefix(Tokens.EXCLUDED)
+                                }
+                                res
+                            }
+                            .trim('_')
+                    })
                     if (!actuallyChanged) return@OutlinedTextField
                     selectedFromSuggested = false
                     if (!autocompleteExpanded && autocomplete is Autocomplete.Ready) {
@@ -165,7 +183,7 @@ fun ModifyTagDialog(
                     .heightIn(max = (48 * 3).dp) // TODO it still can overlap keyboard
                     .exposedDropdownSize(matchTextFieldWidth = true)
             ) {
-                if(autocomplete !is Autocomplete.Ready) return@ExposedDropdownMenu
+                if (autocomplete !is Autocomplete.Ready) return@ExposedDropdownMenu
                 autocomplete.result.forEach {
                     val name = it.name.text
                     val suggestionText = when (it.antecedentName) {
