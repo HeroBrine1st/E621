@@ -107,12 +107,14 @@ class APIClient(
                     "APIEndpoint requires @HttpMethod annotation"
                 )
             // ktor doesn't understand "{param}.json" format
-            if (annotations.any { it is JsonFormatSuffix }) {
-                url {
-                    val segments = pathSegments.toMutableList()
-                    segments[segments.lastIndex] = segments[segments.lastIndex] + ".json"
-                }
-            }
+            // looks like ".json" isn't needed anymore
+//            if (annotations.any { it is JsonFormatSuffix }) {
+//                url {
+//                    val segments = pathSegments.toMutableList()
+//                    segments[segments.lastIndex] = segments[segments.lastIndex] + ".json"
+//                    pathSegments = segments
+//                }
+//            }
             this.method = io.ktor.http.HttpMethod.parse(method.method.name)
             if (body != Unit) {
                 setBody(body)
