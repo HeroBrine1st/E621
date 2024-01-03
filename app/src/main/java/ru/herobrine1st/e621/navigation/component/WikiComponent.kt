@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -37,7 +38,6 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.MessageData
-import ru.herobrine1st.e621.api.NotFoundException
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.api.parseBBCode
@@ -88,17 +88,22 @@ class WikiComponent(
         state = WikiState.Loading
         lifecycleScope.launch {
             state = try {
-                WikiState.Success(api.getWikiPage(tag.value)).parseWikiPage()
-            } catch (e: NotFoundException) {
-                WikiState.NotFound
+                WikiState.Success(api.getWikiPage(tag).getOrThrow()).parseWikiPage()
             } catch (e: ApiException) {
-                Log.e(
-                    TAG,
-                    "Unknown API exception occurred while fetching wiki page for tag $tag",
-                    e
-                )
-                snackbarAdapter.enqueueMessage(R.string.unknown_api_error, SnackbarDuration.Long)
-                WikiState.Failure
+                if(e.status == HttpStatusCode.NotFound) {
+                    WikiState.NotFound
+                } else {
+                    Log.e(
+                        TAG,
+                        "Unknown API exception occurred while fetching wiki page for tag $tag",
+                        e
+                    )
+                    snackbarAdapter.enqueueMessage(
+                        R.string.unknown_api_error,
+                        SnackbarDuration.Long
+                    )
+                    WikiState.Failure
+                }
             } catch (t: Throwable) {
                 exceptionReporter.handleRequestException(t, showThrowable = true)
                 WikiState.Failure

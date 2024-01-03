@@ -11,7 +11,6 @@ plugins {
     id("com.mikepenz.aboutlibraries.plugin")
     kotlin("plugin.serialization")
     id("androidx.room")
-    id("de.jensklingenberg.ktorfit")
 }
 
 val kotlinVersion = "1.9.21"
@@ -19,7 +18,6 @@ val composeCompilerVersion = "1.5.7"
 val protobufVersion = "3.25.1"
 
 val ktorVersion = "2.3.7"
-val ktorfitVersion = "1.11.1"
 
 val applicationId = "ru.herobrine1st.e621"
 val versionCode = getCommitIndexNumber()
@@ -51,7 +49,7 @@ android {
         stringBuildConfigField("DEEP_LINK_BASE_URL", "https://e621.net")
         stringBuildConfigField(
             "USER_AGENT_TEMPLATE",
-            "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) Ktor/$ktorVersion Ktorfit/$ktorfitVersion"
+            "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) Ktor/$ktorVersion"
         )
     }
 
@@ -172,8 +170,7 @@ dependencies {
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
     implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
     implementation("io.ktor:ktor-client-logging:$ktorVersion")
-    implementation("de.jensklingenberg.ktorfit:ktorfit-lib:$ktorfitVersion")
-    ksp("de.jensklingenberg.ktorfit:ktorfit-ksp:$ktorfitVersion")
+    implementation("io.ktor:ktor-client-resources:$ktorVersion")
 
     // Profiling
     "profileableImplementation"("androidx.compose.runtime:runtime-tracing:1.0.0-beta01")

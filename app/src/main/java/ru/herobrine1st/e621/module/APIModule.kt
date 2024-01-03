@@ -22,7 +22,6 @@ package ru.herobrine1st.e621.module
 
 import android.content.Context
 import android.util.Log
-import de.jensklingenberg.ktorfit.Ktorfit
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.HttpSend
@@ -30,11 +29,13 @@ import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.cache.storage.FileStorage
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.logging.LogLevel
 import io.ktor.client.plugins.logging.Logger
 import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.logging.MessageLengthLimitingLogger
 import io.ktor.client.plugins.plugin
+import io.ktor.client.plugins.resources.Resources
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -47,6 +48,8 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.APIClient
+import ru.herobrine1st.e621.api.APIImpl
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass
 import ru.herobrine1st.e621.util.AuthorizationNotifier
@@ -84,6 +87,14 @@ class APIModule(
             install(UserAgent) {
                 agent = USER_AGENT
             }
+
+            install(Resources)
+
+            defaultRequest {
+                url(BuildConfig.API_BASE_URL)
+            }
+
+            expectSuccess = true
 
             debug {
                 install(Logging) {
@@ -135,12 +146,8 @@ class APIModule(
         }
     }
 
-    val apiLazy = lazy {
-        Ktorfit.Builder()
-            .httpClient(ktorClient)
-            .baseUrl(BuildConfig.API_BASE_URL)
-            .build()
-            .create<API>()
+    val apiLazy: Lazy<API> = lazy {
+        APIImpl(APIClient(ktorClient))
     }
 
     val api by apiLazy

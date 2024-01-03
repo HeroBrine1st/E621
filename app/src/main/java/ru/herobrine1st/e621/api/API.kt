@@ -20,118 +20,87 @@
 
 package ru.herobrine1st.e621.api
 
-import androidx.annotation.CheckResult
 import androidx.annotation.IntRange
-import de.jensklingenberg.ktorfit.Response
-import de.jensklingenberg.ktorfit.http.DELETE
-import de.jensklingenberg.ktorfit.http.GET
-import de.jensklingenberg.ktorfit.http.Header
-import de.jensklingenberg.ktorfit.http.POST
-import de.jensklingenberg.ktorfit.http.Path
-import de.jensklingenberg.ktorfit.http.Query
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import ru.herobrine1st.e621.api.endpoint.favourites.GetFavouritesEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.GetPostEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.GetPostsEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.VoteEndpoint
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.Pool
-import ru.herobrine1st.e621.api.model.PostCommentsEndpoint
-import ru.herobrine1st.e621.api.model.PostEndpoint
-import ru.herobrine1st.e621.api.model.PostVoteEndpoint
-import ru.herobrine1st.e621.api.model.PostsEndpoint
+import ru.herobrine1st.e621.api.model.PostId
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
 import ru.herobrine1st.e621.api.model.WikiPage
 
 interface API {
     // TODO proper model
-    @CheckResult
-    @GET("/users/{name}.json")
     suspend fun getUser(
-        @Path("name") name: String
-    ): JsonObject
+        name: String,
+        authorization: String? = null,
+    ): Result<JsonObject>
 
-    @CheckResult
-    @GET("/users/{name}.json")
-    suspend fun authCheck(
-        @Path("name") name: String,
-        @Header("Authorization") credentials: String? = null
-    ): Response<JsonObject>
-
-    @CheckResult
-    @GET("/posts.json")
     suspend fun getPosts(
-        @Query("tags") tags: String? = null,
-        @Query("page") page: Int? = null, // 1 by default
-        @Query("limit") limit: Int? = null, // 250 by default
-        // @Header("Authorization") credentials: String? = null
-    ): PostsEndpoint
+        tags: String? = null,
+        page: Int? = null, // 1 by default
+        limit: Int? = null, // 250 by default
 
-    @CheckResult
-    @GET("/posts/{id}.json")
+    ): Result<GetPostsEndpoint.Response>
+
+
     suspend fun getPost(
-        @Path("id") id: Int
-        // @Header("Authorization") credentials: String? = null
-    ): PostEndpoint
+        id: PostId,
 
-    @CheckResult
-    @GET("/favorites.json")
+        ): Result<GetPostEndpoint.Response>
+
+
     suspend fun getFavourites(
-        @Query("user_id") userId: Int? = null,
-        @Query("page") page: Int? = null, // 1 by default
-        @Query("limit") limit: Int? = null, // 250 by default
-        // @Header("Authorization") credentials: String? = null
-    ): PostsEndpoint
+        userId: Int? = null,
+        page: Int? = null, // 1 by default
+        limit: Int? = null, // 250 by default
 
-    @CheckResult
-    @POST("/favorites.json")
+    ): Result<GetFavouritesEndpoint.Response>
+
     suspend fun addToFavourites(
-        @Query("post_id") postId: Int,
-//        @Header("Authorization") credentials: String
-    ): Response<JsonElement>
+        postId: Int,
 
-    @CheckResult
-    @DELETE("/favorites/{post_id}.json")
+        ): Result<JsonElement>
+
+
     suspend fun removeFromFavourites(
-        @Path("post_id") postId: Int,
-//        @Header("Authorization") credentials: String
-    ): Response<Void>
+        postId: Int,
+    ): Result<Unit>
 
-    @CheckResult
-    @POST("/posts/{post_id}/votes.json")
+
     suspend fun vote(
-        @Path("post_id") postId: Int,
-        @IntRange(from = -1, to = 1) @Query("score") score: Int,
-        @Suppress("SpellCheckingInspection") @Query("no_unvote") noRetractVote: Boolean,
-//        @Header("Authorization") credentials: String
-    ): PostVoteEndpoint
+        postId: Int,
+        @IntRange(from = -1, to = 1) score: Int,
+        noRetractVote: Boolean,
+    ): Result<VoteEndpoint.Response>
 
-    @CheckResult
-    @GET("/wiki_pages/{name}.json")
-    // TODO change to Tag when it is a value class
-    suspend fun getWikiPage(@Path("name") name: String): WikiPage
+    suspend fun getWikiPage(tag: Tag): Result<WikiPage>
 
-    @CheckResult
-    @GET("/posts/{post_id}/comments.json")
     suspend fun getCommentsForPostHTML(
-        @Path("post_id") id: Int
-    ): PostCommentsEndpoint
+        id: Int,
+    ): Result<GetPostCommentsHTMLEndpoint.Response>
 
-    @CheckResult
-    @GET("/comments.json?group_by=comment")
+
     suspend fun getCommentsForPostBBCode(
-        @Query("search[post_id]") id: Int,
-        @Query("page") page: Int,
-        @Query("limit") limit: Int // Default unknown. Maybe 75, but I doubt
-    ): List<CommentBB>
+        id: Int,
+        page: Int,
+        limit: Int, // Default unknown. Maybe 75, but I doubt
+    ): Result<List<CommentBB>>
 
-    @CheckResult
-    @GET("/tags/autocomplete.json")
+
     suspend fun getAutocompleteSuggestions(
-        @Query("search[name_matches]") query: String, // 3 or more characters required on the API side
-        @Query("expiry") expiry: Int = 7 // idk what it is, use default from site.
-    ): List<TagAutocompleteSuggestion>
+        query: String, // 3 or more characters required on the API side
+        expiry: Int = 7, // idk what it is, use default from site.
+    ): Result<List<TagAutocompleteSuggestion>>
 
-    @CheckResult
-    @GET("/pools/{poolId}.json")
-    suspend fun getPool(@Path("poolId") poolId: Int): Pool
+
+    suspend fun getPool(poolId: Int): Result<Pool>
 
     //    //region Up/down votes
 //

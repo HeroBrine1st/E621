@@ -20,10 +20,9 @@
 
 package ru.herobrine1st.e621.api
 
+import io.ktor.http.HttpStatusCode
 import java.io.IOException
 
-@Suppress("CanBeParameter", "MemberVisibilityCanBePrivate")
-open class ApiException(message: String, val statusCode: Int, cause: Throwable? = null) :
-    IOException("$message (http code $statusCode)", cause)
-
-class NotFoundException(cause: Throwable? = null): ApiException("Not found", 404, cause)
+@Suppress("MemberVisibilityCanBePrivate")
+open class ApiException(message: String, val status: HttpStatusCode, cause: Throwable? = null) :
+    IOException("$message (http code $status)", cause)

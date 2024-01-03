@@ -20,6 +20,9 @@
 
 package ru.herobrine1st.e621.api.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class TagAutocompleteSuggestion(
     val id: Int,
     val name: Tag,

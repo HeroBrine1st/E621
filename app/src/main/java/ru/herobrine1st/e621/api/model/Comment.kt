@@ -25,6 +25,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import org.jsoup.Jsoup
+import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
 
 @Serializable
 data class CommentBB(
@@ -46,7 +47,7 @@ data class CommentBB(
     val updaterName: String
 )
 
-fun parseCommentAvatarsAndGetCommentCount(response: PostCommentsEndpoint): Pair<Map<Int, PostReduced?>, Int> {
+fun parseCommentAvatarsAndGetCommentCount(response: GetPostCommentsHTMLEndpoint.Response): Pair<Map<Int, PostReduced?>, Int> {
     val document = Jsoup.parse(response.html).body()
     return document.children().associate { article ->
         val id = article.attr("data-comment-id").toInt()

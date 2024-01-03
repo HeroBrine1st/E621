@@ -9,7 +9,6 @@ plugins {
     id("com.mikepenz.aboutlibraries.plugin") version "10.9.2" apply false
     id("org.jetbrains.kotlin.plugin.serialization") version "1.9.21" apply false
     id("androidx.room") version "2.6.1" apply false
-    id("de.jensklingenberg.ktorfit") version "1.11.1" apply false
 }
 
 buildscript {

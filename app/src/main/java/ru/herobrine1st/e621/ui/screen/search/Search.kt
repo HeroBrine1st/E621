@@ -73,20 +73,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import de.jensklingenberg.ktorfit.Response
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
+import ru.herobrine1st.e621.api.endpoint.favourites.GetFavouritesEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.GetPostEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.GetPostsEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.VoteEndpoint
 import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Pool
-import ru.herobrine1st.e621.api.model.PostCommentsEndpoint
-import ru.herobrine1st.e621.api.model.PostEndpoint
-import ru.herobrine1st.e621.api.model.PostVoteEndpoint
-import ru.herobrine1st.e621.api.model.PostsEndpoint
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
@@ -448,77 +449,74 @@ fun SearchPreview() {
                     )
                 ),
                 api = object : API {
-                    override suspend fun getUser(name: String): JsonObject {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun authCheck(
+                    override suspend fun getUser(
                         name: String,
-                        credentials: String?
-                    ): Response<JsonObject> {
+                        authorization: String?,
+                    ): Result<JsonObject> {
                         error("Not yet implemented")
                     }
 
                     override suspend fun getPosts(
                         tags: String?,
                         page: Int?,
-                        limit: Int?
-                    ): PostsEndpoint {
+                        limit: Int?,
+                    ): Result<GetPostsEndpoint.Response> {
                         error("Not yet implemented")
                     }
 
-                    override suspend fun getPost(id: Int): PostEndpoint {
+                    override suspend fun getPost(id: PostId): Result<GetPostEndpoint.Response> {
                         error("Not yet implemented")
                     }
 
                     override suspend fun getFavourites(
                         userId: Int?,
                         page: Int?,
-                        limit: Int?
-                    ): PostsEndpoint {
+                        limit: Int?,
+                    ): Result<GetFavouritesEndpoint.Response> {
                         error("Not yet implemented")
                     }
 
-                    override suspend fun addToFavourites(postId: Int): Response<JsonElement> {
+                    override suspend fun addToFavourites(postId: Int): Result<JsonElement> {
                         error("Not yet implemented")
                     }
 
-                    override suspend fun removeFromFavourites(postId: Int): Response<Void> {
+                    override suspend fun removeFromFavourites(postId: Int): Result<Unit> {
                         error("Not yet implemented")
                     }
 
                     override suspend fun vote(
                         postId: Int,
                         score: Int,
-                        noRetractVote: Boolean
-                    ): PostVoteEndpoint {
+                        noRetractVote: Boolean,
+                    ): Result<VoteEndpoint.Response> {
                         error("Not yet implemented")
                     }
 
-                    override suspend fun getWikiPage(name: String): WikiPage {
+                    override suspend fun getWikiPage(tag: Tag): Result<WikiPage> {
                         error("Not yet implemented")
                     }
 
-                    override suspend fun getCommentsForPostHTML(id: Int): PostCommentsEndpoint {
+                    override suspend fun getCommentsForPostHTML(id: Int): Result<GetPostCommentsHTMLEndpoint.Response> {
                         error("Not yet implemented")
                     }
 
                     override suspend fun getCommentsForPostBBCode(
                         id: Int,
                         page: Int,
-                        limit: Int
-                    ): List<CommentBB> {
+                        limit: Int,
+                    ): Result<List<CommentBB>> {
                         error("Not yet implemented")
                     }
 
                     override suspend fun getAutocompleteSuggestions(
                         query: String,
-                        expiry: Int
-                    ): List<TagAutocompleteSuggestion> = emptyList()
+                        expiry: Int,
+                    ): Result<List<TagAutocompleteSuggestion>> = Result.success(emptyList())
 
-                    override suspend fun getPool(poolId: Int): Pool {
+                    override suspend fun getPool(poolId: Int): Result<Pool> {
                         error("Not yet implemented")
                     }
+
 
                 },
                 exceptionReporter = object: ExceptionReporter {

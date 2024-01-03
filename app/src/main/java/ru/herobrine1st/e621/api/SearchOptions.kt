@@ -54,7 +54,7 @@ data class PostsSearchOptions(
     val fileType: FileType? = null,
     val fileTypeInvert: Boolean = false,
     val parent: PostId = -1,
-    val poolId: PoolId = -1
+    val poolId: PoolId = -1,
 ) : SearchOptions {
     // TODO randomSeed or something like that for Order.RANDOM
 
@@ -89,13 +89,14 @@ data class PostsSearchOptions(
     }
 
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
-        return api.getPosts(tags = compileToQuery(), page = page, limit = limit).posts
+        return api.getPosts(tags = compileToQuery(), page = page, limit = limit).getOrThrow().posts
     }
+
 
     companion object {
         fun builder(
             options: SearchOptions? = null,
-            builder: Builder.() -> Unit
+            builder: Builder.() -> Unit,
         ): PostsSearchOptions {
             return when (options) {
                 null -> Builder().apply(builder).build()
@@ -161,8 +162,8 @@ data class FavouritesSearchOptions(val favouritesOf: String, var id: Int? = null
     SearchOptions {
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         id = id ?: favouritesOf.let {
-            api.getUser(favouritesOf)["id"]!!.jsonPrimitive.content.toInt()
+            api.getUser(favouritesOf).getOrThrow()["id"]!!.jsonPrimitive.content.toInt()
         }
-        return api.getFavourites(userId = id, page = page, limit = limit).posts
+        return api.getFavourites(userId = id, page = page, limit = limit).getOrThrow().posts
     }
 }

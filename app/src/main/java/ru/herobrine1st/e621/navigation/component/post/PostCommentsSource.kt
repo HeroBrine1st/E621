@@ -36,7 +36,7 @@ import kotlin.properties.Delegates
 class PostCommentsSource(
     private val api: API,
     private val exceptionReporter: ExceptionReporter,
-    private val postId: Int
+    private val postId: Int,
 ) : PagingSource<Int, CommentData>() {
     // userId to post
     private lateinit var avatars: Map<Int, PostReduced?>
@@ -47,48 +47,57 @@ class PostCommentsSource(
     }
 
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, CommentData> {
-        return try {
-            if (!::avatars.isInitialized) {
-                val (avatars, commentCount) = withContext(Dispatchers.Default) {
-                    parseCommentAvatarsAndGetCommentCount(
-                        api.getCommentsForPostHTML(postId)
-                    )
+        // Download user-to-avatar url mapping
+        if (!::avatars.isInitialized) {
+            api.getCommentsForPostHTML(postId)
+                .map {
+                    withContext(Dispatchers.Default) {
+                        parseCommentAvatarsAndGetCommentCount(it)
+                    }
                 }
-                this.avatars = avatars
-                if (commentCount == 0)
-                    return LoadResult.Page(
+                .onSuccess {
+                    val (avatars, commentCount) = it
+
+                    if (commentCount == 0) return LoadResult.Page(
                         data = emptyList(),
                         nextKey = null,
                         prevKey = null
                     )
 
-                // Comments are reversed, doing my best to reverse it back
-                firstPage =
-                    ceil(commentCount.toDouble() / params.loadSize).toInt() // Kotlin/JVM wtf
+                    this.avatars = avatars
+                    // comments are reversed
+                    firstPage = ceil(commentCount.toDouble() / params.loadSize).toInt()
+                }
+                .onFailure {
+                    Log.e("Posts", "Unable to load comments", it)
+                    exceptionReporter.handleRequestException(it)
+                    return LoadResult.Error(it)
+                }
+        }
+
+        val page = params.key ?: firstPage
+        val limit = params.loadSize
+
+        return api.getCommentsForPostBBCode(postId, page, limit).map { it ->
+            it.asReversed()
+        }.map {
+            withContext(Dispatchers.Default) {
+                it.map {
+                    CommentData.fromE621Comment(it, avatars[it.creatorId])
+                }
             }
-            val page = params.key ?: firstPage
-            val limit = params.loadSize
-
-            val res =
-                api.getCommentsForPostBBCode(postId, page, limit).asReversed()
-                    .run {
-                        withContext(Dispatchers.Default) {
-                            map {
-                                CommentData.fromE621Comment(it, avatars[it.creatorId])
-                            }
-                        }
-                    }
-
+        }.map {
             LoadResult.Page(
-                data = res,
+                data = it,
                 prevKey = if (page == firstPage) null else page + 1,
                 nextKey = if (page == 1) null else page - 1,
             )
-        } catch (t: Throwable) {
-            Log.e("Posts", "Unable to load comments", t)
-            exceptionReporter.handleRequestException(t)
-            LoadResult.Error(t)
-        }
+        }.recover {
+            Log.e("Posts", "Unable to load comments", it)
+            exceptionReporter.handleRequestException(it)
+            LoadResult.Error(it)
+        }.getOrThrow()
+
     }
 
 }

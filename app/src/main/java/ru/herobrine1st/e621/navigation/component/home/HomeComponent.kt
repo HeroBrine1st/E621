@@ -35,10 +35,10 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.jsonPrimitive
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.FavouritesSearchOptions
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
@@ -51,7 +51,6 @@ import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.credentials
-import ru.herobrine1st.e621.util.debug
 import java.io.IOException
 
 
@@ -109,7 +108,7 @@ class HomeComponent(
                         R.string.database_error_updating_blacklist,
                         SnackbarDuration.Long
                     )
-                } catch(t: Throwable) {
+                } catch (t: Throwable) {
                     // TODO clarify
                     exceptionReporter.handleRequestException(t, showThrowable = true)
                 }
@@ -173,7 +172,10 @@ class HomeComponent(
             R.string.unknown_api_error, SnackbarDuration.Long
         )
 
+        LoginState.UnknownError -> snackbarAdapter.enqueueMessage(R.string.unknown_error, SnackbarDuration.Long)
+
         LoginState.Loading -> throw IllegalStateException()
+
     }
 
     companion object {
@@ -183,7 +185,7 @@ class HomeComponent(
     class HomeComponentInstance(
         authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
         apiProvider: Lazy<API>,
-        private val blacklistRepository: BlacklistRepository
+        private val blacklistRepository: BlacklistRepository,
     ) : InstanceBase() {
 
         var state by mutableStateOf<LoginState>(LoginState.Loading)
@@ -248,71 +250,63 @@ class HomeComponent(
         suspend fun fetchBlacklistFromAccount(state: LoginState.Authorized) {
             if (blacklistRepository.count() != 0) return
 
-            // Explaining why try and throw
-            // I'm trying to separate responsibilities to component and instance
-            // So, instance is an actual executor and logic holder, - logging errors suits best here
-            // and component is a proxy between it and UI.          - showing errors suits best here
-
-            val entries = try {
-                api.getUser(name = state.username)["blacklisted_tags"]
-                    .let { it as JsonPrimitive }
-                    .content
-                    .split("\n")
-                    .map {
-                        BlacklistEntry(query = it, enabled = true)
-                    }
-            } catch (e: IOException) {
-                Log.e(TAG, "An error occurred while trying to fetch blacklist", e)
-                throw e
-            }
-
-            try {
-                blacklistRepository.insertEntries(entries)
-            } catch (e: SQLiteException) { // TODO should probably create DatabaseException and encapsulate the cause within, so that this code is not connected to ORM
-                Log.e(TAG, "Database error while trying to insert fetched blacklist", e)
-                throw e
-            }
+            api.getUser(name = state.username)
+                .mapCatching { response ->
+                    response["blacklisted_tags"]!!.jsonPrimitive
+                        .content.split("\n")
+                        .map { BlacklistEntry(query = it, enabled = true) }
+                }.onFailure {
+                    Log.e(TAG, "An error occurred while trying to fetch blacklist", it)
+                    throw it
+                }.mapCatching {
+                    blacklistRepository.insertEntries(it)
+                }.onFailure {
+                    Log.e(TAG, "Database error while trying to insert fetched blacklist", it)
+                }.getOrThrow()
         }
 
         private suspend fun tryCredentials(
-            credentials: AuthorizationCredentials // too connected to data store, should probably use own type
+            credentials: AuthorizationCredentials, // too connected to data store, should probably use own type
         ): LoginState {
-            val res = try {
-                api.authCheck(credentials.username, credentials.credentials)
-            } catch (e: IOException) {
-                Log.e(TAG, "A network exception occurred while checking authorization data", e)
-                return LoginState.IOError
-            }
-
-            if (res.isSuccessful) {
-                val body = res.body()!!
-                return LoginState.Authorized(
-                    body["name"]!!.jsonPrimitive.content,
-                    body["id"]!!.jsonPrimitive.content.toInt()
-                )
-            }
-
-            debug {
-                if (!res.isSuccessful) {
-                    Log.d(
-                        TAG,
-                        "An error occurred while authenticating in API (${res.status})"
+            return api.getUser(credentials.username, credentials.credentials)
+                .map { body ->
+                    LoginState.Authorized(
+                        body["name"]!!.jsonPrimitive.content,
+                        body["id"]!!.jsonPrimitive.content.toInt()
                     )
-                    withContext(Dispatchers.IO) {
-                        Log.d(TAG, res.errorBody()!!.toString())
-                    }
                 }
-            }
+                .recover {
+                    when (it) {
+                        is ApiException -> {
+                            val status = it.status
+                            when {
+                                status == HttpStatusCode.Unauthorized -> LoginState.NoAuth
+                                status == HttpStatusCode.ServiceUnavailable -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
+                                status.value in 500..599 -> LoginState.InternalServerError
+                                else -> {
+                                    Log.w(
+                                        TAG,
+                                        "Unknown API error occurred while authenticating: $status"
+                                    )
+                                    LoginState.UnknownAPIError
+                                }
+                            }
+                        }
 
-            return when {
-                res.status == HttpStatusCode.Unauthorized -> LoginState.NoAuth
-                res.status == HttpStatusCode.ServiceUnavailable -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
-                res.code in 500..599 -> LoginState.InternalServerError
-                else -> {
-                    Log.w(TAG, "Unknown API error occurred while authenticating (${res.status})")
-                    LoginState.UnknownAPIError
-                }
-            }
+                        is IOException -> {
+                            Log.e(
+                                TAG,
+                                "A network exception occurred while checking authorization data",
+                                it
+                            )
+                            LoginState.IOError
+                        }
+
+                        else -> LoginState.UnknownError
+                    }
+                }.getOrThrow()
+
+
         }
     }
 
@@ -325,6 +319,8 @@ class HomeComponent(
         data object APITemporarilyUnavailable : LoginState(false)
         data object NoAuth : LoginState(true)
         class Authorized(val username: String, val id: Int) : LoginState(false)
+
+        data object UnknownError : LoginState(false)
     }
 
 

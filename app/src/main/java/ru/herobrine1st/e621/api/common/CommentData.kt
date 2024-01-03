@@ -28,10 +28,6 @@ import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.parseBBCode
 
-// This package may be not the best for this classes
-// It is still WIP, as I don't know ahead of time how will I replace E621 models with my own
-// At the end, I will be able to introduce more APIs to this application
-
 data class CommentData(
     val id: Int,
     val author: UserData,

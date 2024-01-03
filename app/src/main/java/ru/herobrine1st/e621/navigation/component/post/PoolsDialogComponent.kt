@@ -34,20 +34,24 @@ class PoolsDialogComponent(
     api: API,
     pools: List<PoolId>,
     private val openPool: (PoolId) -> Unit,
-    private val close: () -> Unit
+    private val close: () -> Unit,
 ) : ComponentContext by componentContext {
     val lifecycleScope = LifecycleScope()
 
-    private val _pools = pools.map { null }.toMutableStateList<Pool?>()
+    private val _pools = pools.map { PoolState.NotLoaded }.toMutableStateList<PoolState>()
 
-    val pools: List<Pool?> by ::_pools
+    val pools: List<PoolState> by ::_pools
 
     init {
         lifecycle.doOnResume {
             lifecycleScope.launch {
                 pools.indices.forEach { index ->
-                    if (_pools[index] == null) {
-                        _pools[index] = api.getPool(pools[index])
+                    if (_pools[index] == PoolState.NotLoaded) {
+                        _pools[index] = api.getPool(pools[index]).map {
+                            PoolState.Successful(it)
+                        }.recover {
+                            PoolState.Error
+                        }.getOrThrow()
                     }
                 }
             }
@@ -57,4 +61,12 @@ class PoolsDialogComponent(
     fun onClick(pool: Pool) = openPool(pool.id)
 
     fun onDismiss() = close()
+
+    sealed interface PoolState {
+        data class Successful(val pool: Pool) : PoolState
+
+        data object Error : PoolState
+
+        data object NotLoaded : PoolState
+    }
 }

@@ -199,6 +199,10 @@ fun Home(
                                 }
                             }
                         }
+
+                        LoginState.UnknownError -> {
+                            Text(stringResource(R.string.unknown_error))
+                        }
                     }
                 }
             }

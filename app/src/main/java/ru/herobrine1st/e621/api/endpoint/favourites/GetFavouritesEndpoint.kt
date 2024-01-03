@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2023 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2024 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,26 +18,27 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.api.model
+package ru.herobrine1st.e621.api.endpoint.favourites
 
-import kotlinx.datetime.Instant
+import io.ktor.resources.Resource
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-
-typealias PoolId = Int
+import ru.herobrine1st.e621.api.HttpMethod
+import ru.herobrine1st.e621.api.HttpMethodType
+import ru.herobrine1st.e621.api.endpoint.APIEndpoint
+import ru.herobrine1st.e621.api.model.Post
 
 @Serializable
-data class Pool(
-    val id: PoolId,
-    val name: String, // looks like it has underscores as spaces
-    val description: String,
-    val createdAt: Instant,
-    val updatedAt: Instant?,
-    val creatorId: Int,
-    val creatorName: String,
-    val isActive: Boolean,
-    val category: String, // probably a boolean
-    @SerialName("post_ids")
-    val posts: List<PostId>,
-    val postCount: Int
-)
+@HttpMethod(HttpMethodType.GET)
+@Resource("/favorites.json")
+data class GetFavouritesEndpoint(
+    // TODO looks like it is possible to get own favourites without any parameters
+    @SerialName("user_id") val userId: Int? = null,
+    val page: Int? = null, // 1 by default
+    val limit: Int? = null, // 250 by default
+): APIEndpoint<Unit, GetFavouritesEndpoint.Response> {
+    @Serializable
+    data class Response(
+        val posts: List<Post>
+    )
+}

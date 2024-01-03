@@ -35,6 +35,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
+import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent.PoolState
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 import ru.herobrine1st.e621.ui.component.placeholder.material3.shimmer
@@ -45,23 +46,29 @@ fun PoolsDialog(component: PoolsDialogComponent) {
     ActionDialog(
         title = stringResource(id = R.string.pools_dialog_select_pool),
         content = {
-            component.pools.forEach {
+            component.pools.forEach { state ->
                 Row(
                     Modifier
-                        .clickable(enabled = it != null) {
-                            component.onClick(it ?: return@clickable)
+                        .clickable(enabled = state is PoolState.Successful) {
+                            if (state is PoolState.Successful)
+                                component.onClick(state.pool)
                         }
                         .placeholder(
-                            visible = it == null,
+                            visible = state is PoolState.NotLoaded,
                             highlight = PlaceholderHighlight.shimmer(),
                         )
                         .minimumInteractiveComponentSize()
                         .clip(RoundedCornerShape(16.dp))
                 ) {
-                    Text(
-                        // underscores are spaces, I guess
-                        it?.name?.replace('_', ' ') ?: ""
-                    )
+                    when(state) {
+                        is PoolState.Successful -> {
+                            Text(state.pool.name.replace('_', ' '))
+                        }
+                        is PoolState.Error -> {
+                            Text(stringResource(R.string.unknown_error))
+                        }
+                        else -> Text("")
+                    }
                     Spacer(Modifier.weight(1f))
                 }
                 Spacer(Modifier.height(4.dp))

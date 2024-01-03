@@ -86,22 +86,21 @@ class SearchComponent private constructor(
                     return@combine Autocomplete.Ready(emptyList(), query)
 
                 }
-                val result = try {
-                    api.getAutocompleteSuggestions(query)
-                } catch (t: Throwable) {
-                    exceptionReporter.handleRequestException(t, dontShowSnackbar = true)
-                    return@combine Autocomplete.Error
-                }
 
-                val transformed = result.map {
-                    TagSuggestion(
-                        name = it.name,
-                        postCount = it.postCount,
-                        antecedentName = it.antecedentName
-                    )
-                }
-
-                Autocomplete.Ready(transformed, query)
+                api.getAutocompleteSuggestions(query).map {
+                    it.map { suggestion ->
+                        TagSuggestion(
+                            name = suggestion.name,
+                            postCount = suggestion.postCount,
+                            antecedentName = suggestion.antecedentName
+                        )
+                    }
+                }.map {
+                    Autocomplete.Ready(it, query)
+                }.recover {
+                    exceptionReporter.handleRequestException(it, dontShowSnackbar = true)
+                    Autocomplete.Error
+                }.getOrThrow()
             }
             // Make it 🚀 turbo reactive 🚀
             .combine(currentTextFlow) { res, query ->
@@ -117,6 +116,7 @@ class SearchComponent private constructor(
                             res.query
                         )
                     }
+
                     else -> res
                 }
             }

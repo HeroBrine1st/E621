@@ -196,7 +196,8 @@ class PostComponent(
                 ) {
                     isLoadingPost = true
                     try {
-                        post = api.getPost(id).post
+                        // TODO use Result<T> DSL
+                        post = api.getPost(id).getOrThrow().post
                         // Maybe reload ExoPlayer if old object contains invalid URL?
                         // exoPlayer.playbackState may help with that
                     } catch (t: Throwable) {
