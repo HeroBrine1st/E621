@@ -207,7 +207,8 @@ class PostComponent(
                     }
                 }
                 isLoadingPost = false
-                setMediaItem()
+                // TODO handle error in loading
+                if(post != null) setMediaItem()
             }
         }
         lifecycle.doOnDestroy {
