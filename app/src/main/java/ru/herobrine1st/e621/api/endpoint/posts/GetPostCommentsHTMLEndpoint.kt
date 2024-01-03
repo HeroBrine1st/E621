@@ -31,7 +31,8 @@ import ru.herobrine1st.e621.api.model.PostReduced
 @Serializable
 @HttpMethod(HttpMethodType.GET)
 @Resource("/posts/{id}/comments.json")
-data class GetPostCommentsHTMLEndpoint(val id: PostId):
+data class GetPostCommentsHTMLEndpoint(val id: PostId) :
     APIEndpoint<Unit, GetPostCommentsHTMLEndpoint.Response> {
+    @Serializable
     data class Response(val html: String, val posts: Map<Int, PostReduced>)
 }

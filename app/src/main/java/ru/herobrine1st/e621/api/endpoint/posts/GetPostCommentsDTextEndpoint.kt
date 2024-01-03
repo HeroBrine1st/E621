@@ -31,9 +31,14 @@ import ru.herobrine1st.e621.api.model.CommentBB
 
 @Serializable
 @HttpMethod(HttpMethodType.GET)
-@Resource("/comments.json?group_by=comment")
+@Resource("/comments.json")
 data class GetPostCommentsDTextEndpoint(
     @SerialName("search[post_id]") val id: Int,
     @SerialName("page") val page: Int,
-    @SerialName("limit") val limit: Int // Default unknown. Maybe 75, but I doubt
-): APIEndpoint<Unit, List<CommentBB>>
+    @SerialName("limit") val limit: Int, // Default unknown. Maybe 75, but I doubt
+    @SerialName("group_by") val groupBy: String = "comment"
+): APIEndpoint<Unit, List<CommentBB>> {
+    init {
+        require(groupBy == "comment")
+    }
+}
