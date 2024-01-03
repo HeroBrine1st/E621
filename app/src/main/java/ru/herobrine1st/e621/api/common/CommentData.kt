@@ -45,12 +45,12 @@ data class CommentData(
                 author = UserData(
                     id = comment.creatorId,
                     displayName = comment.creatorName,
-                    avatarUrl = authorAvatarPost?.previewUrl ?: authorAvatarPost?.croppedUrl
+                    avatarPost = authorAvatarPost?.toCommon()
                 ),
                 editor = UserData(
                     id = comment.updaterId,
                     displayName = comment.updaterName,
-                    avatarUrl = null
+                    avatarPost = null
                 ),
                 creationTime = comment.createdAt,
                 editTime = comment.updatedAt,
@@ -64,12 +64,12 @@ data class CommentData(
             author = UserData(
                 id = -1,
                 displayName = "Placeholder",
-                avatarUrl = null
+                avatarPost = null
             ),
             editor = UserData(
                 id = -1,
                 displayName = "Placeholder",
-                avatarUrl = null
+                avatarPost = null
             ),
             creationTime = Instant.DISTANT_PAST,
             editTime = Instant.DISTANT_PAST,
@@ -82,7 +82,9 @@ data class CommentData(
     data class UserData(
         val id: Int,
         val displayName: String,
-        val avatarUrl: String?,
-    )
+        val avatarPost: PostReducedCommon?
+    ) {
+        val avatarUrl: String? get() = avatarPost?.previewUrl ?: avatarPost?.croppedUrl
+    }
 }
 
