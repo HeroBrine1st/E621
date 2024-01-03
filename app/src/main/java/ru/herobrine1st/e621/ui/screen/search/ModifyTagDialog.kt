@@ -166,11 +166,17 @@ fun ModifyTagDialog(
                     )
                 },
                 trailingIcon = {
-                    if(autocomplete is Autocomplete.Ready && autocomplete.query != textValue.text) {
-                        CircularProgressIndicator()
-                    }
-                    if(autocomplete is Autocomplete.Error) {
-                        Icon(Icons.Default.Error, contentDescription = stringResource(R.string.unknown_error))
+                    when (autocomplete) {
+                        is Autocomplete.Ready -> if (autocomplete.query != query) {
+                            // 24.dp is size of icon
+                            // strokeWidth is decreased in proportion (24/40 * 4)
+                            CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.4.dp)
+                        }
+
+                        is Autocomplete.Error -> Icon(
+                            Icons.Default.Error,
+                            contentDescription = stringResource(R.string.unknown_error)
+                        )
                     }
                 }
             )
