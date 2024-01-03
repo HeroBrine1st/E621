@@ -46,27 +46,23 @@ interface API {
         tags: String? = null,
         page: Int? = null, // 1 by default
         limit: Int? = null, // 250 by default
-
     ): Result<GetPostsEndpoint.Response>
 
 
     suspend fun getPost(
         id: PostId,
-
-        ): Result<GetPostEndpoint.Response>
+    ): Result<GetPostEndpoint.Response>
 
 
     suspend fun getFavourites(
         userId: Int? = null,
         page: Int? = null, // 1 by default
         limit: Int? = null, // 250 by default
-
     ): Result<GetFavouritesEndpoint.Response>
 
     suspend fun addToFavourites(
         postId: Int,
-
-        ): Result<JsonElement>
+    ): Result<JsonElement>
 
 
     suspend fun removeFromFavourites(
