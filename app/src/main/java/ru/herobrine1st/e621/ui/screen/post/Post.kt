@@ -107,9 +107,9 @@ import ru.herobrine1st.e621.api.common.CommentData
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Tag
-import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
+import ru.herobrine1st.e621.navigation.component.post.PostState
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
@@ -136,7 +136,7 @@ fun Post(
     component: PostComponent,
     isAuthorized: Boolean, // TODO move to component
 ) {
-    val post = component.post
+    val postState = component.state
     val preferences = LocalPreferences.current
 
     val coroutineScope = rememberCoroutineScope()
@@ -153,15 +153,6 @@ fun Post(
         )
     }
 
-    if (post == null) {
-        Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-        return
-    }
 
     var fullscreenState by remember { mutableStateOf(FullscreenState.CLOSED) }
 
@@ -196,7 +187,7 @@ fun Post(
 
     LaunchedEffect(bottomSheetState.currentValue, loadComments) {
         // Attempt to work https://issuetracker.google.com/issues/299973349 around
-        if(bottomSheetState.currentValue != SheetValue.Hidden && !loadComments) {
+        if (bottomSheetState.currentValue != SheetValue.Hidden && !loadComments) {
             bottomSheetState.hide()
         }
     }
@@ -233,9 +224,9 @@ fun Post(
                 )
             },
             sheetContent = {
-                CommentsBottomSheetContent(
+                if (postState is PostState.Ready) CommentsBottomSheetContent(
                     commentsFlow = component.commentsFlow,
-                    post = post,
+                    post = postState.post,
                     loadComments = loadComments
                 )
             },
@@ -243,6 +234,30 @@ fun Post(
             scaffoldState = bottomSheetScaffoldState,
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
         ) { _ ->
+            if (postState !is PostState.Ready) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Spacer(Modifier.weight(1f))
+                    if (postState is PostState.Loading) CircularProgressIndicator()
+                    else {
+                        Icon(Icons.Outlined.Error, contentDescription = null)
+                        Text(stringResource(R.string.could_not_load_post))
+                        Button(onClick = {
+                            component.refreshPost()
+                        }) {
+                            Text(stringResource(R.string.retry))
+                        }
+                    }
+                    Spacer(Modifier.weight(1f))
+                }
+                return@BottomSheetScaffold
+            }
+
+            val post = postState.post
+
             if (preferences.safeModeEnabled && post.rating.isNotSafe) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
@@ -264,14 +279,14 @@ fun Post(
                 userScrollEnabled = fullscreenState == FullscreenState.CLOSED
             ) {
                 item("media") {
-                    val sample = post.selectSample()
+                    val file = component.currentFile
 
                     // "Open to fullscreen" behavior
                     // Currently no animation
                     Box(
                         Modifier
                             // This box will be empty if image is gone to fullscreen
-                            .aspectRatio(sample.aspectRatio)
+                            .aspectRatio(file.aspectRatio)
                             .fillMaxWidth()
                             .clickable(
                                 enabled = fullscreenState == FullscreenState.CLOSED
@@ -286,7 +301,7 @@ fun Post(
                             }
                     ) {
                         if (fullscreenState == FullscreenState.CLOSED)
-                            media(sample, post, Modifier.fillMaxWidth(), false)
+                            media(file, post, Modifier.fillMaxWidth(), false)
                     }
                 }
                 item("actionbar") {
@@ -515,34 +530,36 @@ fun Post(
 
         // TODO animate fullscreen enter via fullscreen zoomable
         if (fullscreenState == FullscreenState.OPEN) {
-            val file = post.selectSample()
-            val initialTranslation: Offset
-            val initialScale: Float
-            // if image size would exceed screen height, it is true
-            val matchHeightConstraintsFirst = file.aspectRatio < maxWidth / maxHeight
-            if (!matchHeightConstraintsFirst) {
-                initialTranslation = Offset.Zero
-                initialScale = 1f
-            } else {
-                val width = constraints.maxHeight * file.aspectRatio
-                initialScale = constraints.maxWidth / width
-                initialTranslation = Offset(-(constraints.maxWidth - width) / 2, 0f)
-            }
-            val maxScale = initialScale * MAX_SCALE_DEFAULT
-            media(
-                file, post,
-                Modifier
-                    .zoomable(
-                        rememberZoomableState(
-                            maxScale = maxScale,
-                            initialScale = initialScale,
-                            initialTranslation = initialTranslation
+            if(postState is PostState.Ready) {
+                val file = component.currentFile
+                val initialTranslation: Offset
+                val initialScale: Float
+                // if image size would exceed screen height, it is true
+                val matchHeightConstraintsFirst = file.aspectRatio < maxWidth / maxHeight
+                if (!matchHeightConstraintsFirst) {
+                    initialTranslation = Offset.Zero
+                    initialScale = 1f
+                } else {
+                    val width = constraints.maxHeight * file.aspectRatio
+                    initialScale = constraints.maxWidth / width
+                    initialTranslation = Offset(-(constraints.maxWidth - width) / 2, 0f)
+                }
+                val maxScale = initialScale * MAX_SCALE_DEFAULT
+                media(
+                    file, postState.post,
+                    Modifier
+                        .zoomable(
+                            rememberZoomableState(
+                                maxScale = maxScale,
+                                initialScale = initialScale,
+                                initialTranslation = initialTranslation
+                            )
                         )
-                    )
-                    .background(Color.Black)
-                    .fillMaxSize(),
-                matchHeightConstraintsFirst
-            )
+                        .background(Color.Black)
+                        .fillMaxSize(),
+                    matchHeightConstraintsFirst
+                )
+            }
         }
 
         BackHandler(fullscreenState == FullscreenState.OPEN) {

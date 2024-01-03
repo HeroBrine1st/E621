@@ -41,12 +41,7 @@ import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.getOrCreate
-import com.arkivanov.essenty.lifecycle.doOnDestroy
 import com.arkivanov.essenty.lifecycle.doOnResume
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -56,12 +51,14 @@ import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
+import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.PoolId
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.selectSample
+import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import ru.herobrine1st.e621.navigation.component.posts.handleFavouriteChange
 import ru.herobrine1st.e621.navigation.config.Config
@@ -70,6 +67,7 @@ import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
+import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.isFavourite
 
@@ -84,7 +82,7 @@ class PostComponent(
     componentContext: ComponentContext,
     private val navigator: StackNavigator<Config>,
     private val applicationContext: Context,
-    exceptionReporter: ExceptionReporter,
+    private val exceptionReporter: ExceptionReporter,
     private val api: API,
     private val favouritesCache: FavouritesCache,
     private val snackbarAdapter: SnackbarAdapter,
@@ -94,7 +92,7 @@ class PostComponent(
         Instance(postId, api, exceptionReporter)
     }
 
-    private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
+    private val lifecycleScope = LifecycleScope()
 
     private val slotNavigation = SlotNavigation<PoolsDialogConfig>()
 
@@ -106,7 +104,7 @@ class PostComponent(
             return@childSlot PoolsDialogComponent(
                 componentContext = componentContext,
                 api = api,
-                pools = post!!.pools,
+                pools = (state as PostState.Ready).post.pools,
                 openPool = ::openPool,
                 close = ::closePoolDialog
             )
@@ -114,21 +112,32 @@ class PostComponent(
     )
 
     // private var rememberedPositionMs = -1L
-    var post by mutableStateOf(initialPost)
+    var state by mutableStateOf<PostState>(PostState.Loading)
         private set
-
-    var isLoadingPost by mutableStateOf(initialPost != null)
+    var currentFile by mutableStateOf(
+        NormalizedFile(
+            "stub",
+            0,
+            0,
+            FileType.UNDEFINED,
+            0,
+            emptyList()
+        )
+    )
         private set
 
     @Composable
-    fun isFavouriteAsState(): State<FavouritesCache.FavouriteState> = remember {
+    fun isFavouriteAsState(): State<FavouriteState> = remember {
         // Assume two things:
         // 1. This method is called after post is loaded
         // 2. [post] (particularly, its id) will never change
         favouritesCache.flow.map { cache ->
-            cache.isFavourite(post!!)
+            (state as? PostState.Ready)?.let { cache.isFavourite(it.post) }
+                ?: FavouriteState.Determined.UNFAVOURITE
         }
-    }.collectAsState(favouritesCache.isFavourite(post!!))
+    }.collectAsState((state as? PostState.Ready)?.let { favouritesCache.isFavourite(it.post) }
+        ?: FavouriteState.Determined.UNFAVOURITE
+    )
 
     fun handleFavouriteChange() {
         // Assume post is loaded here as well
@@ -137,7 +146,7 @@ class PostComponent(
                 favouritesCache,
                 api,
                 snackbarAdapter,
-                post!!
+                (state as PostState.Ready).post
             )
         }
     }
@@ -172,57 +181,58 @@ class PostComponent(
         return videoPlayerComponent
     }
 
-    init {
-        stateKeeper.register(POST_STATE_KEY, strategy = Post.serializer()) {
-            post
+    private suspend fun refreshPostInternal() {
+        (state as? PostState.Ready)?.let {
+            state = it.copy(isUpdating = true)
+        } ?: run {
+            if (state is PostState.Error) state = PostState.Loading
         }
+        api.getPost(postId).map {
+            PostState.Ready(it.post)
+        }.onSuccess {
+            state = it
+        }.onFailure {
+            if (state !is PostState.Ready) state = PostState.Error
+            exceptionReporter.handleRequestException(it)
+        }
+    }
+
+    fun refreshPost() = lifecycleScope.launch {
+        refreshPostInternal()
+    }
+
+    init {
+        assert(initialPost == null || initialPost.id == postId)
+        stateKeeper.register(POST_STATE_KEY, strategy = PostState.serializer()) { state }
+
+        val restoredState = stateKeeper.consume(POST_STATE_KEY, strategy = PostState.serializer())
+        if (restoredState != null) state = restoredState
+        else if (initialPost != null) state = PostState.Ready(initialPost)
+        if (state is PostState.Ready) setMediaItem()
+
         lifecycle.doOnResume {
             // TODO behavior preference
             // 1. Do not refresh on resume/open
             // 2. Do refresh on open, do not refresh on resume
             // 3. Do both
-            stateKeeper.consume(POST_STATE_KEY, strategy = Post.serializer())?.let {
-                post = it
-                // Okay, there might be flicker
-                // idk what to do, probably should cache DataStore using StateFlow
-                // FIXME possible flicker
-                isLoadingPost = false
-                return@doOnResume
-            }
             lifecycleScope.launch {
-                val id = post?.id ?: postId
-                if (post == null // Nothing to show
-                    || applicationContext.getPreferencesFlow { !it.dataSaverModeEnabled }.first()
-                ) {
-                    isLoadingPost = true
-                    try {
-                        // TODO use Result<T> DSL
-                        post = api.getPost(id).getOrThrow().post
-                        // Maybe reload ExoPlayer if old object contains invalid URL?
-                        // exoPlayer.playbackState may help with that
-                    } catch (t: Throwable) {
-                        // TODO proper error state
-                        exceptionReporter.handleRequestException(t, showThrowable = true)
-                        Log.e(TAG, "Unable to get post $id", t)
-                    }
-                }
-                isLoadingPost = false
-                // TODO handle error in loading
-                if(post != null) setMediaItem()
+                if (state !is PostState.Ready ||
+                    !applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }.first()
+                ) refreshPostInternal()
+                setMediaItem()
             }
-        }
-        lifecycle.doOnDestroy {
-            lifecycleScope.cancel()
+
         }
     }
 
     private fun setMediaItem() {
-        assert(post != null) { "setMediaItem should be called only after post loading" }
-        val post = post!!
-        if (post.file.type.isVideo) {
-            getVideoPlayerComponent(post.selectSample())
+        val state = state
+        assert(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
+        state as PostState.Ready
+        currentFile = state.post.selectSample()
+        if (currentFile.type.isVideo) {
+            getVideoPlayerComponent(currentFile)
         }
-
     }
 
     fun handleWikiClick(tag: Tag) {
@@ -247,7 +257,7 @@ class PostComponent(
     fun openParentPost() {
         navigator.pushIndexed { index ->
             Config.Post(
-                id = post!!.relationships.parentId!!,
+                id = (state as PostState.Ready).post.relationships.parentId!!,
                 post = null,
                 query = PostsSearchOptions(),
                 index = index
@@ -256,7 +266,7 @@ class PostComponent(
     }
 
     fun openChildrenPostListing() {
-        val post = post!!
+        val post = (state as PostState.Ready).post
         post.relationships.children.singleOrNull()?.let { id ->
             navigator.pushIndexed {
                 Config.Post(
@@ -281,7 +291,7 @@ class PostComponent(
     }
 
     fun openPools() {
-        val post = post!!
+        val post = (state as PostState.Ready).post
         post.pools.singleOrNull()?.let {
             openPool(it)
             return
@@ -329,3 +339,16 @@ class PostComponent(
 
 @Serializable
 object PoolsDialogConfig
+
+@Serializable
+sealed interface PostState {
+
+    @Serializable
+    data object Loading : PostState
+
+    @Serializable
+    data object Error : PostState
+
+    @Serializable
+    data class Ready(val post: Post, val isUpdating: Boolean = false) : PostState
+}

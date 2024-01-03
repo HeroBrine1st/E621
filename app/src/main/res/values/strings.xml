@@ -162,4 +162,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="pools_dialog_select_pool">Select pool to view</string>
     <string name="search_pool">Pool</string>
     <string name="search_pool_id">Pool id</string>
+    <string name="could_not_load_post">Could not load post</string>
 </resources>
