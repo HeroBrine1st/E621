@@ -157,11 +157,6 @@ dependencies {
     implementation("io.coil-kt:coil-gif:$coilVersion")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-    // G Accompanist (Apache 2.0)
-    val accompanistVersion = "0.32.0"
-    implementation("com.google.accompanist:accompanist-systemuicontroller:$accompanistVersion")
-
-
     // KTorfit
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
