@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.ui.screen.post.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -35,18 +36,28 @@ import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
+import ru.herobrine1st.e621.api.common.PostReducedCommon
+import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
 import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 
 @Composable
 fun CommentAvatar(
-    url: String?,
+    avatarPost: PostReducedCommon?,
     modifier: Modifier = Modifier,
-    placeholder: Boolean = false
+    placeholder: Boolean = false,
+    onAvatarClick: () -> Unit = {}
 ) {
+    val safeMode = LocalPreferences.current.safeModeEnabled
+
     var isPlaceholderActive by remember { mutableStateOf(true) }
-    if (url != null) {
+    if (avatarPost != null &&
+        (avatarPost.rating == Rating.SAFE || !safeMode) &&
+        (avatarPost.previewUrl != null || avatarPost.croppedUrl != null)
+    ) {
+        val url = avatarPost.previewUrl ?: avatarPost.croppedUrl
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
                 .data(url)
@@ -61,6 +72,7 @@ fun CommentAvatar(
             },
             modifier = modifier
                 .clip(CircleShape) // For placeholder
+                .clickable(onClick = onAvatarClick)
                 .placeholder(
                     isPlaceholderActive,
                     highlight = PlaceholderHighlight.fade()

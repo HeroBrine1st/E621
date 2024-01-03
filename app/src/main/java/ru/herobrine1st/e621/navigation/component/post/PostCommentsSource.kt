@@ -38,7 +38,7 @@ class PostCommentsSource(
     private val exceptionReporter: ExceptionReporter,
     private val postId: Int,
 ) : PagingSource<Int, CommentData>() {
-    // userId to post
+    // commentId to post
     private lateinit var avatars: Map<Int, PostReduced?>
     private var firstPage by Delegates.notNull<Int>()
 
@@ -83,7 +83,7 @@ class PostCommentsSource(
         }.map {
             withContext(Dispatchers.Default) {
                 it.map {
-                    CommentData.fromE621Comment(it, avatars[it.creatorId])
+                    CommentData.fromE621Comment(it, avatars[it.id])
                 }
             }
         }.map {

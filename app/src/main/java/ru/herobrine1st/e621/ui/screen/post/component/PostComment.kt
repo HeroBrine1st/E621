@@ -63,7 +63,7 @@ fun PostComment(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             CommentAvatar(
-                commentData.author.avatarUrl,
+                commentData.author.avatarPost,
                 Modifier.size(24.dp),
                 placeholder = placeholder
             )
