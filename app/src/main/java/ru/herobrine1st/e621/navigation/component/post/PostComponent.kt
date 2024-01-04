@@ -67,7 +67,6 @@ import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
-import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.isFavourite
 
@@ -96,20 +95,19 @@ class PostComponent(
 
     private val slotNavigation = SlotNavigation<PoolsDialogConfig>()
 
-    val dialog: Value<ChildSlot<PoolsDialogConfig, PoolsDialogComponent>> = childSlot(
-        source = slotNavigation,
-        serializer = PoolsDialogConfig.serializer(),
-        handleBackButton = true,
-        childFactory = { _, componentContext ->
-            return@childSlot PoolsDialogComponent(
-                componentContext = componentContext,
-                api = api,
-                pools = (state as PostState.Ready).post.pools,
-                openPool = ::openPool,
-                close = ::closePoolDialog
-            )
-        }
-    )
+    val dialog: Value<ChildSlot<PoolsDialogConfig, PoolsDialogComponent>> =
+        childSlot(source = slotNavigation,
+            serializer = PoolsDialogConfig.serializer(),
+            handleBackButton = true,
+            childFactory = { _, componentContext ->
+                return@childSlot PoolsDialogComponent(
+                    componentContext = componentContext,
+                    api = api,
+                    pools = (state as PostState.Ready).post.pools,
+                    openPool = ::openPool,
+                    close = ::closePoolDialog
+                )
+            })
 
     // private var rememberedPositionMs = -1L
     var state by mutableStateOf<PostState>(PostState.Loading)
@@ -126,33 +124,66 @@ class PostComponent(
     )
         private set
 
-    @Composable
-    fun isFavouriteAsState(): State<FavouriteState> = remember {
-        // Assume two things:
-        // 1. This method is called after post is loaded
-        // 2. post id will never change
-        favouritesCache.flow.map { cache ->
-            cache.isFavourite((state as PostState.Ready).post)
-        }
-    }.collectAsState(favouritesCache.isFavourite((state as PostState.Ready).post))
-
-    fun handleFavouriteChange() {
-        // Assume post is loaded here as well
-        lifecycleScope.launch {
-            handleFavouriteChange(
-                favouritesCache,
-                api,
-                snackbarAdapter,
-                (state as PostState.Ready).post
-            )
-        }
-    }
 
     // TODO move to another component (it should be overlay component)
     val commentsFlow get() = instance.commentsFlow
 
     private lateinit var videoPlayerComponent: VideoPlayerComponent
+
     private var latestPlayedFile: NormalizedFile? = null
+
+    init {
+        assert(initialPost == null || initialPost.id == postId)
+        stateKeeper.register(POST_STATE_KEY, strategy = PostState.serializer()) { state }
+
+
+        state = stateKeeper.consume(POST_STATE_KEY, strategy = PostState.serializer())
+            ?: initialPost?.let { PostState.Ready(it) } ?: PostState.Loading
+
+        if (state is PostState.Ready) setMediaItem()
+
+        lifecycle.doOnResume {
+            // TODO behavior preference
+            // 1. Do not refresh on resume/open
+            // 2. Do refresh on open, do not refresh on resume
+            // 3. Do both
+            lifecycleScope.launch {
+                if (
+                    state !is PostState.Ready
+                    || !applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }.first()
+                )
+                    refreshPostInternal()
+                setMediaItem()
+            }
+
+        }
+    }
+
+    private suspend fun refreshPostInternal() {
+        (state as? PostState.Ready)?.let {
+            state = it.copy(isUpdating = true)
+        } ?: run {
+            if (state is PostState.Error) state = PostState.Loading
+        }
+        api.getPost(postId).map {
+            PostState.Ready(it.post)
+        }.onSuccess {
+            state = it
+        }.onFailure {
+            if (state !is PostState.Ready) state = PostState.Error
+            exceptionReporter.handleRequestException(it)
+        }
+    }
+
+    private fun setMediaItem() {
+        val state = state
+        assert(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
+        state as PostState.Ready
+        currentFile = state.post.selectSample()
+        if (currentFile.type.isVideo) {
+            getVideoPlayerComponent(currentFile)
+        }
+    }
 
     fun getVideoPlayerComponent(file: NormalizedFile): VideoPlayerComponent {
         assert(file.type.isVideo) {
@@ -178,59 +209,28 @@ class PostComponent(
         return videoPlayerComponent
     }
 
-    private suspend fun refreshPostInternal() {
-        (state as? PostState.Ready)?.let {
-            state = it.copy(isUpdating = true)
-        } ?: run {
-            if (state is PostState.Error) state = PostState.Loading
-        }
-        api.getPost(postId).map {
-            PostState.Ready(it.post)
-        }.onSuccess {
-            state = it
-        }.onFailure {
-            if (state !is PostState.Ready) state = PostState.Error
-            exceptionReporter.handleRequestException(it)
-        }
-    }
-
     fun refreshPost() = lifecycleScope.launch {
         refreshPostInternal()
     }
 
-    init {
-        assert(initialPost == null || initialPost.id == postId)
-        stateKeeper.register(POST_STATE_KEY, strategy = PostState.serializer()) { state }
-
-        val restoredState = stateKeeper.consume(POST_STATE_KEY, strategy = PostState.serializer())
-        if (restoredState != null) state = restoredState
-        else if (initialPost != null) state = PostState.Ready(initialPost)
-        if (state is PostState.Ready) setMediaItem()
-
-        lifecycle.doOnResume {
-            // TODO behavior preference
-            // 1. Do not refresh on resume/open
-            // 2. Do refresh on open, do not refresh on resume
-            // 3. Do both
-            lifecycleScope.launch {
-                if (state !is PostState.Ready ||
-                    !applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }.first()
-                ) refreshPostInternal()
-                setMediaItem()
-            }
-
+    fun handleFavouriteChange() {
+        // Assume post is loaded here as well
+        lifecycleScope.launch {
+            handleFavouriteChange(
+                favouritesCache, api, snackbarAdapter, (state as PostState.Ready).post
+            )
         }
     }
 
-    private fun setMediaItem() {
-        val state = state
-        assert(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
-        state as PostState.Ready
-        currentFile = state.post.selectSample()
-        if (currentFile.type.isVideo) {
-            getVideoPlayerComponent(currentFile)
+    @Composable
+    fun isFavouriteAsState(): State<FavouritesCache.FavouriteState> = remember {
+        // Assume two things:
+        // 1. This method is called after post is loaded
+        // 2. post id will never change
+        favouritesCache.flow.map { cache ->
+            cache.isFavourite((state as PostState.Ready).post)
         }
-    }
+    }.collectAsState(favouritesCache.isFavourite((state as PostState.Ready).post))
 
     fun handleWikiClick(tag: Tag) {
         navigator.pushIndexed {
@@ -267,10 +267,7 @@ class PostComponent(
         post.relationships.children.singleOrNull()?.let { id ->
             navigator.pushIndexed {
                 Config.Post(
-                    id = id,
-                    post = null,
-                    query = PostsSearchOptions(),
-                    index = it
+                    id = id, post = null, query = PostsSearchOptions(), index = it
                 )
             }
             return
@@ -281,8 +278,7 @@ class PostComponent(
                     // TODO get safe mode synchronously
                     // (post listing has filter for safe mode)
                     parent = post.id
-                ),
-                index = index
+                ), index = index
             )
         }
     }
@@ -304,8 +300,7 @@ class PostComponent(
         // If it isn't possible, user feedback is required *before* any workarounds are implemented.
         // Particularly, there needs to find pool with that order anomaly to test hypothetical workarounds.
         val searchOptions = PostsSearchOptions(
-            order = Order.NEWEST_TO_OLDEST,
-            orderAscending = true, // thus oldest to newest
+            order = Order.NEWEST_TO_OLDEST, orderAscending = true, // thus oldest to newest
             poolId = id
         )
         Log.d(TAG, "Making search options for pool $id: $searchOptions")
