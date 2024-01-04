@@ -149,7 +149,7 @@ class PostListingComponent(
                 .map { list ->
                     list.filter { it.enabled }
                         .map { createTagProcessor(it.query) }
-                        .reduceOrNull { a, b -> ;a.or(b) } ?: Predicate { false }
+                        .reduceOrNull { a, b -> a.or(b) } ?: Predicate { false }
                 }
                 .flowOn(Dispatchers.Default)
 
