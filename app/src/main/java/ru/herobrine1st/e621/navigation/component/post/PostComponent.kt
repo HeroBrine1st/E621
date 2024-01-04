@@ -130,14 +130,11 @@ class PostComponent(
     fun isFavouriteAsState(): State<FavouriteState> = remember {
         // Assume two things:
         // 1. This method is called after post is loaded
-        // 2. [post] (particularly, its id) will never change
+        // 2. post id will never change
         favouritesCache.flow.map { cache ->
-            (state as? PostState.Ready)?.let { cache.isFavourite(it.post) }
-                ?: FavouriteState.Determined.UNFAVOURITE
+            cache.isFavourite((state as PostState.Ready).post)
         }
-    }.collectAsState((state as? PostState.Ready)?.let { favouritesCache.isFavourite(it.post) }
-        ?: FavouriteState.Determined.UNFAVOURITE
-    )
+    }.collectAsState(favouritesCache.isFavourite((state as PostState.Ready).post))
 
     fun handleFavouriteChange() {
         // Assume post is loaded here as well
