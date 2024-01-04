@@ -101,11 +101,8 @@ class APIClient(
     ): Response {
         val response = httpClient.request(endpoint) {
             val annotations = serializer<Endpoint>().descriptor.annotations
-            val method =
-                annotations.filterIsInstance<HttpMethod>()
-                    .firstOrNull() ?: error(
-                    "APIEndpoint requires @HttpMethod annotation"
-                )
+            val method = annotations.filterIsInstance<HttpMethod>()
+                .firstOrNull() ?: error("APIEndpoint requires @HttpMethod annotation")
             // ktor doesn't understand "{param}.json" format
             // looks like ".json" isn't needed anymore
 //            if (annotations.any { it is JsonFormatSuffix }) {
@@ -116,9 +113,7 @@ class APIClient(
 //                }
 //            }
             this.method = io.ktor.http.HttpMethod.parse(method.method.name)
-            if (body != Unit) {
-                setBody(body)
-            }
+            if (body != Unit) setBody(body)
             builder()
         }
 
