@@ -96,7 +96,7 @@ fun Posts(
     // Now I need to connect pullToRefreshState.isRefreshing to posts.loadState.refresh is LoadState.Loading
     // Both are data, neither is callback
     //region Working around strange API
-    if (pullToRefreshState.isRefreshing) {
+    if (pullToRefreshState.isRefreshing && posts.loadState.refresh !is LoadState.Loading) {
         LaunchedEffect(Unit) {
             posts.refresh()
         }
