@@ -91,11 +91,13 @@ fun Posts(
     val lazyListState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
 
+
+    //region Working around strange API
+    // https://issuetracker.google.com/issues/317177683
     // New API is strange. Why don't just use previous interfaces: state of refreshing from
     // user code and callback to refresh from library?
     // Now I need to connect pullToRefreshState.isRefreshing to posts.loadState.refresh is LoadState.Loading
     // Both are data, neither is callback
-    //region Working around strange API
     if (pullToRefreshState.isRefreshing && posts.loadState.refresh !is LoadState.Loading) {
         LaunchedEffect(Unit) {
             posts.refresh()
