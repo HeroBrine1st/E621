@@ -27,6 +27,12 @@ import java.util.function.Predicate
 import java.util.regex.Pattern
 
 
+// A bunch of useful links
+// https://github.com/e621ng/e621ng/blob/master/app/logical/post_sets/post.rb
+// https://github.com/e621ng/e621ng/blob/master/app/logical/tag_query.rb
+// https://github.com/e621ng/e621ng/blob/master/app/logical/parse_value.rb
+// Taken at 330fb7cb8bc8fcada26c8fb095d96fdf12a4807c
+
 // TODO add another for these:
 // date:month..year
 // filesize:200KB..300KB
