@@ -138,6 +138,7 @@ class PostListingComponent(
         private val pager = Pager(
             PagingConfig(
                 pageSize = BuildConfig.PAGER_PAGE_SIZE,
+                prefetchDistance = BuildConfig.PAGER_PREFETCH_DISTANCE,
                 initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
             )
         ) {
