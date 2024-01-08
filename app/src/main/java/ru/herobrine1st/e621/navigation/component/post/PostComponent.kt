@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.navigation.component.post
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -49,11 +48,12 @@ import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.PoolSearchOptions
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
-import ru.herobrine1st.e621.api.model.Order
+import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.PoolId
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Tag
@@ -71,7 +71,6 @@ import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.isFavourite
 
 private const val POST_STATE_KEY = "POST_STATE_KEY"
-private const val TAG = "PostComponent"
 
 class PostComponent(
     val openComments: Boolean,
@@ -104,7 +103,9 @@ class PostComponent(
                     componentContext = componentContext,
                     api = api,
                     pools = (state as PostState.Ready).post.pools,
-                    openPool = ::openPool,
+                    openPool = {
+                        openPool(it.id, pool = it)
+                    },
                     close = ::closePoolDialog
                 )
             })
@@ -292,18 +293,9 @@ class PostComponent(
         slotNavigation.navigate { PoolsDialogConfig }
     }
 
-    private fun openPool(id: PoolId) {
+    private fun openPool(id: PoolId, pool: Pool? = null) {
         closePoolDialog()
-        // TODO find a way to get posts in right order, downloading them in the same API call
-        //      because pool may be ordered differently to order:id
-        // It is known that there's a way to get order of posts, but not ordered posts themselves.
-        // If it isn't possible, user feedback is required *before* any workarounds are implemented.
-        // Particularly, there needs to find pool with that order anomaly to test hypothetical workarounds.
-        val searchOptions = PostsSearchOptions(
-            order = Order.NEWEST_TO_OLDEST, orderAscending = true, // thus oldest to newest
-            poolId = id
-        )
-        Log.d(TAG, "Making search options for pool $id: $searchOptions")
+        val searchOptions = PoolSearchOptions(poolId = id, postIds = pool?.posts)
         navigator.pushIndexed { index -> Config.PostListing(searchOptions, index = index) }
     }
 

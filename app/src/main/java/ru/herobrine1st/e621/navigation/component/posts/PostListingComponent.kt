@@ -41,7 +41,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.FavouritesSearchOptions
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.createTagProcessor
@@ -104,12 +103,7 @@ class PostListingComponent(
     fun onOpenSearch() {
         navigator.pushIndexed { index ->
             Config.Search(
-                initialSearch = when (searchOptions) {
-                    is PostsSearchOptions -> searchOptions
-                    is FavouritesSearchOptions -> PostsSearchOptions(
-                        favouritesOf = searchOptions.favouritesOf
-                    )
-                },
+                initialSearch = PostsSearchOptions.from(searchOptions),
                 index = index
             )
         }

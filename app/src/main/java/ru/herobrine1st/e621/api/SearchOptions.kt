@@ -35,6 +35,8 @@ import java.io.IOException
 
 @Serializable
 sealed interface SearchOptions {
+    val maxLimit: Int
+
     @Throws(ApiException::class, IOException::class)
     suspend fun getPosts(api: API, limit: Int, page: Int): List<Post>
 
@@ -88,6 +90,8 @@ data class PostsSearchOptions(
         return minima.map { prefix + "rating:" + it.apiName }
     }
 
+    override val maxLimit: Int get() = E621_MAX_POSTS_IN_QUERY
+
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         return api.getPosts(tags = compileToQuery(), page = page, limit = limit).getOrThrow().posts
     }
@@ -102,6 +106,31 @@ data class PostsSearchOptions(
                 null -> Builder().apply(builder).build()
                 else -> Builder.from(options).apply(builder).build()
             }
+        }
+
+        fun from(options: SearchOptions) = when (options) {
+            is PostsSearchOptions -> with(options) {
+                PostsSearchOptions(
+                    allOf = allOf.toSet(),
+                    noneOf = noneOf.toSet(),
+                    anyOf = anyOf.toSet(),
+                    order = order,
+                    orderAscending = orderAscending,
+                    rating = rating.toSet(),
+                    favouritesOf = favouritesOf,
+                    fileType = fileType,
+                    fileTypeInvert = fileTypeInvert,
+                    parent = parent,
+                    poolId = poolId
+                )
+            }
+
+            is FavouritesSearchOptions -> PostsSearchOptions(favouritesOf = options.favouritesOf)
+            is PoolSearchOptions -> PostsSearchOptions(
+                poolId = options.poolId,
+                order = Order.NEWEST_TO_OLDEST,
+                orderAscending = true
+            )
         }
     }
 
@@ -120,46 +149,56 @@ data class PostsSearchOptions(
     ) {
         fun build() =
             PostsSearchOptions(
-                allOf,
-                noneOf,
-                anyOf,
-                order,
-                orderAscending,
-                rating,
-                favouritesOf,
-                fileType,
-                fileTypeInvert,
-                parent,
-                poolId
+                allOf = allOf,
+                noneOf = noneOf,
+                anyOf = anyOf,
+                order = order,
+                orderAscending = orderAscending,
+                rating = rating,
+                favouritesOf = favouritesOf,
+                fileType = fileType,
+                fileTypeInvert = fileTypeInvert,
+                parent = parent,
+                poolId = poolId
             )
 
         companion object {
             fun from(options: SearchOptions) = when (options) {
                 is PostsSearchOptions -> with(options) {
                     Builder(
-                        allOf.toMutableSet(),
-                        noneOf.toMutableSet(),
-                        anyOf.toMutableSet(),
-                        order,
-                        orderAscending,
-                        rating.toMutableSet(),
-                        favouritesOf,
-                        fileType,
-                        fileTypeInvert,
-                        parent,
-                        poolId
+                        allOf = allOf.toMutableSet(),
+                        noneOf = noneOf.toMutableSet(),
+                        anyOf = anyOf.toMutableSet(),
+                        order = order,
+                        orderAscending = orderAscending,
+                        rating = rating.toMutableSet(),
+                        favouritesOf = favouritesOf,
+                        fileType = fileType,
+                        fileTypeInvert = fileTypeInvert,
+                        parent = parent,
+                        poolId = poolId
                     )
                 }
 
                 is FavouritesSearchOptions -> Builder(favouritesOf = options.favouritesOf)
+                is PoolSearchOptions -> Builder(
+                    poolId = options.poolId,
+                    order = Order.NEWEST_TO_OLDEST,
+                    orderAscending = true
+                )
             }
         }
     }
 }
 
 @Serializable
-data class FavouritesSearchOptions(val favouritesOf: String, var id: Int? = null) :
-    SearchOptions {
+data class FavouritesSearchOptions(
+    val favouritesOf: String,
+    @set:InternalState var id: Int? = null,
+) : SearchOptions {
+    override val maxLimit: Int get() = E621_MAX_POSTS_IN_QUERY
+
+    @OptIn(InternalState::class)
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         id = id ?: favouritesOf.let {
             api.getUser(favouritesOf).getOrThrow()["id"]!!.jsonPrimitive.content.toInt()
@@ -167,3 +206,47 @@ data class FavouritesSearchOptions(val favouritesOf: String, var id: Int? = null
         return api.getFavourites(userId = id, page = page, limit = limit).getOrThrow().posts
     }
 }
+
+@Serializable
+data class PoolSearchOptions(
+    val poolId: Int,
+    @set:InternalState var postIds: List<PostId>? = null,
+) : SearchOptions {
+    override val maxLimit: Int get() = E621_MAX_ITEMS_IN_RANGE_ENUMERATION
+
+    @OptIn(InternalState::class)
+    override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
+        require(limit <= maxLimit)
+        val postIds = (postIds ?: api.getPool(poolId).getOrThrow().posts)
+            .also { postIds = it }
+            .drop(limit * (page - 1))
+            .take(limit)
+
+
+
+        if (postIds.isEmpty()) return emptyList()
+        val posts = api.getPosts(tags = postIds.joinToString(prefix = "id:", separator = ","))
+            .getOrThrow()
+            .posts
+
+        // FAST PATH: short-circuit if pool is "normal", which should be the case of vast number of pools
+        // P.s. it would require future value class PostId to implement Comparable
+        val isSorted = postIds.asSequence().zipWithNext { a, b -> a <= b }.all { it }
+        if (isSorted) return posts
+
+        // Or else, sort here
+        val idToPost = posts.associateBy { it.id }
+        return postIds.mapNotNull { id ->
+            idToPost[id].also {
+                if (it == null) Log.w(
+                    "PoolSearchOptions",
+                    "API did not return post with id=$id for query with postIds=$postIds"
+                )
+            }
+        }
+    }
+}
+
+@RequiresOptIn(message = "Internal state, DO NOT CHANGE")
+@Retention(AnnotationRetention.BINARY)
+annotation class InternalState

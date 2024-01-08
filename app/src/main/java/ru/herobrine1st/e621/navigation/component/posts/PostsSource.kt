@@ -42,9 +42,10 @@ class PostsSource(
                 emptyList(), null, null
             )
         }
+        val limit = params.loadSize.coerceAtMost(searchOptions.maxLimit)
         return try {
             val page = params.key ?: 1
-            val posts: List<Post> = searchOptions.getPosts(api, page = page, limit = params.loadSize)
+            val posts: List<Post> = searchOptions.getPosts(api, page = page, limit = limit)
             LoadResult.Page(
                 data = posts,
                 prevKey = if (page == 1) null else page - 1,

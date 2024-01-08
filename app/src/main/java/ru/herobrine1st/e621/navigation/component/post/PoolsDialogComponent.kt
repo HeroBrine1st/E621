@@ -33,7 +33,7 @@ class PoolsDialogComponent(
     componentContext: ComponentContext,
     api: API,
     pools: List<PoolId>,
-    private val openPool: (PoolId) -> Unit,
+    private val openPool: (Pool) -> Unit,
     private val close: () -> Unit,
 ) : ComponentContext by componentContext {
     val lifecycleScope = LifecycleScope()
@@ -58,7 +58,7 @@ class PoolsDialogComponent(
         }
     }
 
-    fun onClick(pool: Pool) = openPool(pool.id)
+    fun onClick(pool: Pool) = openPool(pool)
 
     fun onDismiss() = close()
 
