@@ -110,7 +110,7 @@ import ru.herobrine1st.e621.util.text
 @Composable
 fun Search(
     screenSharedState: ScreenSharedState,
-    component: SearchComponent
+    component: SearchComponent,
 ) {
     val preferences = LocalPreferences.current
 
@@ -248,7 +248,8 @@ fun Search(
                                     Icons.Filled.ArrowDropDown,
                                     null,
                                     Modifier.rotate(
-                                        animateFloatAsState(if (expanded) 180f else 360f,
+                                        animateFloatAsState(
+                                            if (expanded) 180f else 360f,
                                             label = "dropdown arrow rotation animation"
                                         ).value
                                     )
@@ -531,7 +532,7 @@ fun SearchPreview() {
 
 
                 },
-                exceptionReporter = object: ExceptionReporter {
+                exceptionReporter = object : ExceptionReporter {
                     override suspend fun handleRequestException(
                         t: Throwable,
                         message: String,
