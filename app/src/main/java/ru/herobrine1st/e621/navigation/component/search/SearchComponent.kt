@@ -35,7 +35,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flowOn
-import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.Tokens
 import ru.herobrine1st.e621.api.model.PostId
@@ -52,7 +52,7 @@ class SearchComponent private constructor(
     componentContext: ComponentContext,
     initialSearchOptions: PostsSearchOptions,
     private val navigator: StackNavigator<Config>,
-    private val api: API,
+    private val api: AutocompleteSuggestionsAPI,
     private val exceptionReporter: ExceptionReporter,
     applicationContext: Context,
 ) : ComponentContext by componentContext {
@@ -128,7 +128,7 @@ class SearchComponent private constructor(
         componentContext: ComponentContext,
         navigator: StackNavigator<Config>,
         initialSearchOptions: PostsSearchOptions,
-        api: API,
+        api: AutocompleteSuggestionsAPI,
         exceptionReporter: ExceptionReporter,
         applicationContext: Context,
     ) : this(

@@ -35,7 +35,14 @@ import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
 import ru.herobrine1st.e621.api.model.WikiPage
 
-interface API {
+interface AutocompleteSuggestionsAPI {
+    suspend fun getAutocompleteSuggestions(
+        query: String, // 3 or more characters required on the API side
+        expiry: Int = 7, // idk what it is, use default from site.
+    ): Result<List<TagAutocompleteSuggestion>>
+}
+
+interface API : AutocompleteSuggestionsAPI {
     // TODO proper model
     suspend fun getUser(
         name: String,
@@ -88,12 +95,6 @@ interface API {
         page: Int,
         limit: Int, // Default unknown. Maybe 75, but I doubt
     ): Result<List<CommentBB>>
-
-
-    suspend fun getAutocompleteSuggestions(
-        query: String, // 3 or more characters required on the API side
-        expiry: Int = 7, // idk what it is, use default from site.
-    ): Result<List<TagAutocompleteSuggestion>>
 
 
     suspend fun getPool(poolId: Int): Result<Pool>

@@ -74,25 +74,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
 import ru.herobrine1st.e621.api.PostsSearchOptions
-import ru.herobrine1st.e621.api.endpoint.favourites.GetFavouritesEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.GetPostEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.GetPostsEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.VoteEndpoint
-import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
-import ru.herobrine1st.e621.api.model.Pool
-import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
-import ru.herobrine1st.e621.api.model.WikiPage
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
@@ -448,7 +437,6 @@ fun Search(
 @OptIn(PreviewUtils::class)
 fun SearchPreview() {
     CompositionLocalProvider(LocalPreferences provides Preferences.getDefaultInstance()) {
-
         Search(
             screenSharedState = rememberScreenPreviewSharedState(),
             component = SearchComponent(
@@ -461,76 +449,9 @@ fun SearchPreview() {
                         Tag("test")
                     )
                 ),
-                api = object : API {
-                    override suspend fun getUser(
-                        name: String,
-                        authorization: String?,
-                    ): Result<JsonObject> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun getPosts(
-                        tags: String?,
-                        page: Int?,
-                        limit: Int?,
-                    ): Result<GetPostsEndpoint.Response> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun getPost(id: PostId): Result<GetPostEndpoint.Response> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun getFavourites(
-                        userId: Int?,
-                        page: Int?,
-                        limit: Int?,
-                    ): Result<GetFavouritesEndpoint.Response> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun addToFavourites(postId: PostId): Result<JsonElement> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun removeFromFavourites(postId: PostId): Result<Unit> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun vote(
-                        postId: PostId,
-                        score: Int,
-                        noRetractVote: Boolean,
-                    ): Result<VoteEndpoint.Response> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun getWikiPage(tag: Tag): Result<WikiPage> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun getCommentsForPostHTML(id: PostId): Result<GetPostCommentsHTMLEndpoint.Response> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun getCommentsForPostBBCode(
-                        id: PostId,
-                        page: Int,
-                        limit: Int,
-                    ): Result<List<CommentBB>> {
-                        error("Not yet implemented")
-                    }
-
-                    override suspend fun getAutocompleteSuggestions(
-                        query: String,
-                        expiry: Int,
-                    ): Result<List<TagAutocompleteSuggestion>> = Result.success(emptyList())
-
-                    override suspend fun getPool(poolId: Int): Result<Pool> {
-                        error("Not yet implemented")
-                    }
-
-
+                api = object : AutocompleteSuggestionsAPI {
+                    override suspend fun getAutocompleteSuggestions(query: String, expiry: Int) =
+                        Result.success(emptyList<TagAutocompleteSuggestion>())
                 },
                 exceptionReporter = object : ExceptionReporter {
                     override suspend fun handleRequestException(
