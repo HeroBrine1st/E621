@@ -55,7 +55,7 @@ data class PostsSearchOptions(
     val favouritesOf: String? = null, // "favorited_by" in api
     val fileType: FileType? = null,
     val fileTypeInvert: Boolean = false,
-    val parent: PostId = -1,
+    val parent: PostId = PostId.INVALID,
     val poolId: PoolId = -1,
 ) : SearchOptions {
     // TODO randomSeed or something like that for Order.RANDOM
@@ -70,7 +70,7 @@ data class PostsSearchOptions(
         fileType?.extension?.let { cache += (if (fileTypeInvert) "-" else "") + "type:" + it }
         favouritesOf?.let { cache += "fav:$it" }
         (if (orderAscending) order.ascendingApiName else order.apiName)?.let { cache += "order:$it" }
-        if (parent > 0) cache += "parent:$parent"
+        if (parent != PostId.INVALID) cache += "parent:${parent.value}"
         if (poolId > 0) cache += "pool:$poolId"
 
         return cache.joinToString(" ").debug {
@@ -144,7 +144,7 @@ data class PostsSearchOptions(
         var favouritesOf: String? = null,
         var fileType: FileType? = null,
         var fileTypeInvert: Boolean = false,
-        var parent: PostId = -1,
+        var parent: PostId = PostId.INVALID,
         var poolId: PoolId = -1,
     ) {
         fun build() =

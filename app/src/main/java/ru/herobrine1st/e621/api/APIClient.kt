@@ -149,21 +149,21 @@ class APIImpl(val client: APIClient) : API {
         limit: Int?,
     ) = client.request(GetFavouritesEndpoint(userId, page, limit))
 
-    override suspend fun addToFavourites(postId: Int): Result<JsonElement> =
+    override suspend fun addToFavourites(postId: PostId): Result<JsonElement> =
         client.request(AddToFavouritesEndpoint(postId))
 
-    override suspend fun removeFromFavourites(postId: Int) =
+    override suspend fun removeFromFavourites(postId: PostId) =
         client.request(RemoveFromFavouritesEndpoint(postId))
 
-    override suspend fun vote(postId: Int, score: Int, noRetractVote: Boolean) =
+    override suspend fun vote(postId: PostId, score: Int, noRetractVote: Boolean) =
         client.request(VoteEndpoint(postId, score, noRetractVote))
 
     override suspend fun getWikiPage(tag: Tag) = client.request(GetWikiPageEndpoint(tag))
 
-    override suspend fun getCommentsForPostHTML(id: Int) =
+    override suspend fun getCommentsForPostHTML(id: PostId) =
         client.request(GetPostCommentsHTMLEndpoint(id))
 
-    override suspend fun getCommentsForPostBBCode(id: Int, page: Int, limit: Int) =
+    override suspend fun getCommentsForPostBBCode(id: PostId, page: Int, limit: Int) =
         client.request(GetPostCommentsDTextEndpoint(id, page, limit))
 
     override suspend fun getAutocompleteSuggestions(

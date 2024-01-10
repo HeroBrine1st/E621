@@ -476,16 +476,16 @@ fun SearchPreview() {
                         error("Not yet implemented")
                     }
 
-                    override suspend fun addToFavourites(postId: Int): Result<JsonElement> {
+                    override suspend fun addToFavourites(postId: PostId): Result<JsonElement> {
                         error("Not yet implemented")
                     }
 
-                    override suspend fun removeFromFavourites(postId: Int): Result<Unit> {
+                    override suspend fun removeFromFavourites(postId: PostId): Result<Unit> {
                         error("Not yet implemented")
                     }
 
                     override suspend fun vote(
-                        postId: Int,
+                        postId: PostId,
                         score: Int,
                         noRetractVote: Boolean,
                     ): Result<VoteEndpoint.Response> {
@@ -496,12 +496,12 @@ fun SearchPreview() {
                         error("Not yet implemented")
                     }
 
-                    override suspend fun getCommentsForPostHTML(id: Int): Result<GetPostCommentsHTMLEndpoint.Response> {
+                    override suspend fun getCommentsForPostHTML(id: PostId): Result<GetPostCommentsHTMLEndpoint.Response> {
                         error("Not yet implemented")
                     }
 
                     override suspend fun getCommentsForPostBBCode(
-                        id: Int,
+                        id: PostId,
                         page: Int,
                         limit: Int,
                     ): Result<List<CommentBB>> {

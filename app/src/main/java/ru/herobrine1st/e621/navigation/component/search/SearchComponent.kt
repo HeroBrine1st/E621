@@ -38,6 +38,7 @@ import kotlinx.coroutines.flow.flowOn
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.Tokens
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
@@ -68,7 +69,7 @@ class SearchComponent private constructor(
     var favouritesOf by mutableStateOf(initialSearchOptions.favouritesOf ?: "")
     var fileType by mutableStateOf(initialSearchOptions.fileType)
     var fileTypeInvert by mutableStateOf(initialSearchOptions.fileTypeInvert)
-    var parentPostId by mutableIntStateOf(initialSearchOptions.parent)
+    var parentPostId by mutableIntStateOf(initialSearchOptions.parent.value)
     var poolId by mutableIntStateOf(initialSearchOptions.poolId)
 
     fun tagSuggestionFlow(getCurrentText: () -> String): Flow<Autocomplete> {
@@ -182,7 +183,7 @@ class SearchComponent private constructor(
             favouritesOf = favouritesOf.ifBlank { null },
             fileType = fileType,
             fileTypeInvert = fileTypeInvert,
-            parent = parentPostId,
+            parent = PostId(parentPostId),
             poolId = poolId
         )
     }

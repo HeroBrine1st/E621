@@ -24,6 +24,7 @@ import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.SearchOptions
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.Post as ModelPost
 
@@ -49,11 +50,11 @@ sealed interface Config {
 
     @Serializable
     data class Post(
-        val id: Int,
+        val id: PostId,
         val post: ModelPost?,
         val openComments: Boolean = false,
         val query: SearchOptions,
-        private val index: Int
+        private val index: Int,
     ) : Config
 
     @Serializable

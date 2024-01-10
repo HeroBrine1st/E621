@@ -182,7 +182,7 @@ fun Posts(
                 }
                 items(
                     count = posts.itemCount,
-                    key = posts.itemKey { post -> post.id },
+                    key = posts.itemKey { post -> post.id.value },
                     // contentType is purposely ignored as all items are of the same type and additional calls to Paging library are not needed
                 ) { index ->
                     val post = posts[index] ?: return@items

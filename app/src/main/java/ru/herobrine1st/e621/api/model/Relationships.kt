@@ -27,8 +27,8 @@ import kotlinx.serialization.Serializable
 @Immutable
 @Serializable
 data class Relationships(
-    val parentId: Int?,
+    val parentId: PostId?,
     val hasChildren: Boolean,
     val hasActiveChildren: Boolean,
-    val children: List<Int>
+    val children: List<PostId>,
 )

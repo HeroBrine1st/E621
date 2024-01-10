@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.common.CommentData
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.parseCommentAvatarsAndGetCommentCount
 import ru.herobrine1st.e621.util.ExceptionReporter
@@ -36,7 +37,7 @@ import kotlin.properties.Delegates
 class PostCommentsSource(
     private val api: API,
     private val exceptionReporter: ExceptionReporter,
-    private val postId: Int,
+    private val postId: PostId,
 ) : PagingSource<Int, CommentData>() {
     // commentId to post
     private lateinit var avatars: Map<Int, PostReduced?>

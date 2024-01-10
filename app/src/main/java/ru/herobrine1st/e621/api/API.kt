@@ -61,17 +61,17 @@ interface API {
     ): Result<GetFavouritesEndpoint.Response>
 
     suspend fun addToFavourites(
-        postId: Int,
+        postId: PostId,
     ): Result<JsonElement>
 
 
     suspend fun removeFromFavourites(
-        postId: Int,
+        postId: PostId,
     ): Result<Unit>
 
 
     suspend fun vote(
-        postId: Int,
+        postId: PostId,
         @IntRange(from = -1, to = 1) score: Int,
         noRetractVote: Boolean,
     ): Result<VoteEndpoint.Response>
@@ -79,12 +79,12 @@ interface API {
     suspend fun getWikiPage(tag: Tag): Result<WikiPage>
 
     suspend fun getCommentsForPostHTML(
-        id: Int,
+        id: PostId,
     ): Result<GetPostCommentsHTMLEndpoint.Response>
 
 
     suspend fun getCommentsForPostBBCode(
-        id: Int,
+        id: PostId,
         page: Int,
         limit: Int, // Default unknown. Maybe 75, but I doubt
     ): Result<List<CommentBB>>

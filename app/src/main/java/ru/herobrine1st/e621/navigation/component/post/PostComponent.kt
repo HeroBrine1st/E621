@@ -56,6 +56,7 @@ import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.PoolId
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.navigation.LifecycleScope
@@ -75,7 +76,7 @@ private const val POST_STATE_KEY = "POST_STATE_KEY"
 class PostComponent(
     val openComments: Boolean,
     private val query: SearchOptions,
-    private val postId: Int,
+    private val postId: PostId,
     initialPost: Post?,
     componentContext: ComponentContext,
     private val navigator: StackNavigator<Config>,
@@ -304,7 +305,7 @@ class PostComponent(
     }
 
     class Instance(
-        postId: Int,
+        postId: PostId,
         api: API,
         exceptionReporter: ExceptionReporter,
     ) : InstanceBase() {

@@ -24,17 +24,18 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostId
 
 /**
  * To synchronize many screens.
  */
 
 class FavouritesCache {
-    private val _flow = MutableStateFlow<Map<Int, FavouriteState>>(mapOf()) // id to isFavourite
+    private val _flow = MutableStateFlow<Map<PostId, FavouriteState>>(mapOf()) // id to isFavourite
 
     val flow = _flow.asStateFlow()
 
-    fun setFavourite(id: Int, isFavourite: FavouriteState) {
+    fun setFavourite(id: PostId, isFavourite: FavouriteState) {
         _flow.getAndUpdate {
             it + (id to isFavourite)
         }
@@ -70,7 +71,7 @@ class FavouritesCache {
     }
 }
 
-fun Map<Int, FavouritesCache.FavouriteState>.isFavourite(post: Post) = this.getOrDefault(
+fun Map<PostId, FavouritesCache.FavouriteState>.isFavourite(post: Post) = this.getOrDefault(
     post.id,
     FavouritesCache.FavouriteState.Determined.fromBoolean(post.isFavourite)
 )

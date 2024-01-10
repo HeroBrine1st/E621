@@ -27,7 +27,13 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import kotlinx.serialization.json.JsonElement
 
-typealias PostId = Int
+@JvmInline
+@Serializable
+value class PostId(val value: Int) {
+    companion object {
+        val INVALID = PostId(-1)
+    }
+}
 
 @Immutable
 @Serializable
