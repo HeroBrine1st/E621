@@ -26,16 +26,14 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.E621_MAX_ITEMS_IN_RANGE_ENUMERATION
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
-import ru.herobrine1st.e621.util.InternalState
 
 @Serializable
 data class PoolSearchOptions(
     val poolId: Int,
-    @set:InternalState var postIds: List<PostId>? = null,
+    private var postIds: List<PostId>? = null,
 ) : SearchOptions {
     override val maxLimit: Int get() = E621_MAX_ITEMS_IN_RANGE_ENUMERATION
 
-    @OptIn(InternalState::class)
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         require(limit <= maxLimit)
         val postIds = (postIds ?: api.getPool(poolId).getOrThrow().posts)
