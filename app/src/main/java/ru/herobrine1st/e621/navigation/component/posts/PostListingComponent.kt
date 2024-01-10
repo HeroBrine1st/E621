@@ -41,11 +41,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.PostsSearchOptions
-import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.search.PostsSearchOptions
+import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed

@@ -39,7 +39,7 @@ import kotlinx.serialization.json.jsonPrimitive
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.api.FavouritesSearchOptions
+import ru.herobrine1st.e621.api.search.FavouritesSearchOptions
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry

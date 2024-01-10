@@ -76,12 +76,12 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
-import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
+import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences

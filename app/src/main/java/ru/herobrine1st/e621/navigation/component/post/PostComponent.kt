@@ -48,9 +48,6 @@ import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.PoolSearchOptions
-import ru.herobrine1st.e621.api.PostsSearchOptions
-import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Pool
@@ -59,6 +56,9 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.selectSample
+import ru.herobrine1st.e621.api.search.PoolSearchOptions
+import ru.herobrine1st.e621.api.search.PostsSearchOptions
+import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import ru.herobrine1st.e621.navigation.component.posts.handleFavouriteChange

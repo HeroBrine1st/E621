@@ -3,7 +3,7 @@ package ru.herobrine1st.e621
 import kotlinx.serialization.json.Json
 import org.junit.Assert.assertEquals
 import org.junit.Test
-import ru.herobrine1st.e621.api.FavouritesSearchOptions
+import ru.herobrine1st.e621.api.search.FavouritesSearchOptions
 import ru.herobrine1st.e621.navigation.config.Config
 
 class HeisenbugTest {

@@ -36,10 +36,10 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flowOn
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
-import ru.herobrine1st.e621.api.PostsSearchOptions
 import ru.herobrine1st.e621.api.Tokens
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
+import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.dataStore

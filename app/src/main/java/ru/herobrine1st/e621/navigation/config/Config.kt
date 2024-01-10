@@ -22,10 +22,10 @@ package ru.herobrine1st.e621.navigation.config
 
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
-import ru.herobrine1st.e621.api.PostsSearchOptions
-import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
+import ru.herobrine1st.e621.api.search.PostsSearchOptions
+import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.api.model.Post as ModelPost
 
 @Serializable

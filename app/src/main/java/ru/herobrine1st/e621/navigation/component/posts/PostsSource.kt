@@ -23,8 +23,8 @@ package ru.herobrine1st.e621.navigation.component.posts
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.SearchOptions
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.util.ExceptionReporter
 
 class PostsSource(
