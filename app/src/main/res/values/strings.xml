@@ -163,4 +163,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="search_pool">Pool</string>
     <string name="search_pool_id">Pool id</string>
     <string name="could_not_load_post">Could not load post</string>
+    <string name="search_fill_myself">Fill in with myself</string>
 </resources>

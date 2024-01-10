@@ -160,4 +160,5 @@
     <string name="search_pool">Коллекция</string>
     <string name="search_pool_id">Идентификатор коллекции</string>
     <string name="could_not_load_post">Не удалось загрузить пост</string>
+    <string name="search_fill_myself">Заполнить собой</string>
 </resources>

@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Done
@@ -361,8 +362,16 @@ fun Search(
                         label = { Text(stringResource(R.string.user)) },
                         singleLine = true,
                         trailingIcon = {
-                            IconButton(onClick = { component.favouritesOf = "" }) {
-                                Icon(
+                            IconButton(onClick = {
+                                // TODO move to component
+                                if (component.favouritesOf.isEmpty() && preferences.hasAuth())
+                                    component.favouritesOf = preferences.auth.username
+                                else component.favouritesOf = ""
+                            }) {
+                                if (component.favouritesOf.isEmpty() && preferences.hasAuth()) Icon(
+                                    Icons.Default.AccountCircle,
+                                    contentDescription = stringResource(R.string.search_fill_myself)
+                                ) else Icon(
                                     Icons.Default.Clear,
                                     contentDescription = stringResource(R.string.clear)
                                 )
