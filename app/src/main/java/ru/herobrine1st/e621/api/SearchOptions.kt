@@ -222,22 +222,27 @@ data class PoolSearchOptions(
             .drop(limit * (page - 1))
             .take(limit)
 
-
-
         if (postIds.isEmpty()) return emptyList()
-        val posts = api.getPosts(tags = postIds.joinToString(prefix = "id:", separator = ","))
+
+        // order:id for "normal" pools, i.e. first post in pool is first pool in result - no reverse required
+        val posts = api.getPosts(tags = "id:${postIds.joinToString(",")} order:id")
             .getOrThrow()
             .posts
 
-        // FAST PATH: short-circuit if pool is "normal", which should be the case of vast number of pools
-        // P.s. it would require future value class PostId to implement Comparable
-        val isSorted = postIds.asSequence().zipWithNext { a, b -> a <= b }.all { it }
+        assert(posts.size == postIds.size) { "Expected ${postIds.size} posts, got ${posts.size}" }
+
+        // FAST PATH: short-circuit if pool is "normal", which should be true for a vast number of pools
+        // test that posts in response are in the same order as in postIds
+        val isSorted = postIds
+            .zip(posts) { id, post -> id == post.id }
+            .all { it }
         if (isSorted) return posts
 
         // Or else, sort here
         val idToPost = posts.associateBy { it.id }
         return postIds.mapNotNull { id ->
             idToPost[id].also {
+                // Just in case
                 if (it == null) Log.w(
                     "PoolSearchOptions",
                     "API did not return post with id=$id for query with postIds=$postIds"
