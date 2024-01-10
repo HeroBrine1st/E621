@@ -196,7 +196,10 @@ fun Search(
             item {}
             item("tags") {
                 SettingCard(title = stringResource(R.string.tags)) {
-                    FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
                         component.tags.forEachIndexed { index, tag ->
                             key(tag) {
                                 // TODO place it in text field
@@ -293,7 +296,7 @@ fun Search(
 
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        // TODO crossAxisSpacing = 2.dp
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         for (v in Rating.entries) {
                             val selected = v in component.rating
