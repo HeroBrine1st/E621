@@ -36,7 +36,7 @@ data class CommentData(
     val editTime: Instant,
     val score: Int,
     val isHidden: Boolean,
-    val message: List<MessageData<*>>
+    val message: List<MessageData>,
 ) {
     companion object {
         fun fromE621Comment(comment: CommentBB, authorAvatarPost: PostReduced?) =

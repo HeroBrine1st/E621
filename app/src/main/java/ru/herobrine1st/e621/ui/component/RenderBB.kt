@@ -71,7 +71,7 @@ fun RenderBB(text: String, onWikiLinkClick: ((Tag) -> Unit)? = null) {
 }
 
 @Composable
-fun RenderBB(data: List<MessageData<*>>, onWikiLinkClick: ((Tag) -> Unit)? = null) {
+fun RenderBB(data: List<MessageData>, onWikiLinkClick: ((Tag) -> Unit)? = null) {
     Column {
         data.forEach {
             RenderBB(it, onWikiLinkClick = onWikiLinkClick)
@@ -80,7 +80,7 @@ fun RenderBB(data: List<MessageData<*>>, onWikiLinkClick: ((Tag) -> Unit)? = nul
 }
 
 @Composable
-fun RenderBB(data: MessageData<*>, onWikiLinkClick: ((Tag) -> Unit)? = null) {
+fun RenderBB(data: MessageData, onWikiLinkClick: ((Tag) -> Unit)? = null) {
     when (data) {
         is MessageQuote -> {
             data.author?.let {

@@ -48,7 +48,7 @@ val ITALIC = SpanStyle(
 const val WIKI_PAGE_STRING_ANNOTATION_TAG = "WIKI_PAGE"
 
 @Immutable
-sealed interface MessageData<T : MessageData<T>> {
+sealed interface MessageData {
     fun isEmpty(): Boolean
 }
 
@@ -59,7 +59,7 @@ sealed interface MessageData<T : MessageData<T>> {
 @Immutable
 data class MessageText(
     val text: AnnotatedString,
-) : MessageData<MessageText> {
+) : MessageData {
 
     constructor(text: String) : this(AnnotatedString(text))
 
@@ -76,14 +76,14 @@ data class MessageText(
 @Immutable
 data class MessageQuote(
     val author: Author?,
-    val data: List<MessageData<*>>
-) : MessageData<MessageQuote> {
+    val data: List<MessageData>,
+) : MessageData {
     override fun isEmpty(): Boolean = data.isEmpty()
 
     @Immutable
     data class Author(
         val userName: String,
-        val userId: Int
+        val userId: Int,
     )
 }
 
@@ -97,10 +97,10 @@ private sealed interface DTextTag {
      * @param data list of parsed [MessageData]
      * @return styled list of [MessageData]
      */
-    fun stylize(data: List<MessageData<*>>): List<MessageData<*>>
+    fun stylize(data: List<MessageData>): List<MessageData>
 
     sealed class Styled(override val name: String, private val style: SpanStyle) : DTextTag {
-        override fun stylize(data: List<MessageData<*>>): List<MessageData<*>> {
+        override fun stylize(data: List<MessageData>): List<MessageData> {
             return data.map {
                 (it as? MessageText)?.text?.let { text ->
                     MessageText(AnnotatedString.Builder().apply {
@@ -119,7 +119,7 @@ private sealed interface DTextTag {
     data object Quote : DTextTag {
         override val name: String = "quote"
 
-        override fun stylize(data: List<MessageData<*>>): List<MessageData<*>> {
+        override fun stylize(data: List<MessageData>): List<MessageData> {
             val collapsed = data.collapseMessageTexts().toMutableList()
             val first = collapsed[0]
             val author: MessageQuote.Author?
@@ -143,7 +143,7 @@ private sealed interface DTextTag {
         val commaAttribute: String,
         val property: String
     ) : DTextTag {
-        override fun stylize(data: List<MessageData<*>>): List<MessageData<*>> {
+        override fun stylize(data: List<MessageData>): List<MessageData> {
             val startingTag =
                 "[$name" +
                         (if (commaAttribute.isNotBlank()) ",$commaAttribute" else "") +
@@ -178,7 +178,7 @@ private sealed interface DTextTag {
             else -> Unknown(name, commaAttribute, property)
         }
 
-        fun DTextTag?.stylizeNullable(data: List<MessageData<*>>) = this?.stylize(data) ?: data
+        fun DTextTag?.stylizeNullable(data: List<MessageData>) = this?.stylize(data) ?: data
     }
 }
 
@@ -197,7 +197,7 @@ val pattern =
 // name said:
 val quotePattern = Regex("""(?:"?([^"\n]+)"?:/user(?:s|/show)/(\d+)|(\S+)) said:\r?\n""")
 
-fun parseBBCode(input: String): List<MessageData<*>> {
+fun parseBBCode(input: String): List<MessageData> {
     val (parsed, end) = parseBBCodeInternal(input, null, 0)
     assert(end == input.length) {
         "Parser hasn't reached end of string: expected ${input.length}, actual $end"
@@ -209,9 +209,9 @@ fun parseBBCode(input: String): List<MessageData<*>> {
 private fun parseBBCodeInternal(
     input: String,
     currentTag: DTextTag?,
-    initialStart: Int
-): Pair<List<MessageData<*>>, Int> {
-    val output = mutableListOf<MessageData<*>>()
+    initialStart: Int,
+): Pair<List<MessageData>, Int> {
+    val output = mutableListOf<MessageData>()
     var start = initialStart
 
     var tagClosed = false
@@ -293,7 +293,7 @@ private fun parseQuoteHeader(input: String): Pair<MessageQuote.Author, Int>? {
  *
  * @return Optimized list of [MessageData]
  */
-private fun List<MessageData<*>>.collapseMessageTexts(): List<MessageData<*>> {
+private fun List<MessageData>.collapseMessageTexts(): List<MessageData> {
     // FAST PATH: Short comment, maybe with one quote or picture.
     if (this.size < 2) return this
         .filter { (it as? MessageText)?.text?.isNotEmpty() != false }

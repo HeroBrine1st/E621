@@ -136,10 +136,10 @@ sealed interface WikiState {
     @Serializable
     class Success(val result: WikiPage) : WikiState {
         @Transient // it is a cache
-        lateinit var parsed: List<MessageData<*>>
+        lateinit var parsed: List<MessageData>
             private set
 
-        fun setParsed(v: List<MessageData<*>>) {
+        fun setParsed(v: List<MessageData>) {
             if (::parsed.isInitialized) throw RuntimeException("This property is write-once")
             parsed = v
         }
