@@ -20,35 +20,37 @@
 
 package ru.herobrine1st.e621.navigation.component.posts
 
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
+
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.search.SearchOptions
+import ru.herobrine1st.paging.api.LoadParams
+import ru.herobrine1st.paging.api.LoadResult
+import ru.herobrine1st.paging.api.PagingSource
 import ru.herobrine1st.e621.util.ExceptionReporter
 
 class PostsSource(
     private val api: API,
     private val exceptionReporter: ExceptionReporter,
     private val searchOptions: SearchOptions?,
-) : PagingSource<Int, Post>() {
-    override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
-        return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
-    }
+) : PagingSource<Int, Post> {
+//    override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
+//        return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
+//    }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Post> {
+    override suspend fun getPage(params: LoadParams<Int>): LoadResult<Int, Post> {
         if (searchOptions == null) {
             return LoadResult.Page(
                 emptyList(), null, null
             )
         }
-        val limit = params.loadSize.coerceAtMost(searchOptions.maxLimit)
+        val limit = params.requestedSize.coerceAtMost(searchOptions.maxLimit)
         return try {
-            val page = params.key ?: 1
+            val page = params.key
             val posts: List<Post> = searchOptions.getPosts(api, page = page, limit = limit)
             LoadResult.Page(
                 data = posts,
-                prevKey = if (page == 1) null else page - 1,
+                previousKey = if (page == 1) null else page - 1,
                 nextKey = if (posts.isNotEmpty()) page + 1 else null
             )
         } catch (t: Throwable) {

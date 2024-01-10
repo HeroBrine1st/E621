@@ -161,4 +161,13 @@
     <string name="search_pool_id">Идентификатор коллекции</string>
     <string name="could_not_load_post">Не удалось загрузить пост</string>
     <string name="search_fill_myself">Заполнить собой</string>
+    <string name="posts_hidden_safe_mode">%s скрыты из-за безопасного режима</string>
+    <string name="posts_hidden_blacklisted">%s скрыты из-за чёрного списка</string>
+    <string name="posts_hidden_blacklist_and_safe_mode">%s скрыты из-за безопасного режима и %d из-за чёрного списка</string>
+    <plurals name="list_items">
+        <item quantity="one">%d элемент</item>
+        <item quantity="few">%d элемента</item>
+        <item quantity="many">%d элементов</item>
+        <item quantity="other">%d элементов</item>
+    </plurals>
 </resources>

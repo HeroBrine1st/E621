@@ -23,10 +23,6 @@ package ru.herobrine1st.e621.navigation.component.posts
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
-import androidx.paging.filter
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
@@ -49,12 +45,19 @@ import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
+import ru.herobrine1st.paging.Pager
+import ru.herobrine1st.paging.api.PagingConfig
+import ru.herobrine1st.paging.api.applyPageBoundary
+import ru.herobrine1st.paging.api.cachedIn
+import ru.herobrine1st.paging.api.transform
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
-import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
+import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState.Determined.UNFAVOURITE
 import ru.herobrine1st.e621.util.InstanceBase
+import ru.herobrine1st.e621.util.accumulate
+import ru.herobrine1st.e621.util.isFavourite
 import java.util.function.Predicate
 
 class PostListingComponent(
@@ -134,10 +137,10 @@ class PostListingComponent(
                 pageSize = BuildConfig.PAGER_PAGE_SIZE,
                 prefetchDistance = BuildConfig.PAGER_PREFETCH_DISTANCE,
                 initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
-            )
-        ) {
+            ),
+            initialKey = 1,
             PostsSource(api, exceptionReporter, searchOptions)
-        }
+        )
 
         private val blacklistPredicateFlow =
             blacklistRepository.getEntriesFlow()
@@ -149,26 +152,45 @@ class PostListingComponent(
                 .flowOn(Dispatchers.Default)
 
         val postsFlow = combine(
-            pager.flow.cachedIn(lifecycleScope), // cachedIn strictly required here (double collection exception otherwise)
+            pager.flow,
             applicationContext.getPreferencesFlow { it.blacklistEnabled },
             blacklistPredicateFlow,
-            favouritesCache.flow
-        ) { posts, isBlacklistEnabled, blacklistPredicate, favourites ->
-            if (!isBlacklistEnabled) posts
-            else posts.filter {
-                favourites.getOrDefault(
-                    it.id,
-                    FavouriteState.Determined.fromBoolean(it.isFavourite)
-                ) != FavouriteState.Determined.UNFAVOURITE // Show post if it is either favourite
-                        || !blacklistPredicate.test(it)    //           or is not blacklisted
+            favouritesCache.flow,
+            applicationContext.getPreferencesFlow { it.safeModeEnabled }
+        ) { posts, isBlacklistEnabled, blacklistPredicate, favourites, safeModeEnabled ->
+            // It is hard to understand
+            // Briefly, it maps Post to either show-able Post or hidden (due to blacklist or safe mode) item
+            // then it merges sequences of hidden posts into one object
+            //
+            // Also it is probably possible to avoid re-computation when posts.updateKind is UpdateKind.StateChange,
+            // but care should be taken not to avoid re-computation when other flows in combine emit new values
+            posts.transform {
+                it.map { post ->
+                    when {
+                        safeModeEnabled && post.rating != Rating.SAFE ->
+                            PostListingItem.HiddenItems.ofUnsafe(post)
+
+                        isBlacklistEnabled && favourites.isFavourite(post) == UNFAVOURITE // Show post if it is either favourite
+                                && blacklistPredicate.test(post) ->                       //           or is not blacklisted
+                            PostListingItem.HiddenItems.ofBlacklisted(post)
+
+                        else -> PostListingItem.Post(post)
+                    }
+                }.accumulate { previous, current ->
+                    val (first, second) = mergePostListingItems(previous, current)
+                    if (second != null) {
+                        yield(first)
+                        second
+                    } else {
+                        first
+                    }
+                }
+            }.applyPageBoundary { lastElementInPrevious, firstElementInNext ->
+                mergePostListingItems(lastElementInPrevious, firstElementInNext)
             }
-        }.combine(applicationContext.getPreferencesFlow { it.safeModeEnabled }) { posts, safeModeEnabled ->
-            if (safeModeEnabled) posts.filter { it.rating == Rating.SAFE }
-            else posts
-            /* CPU intensive ?
-         * Does it need to be cached? I mean, in terms of memory and CPU resources
-         * And, maybe, energy.
-         */
-        }.flowOn(Dispatchers.Default)
+        }
+            .flowOn(Dispatchers.Default)
+            .cachedIn(lifecycleScope)
     }
 }
+

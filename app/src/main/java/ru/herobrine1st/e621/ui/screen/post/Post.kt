@@ -115,7 +115,6 @@ import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
 import ru.herobrine1st.e621.ui.component.MAX_SCALE_DEFAULT
 import ru.herobrine1st.e621.ui.component.RenderBB
-import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.rememberZoomableState
@@ -616,7 +615,8 @@ fun CommentsBottomSheetContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {}
-                endOfPagePlaceholder(comments.loadState.prepend)
+                // STOPSHIP: migration
+//                endOfPagePlaceholder(comments.loadState.prepend)
                 items(
                     // count is known before even initialization of PagingSource, why the fuck Paging 3 does not give a way to provide it before request starts?
                     count = if (comments.loadState.refresh is LoadState.Loading) post.commentCount
@@ -641,7 +641,8 @@ fun CommentsBottomSheetContent(
                         animateTextChange = true
                     )
                 }
-                endOfPagePlaceholder(comments.loadState.append)
+                // STOPSHIP: migration
+//                endOfPagePlaceholder(comments.loadState.append)
                 item {}
             }
         }
