@@ -44,9 +44,10 @@ data class PoolSearchOptions(
         if (postIds.isEmpty()) return emptyList()
 
         // order:id for "normal" pools, i.e. first post in pool is first pool in result - no reverse required
-        val posts = api.getPosts(tags = "id:${postIds.joinToString(",")} order:id")
-            .getOrThrow()
-            .posts
+        val posts =
+            api.getPosts(tags = "id:${postIds.joinToString(",") { it.value.toString() }} order:id")
+                .getOrThrow()
+                .posts
 
         assert(posts.size == postIds.size) { "Expected ${postIds.size} posts, got ${posts.size}" }
 
