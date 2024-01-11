@@ -233,7 +233,7 @@ fun Post(
                 Text(
                     stringResource(
                         R.string.assertion_failed,
-                        "API_RETURNED_VIDEO_SAMPLE_${post.id}"
+                        "API_RETURNED_VIDEO_SAMPLE_${post.id.value}"
                     )
                 )
             } else

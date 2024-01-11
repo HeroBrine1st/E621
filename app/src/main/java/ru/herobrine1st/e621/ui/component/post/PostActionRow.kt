@@ -131,7 +131,7 @@ fun PostActionRow(
                         action = Intent.ACTION_SEND
                         putExtra(
                             Intent.EXTRA_TEXT,
-                            "${BuildConfig.DEEP_LINK_BASE_URL}/posts/${post.id}"
+                            "${BuildConfig.DEEP_LINK_BASE_URL}/posts/${post.id.value}"
                         )
                         type = "text/plain"
                     }, null
