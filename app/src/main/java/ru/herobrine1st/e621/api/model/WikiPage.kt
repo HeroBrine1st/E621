@@ -27,14 +27,14 @@ import kotlinx.serialization.Serializable
 data class WikiPage(
     val id: Int,
     val createdAt: Instant,
-    val updatedAt: Instant?,
+    val updatedAt: Instant? = null,
     val title: String,
     val body: String,
     val creatorId: Int,
     val creatorName: String? = null,
-    val updaterId: Int,
+    val updaterId: Int = -1,
     val isLocked: Boolean,
     val isDeleted: Boolean,
     val otherNames: List<String>,
-    val categoryId: Int
+    val categoryId: Int,
 )
