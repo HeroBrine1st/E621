@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.ui.screen.posts
 
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -53,7 +54,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -76,6 +76,7 @@ import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
+import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.e621.util.text
 import ru.herobrine1st.paging.api.LoadState
@@ -95,19 +96,28 @@ fun Posts(
     val lazyListState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
 
-    var index by remember { mutableIntStateOf(-1) }
+    var index by remember { mutableStateOf<IndexContainer?>(null) }
     val posts = remember {
         component.postsFlow.correctFirstVisibleItem(
             getFirstVisibleItemIndex = { lazyListState.firstVisibleItemIndex },
             setIndex = { index = it }
         )
-    }
-        .collectAsPagingItems(startImmediately = true)
+    }.collectAsPagingItems(startImmediately = true)
 
-    LaunchedEffect(key1 = index) {
-        if (index == -1) return@LaunchedEffect
-        lazyListState.scrollToItem(index)
-        index = -1
+    // Restore scroll position in case of structural changes in a list that are beyond LazyList capabilities
+    LaunchedEffect(index, posts.currentGeneration) {
+        index?.let {
+            debug {
+                Log.d(
+                    "Posts UI",
+                    "Got index data $index on generation ${posts.currentGeneration}"
+                )
+            }
+            if (it.generation != posts.currentGeneration) return@LaunchedEffect
+            debug { Log.d("Posts UI", "Using that data to restore scroll state") }
+            lazyListState.scrollToItem(it.index)
+            index = null
+        }
     }
 
     //region Working around strange API
@@ -126,7 +136,7 @@ fun Posts(
     // FIXME if LaunchedEffect below leaves composition while condition is true,
     //       there's nothing that will call endRefresh()
     //       which in turn can make condition above true
-    //       and calls refresh()
+    //       and call refresh() again
     // Steps to reproduce:
     // 1. Enter this screen
     // 2. Immediately go into search or settings

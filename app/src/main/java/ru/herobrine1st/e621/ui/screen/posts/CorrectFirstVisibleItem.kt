@@ -26,14 +26,44 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.runningReduce
 import ru.herobrine1st.e621.navigation.component.posts.PostListingItem
+import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.getAtIndex2DOrNull
 import ru.herobrine1st.e621.util.indexOfFirst2D
 import ru.herobrine1st.paging.api.Snapshot
 import ru.herobrine1st.paging.internal.UpdateKind
 
+data class IndexContainer(
+    /**
+     * Generation number is used to synchronize [correctFirstVisibleItem] with effects
+     * that will use [index] to restore scroll position
+     */
+    val generation: Int,
+    /**
+     * Index to snap to
+     */
+    val index: Int,
+)
+
+/**
+ * This middleware reacts to structural changes in underlying data to update scrolling
+ * index with the same location in the new data.
+ *
+ * Some of structural changes are beyond LazyList capabilities and there's no API
+ * to override internal key-to-index maps or alter index restoration behavior.
+ *
+ * Detected changes follow:
+ *
+ * * Series of elements replaced with one element with composite key
+ * * Element with compose key replaced with series of elements of keys that former element's key composed of
+ *
+ * Changes that LazyList can recover from are detected and ignored.
+ *
+ * @param getFirstVisibleItemIndex Lambda to get LazyListState.firstVisibleItemIndex
+ * @param setIndex lambda to save data about new scroll index
+ */
 inline fun <K : Any> Flow<Snapshot<K, PostListingItem>>.correctFirstVisibleItem(
     crossinline getFirstVisibleItemIndex: () -> Int,
-    crossinline setIndex: (Int) -> Unit,
+    crossinline setIndex: (IndexContainer) -> Unit,
 ) = runningReduce { previous, current ->
     if (current.updateKind is UpdateKind.StateChange) return@runningReduce current
 
@@ -43,11 +73,12 @@ inline fun <K : Any> Flow<Snapshot<K, PostListingItem>>.correctFirstVisibleItem(
             it.data
         } ?: return@runningReduce current
 
-    val index1 = when (currentlyObservedValue) {
+
+    val index = when (currentlyObservedValue) {
         is PostListingItem.HiddenItems -> current.pages.indexOfFirst2D({ it.data }) {
             when (it) {
-                is PostListingItem.HiddenItems -> (currentlyObservedValue.postIds == it.postIds).also { areEqual ->
-                    if (areEqual) return@runningReduce current
+                is PostListingItem.HiddenItems -> (currentlyObservedValue.key == it.key).also { areEqual ->
+                    if (areEqual) return@runningReduce current // LazyList will recover itself
                 }
 
                 is PostListingItem.Post -> currentlyObservedValue.postIds.first() == it.post.id
@@ -58,7 +89,7 @@ inline fun <K : Any> Flow<Snapshot<K, PostListingItem>>.correctFirstVisibleItem(
             current.pages.indexOfFirst2D({ it.data }) {
                 when (it) {
                     is PostListingItem.Post -> (it.key == currentlyObservedValue.key).also { areEqual ->
-                        if (areEqual) return@runningReduce current
+                        if (areEqual) return@runningReduce current // LazyList will recover itself
                     }
 
                     is PostListingItem.HiddenItems -> currentlyObservedValue.post.id in it.postIds
@@ -66,11 +97,14 @@ inline fun <K : Any> Flow<Snapshot<K, PostListingItem>>.correctFirstVisibleItem(
             }
         }
     }
-    Log.d(
-        "Posts UI",
-        "Snapping from key ${currentlyObservedValue.key} at index $firstVisibleItemIndex to index $index1"
-    )
-    setIndex(index1)
+    if (index == -1) return@runningReduce current
+    debug {
+        Log.d(
+            "CorrectFirstVisibleItem",
+            "Snapping from key ${currentlyObservedValue.key} at index $firstVisibleItemIndex to index $index (generation ${current.generation})"
+        )
+    }
+    setIndex(IndexContainer(generation = current.generation, index = index))
 
     current
 }.flowOn(Dispatchers.Default)
