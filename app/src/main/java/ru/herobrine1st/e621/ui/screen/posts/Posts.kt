@@ -280,15 +280,6 @@ fun Posts(
                 }
                 endOfPagePlaceholder(posts.loadStates.append)
             }
-            // FIXME indicator is shown for a moment after navigating back
-            // Related: https://issuetracker.google.com/issues/177245496
-            // (but the actual cause is absence of a "None" state like in Coil, which indicates
-            // that no request is in fly but no data available hence no loading and no indicator)
-//            PullRefreshIndicator(
-//                refreshing = posts.loadState.refresh is LoadState.Loading,
-//                state = pullRefreshState,
-//                modifier = Modifier.align(Alignment.TopCenter)
-//            )
 
             PullToRefreshContainer(
                 state = pullToRefreshState,
@@ -330,24 +321,6 @@ fun Post(
                         throw RuntimeException("Normalized sample is a video, which is not possible")
                     }
                 )
-            // FIXME UI jank in both FlowRow and PostActionsRow
-            // This issue is somehow related to Text, but quick test shows that removing Text
-            // does not help while removing both FlowRow and PostActionsRow make scrolling smooth
-            // even in debug build.
-            //
-            // First, this was only visible in decomposition, but a day or two after it came into
-            // composition as well, and then someday vanished from decomposition. This happened
-            // literally while I was bisecting it.
-            // Also someday I somehow found that Text is source of jank, but now it is not. I don't
-            // remember reproduce steps. Copying tags (literally six pointers to strings) also is
-            // not the source, as I have tested like two weeks ago.
-            // And PostActionsRow even does not have any state, it literally use what is given.
-            // What the fucking fuck.
-            // Possible source: my device? Upstream? Idk.
-            //
-            // Btw, in release build this issue is unnoticeable when you don't know it is there.
-            // It has been there forever (literally from february 2022) and I noticed it only
-            // in december while optimizing blacklist.
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 // TODO crossAxisSpacing = 2.dp,
