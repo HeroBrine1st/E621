@@ -54,7 +54,7 @@ data class IndexContainer(
  * Detected changes follow:
  *
  * * Series of elements replaced with one element with composite key
- * * Element with compose key replaced with series of elements of keys that former element's key composed of
+ * * Element with compose key replaced with series of elements with keys that former element's key composed of
  *
  * Changes that LazyList can recover from are detected and ignored.
  *
