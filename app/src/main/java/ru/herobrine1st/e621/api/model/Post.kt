@@ -60,7 +60,6 @@ data class Post(
     val uploaderId: Int,
     val description: String,
     val commentCount: Int,
-    @Suppress("SpellCheckingInspection")
     @SerialName("isFavorited")
     val isFavourite: Boolean = false,
     val hasNotes: Boolean = false,

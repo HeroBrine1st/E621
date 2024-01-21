@@ -348,7 +348,7 @@ fun Search(
             }
             item("favourites of") {
                 SettingCard(title = stringResource(R.string.favourites_of)) {
-                    // TODO autocomplete - накостылить через передачу fav:${state.favouritesOf} в autocomplete.json
+                    // TODO autocomplete
                     OutlinedTextField(
                         value = component.favouritesOf,
                         onValueChange = { component.favouritesOf = it },

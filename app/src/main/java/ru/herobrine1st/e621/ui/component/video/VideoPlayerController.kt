@@ -107,7 +107,7 @@ fun VideoPlayerController(
             )
         ) {
             // After migration to Media3 IconButton got indication
-            // white there was no indication before (it was a bug, because code after fix below was literally the same)
+            // while there was no indication before (it was a bug, because code after fix below was literally the same)
             Box(
                 modifier = Modifier
                     .minimumInteractiveComponentSize()
@@ -119,7 +119,7 @@ fun VideoPlayerController(
                     ),
                 contentAlignment = Alignment.Center
             ) {
-                Crossfade(targetState = willPlayWhenReady, label = "Play-pause crosffade") {
+                Crossfade(targetState = willPlayWhenReady, label = "Play-pause crossfade") {
                     when (it) {
                         true -> Icon(
                             Icons.Default.Pause,

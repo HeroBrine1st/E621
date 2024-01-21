@@ -25,13 +25,12 @@ import androidx.annotation.StringRes
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.R
 
-@Suppress("SpellCheckingInspection")
+@Suppress("unused")
 @Serializable
 enum class Order(
     @StringRes val descriptionId: Int,
     val apiName: String?,
     val supportsAscending: Boolean = true,
-    val supportsPaging: Boolean = true,
     val ascendingApiName: String = apiName + "_asc"
 ) {
     NEWEST_TO_OLDEST(R.string.order_none, null, ascendingApiName = "id"),
@@ -46,6 +45,6 @@ enum class Order(
     //    WIDEST_LAST(R.string.order_portrait, "portrait", supportsAscending = false),
     DURATION(R.string.order_duration, "duration"),
     CHANGE(R.string.order_change, "change", supportsAscending = false),
-    RANDOM(R.string.order_random, "random", supportsAscending = false, supportsPaging = false)
+    RANDOM(R.string.order_random, "random", supportsAscending = false)
 
 }

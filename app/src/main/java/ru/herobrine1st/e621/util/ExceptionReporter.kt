@@ -34,8 +34,8 @@ interface ExceptionReporter {
     suspend fun handleRequestException(
         t: Throwable,
         message: String = "Unknown request exception occurred",
-        @Suppress("SpellCheckingInspection") dontShowSnackbar: Boolean = false,
-        showThrowable: Boolean = false
+        dontShowSnackbar: Boolean = false,
+        showThrowable: Boolean = false,
     )
 }
 

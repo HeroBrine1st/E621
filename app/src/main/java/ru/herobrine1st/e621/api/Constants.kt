@@ -24,7 +24,7 @@ package ru.herobrine1st.e621.api
 const val E621_MAX_POSTS_IN_QUERY = 500
 
 /**
- * Maximum count of items in metatags like "id:1,2,3,4"
+ * Maximum count of items in meta-tags like "id:1,2,3,4"
  *
  * **See also:** [Source code](https://github.com/e621ng/e621ng/blob/330fb7cb8bc8fcada26c8fb095d96fdf12a4807c/app/logical/parse_value.rb#L55)
  */

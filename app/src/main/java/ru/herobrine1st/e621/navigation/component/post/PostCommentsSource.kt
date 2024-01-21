@@ -80,25 +80,25 @@ class PostCommentsSource(
         val page = params.key.takeIf { it != Int.MIN_VALUE } ?: firstPage
         val limit = params.requestedSize
 
-        return api.getCommentsForPostBBCode(postId, page, limit).map { it ->
-            it.asReversed()
-        }.map {
-            withContext(Dispatchers.Default) {
-                it.map {
-                    CommentData.fromE621Comment(it, avatars[it.id])
+        return api.getCommentsForPostBBCode(postId, page, limit)
+            .map { it.asReversed() }
+            .map {
+                withContext(Dispatchers.Default) {
+                    it.map {
+                        CommentData.fromE621Comment(it, avatars[it.id])
+                    }
                 }
-            }
-        }.map {
-            LoadResult.Page(
-                data = it,
-                previousKey = if (page == firstPage) null else page + 1,
-                nextKey = if (page == 1) null else page - 1,
-            )
-        }.recover {
-            Log.e("Posts", "Unable to load comments", it)
-            exceptionReporter.handleRequestException(it)
-            LoadResult.Error(it)
-        }.getOrThrow()
+            }.map {
+                LoadResult.Page(
+                    data = it,
+                    previousKey = if (page == firstPage) null else page + 1,
+                    nextKey = if (page == 1) null else page - 1,
+                )
+            }.recover {
+                Log.e("Posts", "Unable to load comments", it)
+                exceptionReporter.handleRequestException(it)
+                LoadResult.Error(it)
+            }.getOrThrow()
 
     }
 

@@ -82,9 +82,7 @@ data class CommentData(
     data class UserData(
         val id: Int,
         val displayName: String,
-        val avatarPost: PostReducedCommon?
-    ) {
-        val avatarUrl: String? get() = avatarPost?.previewUrl ?: avatarPost?.croppedUrl
-    }
+        val avatarPost: PostReducedCommon?,
+    )
 }
 

@@ -50,7 +50,6 @@ val operation = { i1: Int, operator: String, i2: Int ->
     }
 }
 
-@Suppress("SpellCheckingInspection")
 val metaTagToNumber = mapOf<String, (Post) -> Int>(
     "id" to { it.id.value },
     "score" to { it.score.total },

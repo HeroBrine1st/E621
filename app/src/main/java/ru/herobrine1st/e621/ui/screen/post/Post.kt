@@ -125,7 +125,6 @@ import ru.herobrine1st.paging.api.PagingItems
 import ru.herobrine1st.paging.api.collectAsPagingItems
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
-private const val TAG = "Post Screen"
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

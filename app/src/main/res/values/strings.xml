@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name" translatable="false">E621</string>
     <string name="add">Add</string>
     <string name="add_tag">Add tag</string>
@@ -26,7 +26,6 @@
     <string name="any">Any</string>
     <string name="posts">Posts</string>
     <string name="network_error">Unknown network error occurred. No internet available?</string>
-    <string name="okay">Okay</string>
     <string name="settings">Settings</string>
     <string name="setting_blacklist">Blacklist tags</string>
     <string name="setting_blacklist_subtitle">Hide arts so that you don\'t see what you don\'t want to see</string>
@@ -38,18 +37,10 @@
     <string name="selection_all">All</string>
     <string name="database_error_updating_blacklist">Database error occurred while updating blacklist entry \"%s\"</string>
     <string name="edit">Edit</string>
-    <string name="new_item">New</string>
-    <string name="submit">Submit</string>
-    <string name="edit_blacklist_entry">Edit blacklist entry</string>
     <string name="tag_combination">Tag combination</string>
-    <string name="add_entry_to_blacklist">Add entry to blacklist</string>
-    <string name="unsaved_changes">Unsaved changes</string>
-    <string name="unsaved_changes_message">Are you sure you want to exit? Your changes will be lost.</string>
     <string name="cancel">Cancel</string>
-    <string name="leave_discard_changes">Discard</string>
     <string name="blacklist_enabled">Enabled</string>
     <string name="blacklist_disabled">Disabled</string>
-    <string name="maybe_search_query_intersects_with_blacklist">Detected huge consistent sequences of blacklisted posts - loading new may take too long. Maybe your search query intersects with blacklist? Try disabling blacklist entries or change your query.</string>
     <string name="score_up">Like</string>
     <string name="score_down">Dislike</string>
     <string name="comments">Comments</string>
@@ -81,7 +72,6 @@
     <string name="add_tag_to_search">Add tag to search</string>
     <string name="exclude_tag_from_search">Exclude tag from search</string>
     <string name="tag_view_wiki">Find in wiki</string>
-    <string name="not_found">Not found</string>
     <string name="wiki_load_failed">Failed to load wiki page</string>
     <string name="uploaded_relative_date">Uploaded %s</string>
     <string name="artist_tags">Artist(s)</string>
@@ -95,14 +85,11 @@
     <string name="no_comments_found">There are no comments</string>
     <string name="click_to_load">Click to load</string>
     <string name="quote_comments">%s said:</string>
-    <string name="message_quote">Quote</string>
-    <string name="message_text">Text</string>
     <string name="unknown_error">Unknown error occurred</string>
     <string name="retry">Retry</string>
     <string name="settings_safe_mode">Safe mode</string>
     <string name="settings_safe_mode_shortdesc">Hide explicit content from search results</string>
     <string name="disclaimer">Disclaimer</string>
-    <string name="disclaimer_agree">I agree</string>
     <string name="settings_safe_mode_disclaimer">By disabling safe mode you agree you have reached the legal age in your country. If you agree, <b>explicit content</b> may be shown.</string>
     <string name="search_safe_mode">Safe mode enabled. This option is blocked.</string>
     <string name="clear">Clear</string>
@@ -118,14 +105,11 @@ This application is free software: you can redistribute it and/or modify it unde
 This application is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License along with this application.  If not, see &lt;https://www.gnu.org/licenses/&gt;."</string>
-    <string name="license_url" translatable="false">https://www.gnu.org/licenses/gpl-3.0.html</string>
     <string name="license_name" translatable="false">GNU General Public License</string>
     <string name="license_word">License</string>
-    <string name="open_in_browser">Open in browser</string>
     <string name="non_affiliation_disclaimer">Developers of this application, and this application itself are not affiliated, associated, authorized, endorsed by, or in any way officially connected with e621.net and e926.net.</string>
     <string name="i_understand">I understand</string>
     <string name="explicitly_click_button">Explicitly click button if you\'ve done</string>
-    <string name="license_name_short" translatable="false">GNU GPL</string>
     <string name="empty_results">Wow, such empty</string>
     <string name="oss_licenses">Open Source Licenses</string>
     <string name="description">Description</string>
@@ -166,7 +150,7 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="search_fill_myself">Fill in with myself</string>
     <string name="posts_hidden_safe_mode">%s hidden due to safe mode</string>
     <string name="posts_hidden_blacklisted">%s hidden due to blacklist</string>
-    <string name="posts_hidden_blacklist_and_safe_mode">%s hidden due to safe mode and %d due to blacklist</string>
+    <string name="posts_hidden_blacklist_and_safe_mode" tools:ignore="PluralsCandidate">%s hidden due to safe mode and %d due to blacklist</string>
     <plurals name="list_items">
         <item quantity="one">%d item</item>
         <item quantity="other">%d items</item>
