@@ -1,5 +1,3 @@
-@file:Suppress("SpellCheckingInspection", "UnstableApiUsage")
-
 import com.android.build.api.dsl.VariantDimension
 import java.io.ByteArrayOutputStream
 
@@ -82,7 +80,6 @@ android {
         jvmTarget = "1.8"
         freeCompilerArgs = listOf(
             "-opt-in=kotlin.RequiresOptIn",
-//            "-Xjvm-default=all-compatibility"
         )
     }
     buildFeatures {
@@ -97,6 +94,7 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+    @Suppress("UnstableApiUsage")
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
@@ -168,7 +166,6 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.2.0")
     implementation("androidx.media3:media3-ui:1.2.0")
     implementation("androidx.media3:media3-datasource-okhttp:1.2.0")
-//    implementation("androidx.media3:media3-session:1.0.1")
 
     // Other libraries
     implementation("org.jsoup:jsoup:1.17.2") // Expat License
@@ -198,7 +195,6 @@ protobuf {
     generateProtoTasks {
         all().configureEach {
             builtins {
-                // TODO protoc plugin 'java' not defined. Trying to use 'protoc-gen-java' from system path
                 create("java") {
                     option("lite")
                 }
@@ -210,15 +206,6 @@ protobuf {
 room {
     schemaDirectory("$projectDir/schemas")
 }
-
-// KAPT and KSP use gradle JDK version for that
-// KAPT requires 11, while android is still using 1.8
-// Use narrow class names to minimize impact on other tasks
-//tasks.withType<com.google.devtools.ksp.gradle.KspTaskJvm>().configureEach {
-//    kotlinOptions {
-//        jvmTarget = "1.8"
-//    }
-//}
 
 fun getCommitIndexNumber(revision: String = "HEAD"): Int {
     val byteArrayOutputStream = ByteArrayOutputStream()
