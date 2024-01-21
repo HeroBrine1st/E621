@@ -30,7 +30,6 @@ import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.getAtIndex2DOrNull
 import ru.herobrine1st.e621.util.indexOfFirst2D
 import ru.herobrine1st.paging.api.Snapshot
-import ru.herobrine1st.paging.internal.UpdateKind
 
 data class IndexContainer(
     /**
@@ -65,7 +64,7 @@ inline fun <K : Any> Flow<Snapshot<K, PostListingItem>>.correctFirstVisibleItem(
     crossinline getFirstVisibleItemIndex: () -> Int,
     crossinline setIndex: (IndexContainer) -> Unit,
 ) = runningReduce { previous, current ->
-    if (current.updateKind is UpdateKind.StateChange) return@runningReduce current
+    if (previous.pages == current.pages) return@runningReduce current
 
     val firstVisibleItemIndex = getFirstVisibleItemIndex()
     val currentlyObservedValue =
