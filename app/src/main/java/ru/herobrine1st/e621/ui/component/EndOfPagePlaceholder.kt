@@ -28,8 +28,8 @@ import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.paging.LoadState
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.paging.api.LoadState
 
 // edge of page, start and end of page or anything, it just doesn't matter while the name is clear
 fun LazyListScope.endOfPagePlaceholder(loadState: LoadState) {

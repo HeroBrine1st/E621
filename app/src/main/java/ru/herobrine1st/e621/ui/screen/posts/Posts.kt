@@ -60,15 +60,18 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
+import ru.herobrine1st.e621.navigation.component.posts.PostListingItem
+import ru.herobrine1st.paging.api.LoadState
+import ru.herobrine1st.paging.api.collectAsPagingItems
+import ru.herobrine1st.paging.api.contentType
+import ru.herobrine1st.paging.api.itemKey
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
@@ -86,7 +89,7 @@ fun Posts(
     component: PostListingComponent,
     isAuthorized: Boolean, // TODO move to component
 ) {
-    val posts = component.postsFlow.collectAsLazyPagingItems()
+    val posts = component.postsFlow.collectAsPagingItems(startImmediately = true)
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
@@ -98,17 +101,27 @@ fun Posts(
     // user code and callback to refresh from library?
     // Now I need to connect pullToRefreshState.isRefreshing to posts.loadState.refresh is LoadState.Loading
     // Both are data, neither is callback
-    if (pullToRefreshState.isRefreshing && posts.loadState.refresh !is LoadState.Loading) {
+    if (pullToRefreshState.isRefreshing && posts.loadStates.refresh !is LoadState.Loading) {
         LaunchedEffect(Unit) {
             posts.refresh()
         }
     }
 
-    if(posts.loadState.refresh is LoadState.Loading) {
+    // And we have first design-based issue just after 22 days of this code, congratulations!
+    // FIXME if LaunchedEffect below leaves composition while condition is true,
+    //       there's nothing that will call endRefresh()
+    //       which in turn can make condition above true
+    //       and calls refresh()
+    // Steps to reproduce:
+    // 1. Enter this screen
+    // 2. Immediately go into search or settings
+    // 3. Wait until request completes (look to logs)
+    // 4. Return back - it will do the same request again
+    if (posts.loadStates.refresh is LoadState.Loading) {
         LaunchedEffect(Unit) {
             pullToRefreshState.startRefresh()
             // wait until it completes
-            snapshotFlow { posts.loadState.refresh is LoadState.Loading }
+            snapshotFlow { posts.loadStates.refresh is LoadState.Loading }
                 .first { !it }
             pullToRefreshState.endRefresh()
         }
@@ -153,13 +166,13 @@ fun Posts(
         ) {
             LazyColumn(
                 // Solution from https://issuetracker.google.com/issues/177245496#comment24
-                state = if (posts.itemCount == 0) rememberLazyListState() else lazyListState,
+                state = if (posts.size == 0) rememberLazyListState() else lazyListState,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                endOfPagePlaceholder(posts.loadState.prepend)
+                endOfPagePlaceholder(posts.loadStates.prepend)
                 // TODO add info about pool here, getting that info from component
-                if (posts.itemCount == 0) {
+                if (posts.size == 0) {
                     item {
                         Spacer(Modifier.height(4.dp))
                         Column(
@@ -168,38 +181,79 @@ fun Posts(
                                 .padding(BASE_PADDING_HORIZONTAL)
                                 .fillMaxSize()
                         ) {
-                            when (posts.loadState.refresh) {
-                                is LoadState.NotLoading -> Text(stringResource(R.string.empty_results))
+                            when (posts.loadStates.refresh) {
                                 is LoadState.Error -> {
                                     Icon(Icons.Outlined.Error, contentDescription = null)
                                     Text(stringResource(R.string.unknown_error))
                                 }
 
+                                LoadState.Complete -> Text(stringResource(R.string.empty_results))
                                 LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
+                                is LoadState.NotLoading, LoadState.Idle -> {}
                             }
                         }
                     }
                 }
                 items(
-                    count = posts.itemCount,
-                    key = posts.itemKey { post -> post.id.value },
-                    // contentType is purposely ignored as all items are of the same type and additional calls to Paging library are not needed
+                    count = posts.size,
+                    key = posts.itemKey { post -> post.key },
+                    contentType = posts.contentType { post -> post.contentType }
                 ) { index ->
-                    val post = posts[index] ?: return@items
-                    Post(
-                        post = post,
-                        favouriteState = favouritesCache.isFavourite(post),
-                        isAuthorized = isAuthorized,
-                        onFavouriteChange = {
-                            component.handleFavouriteChange(post)
-                        },
-                        openPost = { openComments ->
-                            component.onOpenPost(post, openComments)
+                    when (val item = posts[index]) {
+                        is PostListingItem.HiddenItems -> {
+                            val modifier = Modifier.padding(horizontal = 8.dp)
+                            if (item.hiddenDueToSafeModeNumber == 0) {
+                                Text(
+                                    stringResource(
+                                        R.string.posts_hidden_blacklisted,
+                                        pluralStringResource(
+                                            id = R.plurals.list_items,
+                                            count = item.hiddenDueToBlacklistNumber,
+                                            item.hiddenDueToBlacklistNumber
+                                        )
+                                    ), modifier
+                                )
+                            } else if (item.hiddenDueToBlacklistNumber == 0) {
+                                Text(
+                                    stringResource(
+                                        R.string.posts_hidden_safe_mode,
+                                        pluralStringResource(
+                                            id = R.plurals.list_items,
+                                            count = item.hiddenDueToSafeModeNumber,
+                                            item.hiddenDueToSafeModeNumber
+                                        )
+                                    ), modifier
+                                )
+                            } else {
+                                Text(
+                                    stringResource(
+                                        R.string.posts_hidden_blacklist_and_safe_mode,
+                                        pluralStringResource(
+                                            id = R.plurals.list_items,
+                                            count = item.hiddenDueToSafeModeNumber,
+                                            item.hiddenDueToSafeModeNumber
+                                        ),
+                                        item.hiddenDueToBlacklistNumber
+                                    ), modifier
+                                )
+                            }
                         }
-                    )
+
+                        is PostListingItem.Post -> Post(
+                            post = item.post,
+                            favouriteState = favouritesCache.isFavourite(item.post),
+                            isAuthorized = isAuthorized,
+                            onFavouriteChange = {
+                                component.handleFavouriteChange(item.post)
+                            },
+                            openPost = { openComments ->
+                                component.onOpenPost(item.post, openComments)
+                            }
+                        )
+                    }
 
                 }
-                endOfPagePlaceholder(posts.loadState.append)
+                endOfPagePlaceholder(posts.loadStates.append)
             }
             // FIXME indicator is shown for a moment after navigating back
             // Related: https://issuetracker.google.com/issues/177245496
@@ -211,7 +265,10 @@ fun Posts(
 //                modifier = Modifier.align(Alignment.TopCenter)
 //            )
 
-            PullToRefreshContainer(state = pullToRefreshState, modifier = Modifier.align(Alignment.TopCenter))
+            PullToRefreshContainer(
+                state = pullToRefreshState,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
         }
     }
 }
@@ -223,7 +280,7 @@ fun Post(
     favouriteState: FavouriteState,
     isAuthorized: Boolean,
     onFavouriteChange: () -> Unit,
-    openPost: (scrollToComments: Boolean) -> Unit
+    openPost: (scrollToComments: Boolean) -> Unit,
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth()

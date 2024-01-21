@@ -22,12 +22,29 @@ package ru.herobrine1st.e621.util
 
 fun <T> Sequence<T>.accumulate(accumulator: suspend SequenceScope<T>.(previous: T, current: T) -> T): Sequence<T> {
     val iterator = this@accumulate.iterator()
-    if(!iterator.hasNext()) return emptySequence()
+    if (!iterator.hasNext()) return emptySequence()
     return sequence {
         var previous = iterator.next()
-        for(current in iterator) {
+        for (current in iterator) {
             previous = accumulator(previous, current)
         }
         yield(previous)
     }
+}
+
+inline fun <T> Iterable<T>.accumulate(accumulator: AccumulatorScope<T>.(previous: T, current: T) -> T): List<T> {
+    val iterator = this.iterator()
+    if (!iterator.hasNext()) return emptyList()
+    val result = mutableListOf<T>()
+    val scope = AccumulatorScope<T> { value -> result.add(value) }
+    var previous = iterator.next()
+    for (current in iterator) {
+        previous = scope.accumulator(previous, current)
+    }
+    result.add(previous)
+    return result
+}
+
+fun interface AccumulatorScope<T> {
+    fun yield(value: T)
 }

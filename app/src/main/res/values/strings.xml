@@ -164,4 +164,11 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="search_pool_id">Pool id</string>
     <string name="could_not_load_post">Could not load post</string>
     <string name="search_fill_myself">Fill in with myself</string>
+    <string name="posts_hidden_safe_mode">%s hidden due to safe mode</string>
+    <string name="posts_hidden_blacklisted">%s hidden due to blacklist</string>
+    <string name="posts_hidden_blacklist_and_safe_mode">%s hidden due to safe mode and %d due to blacklist</string>
+    <plurals name="list_items">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
 </resources>
