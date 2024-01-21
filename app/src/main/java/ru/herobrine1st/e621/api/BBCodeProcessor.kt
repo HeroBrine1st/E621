@@ -294,12 +294,8 @@ private fun parseQuoteHeader(input: String): Pair<MessageQuote.Author, Int>? {
  * @return Optimized list of [MessageData]
  */
 private fun List<MessageData>.collapseMessageTexts(): List<MessageData> {
-    // FAST PATH: Short comment, maybe with one quote or picture.
-    if (this.size < 2) return this
-        .filter { (it as? MessageText)?.text?.isNotEmpty() != false }
-        .map { (it as? MessageText)?.trim() ?: it }
     // TD;DR accumulate MessageText until another MessageData is found, then continue with another accumulator)
-    return this.asSequence()
+    return this
         .filter { (it as? MessageText)?.text?.isNotEmpty() != false }
         .accumulate { previous, current ->
             if (previous is MessageText && current is MessageText) {
@@ -310,5 +306,4 @@ private fun List<MessageData>.collapseMessageTexts(): List<MessageData> {
             }
         }
         .map { (it as? MessageText)?.trim() ?: it }
-        .toList()
 }
