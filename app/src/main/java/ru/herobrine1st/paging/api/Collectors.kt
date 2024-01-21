@@ -23,7 +23,6 @@ package ru.herobrine1st.paging.api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.paging.internal.PagingItemsImpl
 
@@ -31,8 +30,7 @@ import ru.herobrine1st.paging.internal.PagingItemsImpl
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.collectAsPagingItems(
     startImmediately: Boolean = true,
 ): PagingItems<Key, Value> {
-    val coroutineScope = rememberCoroutineScope()
-    val pagingItems = remember { PagingItemsImpl(this, coroutineScope) }
+    val pagingItems = remember { PagingItemsImpl(this) }
 
     LaunchedEffect(Unit) {
         pagingItems.collectPagingData(startImmediately)

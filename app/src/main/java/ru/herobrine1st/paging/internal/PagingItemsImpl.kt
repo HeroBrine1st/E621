@@ -23,7 +23,6 @@ package ru.herobrine1st.paging.internal
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.paging.api.LoadState
 import ru.herobrine1st.paging.api.LoadStates
@@ -35,7 +34,6 @@ import kotlin.math.sign
 
 class PagingItemsImpl<Key : Any, Value : Any>(
     val flow: Flow<Snapshot<Key, Value>>,
-    val coroutineScope: CoroutineScope,
 ) : PagingItems<Key, Value> {
 
     private var listDelegate by mutableStateOf(emptyList<Value>())
