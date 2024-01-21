@@ -21,15 +21,11 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import android.util.Log
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,12 +33,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.InputChip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
@@ -52,7 +45,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,24 +53,18 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingItem
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
-import ru.herobrine1st.e621.ui.component.post.PostActionRow
-import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
-import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.isFavourite
-import ru.herobrine1st.e621.util.text
 import ru.herobrine1st.paging.api.LoadState
 import ru.herobrine1st.paging.api.collectAsPagingItems
 import ru.herobrine1st.paging.api.contentType
@@ -91,7 +77,6 @@ fun Posts(
     component: PostListingComponent,
     isAuthorized: Boolean, // TODO move to component
 ) {
-
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
@@ -225,44 +210,7 @@ fun Posts(
                     contentType = posts.contentType { post -> post.contentType }
                 ) { index ->
                     when (val item = posts[index]) {
-                        is PostListingItem.HiddenItems -> {
-                            val modifier = Modifier.padding(horizontal = 8.dp)
-                            if (item.hiddenDueToSafeModeNumber == 0) {
-                                Text(
-                                    stringResource(
-                                        R.string.posts_hidden_blacklisted,
-                                        pluralStringResource(
-                                            id = R.plurals.list_items,
-                                            count = item.hiddenDueToBlacklistNumber,
-                                            item.hiddenDueToBlacklistNumber
-                                        )
-                                    ), modifier
-                                )
-                            } else if (item.hiddenDueToBlacklistNumber == 0) {
-                                Text(
-                                    stringResource(
-                                        R.string.posts_hidden_safe_mode,
-                                        pluralStringResource(
-                                            id = R.plurals.list_items,
-                                            count = item.hiddenDueToSafeModeNumber,
-                                            item.hiddenDueToSafeModeNumber
-                                        )
-                                    ), modifier
-                                )
-                            } else {
-                                Text(
-                                    stringResource(
-                                        R.string.posts_hidden_blacklist_and_safe_mode,
-                                        pluralStringResource(
-                                            id = R.plurals.list_items,
-                                            count = item.hiddenDueToSafeModeNumber,
-                                            item.hiddenDueToSafeModeNumber
-                                        ),
-                                        item.hiddenDueToBlacklistNumber
-                                    ), modifier
-                                )
-                            }
-                        }
+                        is PostListingItem.HiddenItems -> HiddenItems(item)
 
                         is PostListingItem.Post -> Post(
                             post = item.post,
@@ -285,87 +233,6 @@ fun Posts(
                 state = pullToRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter)
             )
-        }
-    }
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-fun Post(
-    post: Post,
-    favouriteState: FavouriteState,
-    isAuthorized: Boolean,
-    onFavouriteChange: () -> Unit,
-    openPost: (scrollToComments: Boolean) -> Unit,
-) {
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column {
-            if (post.normalizedSample.type.isVideo) {
-                Text(
-                    stringResource(
-                        R.string.assertion_failed,
-                        "API_RETURNED_VIDEO_SAMPLE_${post.id.value}"
-                    )
-                )
-            } else
-                PostMediaContainer(
-                    file = post.normalizedSample,
-                    contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
-                    modifier = Modifier.clickable {
-                        openPost(false)
-                    },
-                    post = post,
-                    getVideoPlayerComponent = {
-                        throw RuntimeException("Normalized sample is a video, which is not possible")
-                    }
-                )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                // TODO crossAxisSpacing = 2.dp,
-                modifier = Modifier.padding(8.dp)
-            ) {
-                var expandTags by remember { mutableStateOf(false) }
-                val visibleTags by remember(post.tags) {
-                    derivedStateOf {
-                        post.tags.reduced
-                            .let {
-                                if (expandTags) it
-                                else it.take(6)
-                            }
-                    }
-                }
-                visibleTags.forEach {
-                    InputChip(
-                        selected = false,
-                        onClick = { /*TODO*/ },
-                        label = {
-                            Text(it.text)
-                        }
-                    )
-                }
-                // TODO use SubcomposeLayout to fill two lines of chips
-                if (!expandTags && post.tags.reduced.size > 6) {
-                    InputChip(
-                        selected = false,
-                        onClick = { expandTags = true },
-                        label = {
-                            Text("...")
-                        }
-                    )
-                }
-            }
-            HorizontalDivider(Modifier.padding(horizontal = 8.dp))
-            PostActionRow(
-                post, favouriteState, isAuthorized,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
-                onFavouriteChange = onFavouriteChange
-            ) {
-                openPost(true)
-            }
         }
     }
 }
