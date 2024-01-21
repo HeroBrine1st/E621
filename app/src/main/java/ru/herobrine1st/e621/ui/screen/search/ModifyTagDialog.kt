@@ -84,7 +84,7 @@ fun ModifyTagDialog(
     // suggestions open again after clicking one
     var selectedFromSuggested by remember { mutableStateOf(false) }
 
-    val autocomplete = produceState<Autocomplete>(Autocomplete.Ready(emptyList(), "")) {
+    val autocomplete = produceState<Autocomplete>(Autocomplete.Ready(emptyList(), initialText)) {
         getSuggestionsFlow { query }.collect {
             value = it
             if (!selectedFromSuggested && it is Autocomplete.Ready)
