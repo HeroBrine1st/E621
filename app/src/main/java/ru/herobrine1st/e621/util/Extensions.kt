@@ -64,32 +64,3 @@ val Tag.text
     get() = if (BuildConfig.HIDE_UNDERSCORES_FROM_USER) value.replace('_', ' ')
     else value
 
-/**
- * Equivalent of flatMap(mapper).get(index), but without list allocations
- */
-inline fun <T, K> List<T>.getAtIndex2DOrNull(index: Int, mapper: (T) -> List<K>): K? {
-    var accumulatedSize = 0
-    forEach {
-        val list = mapper(it)
-        if (accumulatedSize + list.size < index) {
-            accumulatedSize += list.size
-            return@forEach
-        }
-        return list[index - accumulatedSize]
-    }
-    return null
-}
-
-/**
- * Equivalent of flatMap(mapper).indexOfFirst(predicate), but without list allocations
- */
-inline fun <T, K> List<T>.indexOfFirst2D(mapper: (T) -> List<K>, predicate: (K) -> Boolean): Int {
-    var accumulatedSize = 0
-    forEach {
-        val list = mapper(it)
-        val index = list.indexOfFirst(predicate)
-        if (index != -1) return accumulatedSize + index
-        accumulatedSize += list.size
-    }
-    return -1
-}
