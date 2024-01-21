@@ -45,7 +45,8 @@ inline fun <Key : Any, Value : Any, R : Any> Snapshot<Key, Value>.transform(
         updateKind = updateKind,
         pagingConfig = pagingConfig,
         loadStates = loadStates,
-        uiChannel = uiChannel
+        uiChannel = uiChannel,
+        generation = generation
     )
 
 inline fun <Key : Any, Value : Any> Snapshot<Key, Value>.filter(block: (Value) -> Boolean) =

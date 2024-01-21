@@ -30,8 +30,18 @@ interface PagingItems<Key : Any, Value : Any> {
 
     val size: Int
 
+    val currentGeneration: Int
+
+    /**
+     * A linear snapshot of loaded items. Accessing this list does not trigger page fetching.
+     *
+     * Supports random access
+     */
     val items: List<Value>
 
+    /**
+     * Returns element with specified index and triggers page fetching if necessary
+     */
     operator fun get(index: Int): Value
 
     fun peek(index: Int): Value

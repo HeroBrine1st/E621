@@ -48,8 +48,18 @@ class Pager<Key : Any, Value : Any>(
             append = LoadState.Idle,
             refresh = LoadState.NotLoading
         )
+        var currentGeneration = Int.MIN_VALUE
 
-        send(Snapshot(pages, UpdateKind.StateChange, config, loadStates, uiChannel))
+        send(
+            Snapshot(
+                pages,
+                UpdateKind.StateChange,
+                config,
+                loadStates,
+                uiChannel,
+                currentGeneration
+            )
+        )
 
         uiChannel.flow.collect { event ->
             when (event) {
@@ -66,13 +76,15 @@ class Pager<Key : Any, Value : Any>(
                         is PagingRequest.Prepend -> loadStates.copy(prepend = LoadState.Loading)
                     }
 
+                    currentGeneration++
                     send(
                         Snapshot(
                             pages,
                             updateKind = UpdateKind.StateChange,
                             pagingConfig = config,
                             loadStates = loadStates,
-                            uiChannel = uiChannel
+                            uiChannel = uiChannel,
+                            generation = currentGeneration
                         )
                     )
 
@@ -127,13 +139,15 @@ class Pager<Key : Any, Value : Any>(
                         }
                     }
                     // Notify observers
+                    currentGeneration++
                     send(
                         Snapshot(
                             pages = pages,
                             updateKind = updateKind,
                             pagingConfig = config,
                             loadStates = loadStates,
-                            uiChannel = uiChannel
+                            uiChannel = uiChannel,
+                            generation = currentGeneration
                         )
                     )
                 }
@@ -149,13 +163,15 @@ class Pager<Key : Any, Value : Any>(
                     )
 
                     // Notify observers
+                    currentGeneration++
                     send(
                         Snapshot(
                             pages = pages, // do not clear pages (should probably be configurable)
                             updateKind = UpdateKind.StateChange,
                             pagingConfig = config,
                             loadStates = loadStates,
-                            uiChannel = uiChannel
+                            uiChannel = uiChannel,
+                            generation = currentGeneration
                         )
                     )
 
@@ -190,13 +206,15 @@ class Pager<Key : Any, Value : Any>(
                     }
 
                     // Notify observers
+                    currentGeneration++
                     send(
                         Snapshot(
                             pages = pages,
                             updateKind = updateKind,
                             pagingConfig = config,
                             loadStates = loadStates,
-                            uiChannel = uiChannel
+                            uiChannel = uiChannel,
+                            generation = currentGeneration
                         )
                     )
                 }
