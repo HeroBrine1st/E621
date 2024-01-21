@@ -28,9 +28,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
-import androidx.paging.cachedIn
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.slot.ChildSlot
@@ -70,6 +67,9 @@ import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.isFavourite
+import ru.herobrine1st.paging.Pager
+import ru.herobrine1st.paging.api.PagingConfig
+import ru.herobrine1st.paging.api.cachedIn
 
 private const val POST_STATE_KEY = "POST_STATE_KEY"
 
@@ -313,10 +313,10 @@ class PostComponent(
             PagingConfig(
                 pageSize = BuildConfig.PAGER_PAGE_SIZE,
                 initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
-            )
-        ) {
+            ),
+            initialKey = Int.MIN_VALUE,
             PostCommentsSource(api, exceptionReporter, postId)
-        }
+        )
 
         val commentsFlow = pager.flow.cachedIn(lifecycleScope)
     }

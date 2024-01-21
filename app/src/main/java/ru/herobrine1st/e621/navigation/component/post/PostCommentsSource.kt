@@ -21,8 +21,6 @@
 package ru.herobrine1st.e621.navigation.component.post
 
 import android.util.Log
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.api.API
@@ -31,6 +29,9 @@ import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.parseCommentAvatarsAndGetCommentCount
 import ru.herobrine1st.e621.util.ExceptionReporter
+import ru.herobrine1st.paging.api.LoadParams
+import ru.herobrine1st.paging.api.LoadResult
+import ru.herobrine1st.paging.api.PagingSource
 import kotlin.math.ceil
 import kotlin.properties.Delegates
 
@@ -38,16 +39,16 @@ class PostCommentsSource(
     private val api: API,
     private val exceptionReporter: ExceptionReporter,
     private val postId: PostId,
-) : PagingSource<Int, CommentData>() {
+) : PagingSource<Int, CommentData> {
     // commentId to post
     private lateinit var avatars: Map<Int, PostReduced?>
     private var firstPage by Delegates.notNull<Int>()
 
-    override fun getRefreshKey(state: PagingState<Int, CommentData>): Int? {
-        return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
-    }
+//    override fun getRefreshKey(state: PagingState<Int, CommentData>): Int? {
+//        return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
+//    }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, CommentData> {
+    override suspend fun getPage(params: LoadParams<Int>): LoadResult<Int, CommentData> {
         // Download user-to-avatar url mapping
         if (!::avatars.isInitialized) {
             api.getCommentsForPostHTML(postId)
@@ -62,12 +63,12 @@ class PostCommentsSource(
                     if (commentCount == 0) return LoadResult.Page(
                         data = emptyList(),
                         nextKey = null,
-                        prevKey = null
+                        previousKey = null
                     )
 
                     this.avatars = avatars
                     // comments are reversed
-                    firstPage = ceil(commentCount.toDouble() / params.loadSize).toInt()
+                    firstPage = ceil(commentCount.toDouble() / params.requestedSize).toInt()
                 }
                 .onFailure {
                     Log.e("Posts", "Unable to load comments", it)
@@ -76,8 +77,8 @@ class PostCommentsSource(
                 }
         }
 
-        val page = params.key ?: firstPage
-        val limit = params.loadSize
+        val page = params.key.takeIf { it != Int.MIN_VALUE } ?: firstPage
+        val limit = params.requestedSize
 
         return api.getCommentsForPostBBCode(postId, page, limit).map { it ->
             it.asReversed()
@@ -90,7 +91,7 @@ class PostCommentsSource(
         }.map {
             LoadResult.Page(
                 data = it,
-                prevKey = if (page == firstPage) null else page + 1,
+                previousKey = if (page == firstPage) null else page + 1,
                 nextKey = if (page == 1) null else page - 1,
             )
         }.recover {

@@ -22,7 +22,6 @@ package ru.herobrine1st.e621.ui.screen.post
 
 import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
@@ -96,11 +95,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.paging.LoadState
-import androidx.paging.PagingData
-import androidx.paging.compose.collectAsLazyPagingItems
 import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.CommentData
@@ -115,6 +110,7 @@ import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
 import ru.herobrine1st.e621.ui.component.MAX_SCALE_DEFAULT
 import ru.herobrine1st.e621.ui.component.RenderBB
+import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.rememberZoomableState
@@ -124,6 +120,9 @@ import ru.herobrine1st.e621.ui.component.zoomable
 import ru.herobrine1st.e621.ui.screen.post.component.PoolsDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.util.text
+import ru.herobrine1st.paging.api.LoadState
+import ru.herobrine1st.paging.api.PagingItems
+import ru.herobrine1st.paging.api.collectAsPagingItems
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 private const val TAG = "Post Screen"
@@ -140,17 +139,16 @@ fun Post(
 
     val coroutineScope = rememberCoroutineScope()
 
-    var loadComments by remember {
-        mutableStateOf(
-            preferences.hasAuth() // Assuming there can't be invalid credentials in preferences
-                    && (
-                    // TODO automatic download is disabled due to fix below
-                    // https://issuetracker.google.com/issues/299973349
+    // Probably can't use refresh state to replace this variable at first frame
+    val loadComments =
+        preferences.hasAuth() // Assuming there can't be invalid credentials in preferences
+                && (
+                // TODO automatic download is disabled due to fix below
+                // https://issuetracker.google.com/issues/299973349
 //                    !preferences.dataSaverModeEnabled // Do not make excessive API calls on user preference
 //                    ||
-                    component.openComments)
-        )
-    }
+                component.openComments)
+    val comments = component.commentsFlow.collectAsPagingItems(startImmediately = loadComments)
 
 
     var fullscreenState by remember { mutableStateOf(FullscreenState.CLOSED) }
@@ -176,17 +174,18 @@ fun Post(
 
     val bottomSheetState = rememberStandardBottomSheetState(
         // `&& loadComments` is a fix for unauthenticated usage case
-        // Think of it as there is no point to opening comment if they're not loading
-        // (yes we can && preferences.hasAuth(), but let's go with single source of truth, ok?
-        // Auth logic may and will change sometime. Also && loadComments has less overhead - it is anyway already computed)
+        // Think of it as there is no point in opening comments if they're not loading
         initialValue = if (component.openComments && loadComments) SheetValue.PartiallyExpanded
         else SheetValue.Hidden,
         skipHiddenState = false
     )
 
-    LaunchedEffect(bottomSheetState.currentValue, loadComments) {
+    LaunchedEffect(
+        bottomSheetState.currentValue,
+        comments.loadStates.refresh is LoadState.NotLoading
+    ) {
         // Attempt to work https://issuetracker.google.com/issues/299973349 around
-        if (bottomSheetState.currentValue != SheetValue.Hidden && !loadComments) {
+        if (bottomSheetState.currentValue != SheetValue.Hidden && comments.loadStates.refresh is LoadState.NotLoading) {
             bottomSheetState.hide()
         }
     }
@@ -197,6 +196,8 @@ fun Post(
     )
 
     val dialog by component.dialog.subscribeAsState()
+
+
 
     when (val dialogComponent = dialog.child?.instance) {
         is PoolsDialogComponent -> {
@@ -224,9 +225,8 @@ fun Post(
             },
             sheetContent = {
                 if (postState is PostState.Ready) CommentsBottomSheetContent(
-                    commentsFlow = component.commentsFlow,
-                    post = postState.post,
-                    loadComments = loadComments
+                    comments = comments,
+                    post = postState.post
                 )
             },
             sheetPeekHeight = maxHeight * 0.5f,
@@ -313,7 +313,9 @@ fun Post(
                         onFavouriteChange = component::handleFavouriteChange
                     ) {
                         coroutineScope.launch {
-                            loadComments = true
+                            if (comments.loadStates.refresh is LoadState.NotLoading) {
+                                comments.refresh()
+                            }
                             bottomSheetState.partialExpand()
                         }
                     }
@@ -379,7 +381,9 @@ fun Post(
                             .fillMaxWidth()
                             .clickable(enabled = post.commentCount != 0 && preferences.hasAuth()) {
                                 coroutineScope.launch {
-                                    loadComments = true
+                                    if (comments.loadStates.refresh is LoadState.NotLoading) {
+                                        comments.refresh()
+                                    }
                                     bottomSheetState.partialExpand()
                                 }
                             }
@@ -390,37 +394,25 @@ fun Post(
                             style = MaterialTheme.typography.headlineSmall
                         )
                         Spacer(Modifier.width(4.dp))
-
                         val commentState = when {
                             post.commentCount == 0 -> {
                                 CommentsLoadingState.Empty
                             }
 
-
-                            loadComments -> {
-                                // Cannot hoist comments: there's no disable for automatic download
-                                val comments = component.commentsFlow.collectAsLazyPagingItems()
-                                when (comments.loadState.refresh) {
+                            comments.loadStates.refresh !is LoadState.NotLoading -> {
+                                when (comments.loadStates.refresh) {
                                     is LoadState.Loading -> {
                                         CommentsLoadingState.Showable.Loading
                                     }
 
-                                    is LoadState.NotLoading -> {
-                                        if (comments.itemSnapshotList.isEmpty()) CommentsLoadingState.Empty
-                                        else comments.peek(0)
-                                            ?.let { CommentsLoadingState.Showable.Success(it) }
-                                            ?: run {
-                                                Log.w(
-                                                    TAG,
-                                                    "itemSnapshotList is not empty but first item is not a show-able comment"
-                                                )
-                                                // It is not possible, but !! on UI thread is bad imho
-                                                // so fall back gently
-                                                CommentsLoadingState.Failed
-                                            }
+                                    is LoadState.Complete -> {
+                                        if (comments.items.isEmpty()) CommentsLoadingState.Empty
+                                        else CommentsLoadingState.Showable.Success(comments.peek(0))
                                     }
 
                                     is LoadState.Error -> CommentsLoadingState.Failed
+                                    // Both not possible
+                                    is LoadState.Idle, is LoadState.NotLoading -> CommentsLoadingState.Failed
                                 }
                             }
 
@@ -529,7 +521,7 @@ fun Post(
 
         // TODO animate fullscreen enter via fullscreen zoomable
         if (fullscreenState == FullscreenState.OPEN) {
-            if(postState is PostState.Ready) {
+            if (postState is PostState.Ready) {
                 val file = component.currentFile
                 val initialTranslation: Offset
                 val initialScale: Float
@@ -575,21 +567,18 @@ fun Post(
 
 @Composable
 fun CommentsBottomSheetContent(
-    commentsFlow: Flow<PagingData<CommentData>>,
+    comments: PagingItems<*, CommentData>,
     post: Post,
-    loadComments: Boolean,
 ) {
-
     val commentsLazyListState = rememberLazyListState()
 
     Box(
         Modifier.fillMaxSize()
     ) {
-        if (!loadComments) return@Box
+        if (comments.loadStates.refresh is LoadState.NotLoading) return@Box
 
-        val comments = commentsFlow.collectAsLazyPagingItems()
         Crossfade(
-            comments.loadState.refresh is LoadState.Error,
+            comments.loadStates.refresh is LoadState.Error,
             label = "Comments sheet animation between error and content"
         ) {
             if (it) Column(
@@ -602,7 +591,7 @@ fun CommentsBottomSheetContent(
                 Icon(Icons.Outlined.Error, contentDescription = null)
                 Text(stringResource(R.string.comments_load_failed))
                 Button(onClick = {
-                    comments.retry()
+                    comments.refresh()
                 }) {
                     Text(stringResource(R.string.retry))
                 }
@@ -615,25 +604,21 @@ fun CommentsBottomSheetContent(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {}
-                // STOPSHIP: migration
-//                endOfPagePlaceholder(comments.loadState.prepend)
+                endOfPagePlaceholder(comments.loadStates.prepend)
                 items(
-                    // count is known before even initialization of PagingSource, why the fuck Paging 3 does not give a way to provide it before request starts?
-                    count = if (comments.loadState.refresh is LoadState.Loading) post.commentCount
-                    else comments.itemCount,
+                    // TODO Move placeholders to pager
+                    count = if (comments.loadStates.refresh is LoadState.Loading) post.commentCount
+                    else comments.size,
                     key = { index ->
-                        val comment = if (index >= comments.itemCount) null
+                        val comment = if (index >= comments.size) null
                         else comments[index]
                         return@items comment?.id ?: "index key $index"
                     }
-                    // contentType is purposely ignored as all items are of the same type and additional calls to Paging library are not needed
+                    // contentType is purposely ignored as all items are of the same type
                 ) { index ->
                     val comment =
-                    // Because there is a fucking check and a fucking throw
-                    // TODO migrate away from Paging 3
-                        // (I think I will postpone it until workarounds are causing lags)
-                        if (index >= comments.itemCount) CommentData.PLACEHOLDER
-                        else comments[index] ?: CommentData.PLACEHOLDER
+                        if (index >= comments.size) CommentData.PLACEHOLDER
+                        else comments[index]
                     PostComment(
                         comment,
                         modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
@@ -641,8 +626,7 @@ fun CommentsBottomSheetContent(
                         animateTextChange = true
                     )
                 }
-                // STOPSHIP: migration
-//                endOfPagePlaceholder(comments.loadState.append)
+                endOfPagePlaceholder(comments.loadStates.append)
                 item {}
             }
         }
