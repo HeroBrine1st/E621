@@ -63,6 +63,8 @@ import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
+import ru.herobrine1st.e621.ui.screen.posts.component.HiddenItems
+import ru.herobrine1st.e621.ui.screen.posts.component.Post
 import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.paging.api.LoadState
