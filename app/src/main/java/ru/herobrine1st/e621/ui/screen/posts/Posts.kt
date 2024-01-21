@@ -53,6 +53,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -68,10 +69,6 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingItem
-import ru.herobrine1st.paging.api.LoadState
-import ru.herobrine1st.paging.api.collectAsPagingItems
-import ru.herobrine1st.paging.api.contentType
-import ru.herobrine1st.paging.api.itemKey
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
@@ -81,6 +78,10 @@ import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.e621.util.text
+import ru.herobrine1st.paging.api.LoadState
+import ru.herobrine1st.paging.api.collectAsPagingItems
+import ru.herobrine1st.paging.api.contentType
+import ru.herobrine1st.paging.api.itemKey
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,11 +90,25 @@ fun Posts(
     component: PostListingComponent,
     isAuthorized: Boolean, // TODO move to component
 ) {
-    val posts = component.postsFlow.collectAsPagingItems(startImmediately = true)
+
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
 
+    var index by remember { mutableIntStateOf(-1) }
+    val posts = remember {
+        component.postsFlow.correctFirstVisibleItem(
+            getFirstVisibleItemIndex = { lazyListState.firstVisibleItemIndex },
+            setIndex = { index = it }
+        )
+    }
+        .collectAsPagingItems(startImmediately = true)
+
+    LaunchedEffect(key1 = index) {
+        if (index == -1) return@LaunchedEffect
+        lazyListState.scrollToItem(index)
+        index = -1
+    }
 
     //region Working around strange API
     // https://issuetracker.google.com/issues/317177683
