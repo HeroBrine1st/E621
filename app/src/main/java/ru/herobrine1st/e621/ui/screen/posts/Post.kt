@@ -81,7 +81,7 @@ fun Post(
                 )
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
-                // TODO crossAxisSpacing = 2.dp,
+                verticalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier.padding(8.dp)
             ) {
                 var expandTags by remember { mutableStateOf(false) }
