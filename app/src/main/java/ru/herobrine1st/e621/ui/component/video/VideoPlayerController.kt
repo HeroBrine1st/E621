@@ -42,7 +42,6 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.ripple.rememberRipple
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -88,16 +87,6 @@ fun VideoPlayerController(
     Box(
         modifier = modifier
     ) {
-        AnimatedVisibility(
-            visible = playbackState == Player.STATE_BUFFERING,
-            enter = fadeIn(),
-            exit = fadeOut(),
-            modifier = Modifier.align(
-                Alignment.Center
-            )
-        ) {
-            CircularProgressIndicator(color = Color.White)
-        }
         AnimatedVisibility(
             visible = playbackState == Player.STATE_READY,
             enter = fadeIn(),
