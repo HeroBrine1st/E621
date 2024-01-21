@@ -141,7 +141,7 @@ fun ModifyTagDialog(
                                 }
                                 res
                             }
-                            .trim('_')
+                            .trimStart('_')
                     })
                     if (!actuallyChanged) return@OutlinedTextField
                     selectedFromSuggested = false
