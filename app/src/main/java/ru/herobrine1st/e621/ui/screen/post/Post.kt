@@ -23,7 +23,6 @@ package ru.herobrine1st.e621.ui.screen.post
 import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
-import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
@@ -32,7 +31,6 @@ import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -40,7 +38,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,25 +46,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Help
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Explicit
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
@@ -88,7 +77,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -101,7 +89,6 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.CommentData
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.post.PostState
@@ -110,7 +97,6 @@ import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
 import ru.herobrine1st.e621.ui.component.MAX_SCALE_DEFAULT
 import ru.herobrine1st.e621.ui.component.RenderBB
-import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
 import ru.herobrine1st.e621.ui.component.rememberZoomableState
@@ -119,9 +105,8 @@ import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.zoomable
 import ru.herobrine1st.e621.ui.screen.post.component.PoolsDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
-import ru.herobrine1st.e621.util.text
+import ru.herobrine1st.e621.ui.screen.post.component.tags
 import ru.herobrine1st.paging.api.LoadState
-import ru.herobrine1st.paging.api.PagingItems
 import ru.herobrine1st.paging.api.collectAsPagingItems
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
@@ -562,220 +547,4 @@ fun Post(
             bottomSheetState.hide()
         }
     }
-}
-
-@Composable
-fun CommentsBottomSheetContent(
-    comments: PagingItems<CommentData>,
-    post: Post,
-) {
-    val commentsLazyListState = rememberLazyListState()
-
-    Box(
-        Modifier.fillMaxSize()
-    ) {
-        if (comments.loadStates.refresh is LoadState.NotLoading) return@Box
-
-        Crossfade(
-            comments.loadStates.refresh is LoadState.Error,
-            label = "Comments sheet animation between error and content"
-        ) {
-            if (it) Column(
-                Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                // Not very good
-                // I'm a bad UI designer, I know
-                Icon(Icons.Outlined.Error, contentDescription = null)
-                Text(stringResource(R.string.comments_load_failed))
-                Button(onClick = {
-                    comments.refresh()
-                }) {
-                    Text(stringResource(R.string.retry))
-                }
-            }
-            else LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                state = commentsLazyListState,
-                modifier = Modifier
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                item {}
-                endOfPagePlaceholder(comments.loadStates.prepend)
-                items(
-                    // TODO Move placeholders to pager
-                    count = if (comments.loadStates.refresh is LoadState.Loading) post.commentCount
-                    else comments.size,
-                    key = { index ->
-                        val comment = if (index >= comments.size) null
-                        else comments[index]
-                        return@items comment?.id ?: "index key $index"
-                    }
-                    // contentType is purposely ignored as all items are of the same type
-                ) { index ->
-                    val comment =
-                        if (index >= comments.size) CommentData.PLACEHOLDER
-                        else comments[index]
-                    PostComment(
-                        comment,
-                        modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
-                        placeholder = comment === CommentData.PLACEHOLDER,
-                        animateTextChange = true
-                    )
-                }
-                endOfPagePlaceholder(comments.loadStates.append)
-                item {}
-            }
-        }
-    }
-
-}
-
-private fun LazyListScope.tags(
-    post: Post,
-    onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
-    onWikiClick: (Tag) -> Unit,
-) {
-    tags(R.string.artist_tags, post.tags.artist, onModificationClick, onWikiClick)
-    tags(
-        R.string.copyright_tags,
-        post.tags.copyright,
-        onModificationClick,
-        onWikiClick
-    )
-    tags(
-        R.string.character_tags,
-        post.tags.character,
-        onModificationClick,
-        onWikiClick
-    )
-    tags(R.string.species_tags, post.tags.species, onModificationClick, onWikiClick)
-    tags(R.string.general_tags, post.tags.general, onModificationClick, onWikiClick)
-    tags(R.string.lore_tags, post.tags.lore, onModificationClick, onWikiClick)
-    tags(R.string.meta_tags, post.tags.meta, onModificationClick, onWikiClick)
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-private fun LazyListScope.tags(
-    @StringRes titleId: Int,
-    tags: List<Tag>,
-    onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
-    onWikiClick: (Tag) -> Unit,
-) {
-    if (tags.isEmpty()) return
-    stickyHeader("$titleId tags") {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(start = 8.dp)
-                .height(ButtonDefaults.MinHeight)
-                .background(
-                    brush = Brush.verticalGradient(
-                        listOf(
-                            MaterialTheme.colorScheme.background,
-                            MaterialTheme.colorScheme.background.copy(alpha = 0f)
-                        )
-                    )
-                )
-        ) {
-            Text(
-                stringResource(titleId),
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.weight(1f)
-            )
-        }
-    }
-    items(tags, key = { "$it tag" }) {
-        Tag(it, onModificationClick, onWikiClick)
-    }
-}
-
-@Composable
-private fun Tag(
-    tag: Tag,
-    onModificationClick: (tag: Tag, exclude: Boolean) -> Unit,
-    onWikiClick: (Tag) -> Unit,
-) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.padding(start = 8.dp)
-    ) {
-        Text(tag.text, modifier = Modifier.weight(1f))
-        IconButton( // Add
-            onClick = {
-                onModificationClick(tag, false)
-            }
-        ) {
-            Icon(
-                Icons.Default.Add,
-                contentDescription = stringResource(R.string.add_tag_to_search)
-            )
-        }
-        IconButton(
-            onClick = {
-                onModificationClick(tag, true)
-            }
-        ) {
-            Icon(
-                Icons.Default.Remove,
-                contentDescription = stringResource(R.string.exclude_tag_from_search)
-            )
-        }
-        IconButton(
-            onClick = {
-                onWikiClick(tag)
-            }
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.Help,
-                contentDescription = stringResource(R.string.tag_view_wiki)
-            )
-        }
-    }
-}
-
-enum class FullscreenState {
-    OPEN,
-    CLOSED,
-}
-
-private sealed interface CommentsLoadingState {
-    // To be used as content key for animation
-    val index: Int
-
-    @Suppress("SpellCheckingInspection") // idk how to name it
-    sealed interface Showable : CommentsLoadingState {
-        override val index: Int
-            get() = 2
-        val commentData: CommentData
-
-        data class Success(override val commentData: CommentData) : Showable
-
-        data object Loading : Showable {
-            override val commentData by CommentData.Companion::PLACEHOLDER
-        }
-    }
-
-    data object NotLoading : CommentsLoadingState {
-        override val index: Int
-            get() = 0
-    }
-
-    data object Empty : CommentsLoadingState {
-        override val index: Int
-            get() = 1
-    }
-
-    data object Failed : CommentsLoadingState {
-        override val index: Int
-            get() = 3
-    }
-
-    data object Forbidden/*due to credentials absence*/ : CommentsLoadingState {
-        override val index: Int
-            get() = 4
-    }
-
 }
