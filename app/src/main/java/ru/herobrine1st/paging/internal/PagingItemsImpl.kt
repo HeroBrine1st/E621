@@ -53,10 +53,10 @@ class PagingItemsImpl<Key : Any, Value : Any>(
     suspend fun collectPagingData(startImmediately: Boolean) {
         flow.collect { snapshot ->
             loadStates = snapshot.loadStates
+            currentGeneration = snapshot.generation
             if (uiChannel == null) {
                 uiChannel = snapshot.uiChannel
                 pagingConfig = snapshot.pagingConfig
-                currentGeneration = snapshot.generation
                 if (startImmediately && loadStates.refresh is LoadState.NotLoading) refresh()
             }
 
