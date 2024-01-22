@@ -42,8 +42,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.ui.component.post.InvalidPost
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
-import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
+import ru.herobrine1st.e621.ui.component.post.PostImage
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.text
 
@@ -60,25 +61,29 @@ fun Post(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            if (post.normalizedSample.type.isVideo) {
-                Text(
-                    stringResource(
-                        R.string.assertion_failed,
-                        "API_RETURNED_VIDEO_SAMPLE_${post.id.value}"
-                    )
-                )
-            } else
-                PostMediaContainer(
-                    file = post.normalizedSample,
+            val file = post.normalizedSample
+            when {
+                file.type.isImage -> PostImage(
+                    file = file,
                     contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
                     modifier = Modifier.clickable {
                         openPost(false)
                     },
-                    post = post,
-                    getVideoPlayerComponent = {
-                        throw RuntimeException("Normalized sample is a video, which is not possible")
-                    }
+                    actualPostFileType = post.file.type
                 )
+
+                else -> {
+                    InvalidPost(
+                        text = stringResource(
+                            R.string.unsupported_post_type,
+                            file.type.extension
+                        ),
+                        modifier = Modifier.clickable {
+                            openPost(false)
+                        }
+                    )
+                }
+            }
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
