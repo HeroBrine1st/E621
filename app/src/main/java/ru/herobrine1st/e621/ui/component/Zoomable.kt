@@ -70,13 +70,14 @@ import kotlin.math.sqrt
 const val MAX_SCALE_DEFAULT = 5f
 const val TAG = "Zoomable"
 
-fun Modifier.zoomable(state: ZoomableState) = this
+fun Modifier.zoomable(state: ZoomableState, onTap: (position: Offset) -> Unit = {}) = this
     .pointerInput(state) {
         detectTransformGestures(
             onGestureStart = state::handleGestureStart,
             onGesture = state::handleTransformationGesture,
             onGestureEnd = state::handleGestureEnd,
-            onDoubleTap = state::onDoubleTap
+            onDoubleTap = state::onDoubleTap,
+            onSingleTap = onTap
         )
     }
     .graphicsLayer {
@@ -98,6 +99,7 @@ private suspend inline fun PointerInputScope.detectTransformGestures(
     crossinline onGesture: (centroid: Offset, pan: Offset, zoom: Float, uptimeMillis: Long) -> Unit,
     crossinline onGestureEnd: () -> Unit = {},
     crossinline onDoubleTap: (position: Offset) -> Unit = {},
+    crossinline onSingleTap: (position: Offset) -> Unit = {},
 ) {
     awaitEachGesture {
         var cumZoom = 1f
@@ -151,7 +153,11 @@ private suspend inline fun PointerInputScope.detectTransformGestures(
                             // It does cancel this coroutine after timeout, but just in case
                         } while (change.uptimeMillis <= first.uptimeMillis + viewConfiguration.doubleTapTimeoutMillis)
                         change
-                    } ?: return@run // it is a simple tap
+                    }
+                if (second == null) {
+                    onSingleTap(first.position)
+                    return@run
+                }
 
                 val centroid = second.position
                 var secondGestureIsScaling = false
