@@ -33,9 +33,9 @@ import ru.herobrine1st.paging.api.Snapshot
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
-class PagingItemsImpl<Key : Any, Value : Any>(
-    val flow: Flow<Snapshot<Key, Value>>,
-) : PagingItems<Key, Value> {
+class PagingItemsImpl<Value : Any>(
+    val flow: Flow<Snapshot<*, Value>>,
+) : PagingItems<Value> {
 
     private var listDelegate by mutableStateOf(emptyList<Value>())
     private var uiChannel: SynchronizedBus<PagingRequest>? = null

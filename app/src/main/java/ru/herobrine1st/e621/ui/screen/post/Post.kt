@@ -566,7 +566,7 @@ fun Post(
 
 @Composable
 fun CommentsBottomSheetContent(
-    comments: PagingItems<*, CommentData>,
+    comments: PagingItems<CommentData>,
     post: Post,
 ) {
     val commentsLazyListState = rememberLazyListState()

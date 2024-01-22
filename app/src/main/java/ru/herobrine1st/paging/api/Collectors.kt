@@ -29,7 +29,7 @@ import ru.herobrine1st.paging.internal.PagingItemsImpl
 @Composable
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.collectAsPagingItems(
     startImmediately: Boolean = true,
-): PagingItems<Key, Value> {
+): PagingItems<Value> {
     val pagingItems = remember { PagingItemsImpl(this) }
 
     LaunchedEffect(Unit) {

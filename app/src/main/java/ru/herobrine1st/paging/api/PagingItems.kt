@@ -23,7 +23,7 @@ package ru.herobrine1st.paging.api
 import androidx.compose.runtime.Stable
 
 @Stable
-interface PagingItems<Key : Any, Value : Any> {
+interface PagingItems<Value : Any> {
 
     val loadStates: LoadStates
     fun refresh()
@@ -47,12 +47,12 @@ interface PagingItems<Key : Any, Value : Any> {
     fun peek(index: Int): Value
 }
 
-inline fun <Value : Any, T> PagingItems<*, Value>.itemKey(crossinline block: (Value) -> T): (Int) -> T =
+inline fun <Value : Any, T> PagingItems<Value>.itemKey(crossinline block: (Value) -> T): (Int) -> T =
     {
         block(items[it])
     }
 
-inline fun <Value : Any, T> PagingItems<*, Value>.contentType(crossinline block: (Value) -> T?): (Int) -> T? =
+inline fun <Value : Any, T> PagingItems<Value>.contentType(crossinline block: (Value) -> T?): (Int) -> T? =
     {
         block(items[it])
     }
