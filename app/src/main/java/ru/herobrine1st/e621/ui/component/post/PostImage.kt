@@ -45,6 +45,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
@@ -52,6 +53,7 @@ import coil.compose.AsyncImagePainter
 import coil.compose.AsyncImagePainter.State.Empty
 import coil.compose.AsyncImagePainter.State.Error
 import coil.compose.AsyncImagePainter.State.Loading
+import coil.request.ImageRequest
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.FileType
@@ -70,13 +72,24 @@ fun PostImage(
     contentDescription: String?,
     modifier: Modifier = Modifier,
     actualPostFileType: FileType? = null,
-    matchHeightConstraintsFirst: Boolean = false
+    matchHeightConstraintsFirst: Boolean = false,
+    setSizeOriginal: Boolean = false,
 ) {
     val aspectRatio = file.aspectRatio
     val url = file.urls.firstNotNullOfOrNull { it.toHttpUrlOrNull() }
 
     var painterState by remember { mutableStateOf<AsyncImagePainter.State>(Empty) }
     val progress by collectDownloadProgressAsState(url)
+
+    val context = LocalContext.current
+    val imageRequest = remember(url) {
+        ImageRequest.Builder(context)
+            .data(url)
+            .apply {
+                if (setSizeOriginal) size(coil.size.Size.ORIGINAL)
+            }
+            .build()
+    }
 
     debug {
         var maxProgress by remember { mutableStateOf(progress) }
@@ -101,8 +114,9 @@ fun PostImage(
                 matchHeightConstraintsFirst = matchHeightConstraintsFirst
             )
     ) {
+
         AsyncImage(
-            model = url,
+            model = imageRequest,
             contentDescription = contentDescription,
             modifier = Modifier
                 .matchParentSize()

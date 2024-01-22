@@ -87,8 +87,8 @@ import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.CommentData
-import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.isOriginal
 import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.post.PostState
@@ -97,8 +97,10 @@ import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
 import ru.herobrine1st.e621.ui.component.MAX_SCALE_DEFAULT
 import ru.herobrine1st.e621.ui.component.RenderBB
+import ru.herobrine1st.e621.ui.component.post.InvalidPost
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
-import ru.herobrine1st.e621.ui.component.post.PostMediaContainer
+import ru.herobrine1st.e621.ui.component.post.PostImage
+import ru.herobrine1st.e621.ui.component.post.PostVideo
 import ru.herobrine1st.e621.ui.component.rememberZoomableState
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
@@ -140,16 +142,34 @@ fun Post(
     var imagePositionInRoot by remember { mutableStateOf(Offset.Unspecified) }
 
     val media = remember {
-        movableContentOf { file: NormalizedFile, post: Post, modifier: Modifier, matchHeightConstrainsFirst: Boolean ->
-            PostMediaContainer(
-                file = file,
-                contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
-                modifier = modifier,
-                getVideoPlayerComponent = {
-                    component.getVideoPlayerComponent(file)
-                },
-                matchHeightConstraintsFirst = matchHeightConstrainsFirst
-            )
+        movableContentOf { post: Post, modifier: Modifier, matchHeightConstraintsFirst: Boolean ->
+            val file = component.currentFile
+
+            when {
+                file.type.isVideo -> PostVideo(
+                    component.getVideoPlayerComponent(file),
+                    file,
+                    modifier = modifier,
+                    matchHeightConstraintsFirst = matchHeightConstraintsFirst
+                )
+
+                file.type.isImage -> PostImage(
+                    file = file,
+                    contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
+                    modifier = modifier,
+                    actualPostFileType = post.file.type,
+                    matchHeightConstraintsFirst = matchHeightConstraintsFirst,
+                    setSizeOriginal = file.isOriginal()
+                )
+
+                else -> InvalidPost(
+                    text = stringResource(
+                        R.string.unsupported_post_type,
+                        file.type.extension
+                    ),
+                    modifier = modifier
+                )
+            }
         }
     }
 
@@ -180,8 +200,6 @@ fun Post(
     )
 
     val dialog by component.dialog.subscribeAsState()
-
-
 
     when (val dialogComponent = dialog.child?.instance) {
         is PoolsDialogComponent -> {
@@ -284,7 +302,7 @@ fun Post(
                             }
                     ) {
                         if (fullscreenState == FullscreenState.CLOSED)
-                            media(file, post, Modifier.fillMaxWidth(), false)
+                            media(post, Modifier.fillMaxWidth(), false)
                     }
                 }
                 item("actionbar") {
@@ -473,6 +491,16 @@ fun Post(
                     if (post.relationships.hasChildren || post.relationships.parentId != null || post.pools.isNotEmpty())
                         HorizontalDivider()
                 }
+                item("show original file button") {
+                    TextButton(
+                        onClick = { component.setFile(post.normalizedFile) },
+                        enabled = !component.currentFile.isOriginal()
+                    ) {
+                        Text(stringResource(R.string.show_original_file))
+                        Spacer(Modifier.weight(1f))
+                    }
+                    HorizontalDivider()
+                }
                 item("uploaded") {
                     Spacer(Modifier.height(8.dp))
                     // TODO place more information here
@@ -507,6 +535,8 @@ fun Post(
         if (fullscreenState == FullscreenState.OPEN) {
             if (postState is PostState.Ready) {
                 val file = component.currentFile
+                val post = postState.post
+
                 val initialTranslation: Offset
                 val initialScale: Float
                 // if image size would exceed screen height, it is true
@@ -521,7 +551,7 @@ fun Post(
                 }
                 val maxScale = initialScale * MAX_SCALE_DEFAULT
                 media(
-                    file, postState.post,
+                    post,
                     Modifier
                         .zoomable(
                             rememberZoomableState(

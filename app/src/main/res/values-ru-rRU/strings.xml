@@ -156,4 +156,5 @@
         <item quantity="many">%d элементов</item>
         <item quantity="other">%d элементов</item>
     </plurals>
+    <string name="show_original_file">Показать оригинальный файл</string>
 </resources>

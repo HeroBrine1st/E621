@@ -57,3 +57,5 @@ data class NormalizedFile(
 
     val aspectRatio get() = width.toFloat() / height.toFloat()
 }
+
+fun NormalizedFile.isOriginal() = name == "original"

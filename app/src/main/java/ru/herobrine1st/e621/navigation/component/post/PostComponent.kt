@@ -142,7 +142,7 @@ class PostComponent(
         state = stateKeeper.consume(POST_STATE_KEY, strategy = PostState.serializer())
             ?: initialPost?.let { PostState.Ready(it) } ?: PostState.Loading
 
-        if (state is PostState.Ready) setMediaItem()
+        if (state is PostState.Ready) useSample()
 
         lifecycle.doOnResume {
             // TODO behavior preference
@@ -155,7 +155,7 @@ class PostComponent(
                     || !applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }.first()
                 )
                     refreshPostInternal()
-                setMediaItem()
+                useSample()
             }
 
         }
@@ -177,14 +177,18 @@ class PostComponent(
         }
     }
 
-    private fun setMediaItem() {
+    fun setFile(file: NormalizedFile) {
+        currentFile = file
+        if (file.type.isVideo) {
+            getVideoPlayerComponent(file)
+        }
+    }
+
+    private fun useSample() {
         val state = state
         assert(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
         state as PostState.Ready
-        currentFile = state.post.selectSample()
-        if (currentFile.type.isVideo) {
-            getVideoPlayerComponent(currentFile)
-        }
+        setFile(state.post.selectSample())
     }
 
     fun getVideoPlayerComponent(file: NormalizedFile): VideoPlayerComponent {
