@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.ui.component.post
 
-import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
@@ -37,7 +36,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,7 +61,6 @@ import ru.herobrine1st.e621.net.collectDownloadProgressAsState
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
 import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
-import ru.herobrine1st.e621.util.debug
 
 private const val TAG = "PostImage"
 
@@ -92,21 +89,6 @@ fun PostImage(
             .build()
     }
 
-    debug {
-        var maxProgress by remember { mutableStateOf(progress) }
-        LaunchedEffect(progress?.progress) {
-            progress?.let { progress ->
-                if (progress.progress < (maxProgress?.progress ?: 0f)) {
-                    Log.w(
-                        TAG,
-                        "Progress for ${progress.url} went backwards: from $maxProgress to $progress"
-                    )
-                } else {
-                    maxProgress = progress
-                }
-            }
-        }
-    }
     Box(
         contentAlignment = Alignment.Center,
         modifier = modifier
@@ -115,7 +97,6 @@ fun PostImage(
                 matchHeightConstraintsFirst = matchHeightConstraintsFirst
             )
     ) {
-
         AsyncImage(
             model = imageRequest,
             contentDescription = contentDescription,
