@@ -53,6 +53,7 @@ import coil.compose.AsyncImagePainter
 import coil.compose.AsyncImagePainter.State.Empty
 import coil.compose.AsyncImagePainter.State.Error
 import coil.compose.AsyncImagePainter.State.Loading
+import coil.compose.AsyncImagePainter.State.Success
 import coil.request.ImageRequest
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
@@ -121,7 +122,7 @@ fun PostImage(
             modifier = Modifier
                 .matchParentSize()
                 .placeholder(
-                    visible = painterState is Loading || painterState is Empty,
+                    visible = painterState is Loading,
                     highlight = PlaceholderHighlight.fade()
                 ),
             onState = {
@@ -149,7 +150,7 @@ fun PostImage(
                 Text(stringResource(R.string.unknown_error))
             }
 
-            is Loading, Empty -> Crossfade(
+            is Loading -> Crossfade(
                 progress == null,
                 label = "Crossfade between indeterminate and determinate progress indicators"
             ) {
@@ -170,7 +171,7 @@ fun PostImage(
                 }
             }
 
-            else -> {}
+            is Success, is Empty -> {}
         }
     }
 }
