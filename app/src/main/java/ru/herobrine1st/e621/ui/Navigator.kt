@@ -1,4 +1,3 @@
-
 /*
  * This file is part of ru.herobrine1st.e621.
  *
@@ -43,6 +42,7 @@ import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.animation.reducedSlide
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenSharedState
+import ru.herobrine1st.e621.ui.screen.PostMediaScreen
 import ru.herobrine1st.e621.ui.screen.WikiScreen
 import ru.herobrine1st.e621.ui.screen.home.Home
 import ru.herobrine1st.e621.ui.screen.post.Post
@@ -58,7 +58,7 @@ import ru.herobrine1st.e621.ui.screen.settings.SettingsLicenses
 @Composable
 fun Navigator(
     rootComponent: RootComponent,
-    snackbarHostState: androidx.compose.material3.SnackbarHostState
+    snackbarHostState: androidx.compose.material3.SnackbarHostState,
 ) {
     val preferences = LocalPreferences.current
     val navigation = rootComponent.navigation
@@ -109,6 +109,7 @@ fun Navigator(
                 component = instance.component,
                 isAuthorized = preferences.hasAuth()
             )
+
             is Settings -> Settings(
                 screenSharedState = sharedState,
                 onNavigateToBlacklistSettings = {
@@ -118,15 +119,18 @@ fun Navigator(
                     navigation.push(Config.Settings.About)
                 }
             )
+
             is Settings.Blacklist ->
                 SettingsBlacklist(
                     screenSharedState = sharedState,
                     component = instance.component
                 )
+
             is Settings.Blacklist.Entry -> SettingsBlacklistEntry(
                 sharedState,
                 instance.component
             )
+
             is Settings.About -> SettingsAbout(
                 screenSharedState = sharedState,
                 navigateToLicense = {
@@ -136,9 +140,11 @@ fun Navigator(
                     navigation.push(Config.Settings.AboutLibraries)
                 }
             )
+
             is Settings.License -> SettingsLicense(sharedState)
             is Settings.AboutLibraries -> SettingsLicenses(sharedState)
             is Wiki -> WikiScreen(sharedState, instance.component)
+            is RootComponent.Child.PostMedia -> PostMediaScreen(instance.component)
         }
     }
 }

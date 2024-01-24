@@ -22,6 +22,7 @@ package ru.herobrine1st.e621.navigation.config
 
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
+import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
@@ -39,13 +40,13 @@ sealed interface Config {
     @Serializable
     data class Search(
         val initialSearch: PostsSearchOptions = PostsSearchOptions(),
-        private val index: Int
+        private val index: Int,
     ) : Config
 
     @Serializable
     data class PostListing(
         val search: SearchOptions,
-        private val index: Int
+        private val index: Int,
     ) : Config
 
     @Serializable
@@ -60,11 +61,14 @@ sealed interface Config {
     @Serializable
     data class Wiki(
         val tag: Tag,
-        private val index: Int
+        private val index: Int,
     ) : Config
 
-    // Not needed: already covered by [PostListing]
-    // data class Favourites
+    @Serializable
+    data class PostMedia(
+        val post: ModelPost,
+        val initialFile: NormalizedFile,
+    ) : Config
 
     // These are used only once in a stack
     @Serializable
@@ -75,7 +79,7 @@ sealed interface Config {
             data class Entry(
                 val id: Long,
                 val query: String,
-                val enabled: Boolean
+                val enabled: Boolean,
             ) : Config
         }
 

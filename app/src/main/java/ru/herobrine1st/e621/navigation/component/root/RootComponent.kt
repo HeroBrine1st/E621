@@ -28,6 +28,7 @@ import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
+import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
@@ -48,6 +49,7 @@ interface RootComponent {
         class PostListing(val component: PostListingComponent) : Child
         class Post(val component: PostComponent) : Child
         class Wiki(val component: WikiComponent) : Child
+        class PostMedia(val component: PostMediaComponent) : Child
         class Settings(val component: SettingsComponent) : Child {
             class Blacklist(val component: SettingsBlacklistComponent) : Child {
                 class Entry(val component: SettingsBlacklistEntryComponent) : Child

@@ -35,6 +35,7 @@ data class File(
     val url: String = ""
 )
 
+@Serializable
 data class NormalizedFile(
     val name: String,
     val width: Int,

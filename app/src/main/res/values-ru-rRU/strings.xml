@@ -157,4 +157,5 @@
         <item quantity="other">%d элементов</item>
     </plurals>
     <string name="show_original_file">Показать оригинальный файл</string>
+    <string name="image_fullscreen_select_image_variant">Выбрать вариант изображения</string>
 </resources>

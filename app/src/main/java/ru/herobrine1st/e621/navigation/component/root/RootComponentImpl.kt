@@ -28,6 +28,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import ru.herobrine1st.e621.module.ActivityInjectionCompanion
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
+import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
@@ -152,6 +153,7 @@ class RootComponentImpl(
             is Settings.AboutLibraries -> Child.Settings.AboutLibraries(
                 SettingsAboutLibrariesComponent(context)
             )
+
             is Wiki -> Child.Wiki(
                 WikiComponent(
                     configuration.tag,
@@ -160,6 +162,14 @@ class RootComponentImpl(
                     injectionCompanion.snackbarModule.snackbarAdapter,
                     injectionCompanion.exceptionReporter,
                     navigation
+                )
+            )
+
+            is Config.PostMedia -> Child.PostMedia(
+                PostMediaComponent(
+                    configuration.post,
+                    configuration.initialFile,
+                    context
                 )
             )
         }

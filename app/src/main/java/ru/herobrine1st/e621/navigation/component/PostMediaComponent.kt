@@ -18,9 +18,32 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.ui.screen.post
+package ru.herobrine1st.e621.navigation.component
 
-enum class FullscreenState {
-    OPEN,
-    CLOSED,
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import com.arkivanov.decompose.ComponentContext
+import ru.herobrine1st.e621.api.model.NormalizedFile
+import ru.herobrine1st.e621.api.model.Post
+
+class PostMediaComponent(
+    post: Post,
+    initialFile: NormalizedFile,
+    componentContext: ComponentContext,
+) : ComponentContext by componentContext {
+    val files = post.files
+
+    init {
+        check(initialFile in files) { "Initial file does not belong to post" }
+    }
+
+
+    var currentFile by mutableStateOf(initialFile)
+        private set
+
+    fun setFile(file: NormalizedFile) {
+        check(file in files) { "File does not belong to post" }
+        currentFile = file
+    }
 }

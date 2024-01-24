@@ -35,6 +35,7 @@ import com.arkivanov.decompose.router.slot.SlotNavigation
 import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigator
+import com.arkivanov.decompose.router.stack.push
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnResume
@@ -306,6 +307,16 @@ class PostComponent(
 
     private fun closePoolDialog() {
         slotNavigation.navigate { null }
+    }
+
+    fun openToFullscreen() {
+        val post = (state as PostState.Ready).post
+        navigator.push(
+            Config.PostMedia(
+                post = post,
+                initialFile = currentFile
+            )
+        )
     }
 
     class Instance(

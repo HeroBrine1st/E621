@@ -31,7 +31,6 @@ import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -68,26 +67,18 @@ import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.movableContentOf
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.CommentData
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.isOriginal
 import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
@@ -95,16 +86,13 @@ import ru.herobrine1st.e621.navigation.component.post.PostState
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
-import ru.herobrine1st.e621.ui.component.MAX_SCALE_DEFAULT
 import ru.herobrine1st.e621.ui.component.RenderBB
 import ru.herobrine1st.e621.ui.component.post.InvalidPost
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostImage
 import ru.herobrine1st.e621.ui.component.post.PostVideo
-import ru.herobrine1st.e621.ui.component.rememberZoomableState
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
-import ru.herobrine1st.e621.ui.component.zoomable
 import ru.herobrine1st.e621.ui.screen.post.component.PoolsDialog
 import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.tags
@@ -136,45 +124,7 @@ fun Post(
                 component.openComments)
     val comments = component.commentsFlow.collectAsPagingItems(startImmediately = loadComments)
 
-
-    var fullscreenState by remember { mutableStateOf(FullscreenState.CLOSED) }
-
-    var imagePositionInRoot by remember { mutableStateOf(Offset.Unspecified) }
-
-    val media = remember {
-        movableContentOf { post: Post, modifier: Modifier, matchHeightConstraintsFirst: Boolean ->
-            val file = component.currentFile
-
-            when {
-                file.type.isVideo -> PostVideo(
-                    component.getVideoPlayerComponent(file),
-                    file,
-                    modifier = modifier,
-                    matchHeightConstraintsFirst = matchHeightConstraintsFirst
-                )
-
-                file.type.isImage -> PostImage(
-                    file = file,
-                    contentDescription = remember(post.id) { post.tags.all.joinToString(" ") },
-                    modifier = modifier,
-                    actualPostFileType = post.file.type,
-                    matchHeightConstraintsFirst = matchHeightConstraintsFirst,
-                    setSizeOriginal = file.isOriginal()
-                )
-
-                else -> InvalidPost(
-                    text = stringResource(
-                        R.string.unsupported_post_type,
-                        file.type.extension
-                    ),
-                    modifier = modifier
-                )
-            }
-        }
-    }
-
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-
 
     val bottomSheetState = rememberStandardBottomSheetState(
         // `&& loadComments` is a fix for unauthenticated usage case
@@ -276,8 +226,7 @@ fun Post(
             // and lags if applied via contentPadding
             // while has no top padding, so useless
             LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                userScrollEnabled = fullscreenState == FullscreenState.CLOSED
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 item("media") {
                     val file = component.currentFile
@@ -290,19 +239,40 @@ fun Post(
                             .aspectRatio(file.aspectRatio)
                             .fillMaxWidth()
                             .clickable(
-                                enabled = fullscreenState == FullscreenState.CLOSED
-                                        && !post.file.type.isVideo,
+                                enabled = !post.file.type.isVideo,
                                 indication = null,
                                 interactionSource = remember { MutableInteractionSource() }
                             ) {
-                                fullscreenState = FullscreenState.OPEN
-                            }
-                            .onGloballyPositioned {
-                                imagePositionInRoot = it.positionInRoot()
+                                component.openToFullscreen()
                             }
                     ) {
-                        if (fullscreenState == FullscreenState.CLOSED)
-                            media(post, Modifier.fillMaxWidth(), false)
+                        when {
+                            file.type.isVideo -> PostVideo(
+                                component.getVideoPlayerComponent(file),
+                                file,
+                                modifier = Modifier.fillMaxWidth(),
+                            )
+
+                            file.type.isImage -> PostImage(
+                                file = file,
+                                contentDescription = remember(post.id) {
+                                    post.tags.all.joinToString(
+                                        " "
+                                    )
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                actualPostFileType = post.file.type,
+                                setSizeOriginal = true // to be loaded instantly
+                            )
+
+                            else -> InvalidPost(
+                                text = stringResource(
+                                    R.string.unsupported_post_type,
+                                    file.type.extension
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
                     }
                 }
                 item("actionbar") {
@@ -529,46 +499,6 @@ fun Post(
                     }
                 )
             }
-        }
-
-        // TODO animate fullscreen enter via fullscreen zoomable
-        if (fullscreenState == FullscreenState.OPEN) {
-            if (postState is PostState.Ready) {
-                val file = component.currentFile
-                val post = postState.post
-
-                val initialTranslation: Offset
-                val initialScale: Float
-                // if image size would exceed screen height, it is true
-                val matchHeightConstraintsFirst = file.aspectRatio < maxWidth / maxHeight
-                if (!matchHeightConstraintsFirst) {
-                    initialTranslation = Offset.Zero
-                    initialScale = 1f
-                } else {
-                    val width = constraints.maxHeight * file.aspectRatio
-                    initialScale = constraints.maxWidth / width
-                    initialTranslation = Offset(-(constraints.maxWidth - width) / 2, 0f)
-                }
-                val maxScale = initialScale * MAX_SCALE_DEFAULT
-                media(
-                    post,
-                    Modifier
-                        .zoomable(
-                            rememberZoomableState(
-                                maxScale = maxScale,
-                                initialScale = initialScale,
-                                initialTranslation = initialTranslation
-                            )
-                        )
-                        .background(Color.Black)
-                        .fillMaxSize(),
-                    matchHeightConstraintsFirst
-                )
-            }
-        }
-
-        BackHandler(fullscreenState == FullscreenState.OPEN) {
-            fullscreenState = FullscreenState.CLOSED
         }
     }
 
