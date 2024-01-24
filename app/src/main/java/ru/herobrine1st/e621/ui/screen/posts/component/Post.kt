@@ -29,7 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.InputChip
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -99,9 +99,11 @@ fun Post(
                             }
                     }
                 }
+
+
+
                 visibleTags.forEach {
-                    InputChip(
-                        selected = false,
+                    SuggestionChip(
                         onClick = { /*TODO*/ },
                         label = {
                             Text(it.text)
@@ -110,8 +112,7 @@ fun Post(
                 }
                 // TODO use SubcomposeLayout to fill two lines of chips
                 if (!expandTags && post.tags.reduced.size > 6) {
-                    InputChip(
-                        selected = false,
+                    SuggestionChip(
                         onClick = { expandTags = true },
                         label = {
                             Text("...")
