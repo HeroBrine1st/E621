@@ -302,11 +302,16 @@ class HomeComponent(
                             LoginState.IOError
                         }
 
-                        else -> LoginState.UnknownError
+                        else -> {
+                            Log.e(
+                                TAG,
+                                "Unknown error occurred while checking authorization data",
+                                it
+                            )
+                            LoginState.UnknownError
+                        }
                     }
                 }.getOrThrow()
-
-
         }
     }
 
