@@ -21,8 +21,20 @@
 package ru.herobrine1st.e621.api.endpoint.posts
 
 import io.ktor.resources.Resource
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.descriptors.buildClassSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonEncoder
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.serializer
 import ru.herobrine1st.e621.api.HttpMethod
 import ru.herobrine1st.e621.api.HttpMethodType
 import ru.herobrine1st.e621.api.endpoint.APIEndpoint
@@ -38,7 +50,38 @@ data class GetPostCommentsDTextEndpoint(
     @SerialName("page") val page: Int,
     @SerialName("limit") val limit: Int, // Default unknown. Maybe 75, but I doubt
     @SerialName("group_by") val groupBy: String = "comment",
-): APIEndpoint<Unit, List<CommentBB>> {
+) : APIEndpoint<Unit, GetPostCommentsDTextEndpoint.Response> {
+
+    @Serializable(with = ResponseSerializer::class)
+    data class Response(val comments: List<CommentBB>)
+
+    class ResponseSerializer : KSerializer<Response> {
+        override val descriptor: SerialDescriptor
+            get() = buildClassSerialDescriptor("GetPostCommentsDTextEndpoint.ResponseSerializer")
+
+        override fun deserialize(decoder: Decoder): Response {
+            decoder as JsonDecoder
+
+            return Response(
+                decoder.json.decodeFromJsonElement<List<CommentBB>>(
+                    when (val element = decoder.decodeJsonElement()) {
+                        is JsonArray -> element
+                        is JsonObject -> element["comments"]
+                            ?: throw IllegalArgumentException("Comments field is not found in wrapped comments response")
+
+                        is JsonPrimitive -> throw IllegalArgumentException("Expected JsonArray/JsonObject, got primitive in comments response as root element")
+                    }
+                )
+            )
+        }
+
+        override fun serialize(encoder: Encoder, value: Response) {
+            encoder as JsonEncoder
+            encoder.encodeSerializableValue(serializer<List<CommentBB>>(), value.comments)
+        }
+
+    }
+
     init {
         require(groupBy == "comment")
     }

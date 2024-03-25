@@ -81,7 +81,7 @@ class PostCommentsSource(
         val limit = params.requestedSize
 
         return api.getCommentsForPostBBCode(postId, page, limit)
-            .map { it.asReversed() }
+            .map { it.comments.asReversed() }
             .map {
                 withContext(Dispatchers.Default) {
                     it.map {

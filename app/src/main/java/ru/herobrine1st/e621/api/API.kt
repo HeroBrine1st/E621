@@ -24,11 +24,11 @@ import androidx.annotation.IntRange
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import ru.herobrine1st.e621.api.endpoint.favourites.GetFavouritesEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsDTextEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostsEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.VoteEndpoint
-import ru.herobrine1st.e621.api.model.CommentBB
 import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
@@ -94,7 +94,7 @@ interface API : AutocompleteSuggestionsAPI {
         id: PostId,
         page: Int,
         limit: Int, // Default unknown. Maybe 75, but I doubt
-    ): Result<List<CommentBB>>
+    ): Result<GetPostCommentsDTextEndpoint.Response>
 
 
     suspend fun getPool(poolId: Int): Result<Pool>
