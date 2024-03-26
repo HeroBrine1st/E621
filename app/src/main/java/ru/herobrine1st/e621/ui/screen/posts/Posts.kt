@@ -172,15 +172,15 @@ fun Posts(
     ) {
         Box(
             Modifier
-                .padding(it)
                 .fillMaxSize()
-                .nestedScroll(pullToRefreshState.nestedScrollConnection) // TODO probably box is redundant
+                .nestedScroll(pullToRefreshState.nestedScrollConnection)
         ) {
             LazyColumn(
                 // Solution from https://issuetracker.google.com/issues/177245496#comment24
                 state = if (posts.size == 0) rememberLazyListState() else lazyListState,
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                contentPadding = it
             ) {
                 endOfPagePlaceholder(posts.loadStates.prepend)
                 // TODO add info about pool here, getting that info from component
@@ -233,7 +233,9 @@ fun Posts(
 
             PullToRefreshContainer(
                 state = pullToRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
+                modifier = Modifier
+                    .padding(it)
+                    .align(Alignment.TopCenter)
             )
         }
     }
