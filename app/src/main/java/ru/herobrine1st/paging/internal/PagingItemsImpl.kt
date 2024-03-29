@@ -37,7 +37,6 @@ class PagingItemsImpl<Value : Any>(
     val flow: Flow<Snapshot<*, Value>>,
 ) : PagingItems<Value> {
 
-    private var listDelegate by mutableStateOf(emptyList<Value>())
     private var uiChannel: SynchronizedBus<PagingRequest>? = null
     private var pagingConfig: PagingConfig? = null
 
@@ -63,18 +62,18 @@ class PagingItemsImpl<Value : Any>(
             when (val updateKind = snapshot.updateKind) {
                 is UpdateKind.Refresh -> {
                     lastAccessedIndex = -1
-                    listDelegate = snapshot.pages.flatMap { it.data }
+                    items = snapshot.pages.flatMap { it.data }
                 }
 
                 is UpdateKind.DataChange -> {
                     if (updateKind.prepended != 0) {
                         // Change lastAccessedIndex accordingly
-                        // It can be unnecessary, but it is harmless, I think
+                        // It may be unnecessary, but it is harmless, I think
                         val pages = updateKind.prepended.absoluteValue
                         val sign = updateKind.prepended.sign
                         lastAccessedIndex = sign * snapshot.pages.take(pages).sumOf { it.data.size }
                     }
-                    listDelegate = snapshot.pages.flatMap { it.data }
+                    items = snapshot.pages.flatMap { it.data }
                     // Fix possible edge cases where user otherwise have to violently scroll to trigger load
                     // Also it immediately requests new page if appended page is empty, avoiding visual bugs
                     if (lastAccessedIndex != -1) triggerPageLoad()
@@ -86,10 +85,11 @@ class PagingItemsImpl<Value : Any>(
     }
 
     override val size: Int
-        get() = listDelegate.size
+        get() = items.size
     override var currentGeneration by mutableIntStateOf(Int.MIN_VALUE)
-    override val items: List<Value>
-        get() = listDelegate
+    override var items: List<Value> by mutableStateOf(emptyList())
+        private set
+
 
     private var lastAccessedIndex = -1
 
@@ -105,11 +105,11 @@ class PagingItemsImpl<Value : Any>(
     override fun get(index: Int): Value {
         lastAccessedIndex = index
         triggerPageLoad()
-        return listDelegate[index]
+        return items[index]
     }
 
     override fun peek(index: Int): Value {
-        return listDelegate[index]
+        return items[index]
     }
 
     override fun refresh() {
