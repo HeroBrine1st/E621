@@ -23,11 +23,11 @@ package ru.herobrine1st.e621.navigation.component.posts
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Post as ModelPost
 
-sealed interface PostListingItem {
+sealed interface InternalPostListingItem {
     val contentType: String
     val key: Any
 
-    data class Post(val post: ModelPost) : PostListingItem {
+    data class Post(val post: ModelPost) : InternalPostListingItem {
         override val contentType: String
             get() = "Post"
         override val key: Any
@@ -47,7 +47,7 @@ sealed interface PostListingItem {
 //        val hasDown: Boolean,
         val hiddenDueToBlacklistNumber: Int,
         val hiddenDueToSafeModeNumber: Int,
-    ) : PostListingItem {
+    ) : InternalPostListingItem {
         fun merge(other: HiddenItems) = HiddenItems(
             postIds = this.postIds + other.postIds,
 //            hasUp = this.hasUp || other.hasUp,
@@ -82,18 +82,18 @@ sealed interface PostListingItem {
 }
 
 fun mergePostListingItems(
-    previous: PostListingItem,
-    current: PostListingItem,
-): Pair<PostListingItem, PostListingItem?> {
+    previous: InternalPostListingItem,
+    current: InternalPostListingItem,
+): Pair<InternalPostListingItem, InternalPostListingItem?> {
     return when (previous) {
-        is PostListingItem.HiddenItems -> when (current) {
-            is PostListingItem.HiddenItems -> previous.merge(current) to null
-            is PostListingItem.Post -> previous/*.copy(hasDown = true)*/ to current
+        is InternalPostListingItem.HiddenItems -> when (current) {
+            is InternalPostListingItem.HiddenItems -> previous.merge(current) to null
+            is InternalPostListingItem.Post -> previous/*.copy(hasDown = true)*/ to current
         }
 
-        is PostListingItem.Post -> when (current) {
-            is PostListingItem.HiddenItems -> previous to current/*.copy(hasUp = true)*/
-            is PostListingItem.Post -> previous to current
+        is InternalPostListingItem.Post -> when (current) {
+            is InternalPostListingItem.HiddenItems -> previous to current/*.copy(hasUp = true)*/
+            is InternalPostListingItem.Post -> previous to current
         }
     }
 }

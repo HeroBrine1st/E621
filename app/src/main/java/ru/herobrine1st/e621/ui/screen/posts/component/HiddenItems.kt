@@ -28,10 +28,10 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.navigation.component.posts.PostListingItem
+import ru.herobrine1st.e621.navigation.component.posts.UIPostListingItem
 
 @Composable
-fun HiddenItems(item: PostListingItem.HiddenItems) {
+fun HiddenItems(item: UIPostListingItem.HiddenItemsBridge) {
     val modifier = Modifier.padding(horizontal = 8.dp)
     if (item.hiddenDueToSafeModeNumber == 0) {
         Text(

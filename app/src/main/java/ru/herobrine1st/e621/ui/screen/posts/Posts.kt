@@ -20,8 +20,6 @@
 
 package ru.herobrine1st.e621.ui.screen.posts
 
-import android.util.Log
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -46,9 +44,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,14 +53,13 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
-import ru.herobrine1st.e621.navigation.component.posts.PostListingItem
+import ru.herobrine1st.e621.navigation.component.posts.UIPostListingItem
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.screen.posts.component.HiddenItems
 import ru.herobrine1st.e621.ui.screen.posts.component.Post
-import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.paging.api.LoadState
 import ru.herobrine1st.paging.api.collectAsPagingItems
@@ -83,29 +77,7 @@ fun Posts(
     val lazyListState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
 
-    var index by remember { mutableStateOf<IndexContainer?>(null) }
-    val posts = remember {
-        component.postsFlow.correctFirstVisibleItem(
-            getFirstVisibleItemIndex = { lazyListState.firstVisibleItemIndex },
-            setIndex = { index = it }
-        )
-    }.collectAsPagingItems(startImmediately = true)
-
-    // Restore scroll position in case of structural changes in a list that are beyond LazyList capabilities
-    LaunchedEffect(index, posts.currentGeneration) {
-        index?.let {
-            debug {
-                Log.d(
-                    "Posts UI",
-                    "Got index data $index on generation ${posts.currentGeneration}"
-                )
-            }
-            if (it.generation != posts.currentGeneration) return@LaunchedEffect
-            debug { Log.d("Posts UI", "Using that data to restore scroll state") }
-            lazyListState.scrollToItem(it.index)
-            index = null
-        }
-    }
+    val posts = component.postsFlow.collectAsPagingItems(startImmediately = true)
 
     //region Working around strange API
     // https://issuetracker.google.com/issues/317177683
@@ -179,7 +151,7 @@ fun Posts(
                 // Solution from https://issuetracker.google.com/issues/177245496#comment24
                 state = if (posts.size == 0) rememberLazyListState() else lazyListState,
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+//                verticalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = it
             ) {
                 endOfPagePlaceholder(posts.loadStates.prepend)
@@ -211,10 +183,11 @@ fun Posts(
                     key = posts.itemKey { post -> post.key },
                     contentType = posts.contentType { post -> post.contentType }
                 ) { index ->
-                    when (val item = posts[index]) {
-                        is PostListingItem.HiddenItems -> HiddenItems(item)
+                    val item = posts[index]
+                    when (item) {
+                        is UIPostListingItem.HiddenItemsBridge -> HiddenItems(item)
 
-                        is PostListingItem.Post -> Post(
+                        is UIPostListingItem.Post -> Post(
                             post = item.post,
                             favouriteState = favouritesCache.isFavourite(item.post),
                             isAuthorized = isAuthorized,
@@ -225,7 +198,11 @@ fun Posts(
                                 component.onOpenPost(item.post, openComments)
                             }
                         )
+
+                        is UIPostListingItem.Empty -> {}
                     }
+                    if (item !is UIPostListingItem.Empty && index != posts.size - 1)
+                        Spacer(Modifier.height(4.dp))
 
                 }
                 endOfPagePlaceholder(posts.loadStates.append)

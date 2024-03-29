@@ -45,11 +45,6 @@ import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
-import ru.herobrine1st.paging.Pager
-import ru.herobrine1st.paging.api.PagingConfig
-import ru.herobrine1st.paging.api.applyPageBoundary
-import ru.herobrine1st.paging.api.cachedIn
-import ru.herobrine1st.paging.api.transform
 import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
@@ -58,6 +53,11 @@ import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState.Determined.UNFAV
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.accumulate
 import ru.herobrine1st.e621.util.isFavourite
+import ru.herobrine1st.paging.Pager
+import ru.herobrine1st.paging.api.PagingConfig
+import ru.herobrine1st.paging.api.applyPageBoundary
+import ru.herobrine1st.paging.api.cachedIn
+import ru.herobrine1st.paging.api.transform
 import java.util.function.Predicate
 
 class PostListingComponent(
@@ -168,13 +168,13 @@ class PostListingComponent(
                 it.map { post ->
                     when {
                         safeModeEnabled && post.rating != Rating.SAFE ->
-                            PostListingItem.HiddenItems.ofUnsafe(post)
+                            InternalPostListingItem.HiddenItems.ofUnsafe(post)
 
                         isBlacklistEnabled && favourites.isFavourite(post) == UNFAVOURITE // Show post if it is either favourite
                                 && blacklistPredicate.test(post) ->                       //           or is not blacklisted
-                            PostListingItem.HiddenItems.ofBlacklisted(post)
+                            InternalPostListingItem.HiddenItems.ofBlacklisted(post)
 
-                        else -> PostListingItem.Post(post)
+                        else -> InternalPostListingItem.Post(post)
                     }
                 }.accumulate { previous, current ->
                     val (first, second) = mergePostListingItems(previous, current)
@@ -187,6 +187,31 @@ class PostListingComponent(
                 }
             }.applyPageBoundary { lastElementInPrevious, firstElementInNext ->
                 mergePostListingItems(lastElementInPrevious, firstElementInNext)
+            }.transform {
+                it.flatMap<InternalPostListingItem, UIPostListingItem> { item ->
+                    when (item) {
+                        is InternalPostListingItem.HiddenItems -> {
+                            buildList(item.postIds.size) {
+                                add(
+                                    UIPostListingItem.HiddenItemsBridge(
+                                        id = item.postIds[0],
+                                        hiddenDueToBlacklistNumber = item.hiddenDueToBlacklistNumber,
+                                        hiddenDueToSafeModeNumber = item.hiddenDueToSafeModeNumber
+                                    )
+                                )
+                                item.postIds.drop(1).map { id ->
+                                    UIPostListingItem.Empty(id)
+                                }.let { list ->
+                                    addAll(list)
+                                }
+                            }
+                        }
+
+                        is InternalPostListingItem.Post -> {
+                            listOf(UIPostListingItem.Post(item.post))
+                        }
+                    }
+                }
             }
         }
             .flowOn(Dispatchers.Default)
