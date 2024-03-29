@@ -21,7 +21,20 @@
 package ru.herobrine1st.paging.api
 
 sealed interface LoadState {
+    /**
+     * State is not initialized and no requests are in fly
+     *
+     * - For [LoadStates.append] and [LoadStates.prepend] it means that first refresh is [NotLoading], is [Loading], is [Error]ed or isn't [Complete]
+     * - For [LoadStates.refresh] it isn't possible
+     */
     data object Idle : LoadState
+
+    /**
+     * State is initialized and no requests are in fly
+     *
+     * - For [LoadStates.append] and [LoadStates.prepend] it means that additional pages can be fetched but it isn't requested
+     * - For [LoadStates.refresh] it means that paging isn't started yet. [LoadStates.refresh] can't be [NotLoading] once it's not [NotLoading]
+     */
     data object NotLoading : LoadState {
         operator fun invoke(endOfPaginationReached: Boolean) = when (endOfPaginationReached) {
             true -> Complete
@@ -29,7 +42,21 @@ sealed interface LoadState {
         }
     }
 
+    /**
+     * State is initialized
+     *
+     * - For [LoadStates.append] and [LoadStates.prepend] it means that end of pagination is reached and no additional pages can be loaded
+     * - For [LoadStates.refresh] it means that refresh is [Complete]
+     */
     data object Complete : LoadState
+
+    /**
+     * State is initialized and [PagingSource] is performing request
+     */
     data object Loading : LoadState
+
+    /**
+     * State is initialized, but [PagingSource] couldn't fetch pages. This state is recoverable.
+     */
     data class Error(val throwable: Throwable) : LoadState
 }
