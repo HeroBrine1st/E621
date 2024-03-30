@@ -162,4 +162,8 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="pool_is_active">This pool is active</string>
     <string name="pool_is_not_active">This pool is not active</string>
     <string name="download">Download</string>
+    <string name="post_rating">Rating: %s</string>
+    <string name="post_is_pending">This post is pending approval</string>
+    <string name="post_has_notes">This post has on-image notes. Notes are currently unsupported, but you can view them in browser.</string>
+    <string name="post_updated">Last updated %s</string>
 </resources>

@@ -49,7 +49,7 @@ data class Post(
     val lockedTags: List<String> = emptyList(),
     @SerialName("change_seq")
     val changeSequence: Int,
-    val flags: JsonElement, // TODO
+    val flags: PostFlags,
     val rating: Rating,
     @SerialName("fav_count")
     val favoriteCount: Int,
@@ -63,7 +63,7 @@ data class Post(
     @SerialName("isFavorited")
     val isFavourite: Boolean = false,
     val hasNotes: Boolean = false,
-    val duration: Float = 0f
+    val duration: Float = 0f,
 ) {
     @Transient
     val normalizedSample = NormalizedFile(sample)

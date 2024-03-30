@@ -500,22 +500,44 @@ fun Post(
                     }
                     HorizontalDivider()
                 }
-                item("uploaded") {
+                item("stats") {
                     Spacer(Modifier.height(8.dp))
-                    // TODO place more information here
-                    Text(
-                        stringResource(
-                            R.string.uploaded_relative_date,
-                            DateUtils.getRelativeTimeSpanString(
-                                post.createdAt.toEpochMilliseconds(),
-                                System.currentTimeMillis(),
-                                SECOND_IN_MILLIS
-                            )
-                        ),
-                        modifier = Modifier
+                    Column(
+                        Modifier
                             .fillMaxWidth()
                             .padding(horizontal = BASE_PADDING_HORIZONTAL)
-                    )
+                    ) {
+                        Text(
+                            stringResource(
+                                R.string.uploaded_relative_date,
+                                DateUtils.getRelativeTimeSpanString(
+                                    post.createdAt.toEpochMilliseconds(),
+                                    System.currentTimeMillis(),
+                                    SECOND_IN_MILLIS
+                                )
+                            )
+                        )
+                        if (post.updatedAt != null)
+                            Text(
+                                stringResource(
+                                    R.string.post_updated, DateUtils.getRelativeTimeSpanString(
+                                        post.updatedAt.toEpochMilliseconds(),
+                                        System.currentTimeMillis(),
+                                        SECOND_IN_MILLIS
+                                    )
+                                )
+                            )
+
+                        Text(
+                            stringResource(
+                                R.string.post_rating,
+                                stringResource(post.rating.descriptionId)
+                            )
+                        )
+                        if (post.flags.pending) Text(stringResource(R.string.post_is_pending))
+                        if (post.hasNotes) Text(stringResource(R.string.post_has_notes))
+                    }
+
                 }
                 // Move tags to another screen?
                 tags(
