@@ -103,7 +103,10 @@ fun Post(
                     }
                 }
 
-
+                SuggestionChip(
+                    onClick = {},
+                    label = { Text(stringResource(post.rating.descriptionId)) }
+                )
 
                 visibleTags.forEach {
                     SuggestionChip(
@@ -113,6 +116,7 @@ fun Post(
                         }
                     )
                 }
+
                 // TODO use SubcomposeLayout to fill two lines of chips
                 if (!expandTags && post.tags.reduced.size > 6) {
                     SuggestionChip(
