@@ -49,7 +49,6 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Pool
-import ru.herobrine1st.e621.api.model.PoolId
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
@@ -96,6 +95,8 @@ class PostComponent(
 
     private val slotNavigation = SlotNavigation<PoolsDialogConfig>()
 
+
+    // Dialog for multiple pools, isPoolLoading for single pool
     val dialog: Value<ChildSlot<PoolsDialogConfig, PoolsDialogComponent>> =
         childSlot(source = slotNavigation,
             serializer = PoolsDialogConfig.serializer(),
@@ -106,11 +107,14 @@ class PostComponent(
                     api = api,
                     pools = (state as PostState.Ready).post.pools,
                     openPool = {
-                        openPool(it.id, pool = it)
+                        openPool(pool = it)
                     },
                     close = ::closePoolDialog
                 )
             })
+
+    var isPoolLoading by mutableStateOf(false)
+        private set
 
     // private var rememberedPositionMs = -1L
     var state by mutableStateOf<PostState>(PostState.Loading)
@@ -292,16 +296,22 @@ class PostComponent(
 
     fun openPools() {
         val post = (state as PostState.Ready).post
-        post.pools.singleOrNull()?.let {
-            openPool(it)
+        post.pools.singleOrNull()?.let { id ->
+            lifecycleScope.launch {
+                isPoolLoading = true
+                api.getPool(id)
+                    .also { isPoolLoading = false }
+                    .onFailure { exceptionReporter.handleRequestException(it) }
+                    .onSuccess { pool -> openPool(pool) }
+            }
             return
         }
         slotNavigation.navigate { PoolsDialogConfig }
     }
 
-    private fun openPool(id: PoolId, pool: Pool? = null) {
+    private fun openPool(pool: Pool) {
         closePoolDialog()
-        val searchOptions = PoolSearchOptions(poolId = id, postIds = pool?.posts)
+        val searchOptions = PoolSearchOptions(pool.id, pool.posts)
         navigator.pushIndexed { index -> Config.PostListing(searchOptions, index = index) }
     }
 

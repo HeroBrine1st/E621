@@ -43,10 +43,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.NavigateNext
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.outlined.Error
@@ -454,6 +456,17 @@ fun Post(
                                     else stringResource(R.string.post_has_pools, post.pools.size)
                                 )
                                 Spacer(Modifier.weight(1f))
+                                if (post.pools.size == 1) Crossfade(
+                                    component.isPoolLoading,
+                                    label = "Crossfade between icon and loading"
+                                ) {
+                                    // 24.dp is from androidx.compose.material3.tokens.IconButtonTokens.IconSize
+                                    if (it) CircularProgressIndicator(Modifier.size(24.0.dp))
+                                    else Icon(
+                                        Icons.AutoMirrored.Default.NavigateNext,
+                                        contentDescription = null
+                                    )
+                                }
                             }
                         )
                     }
