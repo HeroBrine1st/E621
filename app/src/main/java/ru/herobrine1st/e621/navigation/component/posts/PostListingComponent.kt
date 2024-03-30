@@ -21,6 +21,7 @@
 package ru.herobrine1st.e621.navigation.component.posts
 
 import android.content.Context
+import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -38,15 +39,18 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.MessageData
+import ru.herobrine1st.e621.api.common.VoteResult
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.parseBBCode
 import ru.herobrine1st.e621.api.search.PoolSearchOptions
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import ru.herobrine1st.e621.data.vote.VoteRepository
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
@@ -69,12 +73,13 @@ class PostListingComponent(
     private val api: API,
     private val snackbar: SnackbarAdapter,
     private val favouritesCache: FavouritesCache,
-    exceptionReporter: ExceptionReporter,
+    private val exceptionReporter: ExceptionReporter,
     private val searchOptions: SearchOptions,
     private val navigator: StackNavigator<Config>,
     componentContext: ComponentContext,
     applicationContext: Context,
     blacklistRepository: BlacklistRepository,
+    private val voteRepository: VoteRepository,
 ) : ComponentContext by componentContext {
 
     val postsFlow get() = instance.postsFlow
@@ -134,6 +139,14 @@ class PostListingComponent(
             handleFavouriteChange(favouritesCache, api, snackbar, post)
         }
     }
+
+    suspend fun vote(postId: PostId, @IntRange(from = -1, to = 1) vote: Int): VoteResult? {
+        val response = handleVote(postId, vote, api, exceptionReporter)
+        if (response != null) voteRepository.setVote(postId, response.ourScore)
+        return response?.let { VoteResult(it.ourScore, it.total) }
+    }
+
+    suspend fun getVote(postId: PostId): Int? = voteRepository.getVote(postId)
 
 
     private class Instance(

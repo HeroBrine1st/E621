@@ -218,6 +218,12 @@ fun Posts(
                             },
                             openPost = { openComments ->
                                 component.onOpenPost(item.post, openComments)
+                            },
+                            onVote = {
+                                component.vote(item.post.id, it)
+                            },
+                            getVote = {
+                                component.getVote(item.post.id) ?: 0
                             }
                         )
 

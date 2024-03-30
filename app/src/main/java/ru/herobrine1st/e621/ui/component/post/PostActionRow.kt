@@ -21,6 +21,7 @@
 package ru.herobrine1st.e621.ui.component.post
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -43,19 +44,27 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.common.VoteResult
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
+import ru.herobrine1st.e621.util.debug
 
 @Composable
 fun PostActionRow(
@@ -65,9 +74,31 @@ fun PostActionRow(
     modifier: Modifier = Modifier,
     onFavouriteChange: () -> Unit,
     onOpenComments: () -> Unit,
+    onVote: suspend (Int) -> VoteResult?,
+    getVote: suspend () -> Int,
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
     var showRemoveFromFavouritesConfirmation by remember { mutableStateOf(false) }
+
+    var vote by rememberSaveable { mutableIntStateOf(-2) }
+    var scoreWithoutUs by rememberSaveable { mutableIntStateOf(Int.MIN_VALUE) }
+
+    // Error is ±3, there's just no info from API server
+    LaunchedEffect(Unit) {
+        if (vote == -2) {
+            vote = getVote()
+            scoreWithoutUs = post.score.total - vote
+        }
+
+        debug {
+            snapshotFlow { vote to scoreWithoutUs }.collect {
+                Log.d("PostActionRow", "Vote: ${it.first}, scoreWithoutUs: ${it.second}")
+            }
+        }
+    }
+
+
 
     Row(
         modifier = modifier,
@@ -75,14 +106,33 @@ fun PostActionRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { /*TODO*/ }, enabled = isAuthorized) {
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        onVote((vote + 1).coerceAtMost(1))?.let {
+                            vote = it.vote
+                            scoreWithoutUs = it.totalScore - it.vote
+                        }
+                    }
+                },
+                enabled = isAuthorized && vote != 1
+            ) {
                 Icon(
                     Icons.Filled.ArrowUpward,
                     contentDescription = stringResource(R.string.score_up)
                 )
             }
-            Text(post.score.total.toString())
-            IconButton(onClick = { /*TODO*/ }, enabled = isAuthorized) {
+            Text((scoreWithoutUs + vote).toString())
+            IconButton(
+                onClick = {
+                    coroutineScope.launch {
+                        onVote((vote - 1).coerceAtLeast(-1))?.let {
+                            vote = it.vote
+                            scoreWithoutUs = it.totalScore - it.vote
+                        }
+                    }
+                }, enabled = isAuthorized && vote != -1
+            ) {
                 Icon(
                     Icons.Filled.ArrowDownward,
                     contentDescription = stringResource(R.string.score_down)
@@ -114,7 +164,10 @@ fun PostActionRow(
             },
             enabled = isAuthorized && favouriteState !is FavouriteState.InFly
         ) {
-            Crossfade(targetState = favouriteState.isFavourite, label = "Favourite icon animation") {
+            Crossfade(
+                targetState = favouriteState.isFavourite,
+                label = "Favourite icon animation"
+            ) {
                 if (it) Icon(
                     Icons.Filled.Favorite,
                     contentDescription = stringResource(R.string.remove_from_favourites)

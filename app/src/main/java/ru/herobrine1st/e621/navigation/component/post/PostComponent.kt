@@ -21,6 +21,7 @@
 package ru.herobrine1st.e621.navigation.component.post
 
 import android.content.Context
+import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
@@ -46,6 +47,7 @@ import kotlinx.serialization.Serializable
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.common.VoteResult
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Pool
@@ -56,10 +58,12 @@ import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.api.search.PoolSearchOptions
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
+import ru.herobrine1st.e621.data.vote.VoteRepository
 import ru.herobrine1st.e621.module.IDownloadManager
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import ru.herobrine1st.e621.navigation.component.posts.handleFavouriteChange
+import ru.herobrine1st.e621.navigation.component.posts.handleVote
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
@@ -88,6 +92,7 @@ class PostComponent(
     private val snackbarAdapter: SnackbarAdapter,
     private val mediaOkHttpClientProvider: Lazy<OkHttpClient>,
     private val downloadManager: IDownloadManager,
+    private val voteRepository: VoteRepository,
 ) : ComponentContext by componentContext {
     private val instance = instanceKeeper.getOrCreate {
         Instance(postId, api, exceptionReporter)
@@ -335,6 +340,14 @@ class PostComponent(
         val post = (state as? PostState.Ready) ?: return
         downloadManager.downloadFile(post.post.normalizedFile)
     }
+
+    suspend fun vote(postId: PostId, @IntRange(from = -1, to = 1) vote: Int): VoteResult? {
+        val response = handleVote(postId, vote, api, exceptionReporter)
+        if (response != null) voteRepository.setVote(postId, response.ourScore)
+        return response?.let { VoteResult(it.ourScore, it.total) }
+    }
+
+    suspend fun getVote(postId: PostId): Int? = voteRepository.getVote(postId)
 
     class Instance(
         postId: PostId,

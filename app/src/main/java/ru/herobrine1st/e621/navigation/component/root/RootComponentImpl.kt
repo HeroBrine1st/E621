@@ -109,7 +109,8 @@ class RootComponentImpl(
                     searchOptions = configuration.search,
                     navigator = navigation,
                     applicationContext = injectionCompanion.applicationContext,
-                    blacklistRepository = injectionCompanion.databaseModule.blacklistRepository
+                    blacklistRepository = injectionCompanion.databaseModule.blacklistRepository,
+                    voteRepository = injectionCompanion.databaseModule.voteRepository
                 )
             )
             is Post -> Child.Post(
@@ -126,7 +127,8 @@ class RootComponentImpl(
                     injectionCompanion.favouritesCache,
                     injectionCompanion.snackbarModule.snackbarAdapter,
                     injectionCompanion.mediaModule.mediaOkHttpClientLazy,
-                    injectionCompanion.downloadManagerModule.downloadManager
+                    injectionCompanion.downloadManagerModule.downloadManager,
+                    injectionCompanion.databaseModule.voteRepository
                 )
             )
             is Settings -> Child.Settings(SettingsComponent(context))

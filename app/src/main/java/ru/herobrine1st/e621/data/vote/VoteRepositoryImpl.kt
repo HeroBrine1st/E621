@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2023 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2024 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,29 +18,19 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.module
+package ru.herobrine1st.e621.data.vote
 
-import android.content.Context
-import androidx.room.Room
-import ru.herobrine1st.e621.BuildConfig
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepositoryImpl
-import ru.herobrine1st.e621.data.vote.VoteRepositoryImpl
+import ru.herobrine1st.e621.api.model.PostId
+import ru.herobrine1st.e621.dao.VoteDao
+import ru.herobrine1st.e621.data.BaseRepositoryImpl
 import ru.herobrine1st.e621.database.Database
 
-class DatabaseModule(applicationContext: Context) {
+class VoteRepositoryImpl(database: Database, private val dao: VoteDao) :
+    BaseRepositoryImpl(database), VoteRepository {
 
-    val database by lazy {
-        Room.databaseBuilder(
-            applicationContext,
-            Database::class.java, BuildConfig.DATABASE_NAME
-        ).build()
-    }
+    override suspend fun getVote(postId: PostId) = dao.getVote(postId.value)
 
-    val blacklistRepository by lazy {
-        BlacklistRepositoryImpl(database, database.blacklistDao())
-    }
-
-    val voteRepository by lazy {
-        VoteRepositoryImpl(database, database.voteDao())
+    override suspend fun setVote(postId: PostId, vote: Int) {
+        dao.insertOrUpdate(postId.value, vote)
     }
 }

@@ -293,15 +293,22 @@ fun Post(
                         modifier = Modifier
                             .padding(horizontal = 8.dp)
                             .fillMaxWidth(),
-                        onFavouriteChange = component::handleFavouriteChange
-                    ) {
-                        coroutineScope.launch {
-                            if (comments.loadStates.refresh is LoadState.NotLoading) {
-                                comments.refresh()
+                        onFavouriteChange = component::handleFavouriteChange,
+                        onOpenComments = {
+                            coroutineScope.launch {
+                                if (comments.loadStates.refresh is LoadState.NotLoading) {
+                                    comments.refresh()
+                                }
+                                bottomSheetState.partialExpand()
                             }
-                            bottomSheetState.partialExpand()
+                        },
+                        onVote = {
+                            component.vote(post.id, it)
+                        },
+                        getVote = {
+                            component.getVote(post.id) ?: 0
                         }
-                    }
+                    )
                     HorizontalDivider()
                 }
                 // TODO visually connect description to image and add elevation only at bottom

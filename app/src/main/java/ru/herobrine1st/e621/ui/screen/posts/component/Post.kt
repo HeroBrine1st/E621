@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.common.VoteResult
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.component.post.InvalidPost
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
@@ -56,6 +57,8 @@ fun Post(
     isAuthorized: Boolean,
     onFavouriteChange: () -> Unit,
     openPost: (scrollToComments: Boolean) -> Unit,
+    onVote: suspend (Int) -> VoteResult?,
+    getVote: suspend () -> Int,
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth()
@@ -126,10 +129,13 @@ fun Post(
                 modifier = Modifier
                     .padding(horizontal = 8.dp)
                     .fillMaxWidth(),
-                onFavouriteChange = onFavouriteChange
-            ) {
-                openPost(true)
-            }
+                onFavouriteChange = onFavouriteChange,
+                onOpenComments = {
+                    openPost(true)
+                },
+                onVote = onVote,
+                getVote = getVote
+            )
         }
     }
 }

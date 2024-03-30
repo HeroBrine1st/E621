@@ -18,31 +18,31 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.api.endpoint.posts
+package ru.herobrine1st.e621.navigation.component.posts
 
 import androidx.annotation.IntRange
-import io.ktor.resources.Resource
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import ru.herobrine1st.e621.api.HttpMethod
-import ru.herobrine1st.e621.api.HttpMethodType
-import ru.herobrine1st.e621.api.endpoint.APIEndpoint
+import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.endpoint.posts.VoteEndpoint
 import ru.herobrine1st.e621.api.model.PostId
+import ru.herobrine1st.e621.util.ExceptionReporter
 
-@Serializable
-@HttpMethod(HttpMethodType.POST)
-@Resource("/posts/{id}/votes.json")
-data class VoteEndpoint(
-    val id: PostId,
-    @IntRange(from = -1, to = 1) val score: Int,
-    @Suppress("SpellCheckingInspection")
-    @SerialName("no_unvote") val noRetractVote: Boolean,
-): APIEndpoint<Unit, VoteEndpoint.Response> {
-    @Serializable
-    data class Response(
-        val up: Int,
-        val down: Int,
-        @SerialName("score") val total: Int,
-        val ourScore: Int,
-    )
+
+suspend fun handleVote(
+    postId: PostId,
+    @IntRange(from = -1, to = 1) vote: Int,
+    api: API,
+    exceptionReporter: ExceptionReporter,
+): VoteEndpoint.Response? {
+    return try {
+        if (vote == 0) {
+            // I'm a simple person: I see inefficient API - I write inefficient code
+            val res = api.vote(postId, 1, false).getOrThrow()
+            if (res.ourScore != 0)
+                api.vote(postId, 1, false).getOrThrow()
+            else res
+        } else api.vote(postId, vote, true).getOrThrow()
+    } catch (t: Throwable) {
+        exceptionReporter.handleRequestException(t, showThrowable = true)
+        null
+    }?.copy(ourScore = vote)
 }

@@ -18,31 +18,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.api.endpoint.posts
+package ru.herobrine1st.e621.api.common
 
 import androidx.annotation.IntRange
-import io.ktor.resources.Resource
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import ru.herobrine1st.e621.api.HttpMethod
-import ru.herobrine1st.e621.api.HttpMethodType
-import ru.herobrine1st.e621.api.endpoint.APIEndpoint
-import ru.herobrine1st.e621.api.model.PostId
 
-@Serializable
-@HttpMethod(HttpMethodType.POST)
-@Resource("/posts/{id}/votes.json")
-data class VoteEndpoint(
-    val id: PostId,
-    @IntRange(from = -1, to = 1) val score: Int,
-    @Suppress("SpellCheckingInspection")
-    @SerialName("no_unvote") val noRetractVote: Boolean,
-): APIEndpoint<Unit, VoteEndpoint.Response> {
-    @Serializable
-    data class Response(
-        val up: Int,
-        val down: Int,
-        @SerialName("score") val total: Int,
-        val ourScore: Int,
-    )
-}
+data class VoteResult(
+    @IntRange(from = -1, to = 1) val vote: Int,
+    val totalScore: Int,
+)
