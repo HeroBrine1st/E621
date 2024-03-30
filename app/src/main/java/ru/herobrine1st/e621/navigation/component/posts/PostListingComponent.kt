@@ -26,11 +26,7 @@ import androidx.compose.runtime.collectAsState
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
-import com.arkivanov.essenty.lifecycle.doOnDestroy
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
@@ -43,6 +39,7 @@ import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
+import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.getPreferencesFlow
@@ -83,13 +80,7 @@ class PostListingComponent(
         )
     }
 
-    private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
-
-    init {
-        lifecycle.doOnDestroy {
-            lifecycleScope.cancel()
-        }
-    }
+    private val lifecycleScope = LifecycleScope()
 
     fun onOpenPost(post: Post, openComments: Boolean) {
         navigator.pushIndexed {
