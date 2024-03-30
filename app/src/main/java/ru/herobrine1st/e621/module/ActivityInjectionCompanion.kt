@@ -47,6 +47,7 @@ class ActivityInjectionCompanion(
     )
 
     val mediaModule = MediaModule(applicationContext)
+    val downloadManagerModule = DownloadManagerModule(applicationContext)
 
     val databaseModule by applicationInjectionCompanion::databaseModule
     val snackbarModule by applicationInjectionCompanion::snackbarModule

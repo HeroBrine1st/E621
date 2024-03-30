@@ -125,7 +125,8 @@ class RootComponentImpl(
                     injectionCompanion.apiModule.api,
                     injectionCompanion.favouritesCache,
                     injectionCompanion.snackbarModule.snackbarAdapter,
-                    injectionCompanion.mediaModule.mediaOkHttpClientLazy
+                    injectionCompanion.mediaModule.mediaOkHttpClientLazy,
+                    injectionCompanion.downloadManagerModule.downloadManager
                 )
             )
             is Settings -> Child.Settings(SettingsComponent(context))
@@ -169,6 +170,7 @@ class RootComponentImpl(
                 PostMediaComponent(
                     configuration.post,
                     configuration.initialFile,
+                    injectionCompanion.downloadManagerModule.downloadManager,
                     context
                 )
             )

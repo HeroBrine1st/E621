@@ -162,4 +162,5 @@
     <string name="pool_updated_relative_date">Последнее обновление: %s</string>
     <string name="pool_is_active">Эта коллекция активна</string>
     <string name="pool_is_not_active">Эта коллекция не активна</string>
+    <string name="download">Загрузить</string>
 </resources>

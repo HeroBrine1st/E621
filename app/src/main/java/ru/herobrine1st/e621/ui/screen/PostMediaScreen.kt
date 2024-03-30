@@ -34,9 +34,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Animation
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.filled.Movie
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -55,6 +60,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.ui.component.MAX_SCALE_DEFAULT
 import ru.herobrine1st.e621.ui.component.post.PostImage
@@ -131,21 +137,36 @@ fun PostMediaScreen(
                         )
                         Spacer(Modifier.weight(1f))
                         Box {
-                            var showVariants by remember { mutableStateOf(false) }
-                            IconButton(onClick = { showVariants = true }) {
+                            var showMenu by remember { mutableStateOf(false) }
+                            IconButton(onClick = { showMenu = true }) {
                                 Icon(
                                     Icons.Default.MoreVert,
                                     contentDescription = stringResource(R.string.image_fullscreen_select_image_variant)
                                 )
                             }
                             DropdownMenu(
-                                expanded = showVariants,
-                                onDismissRequest = { showVariants = false }
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.download)) },
+                                    leadingIcon = { Icon(Icons.Default.Download, null) },
+                                    onClick = { component.downloadFile() }
+                                )
+                                HorizontalDivider()
                                 component.files.forEach {
                                     DropdownMenuItem(
                                         text = {
                                             Text(it.name.replaceFirstChar { it.uppercase() })
+                                        },
+                                        leadingIcon = {
+                                            val icon = when (it.type) {
+                                                FileType.JPG, FileType.PNG -> Icons.Default.Image
+                                                FileType.GIF -> Icons.Default.Animation
+                                                FileType.WEBM -> Icons.Default.Movie
+                                                FileType.SWF, FileType.UNDEFINED -> return@DropdownMenuItem
+                                            }
+                                            Icon(icon, null)
                                         },
                                         onClick = {
                                             component.setFile(it)

@@ -56,6 +56,7 @@ import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.api.search.PoolSearchOptions
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
+import ru.herobrine1st.e621.module.IDownloadManager
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import ru.herobrine1st.e621.navigation.component.posts.handleFavouriteChange
@@ -86,6 +87,7 @@ class PostComponent(
     private val favouritesCache: FavouritesCache,
     private val snackbarAdapter: SnackbarAdapter,
     private val mediaOkHttpClientProvider: Lazy<OkHttpClient>,
+    private val downloadManager: IDownloadManager,
 ) : ComponentContext by componentContext {
     private val instance = instanceKeeper.getOrCreate {
         Instance(postId, api, exceptionReporter)
@@ -327,6 +329,11 @@ class PostComponent(
                 initialFile = currentFile
             )
         )
+    }
+
+    fun downloadFile() {
+        val post = (state as? PostState.Ready) ?: return
+        downloadManager.downloadFile(post.post.normalizedFile)
     }
 
     class Instance(

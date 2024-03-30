@@ -49,12 +49,14 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.NavigateNext
+import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -171,7 +173,14 @@ fun Post(
                     actions = {
                         ActionBarMenu(
                             onNavigateToSettings = screenSharedState.goToSettings,
-                            onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
+                            onOpenBlacklistDialog = screenSharedState.openBlacklistDialog,
+                            additionalMenuActions = {
+                                DropdownMenuItem(
+                                    text = { Text(stringResource(R.string.download)) },
+                                    leadingIcon = { Icon(Icons.Default.Download, null) },
+                                    onClick = { component.downloadFile() }
+                                )
+                            }
                         )
                     },
                     scrollBehavior = scrollBehavior

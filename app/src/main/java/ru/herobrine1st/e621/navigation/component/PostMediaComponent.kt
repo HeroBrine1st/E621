@@ -26,10 +26,12 @@ import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.module.IDownloadManager
 
 class PostMediaComponent(
-    post: Post,
+    private val post: Post,
     initialFile: NormalizedFile,
+    private val downloadManager: IDownloadManager,
     componentContext: ComponentContext,
 ) : ComponentContext by componentContext {
     val files = post.files
@@ -38,12 +40,15 @@ class PostMediaComponent(
         check(initialFile in files) { "Initial file does not belong to post" }
     }
 
-
     var currentFile by mutableStateOf(initialFile)
         private set
 
     fun setFile(file: NormalizedFile) {
         check(file in files) { "File does not belong to post" }
         currentFile = file
+    }
+
+    fun downloadFile() {
+        downloadManager.downloadFile(post.normalizedFile)
     }
 }

@@ -61,7 +61,8 @@ fun MenuAction(
 @Composable
 fun ActionBarMenu(
     onNavigateToSettings: () -> Unit,
-    onOpenBlacklistDialog: () -> Unit
+    onOpenBlacklistDialog: () -> Unit,
+    additionalMenuActions: @Composable () -> Unit = {},
 ) {
     var openMenu by remember { mutableStateOf(false) }
 
@@ -76,6 +77,7 @@ fun ActionBarMenu(
         expanded = openMenu,
         onDismissRequest = { openMenu = false }
     ) {
+        additionalMenuActions()
         MenuAction(Icons.Outlined.Block, stringResource(R.string.blacklist)) {
             openMenu = false
             onOpenBlacklistDialog()
