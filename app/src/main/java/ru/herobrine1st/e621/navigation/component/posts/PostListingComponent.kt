@@ -23,9 +23,13 @@ package ru.herobrine1st.e621.navigation.component.posts
 import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import com.arkivanov.essenty.lifecycle.doOnResume
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
@@ -33,9 +37,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
+import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.createTagProcessor
+import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.parseBBCode
+import ru.herobrine1st.e621.api.search.PoolSearchOptions
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
@@ -68,6 +76,21 @@ class PostListingComponent(
     applicationContext: Context,
     blacklistRepository: BlacklistRepository,
 ) : ComponentContext by componentContext {
+
+    val postsFlow get() = instance.postsFlow
+
+    var infoState by mutableStateOf<InfoState>(InfoState.None)
+        private set
+
+    init {
+        if (searchOptions is PoolSearchOptions) lifecycle.doOnResume {
+            val pool = searchOptions.pool
+            lifecycleScope.launch(Dispatchers.Default) {
+                infoState = InfoState.PoolInfo(pool, description = parseBBCode(pool.description))
+            }
+        }
+    }
+
 
     private val instance = instanceKeeper.getOrCreate {
         Instance(
@@ -112,7 +135,6 @@ class PostListingComponent(
         }
     }
 
-    val postsFlow get() = instance.postsFlow
 
     private class Instance(
         api: API,
@@ -207,6 +229,14 @@ class PostListingComponent(
         }
             .flowOn(Dispatchers.Default)
             .cachedIn(lifecycleScope)
+    }
+
+    sealed interface InfoState {
+        data object None : InfoState
+
+        data object Loading : InfoState
+
+        data class PoolInfo(val pool: Pool, val description: List<MessageData>) : InfoState
     }
 }
 

@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
@@ -31,6 +30,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -53,11 +53,13 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
+import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent.InfoState
 import ru.herobrine1st.e621.navigation.component.posts.UIPostListingItem
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
+import ru.herobrine1st.e621.ui.screen.post.component.PoolInfoCard
 import ru.herobrine1st.e621.ui.screen.posts.component.HiddenItems
 import ru.herobrine1st.e621.ui.screen.posts.component.Post
 import ru.herobrine1st.e621.util.isFavourite
@@ -151,33 +153,53 @@ fun Posts(
                 // Solution from https://issuetracker.google.com/issues/177245496#comment24
                 state = if (posts.size == 0) rememberLazyListState() else lazyListState,
                 horizontalAlignment = Alignment.CenterHorizontally,
-//                verticalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = it
             ) {
-                endOfPagePlaceholder(posts.loadStates.prepend)
-                // TODO add info about pool here, getting that info from component
-                if (posts.size == 0) {
-                    item {
-                        Spacer(Modifier.height(4.dp))
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier
-                                .padding(BASE_PADDING_HORIZONTAL)
-                                .fillMaxSize()
-                        ) {
-                            when (posts.loadStates.refresh) {
-                                is LoadState.Error -> {
-                                    Icon(Icons.Outlined.Error, contentDescription = null)
-                                    Text(stringResource(R.string.unknown_error))
-                                }
+                when {
+                    posts.loadStates.prepend is LoadState.Loading ||
+                            component.infoState is InfoState.Loading -> item {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
 
-                                LoadState.Complete -> Text(stringResource(R.string.empty_results))
-                                LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
-                                is LoadState.NotLoading, LoadState.Idle -> {}
-                            }
-                        }
+                    posts.loadStates.prepend is LoadState.Error -> item {
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(stringResource(R.string.unknown_error))
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+
+                    posts.loadStates.prepend is LoadState.Complete &&
+                            component.infoState is InfoState.PoolInfo -> item(
+                        "PoolInfoCard",
+                        contentType = "PoolInfoCard"
+                    ) {
+                        PoolInfoCard(
+                            component.infoState as InfoState.PoolInfo,
+                            modifier = Modifier.padding(
+                                start = BASE_PADDING_HORIZONTAL,
+                                end = BASE_PADDING_HORIZONTAL,
+                                bottom = BASE_PADDING_HORIZONTAL,
+                                top = 4.dp
+                            )
+                        )
                     }
                 }
+
+                if (posts.size == 0) item {
+                    if (component.infoState is InfoState.None) Spacer(Modifier.height(4.dp))
+                    when (posts.loadStates.refresh) {
+                        is LoadState.Error -> {
+                            Icon(Icons.Outlined.Error, contentDescription = null)
+                            Text(stringResource(R.string.unknown_error))
+                        }
+
+                        LoadState.Complete -> Text(stringResource(R.string.empty_results))
+                        LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
+                        is LoadState.NotLoading, LoadState.Idle -> {}
+                    }
+                }
+
                 items(
                     count = posts.size,
                     key = posts.itemKey { post -> post.key },

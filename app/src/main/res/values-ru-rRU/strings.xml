@@ -158,4 +158,8 @@
     </plurals>
     <string name="show_original_file">Показать оригинальный файл</string>
     <string name="image_fullscreen_select_image_variant">Выбрать вариант изображения</string>
+    <string name="pool_created_relative_date">Создана: %s</string>
+    <string name="pool_updated_relative_date">Последнее обновление: %s</string>
+    <string name="pool_is_active">Эта коллекция активна</string>
+    <string name="pool_is_not_active">Эта коллекция не активна</string>
 </resources>

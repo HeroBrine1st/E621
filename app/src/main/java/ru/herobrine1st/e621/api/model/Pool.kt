@@ -39,5 +39,7 @@ data class Pool(
     val category: String, // probably a boolean
     @SerialName("post_ids")
     val posts: List<PostId>,
-    val postCount: Int
-)
+    val postCount: Int,
+) {
+    val normalizedName get() = name.replace('_', ' ')
+}
