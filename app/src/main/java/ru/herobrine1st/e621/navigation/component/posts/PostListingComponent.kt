@@ -174,6 +174,8 @@ class PostListingComponent(
             // It is hard to understand
             // Briefly, it maps Post to either show-able Post or hidden (due to blacklist or safe mode) item
             // then it merges sequences of hidden posts into one object
+            // and then "one object" expands to series of objects - one info object and many empty
+            // each having unique key corresponding to item in initial list
             //
             // Also it is probably possible to avoid re-computation when posts.updateKind is UpdateKind.StateChange,
             // but care should be taken not to avoid re-computation when other flows in combine emit new values
