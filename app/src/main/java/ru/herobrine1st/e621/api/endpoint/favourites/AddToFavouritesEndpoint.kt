@@ -23,16 +23,20 @@ package ru.herobrine1st.e621.api.endpoint.favourites
 import io.ktor.resources.Resource
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 import ru.herobrine1st.e621.api.HttpMethod
 import ru.herobrine1st.e621.api.HttpMethodType
 import ru.herobrine1st.e621.api.endpoint.APIEndpoint
+import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
 
-// TODO proper model
 @Serializable
 @HttpMethod(HttpMethodType.POST)
 @Resource("/favorites.json")
 data class AddToFavouritesEndpoint(
-    @SerialName("post_id") val postId: PostId
-): APIEndpoint<Unit, JsonElement>
+    @SerialName("post_id") val postId: PostId,
+) : APIEndpoint<Unit, AddToFavouritesEndpoint.Response> {
+    @Serializable
+    data class Response(
+        val post: Post,
+    )
+}

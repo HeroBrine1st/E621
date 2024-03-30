@@ -29,7 +29,6 @@ import io.ktor.client.request.header
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpHeaders
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.serializer
@@ -149,7 +148,7 @@ class APIImpl(val client: APIClient) : API {
         limit: Int?,
     ) = client.request(GetFavouritesEndpoint(userId, page, limit))
 
-    override suspend fun addToFavourites(postId: PostId): Result<JsonElement> =
+    override suspend fun addToFavourites(postId: PostId): Result<AddToFavouritesEndpoint.Response> =
         client.request(AddToFavouritesEndpoint(postId))
 
     override suspend fun removeFromFavourites(postId: PostId) =

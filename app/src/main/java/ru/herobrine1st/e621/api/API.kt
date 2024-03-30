@@ -21,8 +21,8 @@
 package ru.herobrine1st.e621.api
 
 import androidx.annotation.IntRange
-import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import ru.herobrine1st.e621.api.endpoint.favourites.AddToFavouritesEndpoint
 import ru.herobrine1st.e621.api.endpoint.favourites.GetFavouritesEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsDTextEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
@@ -69,7 +69,7 @@ interface API : AutocompleteSuggestionsAPI {
 
     suspend fun addToFavourites(
         postId: PostId,
-    ): Result<JsonElement>
+    ): Result<AddToFavouritesEndpoint.Response>
 
 
     suspend fun removeFromFavourites(
