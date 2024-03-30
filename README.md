@@ -34,6 +34,7 @@ read-only and has some harmless bugs.
         * [x] Server-side
         * [ ] Local
     * [ ] "Micro-search" (fast local search though current results)
+  * [x] Pools support
 - [x] Safe mode on search and posts screen (i.e. you can open explicit post from your browser, but
   cannot open in through search within app), enabled by default with disclaimer on disable.
 - [x] Autocomplete tags
@@ -56,10 +57,10 @@ read-only and has some harmless bugs.
     * [x] Tags
         * [x] Add to/exclude from search
         * [x] View wiki
-            * [ ] Formatting
-- [ ] Up/down score
+            * [x] Formatting
+- [x] Up/down score
 - [ ] Possibility to make changes visible to another users, like tag editing, commenting etc
-    - It is planned, but not in priority
+    - Will probably never be implemented
 - [x] Basic SOCKS5 proxy support. **WARNING**: it *will* fall back to direct connection if proxy is
   unreachable in any way
     - [ ] Preference to control fall back behavior
@@ -71,9 +72,7 @@ read-only and has some harmless bugs.
 - [x] GIF
 - [x] WEBM
 - [x] MP4
-- [ ] SWF - flash won't be supported neither in near nor far future (but PRs are welcome if they're
-  safe in terms of vulnerabilities which Adobe Flash had (and of course it is not possible, you
-  know))
+- [ ] SWF - can't be supported
 
 # License
 
