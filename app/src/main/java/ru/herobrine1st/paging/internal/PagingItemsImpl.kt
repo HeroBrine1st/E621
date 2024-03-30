@@ -21,7 +21,6 @@
 package ru.herobrine1st.paging.internal
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.Flow
@@ -52,7 +51,6 @@ class PagingItemsImpl<Value : Any>(
     suspend fun collectPagingData(startImmediately: Boolean) {
         flow.collect { snapshot ->
             loadStates = snapshot.loadStates
-            currentGeneration = snapshot.generation
             if (uiChannel == null) {
                 uiChannel = snapshot.uiChannel
                 pagingConfig = snapshot.pagingConfig
@@ -86,7 +84,6 @@ class PagingItemsImpl<Value : Any>(
 
     override val size: Int
         get() = items.size
-    override var currentGeneration by mutableIntStateOf(Int.MIN_VALUE)
     override var items: List<Value> by mutableStateOf(emptyList())
         private set
 

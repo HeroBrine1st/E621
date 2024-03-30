@@ -30,8 +30,6 @@ interface PagingItems<Value : Any> {
 
     val size: Int
 
-    val currentGeneration: Int
-
     /**
      * A linear snapshot of loaded items. Accessing this list does not trigger page fetching.
      *
