@@ -24,20 +24,18 @@ import android.util.Log
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.E621_MAX_ITEMS_IN_RANGE_ENUMERATION
-import ru.herobrine1st.e621.api.model.PoolId
+import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.api.model.PostId
 
 @Serializable
 data class PoolSearchOptions(
-    val poolId: PoolId,
-    val postIds: List<PostId>,
+    val pool: Pool,
 ) : SearchOptions {
     override val maxLimit: Int get() = E621_MAX_ITEMS_IN_RANGE_ENUMERATION
 
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
         require(limit <= maxLimit)
-        val postIds = postIds
+        val postIds = pool.posts
             .drop(limit * (page - 1))
             .take(limit)
 

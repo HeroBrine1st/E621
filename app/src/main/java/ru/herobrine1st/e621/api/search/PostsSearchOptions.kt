@@ -116,7 +116,7 @@ data class PostsSearchOptions(
 
             is FavouritesSearchOptions -> PostsSearchOptions(favouritesOf = options.favouritesOf)
             is PoolSearchOptions -> PostsSearchOptions(
-                poolId = options.poolId,
+                poolId = options.pool.id,
                 order = Order.NEWEST_TO_OLDEST,
                 orderAscending = true
             )
@@ -171,7 +171,7 @@ data class PostsSearchOptions(
 
                 is FavouritesSearchOptions -> Builder(favouritesOf = options.favouritesOf)
                 is PoolSearchOptions -> Builder(
-                    poolId = options.poolId,
+                    poolId = options.pool.id,
                     order = Order.NEWEST_TO_OLDEST,
                     orderAscending = true
                 )

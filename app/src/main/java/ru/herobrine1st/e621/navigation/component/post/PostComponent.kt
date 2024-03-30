@@ -311,7 +311,7 @@ class PostComponent(
 
     private fun openPool(pool: Pool) {
         closePoolDialog()
-        val searchOptions = PoolSearchOptions(pool.id, pool.posts)
+        val searchOptions = PoolSearchOptions(pool)
         navigator.pushIndexed { index -> Config.PostListing(searchOptions, index = index) }
     }
 
