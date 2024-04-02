@@ -24,11 +24,11 @@ import androidx.annotation.CallSuper
 import com.arkivanov.essenty.instancekeeper.InstanceKeeper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 
 abstract class InstanceBase : InstanceKeeper.Instance {
-    protected val lifecycleScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    protected val lifecycleScope = CoroutineScope(Job() + Dispatchers.Main.immediate)
 
     @CallSuper
     override fun onDestroy() {

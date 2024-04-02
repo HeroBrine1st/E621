@@ -26,7 +26,7 @@ import com.arkivanov.essenty.lifecycle.LifecycleOwner
 import com.arkivanov.essenty.lifecycle.doOnDestroy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlin.coroutines.CoroutineContext
 
@@ -36,7 +36,7 @@ inline fun <T : Any> StackNavigator<T>.pushIndexed(crossinline create: (index: I
     }
 
 @Suppress("FunctionName")
-fun LifecycleOwner.LifecycleScope(context: CoroutineContext = Dispatchers.Main.immediate + SupervisorJob()): CoroutineScope {
+fun LifecycleOwner.LifecycleScope(context: CoroutineContext = Dispatchers.Main.immediate + Job()): CoroutineScope {
     val coroutineScope = CoroutineScope(context)
     lifecycle.doOnDestroy {
         coroutineScope.cancel()
