@@ -12,10 +12,10 @@ plugins {
 }
 
 val kotlinVersion = "1.9.21"
-val composeCompilerVersion = "1.5.7"
-val protobufVersion = "3.25.1"
+val composeCompilerVersion = "1.5.11"
+val protobufVersion = "4.26.1"
 
-val ktorVersion = "2.3.7"
+val ktorVersion = "2.3.9"
 
 val applicationId = "ru.herobrine1st.e621"
 val versionCode = getCommitIndexNumber()
@@ -116,16 +116,16 @@ configurations.all {
 dependencies {
     // Android core
     implementation("androidx.core:core-ktx:1.12.0") // Apache 2.0
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2") // Apache 2.0
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.7.0") // Apache 2.0
 
     // Jetpack Compose (Apache 2.0)
-    implementation("androidx.compose.ui:ui:1.5.4")
-    implementation("androidx.compose.material3:material3:1.2.0-beta01")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.5.4")
-    implementation("androidx.compose.material:material-icons-extended:1.5.4")
+    implementation("androidx.compose.ui:ui:1.6.4")
+    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.compose.ui:ui-tooling-preview:1.6.4")
+    implementation("androidx.compose.material:material-icons-extended:1.6.4")
     implementation("androidx.activity:activity-compose:1.8.2")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.2")
-    implementation("androidx.compose.ui:ui-util:1.5.4")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.compose.ui:ui-util:1.6.4")
 
     // Decompose
     val decomposeVersion = "2.2.2"
@@ -143,13 +143,13 @@ dependencies {
     implementation("com.google.protobuf:protobuf-javalite:$protobufVersion") // BSD 3-clause
 
     // Coroutine Image Loader (Apache 2.0)
-    val coilVersion = "2.5.0"
+    val coilVersion = "2.6.0"
     implementation("io.coil-kt:coil:$coilVersion")
     implementation("io.coil-kt:coil-compose:$coilVersion")
     implementation("io.coil-kt:coil-gif:$coilVersion")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
 
-    // KTorfit
+    // KTor
     implementation("io.ktor:ktor-client-core:$ktorVersion")
     implementation("io.ktor:ktor-client-cio:$ktorVersion")
     implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
@@ -163,29 +163,29 @@ dependencies {
     "profileableImplementation"("androidx.tracing:tracing-perfetto-binary:1.0.0")
 
     // Jetpack Media3
-    implementation("androidx.media3:media3-exoplayer:1.2.0")
-    implementation("androidx.media3:media3-ui:1.2.0")
-    implementation("androidx.media3:media3-datasource-okhttp:1.2.0")
+    implementation("androidx.media3:media3-exoplayer:1.3.0")
+    implementation("androidx.media3:media3-ui:1.3.0")
+    implementation("androidx.media3:media3-datasource-okhttp:1.3.0")
 
     // Other libraries
     implementation("org.jsoup:jsoup:1.17.2") // Expat License
-    implementation("com.mikepenz:aboutlibraries-compose-m3:10.10.0") // Apache 2.0
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.2")
+    implementation("com.mikepenz:aboutlibraries-compose-m3:11.1.1") // Apache 2.0
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.5.0")
 
     // Tests
     testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.11.1")
-    testImplementation("androidx.compose.ui:ui-test-junit4:1.5.4")
-    testImplementation("org.mockito:mockito-core:5.8.0")
+    testImplementation("org.robolectric:robolectric:4.12")
+    testImplementation("androidx.compose.ui:ui-test-junit4:1.6.4")
+    testImplementation("org.mockito:mockito-core:5.11.0")
     testImplementation("org.mockito:mockito-inline:5.2.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:5.2.1")
     testImplementation("androidx.test:core:1.5.0")
     androidTestImplementation("androidx.test:core-ktx:1.5.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.5.4")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.5.4")
+    debugImplementation("androidx.compose.ui:ui-tooling:1.6.4")
+    debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.4")
 }
 
 protobuf {
