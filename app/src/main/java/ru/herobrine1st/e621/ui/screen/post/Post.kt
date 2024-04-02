@@ -84,7 +84,6 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.CommentData
 import ru.herobrine1st.e621.api.model.isOriginal
-import ru.herobrine1st.e621.navigation.component.post.PoolsDialogComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.post.PostState
 import ru.herobrine1st.e621.preference.LocalPreferences
@@ -112,7 +111,7 @@ fun Post(
     component: PostComponent,
     isAuthorized: Boolean, // TODO move to component
 ) {
-    val postState = component.state
+    val postState by component.postState.subscribeAsState()
     val preferences = LocalPreferences.current
 
     val coroutineScope = rememberCoroutineScope()
@@ -153,16 +152,6 @@ fun Post(
         snackbarHostState = screenSharedState.snackbarHostState
     )
 
-    val dialog by component.dialog.subscribeAsState()
-
-    when (val dialogComponent = dialog.child?.instance) {
-        is PoolsDialogComponent -> {
-            PoolsDialog(component = dialogComponent)
-        }
-
-        null -> {}
-    }
-
     BoxWithConstraints {
         BottomSheetScaffold(
             topBar = {
@@ -187,16 +176,19 @@ fun Post(
                 )
             },
             sheetContent = {
-                if (postState is PostState.Ready) CommentsBottomSheetContent(
-                    comments = comments,
-                    post = postState.post
-                )
+                (postState as? PostState.Ready)?.post?.let { post ->
+                    CommentsBottomSheetContent(
+                        comments = comments,
+                        post = post
+                    )
+                }
             },
             sheetPeekHeight = maxHeight * 0.5f,
             scaffoldState = bottomSheetScaffoldState,
             modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
         ) { _ ->
-            if (postState !is PostState.Ready) {
+            val post = (postState as? PostState.Ready)?.post
+            if (post == null) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -218,7 +210,6 @@ fun Post(
                 return@BottomSheetScaffold
             }
 
-            val post = postState.post
 
             if (preferences.safeModeEnabled && post.rating.isNotSafe) {
                 Column(
@@ -463,21 +454,30 @@ fun Post(
                     )
 
                     if (post.pools.isNotEmpty()) {
+                        val poolsComponent = component.poolsComponent
+                        PoolsDialog(poolsComponent)
                         TextButton(
-                            onClick = component::openPools,
+                            onClick = poolsComponent::activate,
                             content = {
                                 Text(
-                                    if (post.pools.size == 1)
+                                    if (poolsComponent.pools.size == 1)
                                         stringResource(R.string.post_has_pool)
-                                    else stringResource(R.string.post_has_pools, post.pools.size)
+                                    else stringResource(
+                                        R.string.post_has_pools,
+                                        poolsComponent.pools.size
+                                    )
                                 )
                                 Spacer(Modifier.weight(1f))
-                                if (post.pools.size == 1) Crossfade(
-                                    component.isPoolLoading,
+                                if (poolsComponent.pools.size == 1) Crossfade(
+                                    poolsComponent.loadingPools,
                                     label = "Crossfade between icon and loading"
                                 ) {
-                                    // 24.dp is from androidx.compose.material3.tokens.IconButtonTokens.IconSize
-                                    if (it) CircularProgressIndicator(Modifier.size(24.0.dp))
+                                    // 24.dp is size of icon
+                                    // strokeWidth is decreased in proportion (24/40 * 4)
+                                    if (it) CircularProgressIndicator(
+                                        Modifier.size(24.dp),
+                                        strokeWidth = 2.4.dp
+                                    )
                                     else Icon(
                                         Icons.AutoMirrored.Default.NavigateNext,
                                         contentDescription = null

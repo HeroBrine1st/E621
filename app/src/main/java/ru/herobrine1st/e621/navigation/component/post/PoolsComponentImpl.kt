@@ -36,19 +36,22 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.post.PoolsComponent.PoolState
+import ru.herobrine1st.e621.util.ExceptionReporter
 
 private const val TAG = "PoolsComponentImpl"
 
 class PoolsComponentImpl(
     postState: Value<PostState>,
     private val api: API,
+    private val exceptionReporter: ExceptionReporter,
     private val openPool: (Pool) -> Unit,
+    private val onActivateRequest: () -> Unit,
     private val onDismissRequest: () -> Unit,
     componentContext: ComponentContext,
 ) : PoolsComponent, ComponentContext by componentContext {
     val lifecycleScope = LifecycleScope()
 
-    // TODO save state
+    // It is probably better to re-download all pools than caching them locally
     override val pools = mutableStateListOf<PoolState>()
 
     override var showPools by mutableStateOf(false)
@@ -56,11 +59,15 @@ class PoolsComponentImpl(
     override var loadingPools by mutableStateOf(false)
         private set
 
-    override fun openPool(pool: Pool) {
+    override fun onClick(pool: Pool) {
         openPool.invoke(pool)
     }
 
-    override fun dismiss() {
+    override fun activate() {
+        onActivateRequest()
+    }
+
+    override fun onDismiss() {
         onDismissRequest()
     }
 
@@ -71,6 +78,7 @@ class PoolsComponentImpl(
             if (state !is PostState.Ready) return@observe
             if (pools.map { it.id } == state.post.pools) return@observe
 
+            // Reuse old pools
             val loadedPoolsCache = pools.toList()
                 .filterIsInstance<PoolState.Successful>()
                 .associateBy { it.id }
@@ -90,8 +98,11 @@ class PoolsComponentImpl(
                     "UB: Component is resumed before post information is available"
                 )
                 if (pools.isEmpty()) Log.wtf(TAG, "Component is resumed with no post pools")
+
                 showPools = pools.size > 1
-                downloadPools()
+
+                if (pools.all { it is PoolState.Successful }) goToSinglePool()
+                else downloadPools()
             },
             onPause = {
                 showPools = false
@@ -101,21 +112,29 @@ class PoolsComponentImpl(
     }
 
     private fun downloadPools() {
-        if (pools.none { it is PoolState.NotLoaded }) return
         downloadJob?.cancel()
         downloadJob = lifecycleScope.launch {
             loadingPools = true
             pools.forEachIndexed { index, poolState ->
-                if (poolState is PoolState.NotLoaded) {
+                if (poolState is PoolState.NotLoaded || poolState is PoolState.Error) {
                     pools[index] = api.getPool(poolState.id).map {
                         PoolState.Successful(it)
                     }.recover {
+                        exceptionReporter.handleRequestException(it, dontShowSnackbar = true)
                         PoolState.Error(poolState.id)
                     }.getOrThrow()
                 }
             }
             loadingPools = false
             downloadJob = null
+            goToSinglePool()
         }
+    }
+
+    /**
+     * Automatically goes to pool if there's only one
+     */
+    private fun goToSinglePool() {
+        (pools.singleOrNull() as? PoolState.Successful)?.pool?.let(openPool::invoke)
     }
 }

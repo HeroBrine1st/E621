@@ -34,9 +34,11 @@ interface PoolsComponent {
     @Stable
     val loadingPools: Boolean
 
-    fun openPool(pool: Pool)
+    fun onClick(pool: Pool)
 
-    fun dismiss()
+    fun activate()
+
+    fun onDismiss()
 
     sealed interface PoolState {
         val id: PoolId

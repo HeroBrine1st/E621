@@ -31,15 +31,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
-import com.arkivanov.decompose.router.slot.ChildSlot
-import com.arkivanov.decompose.router.slot.SlotNavigation
-import com.arkivanov.decompose.router.slot.childSlot
-import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.getOrCreate
+import com.arkivanov.essenty.lifecycle.Lifecycle
+import com.arkivanov.essenty.lifecycle.LifecycleRegistry
 import com.arkivanov.essenty.lifecycle.doOnResume
+import com.arkivanov.essenty.lifecycle.resume
+import com.arkivanov.essenty.lifecycle.stop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -94,38 +95,18 @@ class PostComponent(
     private val downloadManager: IDownloadManager,
     private val voteRepository: VoteRepository,
 ) : ComponentContext by componentContext {
+
+
     private val instance = instanceKeeper.getOrCreate {
         Instance(postId, api, exceptionReporter)
     }
 
     private val lifecycleScope = LifecycleScope()
 
-    private val slotNavigation = SlotNavigation<PoolsDialogConfig>()
-
-
-    // Dialog for multiple pools, isPoolLoading for single pool
-    val dialog: Value<ChildSlot<PoolsDialogConfig, PoolsDialogComponent>> =
-        childSlot(source = slotNavigation,
-            serializer = PoolsDialogConfig.serializer(),
-            handleBackButton = true,
-            childFactory = { _, componentContext ->
-                return@childSlot PoolsDialogComponent(
-                    componentContext = componentContext,
-                    api = api,
-                    pools = (state as PostState.Ready).post.pools,
-                    openPool = {
-                        openPool(pool = it)
-                    },
-                    close = ::closePoolDialog
-                )
-            })
-
-    var isPoolLoading by mutableStateOf(false)
-        private set
 
     // private var rememberedPositionMs = -1L
-    var state by mutableStateOf<PostState>(PostState.Loading)
-        private set
+    private val state = MutableValue<PostState>(PostState.Loading)
+
     var currentFile by mutableStateOf(
         NormalizedFile(
             "stub",
@@ -146,15 +127,41 @@ class PostComponent(
 
     private var latestPlayedFile: NormalizedFile? = null
 
+    //region Temporary: members for interface extraction
+
+    val postState: Value<PostState> by ::state
+
+    private val poolsLifecycle = LifecycleRegistry(Lifecycle.State.STARTED)
+
+    val poolsComponent: PoolsComponent = PoolsComponentImpl(
+        postState = postState,
+        exceptionReporter = exceptionReporter,
+        api = api,
+        openPool = {
+            poolsLifecycle.stop()
+            openPool(it)
+        },
+        onActivateRequest = {
+            poolsLifecycle.resume()
+        },
+        onDismissRequest = {
+            poolsLifecycle.stop()
+        },
+        componentContext = childContext("PoolsComponentImpl", poolsLifecycle)
+    )
+
+
+    //endregion
+
     init {
         assert(initialPost == null || initialPost.id == postId)
-        stateKeeper.register(POST_STATE_KEY, strategy = PostState.serializer()) { state }
+        stateKeeper.register(POST_STATE_KEY, strategy = PostState.serializer()) { state.value }
 
 
-        state = stateKeeper.consume(POST_STATE_KEY, strategy = PostState.serializer())
+        state.value = stateKeeper.consume(POST_STATE_KEY, strategy = PostState.serializer())
             ?: initialPost?.let { PostState.Ready(it) } ?: PostState.Loading
 
-        if (state is PostState.Ready) useSample()
+        if (state.value is PostState.Ready) useSample()
 
         lifecycle.doOnResume {
             // TODO behavior preference
@@ -163,7 +170,7 @@ class PostComponent(
             // 3. Do both
             lifecycleScope.launch {
                 if (
-                    state !is PostState.Ready
+                    state.value !is PostState.Ready
                     || !applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }.first()
                 )
                     refreshPostInternal()
@@ -174,17 +181,17 @@ class PostComponent(
     }
 
     private suspend fun refreshPostInternal() {
-        (state as? PostState.Ready)?.let {
-            state = it.copy(isUpdating = true)
+        (state.value as? PostState.Ready)?.let {
+            state.value = it.copy(isUpdating = true)
         } ?: run {
-            if (state is PostState.Error) state = PostState.Loading
+            if (state.value is PostState.Error) state.value = PostState.Loading
         }
         api.getPost(postId).map {
             PostState.Ready(it.post)
         }.onSuccess {
-            state = it
+            state.value = it
         }.onFailure {
-            if (state !is PostState.Ready) state = PostState.Error
+            if (state.value !is PostState.Ready) state.value = PostState.Error
             exceptionReporter.handleRequestException(it)
         }
     }
@@ -197,7 +204,7 @@ class PostComponent(
     }
 
     private fun useSample() {
-        val state = state
+        val state = state.value
         assert(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
         state as PostState.Ready
         setFile(state.post.selectSample())
@@ -235,7 +242,7 @@ class PostComponent(
         // Assume post is loaded here as well
         lifecycleScope.launch {
             handleFavouriteChange(
-                favouritesCache, api, snackbarAdapter, (state as PostState.Ready).post
+                favouritesCache, api, snackbarAdapter, (state.value as PostState.Ready).post
             )
         }
     }
@@ -246,9 +253,9 @@ class PostComponent(
         // 1. This method is called after post is loaded
         // 2. post id will never change
         favouritesCache.flow.map { cache ->
-            cache.isFavourite((state as PostState.Ready).post)
+            cache.isFavourite((state.value as PostState.Ready).post)
         }
-    }.collectAsState(favouritesCache.isFavourite((state as PostState.Ready).post))
+    }.collectAsState(favouritesCache.isFavourite((state.value as PostState.Ready).post))
 
     fun handleWikiClick(tag: Tag) {
         navigator.pushIndexed {
@@ -272,7 +279,7 @@ class PostComponent(
     fun openParentPost() {
         navigator.pushIndexed { index ->
             Config.Post(
-                id = (state as PostState.Ready).post.relationships.parentId!!,
+                id = (state.value as PostState.Ready).post.relationships.parentId!!,
                 post = null,
                 query = PostsSearchOptions(),
                 index = index
@@ -281,7 +288,7 @@ class PostComponent(
     }
 
     fun openChildrenPostListing() {
-        val post = (state as PostState.Ready).post
+        val post = (state.value as PostState.Ready).post
         post.relationships.children.singleOrNull()?.let { id ->
             navigator.pushIndexed {
                 Config.Post(
@@ -301,33 +308,13 @@ class PostComponent(
         }
     }
 
-    fun openPools() {
-        val post = (state as PostState.Ready).post
-        post.pools.singleOrNull()?.let { id ->
-            lifecycleScope.launch {
-                isPoolLoading = true
-                api.getPool(id)
-                    .also { isPoolLoading = false }
-                    .onFailure { exceptionReporter.handleRequestException(it) }
-                    .onSuccess { pool -> openPool(pool) }
-            }
-            return
-        }
-        slotNavigation.navigate { PoolsDialogConfig }
-    }
-
     private fun openPool(pool: Pool) {
-        closePoolDialog()
         val searchOptions = PoolSearchOptions(pool)
         navigator.pushIndexed { index -> Config.PostListing(searchOptions, index = index) }
     }
 
-    private fun closePoolDialog() {
-        slotNavigation.navigate { null }
-    }
-
     fun openToFullscreen() {
-        val post = (state as PostState.Ready).post
+        val post = (state.value as PostState.Ready).post
         navigator.push(
             Config.PostMedia(
                 post = post,
@@ -337,7 +324,7 @@ class PostComponent(
     }
 
     fun downloadFile() {
-        val post = (state as? PostState.Ready) ?: return
+        val post = (state.value as? PostState.Ready) ?: return
         downloadManager.downloadFile(post.post.normalizedFile)
     }
 
@@ -366,9 +353,6 @@ class PostComponent(
         val commentsFlow = pager.flow.cachedIn(lifecycleScope)
     }
 }
-
-@Serializable
-object PoolsDialogConfig
 
 @Serializable
 sealed interface PostState {
