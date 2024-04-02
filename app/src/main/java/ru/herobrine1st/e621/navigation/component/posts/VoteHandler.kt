@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.navigation.component.posts
 
+import android.util.Log
 import androidx.annotation.IntRange
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.endpoint.posts.VoteEndpoint
@@ -44,5 +45,10 @@ suspend fun handleVote(
     } catch (t: Throwable) {
         exceptionReporter.handleRequestException(t, showThrowable = true)
         null
-    }?.copy(ourScore = vote)
+    }?.also {
+        if (it.ourScore != vote) {
+            Log.w("VoteHandler", "API returned inconsistent response or workaround failed")
+            Log.w("VoteHandler", "Expected ourScope=${vote}, got $it")
+        }
+    }
 }
