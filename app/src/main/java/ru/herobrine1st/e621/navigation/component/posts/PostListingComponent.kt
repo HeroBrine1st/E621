@@ -88,7 +88,7 @@ class PostListingComponent(
         private set
 
     init {
-        if (searchOptions is PoolSearchOptions) lifecycle.doOnResume {
+        if (searchOptions is PoolSearchOptions) lifecycle.doOnResume(isOneTime = true) {
             val pool = searchOptions.pool
             lifecycleScope.launch(Dispatchers.Default) {
                 infoState = InfoState.PoolInfo(pool, description = parseBBCode(pool.description))
