@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2023 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2024 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,10 +24,10 @@ package ru.herobrine1st.e621.navigation.component.posts
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.search.SearchOptions
+import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.paging.api.LoadParams
 import ru.herobrine1st.paging.api.LoadResult
 import ru.herobrine1st.paging.api.PagingSource
-import ru.herobrine1st.e621.util.ExceptionReporter
 
 class PostsSource(
     private val api: API,

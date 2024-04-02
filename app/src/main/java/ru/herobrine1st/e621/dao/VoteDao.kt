@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2023 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2024 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,7 +20,11 @@
 
 package ru.herobrine1st.e621.dao
 
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.Query
+import androidx.room.Update
 import ru.herobrine1st.e621.entity.Vote
 
 @Dao
