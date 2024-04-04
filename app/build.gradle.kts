@@ -19,7 +19,7 @@ val ktorVersion = "2.3.9"
 
 val applicationId = "ru.herobrine1st.e621"
 val versionCode = getCommitIndexNumber()
-val versionName = "1.0.0-alpha-4"
+val versionName = "1.0.0-alpha-5"
 
 android {
     compileSdk = 34
