@@ -10,12 +10,11 @@ risk, but it is harmless as this client is mostly read-only :-)
 e926 is also supported, but there's no switch in settings, i.e. rebuild required, although you can
 decompile, change url and assemble back. It is complicated though.
 
-This project is mostly in stable state, but there's no releases because there's no *big enough* changes. Get latest
-snapshot [here](https://github.com/HeroBrine1st/E621/actions/workflows/snapshot-build.yml) (select
+Releases are available [here](https://github.com/HeroBrine1st/E621/releases).
+
+Get latest **development** snapshot [here](https://github.com/HeroBrine1st/E621/actions/workflows/snapshot-build.yml) (select
 last passed workflow and see artifacts). Keep in mind that snapshot builds aren't compatible with
 release builds (they use different signing keys), but you can reinstall if you want.
-
-The roadmap for the next release (I think it will be beta release) is [approximately this](https://github.com/users/HeroBrine1st/projects/1/views/1). It may be appended or anything, it is just an estimate of required features that may pop up in my memory before hitting "publish" button.
 
 # Features
 
@@ -35,8 +34,7 @@ read-only and has some harmless bugs.
         * [ ] Local
     * [ ] "Micro-search" (fast local search though current results)
   * [x] Pools support
-- [x] Safe mode on search and posts screen (i.e. you can open explicit post from your browser, but
-  cannot open in through search within app), enabled by default with disclaimer on disable.
+- [x] Safe mode on (probably) every screen with images, enabled by default with disclaimer on disable.
 - [x] Autocomplete tags
 - [x] Authorization by API key
     - [ ] Authorization by regular username and password (I'm not sure it won't break ToS, but it is
