@@ -37,11 +37,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -77,6 +83,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.arkivanov.decompose.extensions.compose.jetpack.subscribeAsState
@@ -224,11 +231,20 @@ fun Post(
                 return@BottomSheetScaffold
             }
 
-            // PaddingValues purposely unused because it clutters screen if applied via modifier
-            // and lags if applied via contentPadding
-            // while has no top padding, so useless
+            // provided PaddingValues aren't connected to actual visibility window, so are ignored
+            // handling insets manually
             LazyColumn(
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
+                contentPadding = with(LocalDensity.current) {
+                    PaddingValues(
+                        bottom = WindowInsets.navigationBars.getBottom(this).toDp()
+                    )
+                },
+                modifier = Modifier.consumeWindowInsets(
+                    WindowInsets.navigationBars.only(
+                        WindowInsetsSides.Bottom
+                    )
+                )
             ) {
                 item("media") {
                     val file = component.currentFile
