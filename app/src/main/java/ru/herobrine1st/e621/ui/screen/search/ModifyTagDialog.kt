@@ -33,6 +33,8 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -153,7 +155,7 @@ fun ModifyTagDialog(
                 label = { Text(stringResource(R.string.tag)) },
                 singleLine = true,
                 modifier = Modifier
-                    .menuAnchor()
+                    .menuAnchor(MenuAnchorType.PrimaryEditable)
                     .fillMaxWidth(),
                 keyboardActions = KeyboardActions { onApply(textValue.text) },
                 visualTransformation = {
@@ -186,8 +188,7 @@ fun ModifyTagDialog(
                     autocompleteExpanded = false
                 },
                 modifier = Modifier
-                    .heightIn(max = (48 * 3).dp) // TODO it still can overlap keyboard
-                    .exposedDropdownSize(matchTextFieldWidth = true)
+                    .heightIn(max = (48 * 3).dp) // FIXME it can't overlap keyboard, but instead it does not scroll if it is under keyboard
             ) {
                 if (autocomplete !is Autocomplete.Ready) return@ExposedDropdownMenu
                 autocomplete.result.forEach {
@@ -197,7 +198,7 @@ fun ModifyTagDialog(
                         else -> it.antecedentName.text + " → " + name
                     }
                     DropdownMenuItem(
-                        text = { Text(suggestionText) },
+                        text = { Text(suggestionText, style = MaterialTheme.typography.bodyLarge) },
                         onClick = {
                             val prefix = listOf(Tokens.ALTERNATIVE, Tokens.EXCLUDED).find { token ->
                                 textValue.text.startsWith(token)

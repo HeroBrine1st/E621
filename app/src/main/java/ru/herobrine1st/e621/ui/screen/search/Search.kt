@@ -54,6 +54,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -232,7 +234,7 @@ fun Search(
                         TextField(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .menuAnchor(),
+                                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                             readOnly = true,
                             singleLine = true,
                             value = stringResource(component.order.descriptionId),
@@ -241,12 +243,14 @@ fun Search(
                                 Icon(
                                     Icons.Filled.ArrowDropDown,
                                     null,
-                                    Modifier.rotate(
-                                        animateFloatAsState(
-                                            if (expanded) 180f else 360f,
-                                            label = "dropdown arrow rotation animation"
-                                        ).value
-                                    )
+                                    Modifier
+                                        .rotate(
+                                            animateFloatAsState(
+                                                if (expanded) 180f else 360f,
+                                                label = "dropdown arrow rotation animation"
+                                            ).value
+                                        )
+                                        .menuAnchor(MenuAnchorType.SecondaryEditable)
                                 )
                             },
                             colors = ExposedDropdownMenuDefaults.textFieldColors(),
@@ -254,13 +258,16 @@ fun Search(
                         ExposedDropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false },
-                            // FIXME: there's no way to make it fill max width
-                            // there was one, but I lost it :-(
                             modifier = Modifier.exposedDropdownSize(matchTextFieldWidth = true)
                         ) {
                             Order.entries.forEach {
                                 DropdownMenuItem(
-                                    text = { Text(stringResource(it.descriptionId)) },
+                                    text = {
+                                        Text(
+                                            stringResource(it.descriptionId),
+                                            style = MaterialTheme.typography.bodyLarge
+                                        )
+                                    },
                                     onClick = {
                                         component.order = it
                                         expanded = false
