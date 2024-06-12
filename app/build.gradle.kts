@@ -2,34 +2,26 @@ import com.android.build.api.dsl.VariantDimension
 import java.io.ByteArrayOutputStream
 
 plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-    id("com.google.devtools.ksp")
-    id("com.google.protobuf")
-    id("com.mikepenz.aboutlibraries.plugin")
-    kotlin("plugin.serialization")
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.android.application)
+
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.symbolProcessing)
+    alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.kotlin.compose)
+
+    alias(libs.plugins.protobuf)
+    alias(libs.plugins.aboutlibraries)
 }
 
-val kotlinVersion = "1.9.21"
-val composeCompilerVersion = "1.5.14"
-val protobufVersion = "4.27.0"
-
-val ktorVersion = "2.3.11"
-
-val applicationId = "ru.herobrine1st.e621"
-val versionCode = getCommitIndexNumber()
-val versionName = "1.0.0-alpha-5"
-
 android {
-    compileSdk = 34
+    compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = this@Build_gradle.applicationId
-        minSdk = 27
-        targetSdk = 34
-        versionCode = this@Build_gradle.versionCode
-        versionName = this@Build_gradle.versionName
+        applicationId = "ru.herobrine1st.e621"
+        minSdk = libs.versions.android.minSdk.get().toInt()
+        targetSdk = libs.versions.android.targetSdk.get().toInt()
+        versionCode = getCommitIndexNumber()
+        versionName = "1.0.0-alpha-5"
 
         vectorDrawables {
             useSupportLibrary = true
@@ -46,7 +38,7 @@ android {
         stringBuildConfigField("DEEP_LINK_BASE_URL", "https://e621.net")
         stringBuildConfigField(
             "USER_AGENT_TEMPLATE",
-            "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) Ktor/$ktorVersion"
+            "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) Ktor/${libs.versions.ktor.get()}"
         )
     }
 
@@ -87,7 +79,7 @@ android {
         buildConfig = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = composeCompilerVersion
+        kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get()
     }
     packaging {
         resources {
@@ -108,89 +100,78 @@ android {
 
 configurations.all {
     resolutionStrategy {
-        force("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+        // some libraries depend on older stdlib
+        force("org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}")
     }
 }
 
-@Suppress("SpellCheckingInspection")
 dependencies {
-    // Android core
-    implementation("androidx.core:core-ktx:1.13.1") // Apache 2.0
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0") // Apache 2.0
 
-    // Jetpack Compose (Apache 2.0)
-    implementation("androidx.compose.ui:ui:1.6.7")
-    implementation("androidx.compose.material3:material3:1.3.0-beta02")
-    implementation("androidx.compose.ui:ui-tooling-preview:1.6.7")
-    implementation("androidx.compose.material:material-icons-extended:1.6.7")
-    implementation("androidx.activity:activity-compose:1.9.0")
-//    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
-    implementation("androidx.compose.ui:ui-util:1.6.7")
+    implementation(libs.compose.ui.core)
+    implementation(libs.compose.material.m3)
+    implementation(libs.compose.ui.tooling.preview)
+    implementation(libs.compose.material.icons)
+    implementation(libs.compose.ui.util)
 
-    // Decompose
-    val decomposeVersion = "2.2.2"
-    implementation("com.arkivanov.decompose:decompose:$decomposeVersion") // Apache 2.0
-    implementation("com.arkivanov.decompose:extensions-compose-jetpack:$decomposeVersion")
+    implementation(libs.decompose.core)
+    implementation(libs.decompose.extensions.compose)
 
-    // Jetpack Room
-    val roomVersion = "2.7.0-alpha03"
-    implementation("androidx.room:room-runtime:$roomVersion") // Apache 2.0
-    implementation("androidx.room:room-ktx:$roomVersion") // Apache 2.0
-    ksp("androidx.room:room-compiler:$roomVersion") // Not included in binary result
+    implementation(libs.coil.core)
+    implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
+    implementation(libs.okhttp)
 
-    // Jetpack Datastore
-    implementation("androidx.datastore:datastore:1.1.1") // Apache 2.0
-    implementation("com.google.protobuf:protobuf-javalite:$protobufVersion") // BSD 3-clause
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
 
-    // Coroutine Image Loader (Apache 2.0)
-    val coilVersion = "2.6.0"
-    implementation("io.coil-kt:coil:$coilVersion")
-    implementation("io.coil-kt:coil-compose:$coilVersion")
-    implementation("io.coil-kt:coil-gif:$coilVersion")
-    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation(libs.datastore)
+    implementation(libs.protobuf.javalite)
 
-    // KTor
-    implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
-    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
-    implementation("io.ktor:ktor-client-logging:$ktorVersion")
-    implementation("io.ktor:ktor-client-resources:$ktorVersion")
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.client.cio)
+    implementation(libs.ktor.client.contentNegotination)
+    implementation(libs.ktor.client.logging)
+    implementation(libs.ktor.client.resources)
+    implementation(libs.ktor.serialization.kotlinx.json)
+
+    implementation(libs.media3.exoplayer)
+    implementation(libs.media3.ui)
+    implementation(libs.media3.datasource.okhttp)
+
+    implementation(libs.jsoup)
+    implementation(libs.aboutlibraries)
+
+    implementation(libs.kotlinx.serialization.json)
+    implementation(libs.kotlinx.datetime)
+
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.androidx.lifecycle.ktx)
+    implementation(libs.androidx.activity.compose)
 
     // Profiling
-    "profileableImplementation"("androidx.compose.runtime:runtime-tracing:1.0.0-beta01")
-    "profileableImplementation"("androidx.tracing:tracing-perfetto:1.0.0")
-    "profileableImplementation"("androidx.tracing:tracing-perfetto-binary:1.0.0")
-
-    // Jetpack Media3
-    implementation("androidx.media3:media3-exoplayer:1.3.1")
-    implementation("androidx.media3:media3-ui:1.3.1")
-    implementation("androidx.media3:media3-datasource-okhttp:1.3.1")
-
-    // Other libraries
-    implementation("org.jsoup:jsoup:1.17.2") // Expat License
-    implementation("com.mikepenz:aboutlibraries-compose-m3:11.2.0") // Apache 2.0
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.6.0")
-
+    "profileableImplementation"(libs.androidx.compose.tracing)
+    "profileableImplementation"(libs.androidx.tracing.perfetto.core)
+    "profileableImplementation"(libs.androidx.tracing.perfetto.binary)
+    
     // Tests
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.robolectric:robolectric:4.12.2")
-    testImplementation("androidx.compose.ui:ui-test-junit4:1.6.7")
-    testImplementation("org.mockito:mockito-core:5.12.0")
-    testImplementation("org.mockito:mockito-inline:5.2.0")
-    testImplementation("org.mockito.kotlin:mockito-kotlin:5.3.1")
-    testImplementation("androidx.test:core:1.5.0")
-    androidTestImplementation("androidx.test:core-ktx:1.5.0")
-    androidTestImplementation("androidx.test.ext:junit:1.1.5")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
-    debugImplementation("androidx.compose.ui:ui-tooling:1.6.7")
-    debugImplementation("androidx.compose.ui:ui-test-manifest:1.6.7")
+    testImplementation(libs.junit)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.compose.ui.junit4)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.mockito.inline)
+    testImplementation(libs.mockito.kotlin)
+    testImplementation(libs.androidx.core)
+    androidTestImplementation(libs.androidx.test.ktx)
+    androidTestImplementation(libs.androidx.junit)
+    androidTestImplementation(libs.androidx.espresso.core)
+    debugImplementation(libs.compose.ui.tooling.core)
+    debugImplementation(libs.compose.ui.test.manifest)
 }
 
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:$protobufVersion"
+        artifact = libs.protobuf.protoc.get().toString()
     }
     generateProtoTasks {
         all().configureEach {
