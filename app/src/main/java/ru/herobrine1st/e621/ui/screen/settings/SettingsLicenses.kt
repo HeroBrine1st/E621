@@ -21,7 +21,6 @@
 package ru.herobrine1st.e621.ui.screen.settings
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -60,16 +59,11 @@ fun SettingsLicenses(screenSharedState: ScreenSharedState) {
             SnackbarHost(hostState = screenSharedState.snackbarHostState)
         }
     ) { paddingValues ->
-//        Box(
-//            Modifier
-//
-//        ) {
         LibrariesContainer(
             Modifier
-                .padding(paddingValues)
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
-                .fillMaxSize()
+                .fillMaxSize(),
+            contentPadding = paddingValues
         )
-//        }
     }
 }
