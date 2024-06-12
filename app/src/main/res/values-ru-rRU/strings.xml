@@ -167,4 +167,6 @@
     <string name="post_is_pending">Этот пост ожидает рассмотрения</string>
     <string name="post_has_notes">В этом посте есть заметки на изображении. Заметки в настоящее время не поддерживаются, но вы можете просмотреть их в браузере.</string>
     <string name="post_updated">Обновлено %s</string>
+    <string name="about_build_info">Информация о сборке</string>
+    <string name="about_build_info_content">"Версия: %1$s\nТип сборки: %2$s\nUser-Agent: %3$s"</string>
 </resources>

@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -54,6 +55,7 @@ import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
 import ru.herobrine1st.e621.util.PreviewUtils
+import ru.herobrine1st.e621.util.USER_AGENT
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -168,6 +170,35 @@ fun SettingsAbout(
                             ) {
                                 Text(stringResource(R.string.license_name))
                             }
+                        }
+                    }
+                }
+            }
+            item {
+                ElevatedCard(
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth()
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(8.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            stringResource(R.string.about_build_info),
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        SelectionContainer {
+                            Text(
+                                stringResource(
+                                    R.string.about_build_info_content,
+                                    BuildConfig.VERSION_NAME,
+                                    BuildConfig.BUILD_TYPE,
+                                    USER_AGENT
+                                )
+                            )
                         }
                     }
                 }
