@@ -67,6 +67,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -278,7 +279,10 @@ fun AuthorizationMenu(
         singleLine = true,
         enabled = !isLoggingIn,
         modifier = Modifier.fillMaxWidth(),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        keyboardOptions = KeyboardOptions(
+            imeAction = ImeAction.Next,
+            capitalization = KeyboardCapitalization.None
+        ),
         keyboardActions = KeyboardActions { passwordFieldFocusRequester.requestFocus() }
     )
     Spacer(modifier = Modifier.height(8.dp))

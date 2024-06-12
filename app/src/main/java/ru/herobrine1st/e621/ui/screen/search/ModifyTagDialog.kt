@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.ButtonDefaults
@@ -51,6 +52,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextRange
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
@@ -182,7 +186,12 @@ fun ModifyTagDialog(
                         )
                     }
                 },
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                keyboardOptions = KeyboardOptions(
+                    capitalization = KeyboardCapitalization.None,
+                    keyboardType = KeyboardType.Text,
+                    imeAction = ImeAction.Done
+                )
             )
             ExposedDropdownMenu(
                 expanded = autocompleteExpanded && autocomplete is Autocomplete.Ready && autocomplete.result.isNotEmpty(),

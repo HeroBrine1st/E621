@@ -99,7 +99,10 @@ fun ProxyDialog(
                         Icons.Filled.ArrowDropDown,
                         null,
                         Modifier.rotate(
-                            animateFloatAsState(if (state.dropdownExpanded) 180f else 360f, label = "Dropdown arrow rotation animation").value
+                            animateFloatAsState(
+                                if (state.dropdownExpanded) 180f else 360f,
+                                label = "Dropdown arrow rotation animation"
+                            ).value
                         )
                     )
                 },
@@ -131,7 +134,10 @@ fun ProxyDialog(
                 state.hostname = it
             },
             singleLine = true,
-            label = { Text(stringResource(R.string.proxy_address)) }
+            label = { Text(stringResource(R.string.proxy_address)) },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None
+            )
         )
         OutlinedTextField(
             value = if (state.port >= 0) state.port.toString() else "",
@@ -154,7 +160,10 @@ fun ProxyDialog(
                 state.username = it
             },
             singleLine = true,
-            label = { Text(stringResource(R.string.proxy_username)) }
+            label = { Text(stringResource(R.string.proxy_username)) },
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None
+            )
         )
         OutlinedTextField(
             value = state.password,
@@ -166,7 +175,10 @@ fun ProxyDialog(
             label = { Text(stringResource(R.string.proxy_password)) },
             trailingIcon = {
                 IconButton(onClick = { state.showPassword = !state.showPassword }) {
-                    Crossfade(state.showPassword, label = "Show password button crossfade") { showPassword ->
+                    Crossfade(
+                        state.showPassword,
+                        label = "Show password button crossfade"
+                    ) { showPassword ->
                         Icon(
                             imageVector = if (showPassword) Icons.Default.VisibilityOff
                             else Icons.Default.Visibility,
@@ -174,7 +186,11 @@ fun ProxyDialog(
                         )
                     }
                 }
-            }
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Password,
+                capitalization = KeyboardCapitalization.None
+            )
         )
     }
 }
