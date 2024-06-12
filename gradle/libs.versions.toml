@@ -7,7 +7,6 @@ protobuf-plugin = "0.9.4"
 
 aboutlibraries = "11.2.0"
 room = "2.7.0-alpha03"
-compose-compiler = "1.5.14"
 protobuf = "4.27.0"
 ktor = "2.3.11"
 decompose = "2.2.2"
