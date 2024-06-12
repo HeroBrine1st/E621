@@ -21,6 +21,7 @@
 package ru.herobrine1st.e621.ui.screen.posts
 
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -38,6 +39,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -104,9 +107,21 @@ fun Posts(
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) {
+        val pullToRefreshState = rememberPullToRefreshState()
         PullToRefreshBox(
             isRefreshing = posts.loadStates.refresh is LoadState.Loading,
-            onRefresh = posts::refresh
+            onRefresh = posts::refresh,
+            state = pullToRefreshState,
+            indicator = {
+                PullToRefreshDefaults.Indicator(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(it),
+                    isRefreshing = posts.loadStates.refresh is LoadState.Loading,
+                    state = pullToRefreshState
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
         ) {
             LazyColumn(
                 // Solution from https://issuetracker.google.com/issues/177245496#comment24
