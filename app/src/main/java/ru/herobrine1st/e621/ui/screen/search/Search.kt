@@ -43,7 +43,6 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
-import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -54,6 +53,7 @@ import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -94,7 +94,6 @@ import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
 import ru.herobrine1st.e621.util.ExceptionReporter
-import ru.herobrine1st.e621.util.NoRippleTheme
 import ru.herobrine1st.e621.util.PreviewUtils
 import ru.herobrine1st.e621.util.getPreviewComponentContext
 import ru.herobrine1st.e621.util.getPreviewStackNavigator
@@ -294,7 +293,7 @@ fun Search(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        CompositionLocalProvider(LocalRippleTheme provides NoRippleTheme) {
+                        CompositionLocalProvider(LocalRippleConfiguration provides null) {
                             for (v in Rating.entries) {
                                 val selected = v in component.rating
                                 FilterChip(

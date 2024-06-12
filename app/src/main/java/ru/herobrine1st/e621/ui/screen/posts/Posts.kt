@@ -20,9 +20,7 @@
 
 package ru.herobrine1st.e621.ui.screen.posts
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -39,18 +37,14 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.first
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent.InfoState
@@ -77,42 +71,8 @@ fun Posts(
 ) {
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
-    val pullToRefreshState = rememberPullToRefreshState()
 
     val posts = component.postsFlow.collectAsPagingItems(startImmediately = true)
-
-    //region Working around strange API
-    // https://issuetracker.google.com/issues/317177683
-    // New API is strange. Why don't just use previous interfaces: state of refreshing from
-    // user code and callback to refresh from library?
-    // Now I need to connect pullToRefreshState.isRefreshing to posts.loadState.refresh is LoadState.Loading
-    // Both are data, neither is callback
-    if (pullToRefreshState.isRefreshing && posts.loadStates.refresh !is LoadState.Loading) {
-        LaunchedEffect(Unit) {
-            posts.refresh()
-        }
-    }
-
-    // And we have first design-based issue just after 22 days of this code, congratulations!
-    // FIXME if LaunchedEffect below leaves composition while condition is true,
-    //       there's nothing that will call endRefresh()
-    //       which in turn can make condition above true
-    //       and call refresh() again
-    // Steps to reproduce:
-    // 1. Enter this screen
-    // 2. Immediately go into search or settings
-    // 3. Wait until request completes (look to logs)
-    // 4. Return back - it will do the same request again
-    if (posts.loadStates.refresh is LoadState.Loading) {
-        LaunchedEffect(Unit) {
-            pullToRefreshState.startRefresh()
-            // wait until it completes
-            snapshotFlow { posts.loadStates.refresh is LoadState.Loading }
-                .first { !it }
-            pullToRefreshState.endRefresh()
-        }
-    }
-    //endregion
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -144,10 +104,9 @@ fun Posts(
         },
         modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
     ) {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .nestedScroll(pullToRefreshState.nestedScrollConnection)
+        PullToRefreshBox(
+            isRefreshing = posts.loadStates.refresh is LoadState.Loading,
+            onRefresh = posts::refresh
         ) {
             LazyColumn(
                 // Solution from https://issuetracker.google.com/issues/177245496#comment24
@@ -235,13 +194,6 @@ fun Posts(
                 }
                 endOfPagePlaceholder(posts.loadStates.append)
             }
-
-            PullToRefreshContainer(
-                state = pullToRefreshState,
-                modifier = Modifier
-                    .padding(it)
-                    .align(Alignment.TopCenter)
-            )
         }
     }
 }

@@ -41,7 +41,6 @@ import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
@@ -49,6 +48,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.minimumInteractiveComponentSize
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
@@ -201,7 +201,7 @@ fun VideoPlayerController(
                 modifier = Modifier
                     .toggleable(
                         interactionSource = remember { MutableInteractionSource() },
-                        indication = rememberRipple(bounded = false, color = Color.White),
+                        indication = ripple(bounded = false, color = Color.White),
                         value = showRemaining,
                         onValueChange = {
                             toggleShowRemaining(it)
