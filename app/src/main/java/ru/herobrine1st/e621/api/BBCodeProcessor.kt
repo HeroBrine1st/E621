@@ -25,12 +25,10 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.UrlAnnotation
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.text.withStyle
-import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.DTextTag.Companion.stylizeNullable
 import ru.herobrine1st.e621.util.accumulate
 import ru.herobrine1st.e621.util.debug
@@ -257,11 +255,15 @@ private fun parseBBCodeInternal(
             val hyper = match.groupValues[6]
             output += MessageText(
                 AnnotatedString.Builder().apply {
-                    withAnnotation(UrlAnnotation("${BuildConfig.DEEP_LINK_BASE_URL}/wiki_pages/show_or_new?title=$link")) {
+                    // LinkAnnotation conflicts with our implementation
+                    // Probably useful for generic links, so left here as reference
+//                    withLink(
+//                        LinkAnnotation.Url("${BuildConfig.DEEP_LINK_BASE_URL}/wiki_pages/show_or_new?title=$link")
+//                    ) {
                         withAnnotation(WIKI_PAGE_STRING_ANNOTATION_TAG, link) {
                             append(hyper.ifBlank { link })
                         }
-                    }
+//                    }
                 }.toAnnotatedString()
             )
             continue

@@ -33,6 +33,7 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -101,7 +102,7 @@ fun ProxyDialog(
                         )
                     )
                 },
-                modifier = Modifier.menuAnchor()
+                modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable)
             )
             ExposedDropdownMenu(
                 expanded = state.dropdownExpanded,
@@ -116,7 +117,7 @@ fun ProxyDialog(
                             state.type = type
                             state.dropdownExpanded = false
                         }, text = {
-                            Text(type.toString())
+                            Text(type.toString(), style = MaterialTheme.typography.bodyLarge)
                         }
                     )
                 }
@@ -138,7 +139,7 @@ fun ProxyDialog(
             },
             keyboardOptions = KeyboardOptions(
                 capitalization = KeyboardCapitalization.None,
-                autoCorrect = false,
+                autoCorrectEnabled = false,
                 keyboardType = KeyboardType.Number,
                 imeAction = ImeAction.None
             ),
