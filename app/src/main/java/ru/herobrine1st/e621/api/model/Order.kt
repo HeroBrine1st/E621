@@ -25,7 +25,7 @@ import androidx.annotation.StringRes
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.R
 
-@Suppress("unused")
+
 @Serializable
 enum class Order(
     @StringRes val descriptionId: Int,
