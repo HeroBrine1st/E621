@@ -8,7 +8,6 @@ plugins {
     id("com.google.protobuf")
     id("com.mikepenz.aboutlibraries.plugin")
     kotlin("plugin.serialization")
-    id("androidx.room")
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
@@ -134,7 +133,7 @@ dependencies {
     implementation("com.arkivanov.decompose:extensions-compose-jetpack:$decomposeVersion")
 
     // Jetpack Room
-    val roomVersion = "2.6.1"
+    val roomVersion = "2.7.0-alpha03"
     implementation("androidx.room:room-runtime:$roomVersion") // Apache 2.0
     implementation("androidx.room:room-ktx:$roomVersion") // Apache 2.0
     ksp("androidx.room:room-compiler:$roomVersion") // Not included in binary result
@@ -204,8 +203,8 @@ protobuf {
     }
 }
 
-room {
-    schemaDirectory("$projectDir/schemas")
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 fun getCommitIndexNumber(revision: String = "HEAD"): Int {
