@@ -2,7 +2,6 @@ package ru.herobrine1st.e621
 
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.UrlAnnotation
 import androidx.compose.ui.text.withAnnotation
 import androidx.compose.ui.text.withStyle
 import org.junit.Assert.assertEquals
@@ -208,10 +207,8 @@ class BBCodeParserTest {
         val text = res[0] as MessageText
         assertEquals(hyperlink.ifBlank { link }, text.text.text)
         assertEquals(AnnotatedString.Builder().apply {
-            withAnnotation(UrlAnnotation("${BuildConfig.DEEP_LINK_BASE_URL}/wiki_pages/show_or_new?title=$link")) {
-                withAnnotation(WIKI_PAGE_STRING_ANNOTATION_TAG, link) {
-                    append(hyperlink.ifBlank { link })
-                }
+            withAnnotation(WIKI_PAGE_STRING_ANNOTATION_TAG, link) {
+                append(hyperlink.ifBlank { link })
             }
         }.toAnnotatedString(), text.text)
     }
