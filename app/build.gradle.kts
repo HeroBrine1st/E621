@@ -38,7 +38,8 @@ android {
         stringBuildConfigField("DEEP_LINK_BASE_URL", "https://e621.net")
         stringBuildConfigField(
             "USER_AGENT_TEMPLATE",
-            "${applicationId}/${versionName} (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) Ktor/${libs.versions.ktor.get()}"
+            // application id, version, android version, build type
+            "%s/%s (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) Ktor/${libs.versions.ktor.get()}"
         )
     }
 
@@ -62,6 +63,14 @@ android {
             proguardFiles("profileable-rules.pro")
             applicationIdSuffix = ".profileable"
             signingConfig = signingConfigs.getByName("debug")
+        }
+
+        create("nightly") {
+            initWith(getByName("release"))
+            matchingFallbacks.add("release")
+            signingConfig = signingConfigs.getByName("debug")
+            applicationIdSuffix = ".nightly"
+            versionNameSuffix = "-${getCommitShortHash()}"
         }
     }
     compileOptions {
@@ -149,7 +158,7 @@ dependencies {
     "profileableImplementation"(libs.androidx.compose.tracing)
     "profileableImplementation"(libs.androidx.tracing.perfetto.core)
     "profileableImplementation"(libs.androidx.tracing.perfetto.binary)
-    
+
     // Tests
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
@@ -184,15 +193,21 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
-fun getCommitIndexNumber(revision: String = "HEAD"): Int {
+fun executeCommand(vararg argv: String): String {
     val byteArrayOutputStream = ByteArrayOutputStream()
     exec {
-        commandLine = listOf("git", "rev-list", "--count", "--first-parent", revision)
+        commandLine = argv.toList()
         standardOutput = byteArrayOutputStream
         isIgnoreExitValue = false
     }
-    return byteArrayOutputStream.toString().trim().toInt()
+    return byteArrayOutputStream.toString()
 }
+
+fun getCommitIndexNumber(revision: String = "HEAD") =
+    executeCommand("git", "rev-list", "--count", "--first-parent", revision).trim().toInt()
+
+fun getCommitShortHash(revision: String = "HEAD") =
+    executeCommand("git", "rev-parse", "--short", revision).trim()
 
 fun VariantDimension.stringBuildConfigField(name: String, value: String) =
     buildConfigField("String", name, "\"${value.replace("\"", "\\\"")}\"")

@@ -13,9 +13,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v3
     - name: Set up JDK 17
@@ -31,20 +29,22 @@ jobs:
         gradle-version: wrapper
     - name: Run tests
       run: ./gradlew testDebugUnitTest
+      #    - uses: actions/cache@v3
+      #      id: debug-key-cache
+      #      with:
+      #        path: ~/.android/debug.keystore
+      #        key: debug-keystore
+    - name: Show signing report
+      run: ./gradlew signingReport
     - name: Build snapshot
-      run: ./gradlew assembleRelease
-    - uses: actions/cache@v3
-      id: debug-key-cache
-      with:
-        path: debug.keystore
-        key: debug-key
-    - name: Generate debug key
-      if: steps.debug-key-cache.outputs.cache-hit != 'true'
-      run: keytool -genkey -v -keystore debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -validity 14000 -dname "cn=Unknown, ou=Unknown, o=Unknown, c=Unknown"
-    - name: Sign APK with debug key
-      run: $(find /usr/local/lib/android/sdk/build-tools/*/apksigner | sort -r | grep -v rc | head -1) sign --ks debug.keystore --ks-pass pass:android --out app/build/outputs/apk/release/app-release-signed-debug-key.apk app/build/outputs/apk/release/app-release-unsigned.apk
+      run: ./gradlew assembleNightly
     - name: Upload APK
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: app-release.apk
-        path: app/build/outputs/apk/release/app-release-signed-debug-key.apk
+        name: app-nightly.apk
+        path: app/build/outputs/apk/nightly/app-nightly.apk
+    - name: Upload proguard mappings
+      uses: actions/upload-artifact@v4
+      with:
+        name: proguard-mapping
+        path: app/build/outputs/mapping/release/

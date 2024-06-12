@@ -27,7 +27,12 @@ import ru.herobrine1st.e621.BuildConfig
 import kotlin.math.pow
 
 val USER_AGENT = BuildConfig.USER_AGENT_TEMPLATE
-        .format(Build.VERSION.RELEASE, BuildConfig.BUILD_TYPE)
+    .format(
+        BuildConfig.APPLICATION_ID,
+        BuildConfig.VERSION_NAME,
+        Build.VERSION.RELEASE,
+        BuildConfig.BUILD_TYPE
+    )
 
 
 // Used by me when android studio profiler is too much for my phone (i.e. always)
