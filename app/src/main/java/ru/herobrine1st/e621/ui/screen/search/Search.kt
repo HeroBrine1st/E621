@@ -22,6 +22,10 @@ package ru.herobrine1st.e621.ui.screen.search
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.expandIn
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -35,10 +39,11 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.ripple.LocalRippleTheme
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -89,6 +94,7 @@ import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
 import ru.herobrine1st.e621.util.ExceptionReporter
+import ru.herobrine1st.e621.util.NoRippleTheme
 import ru.herobrine1st.e621.util.PreviewUtils
 import ru.herobrine1st.e621.util.getPreviewComponentContext
 import ru.herobrine1st.e621.util.getPreviewStackNavigator
@@ -288,32 +294,36 @@ fun Search(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        for (v in Rating.entries) {
-                            val selected = v in component.rating
-                            FilterChip(
-                                selected = selected,
-                                onClick = {
-                                    if (selected)
-                                        component.rating.remove(v)
-                                    else
-                                        component.rating.add(v)
-                                    // Do not force any behavior: users are free to select all
-                                    // or select none as it is the same
-                                },
-                                label = { Text(stringResource(v.descriptionId)) },
-                                enabled = !preferences.safeModeEnabled,
-                                leadingIcon = if (selected) {
-                                    {
-                                        Icon(
-                                            imageVector = Icons.Filled.Done,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(FilterChipDefaults.IconSize)
-                                        )
+                        CompositionLocalProvider(LocalRippleTheme provides NoRippleTheme) {
+                            for (v in Rating.entries) {
+                                val selected = v in component.rating
+                                FilterChip(
+                                    selected = selected,
+                                    onClick = {
+                                        if (selected)
+                                            component.rating.remove(v)
+                                        else
+                                            component.rating.add(v)
+                                        // Do not force any behavior: users are free to select all
+                                        // or select none as it is the same
+                                    },
+                                    label = { Text(stringResource(v.descriptionId)) },
+                                    enabled = !preferences.safeModeEnabled,
+                                    leadingIcon = {
+                                        AnimatedVisibility(
+                                            visible = selected,
+                                            enter = fadeIn() + expandIn(expandFrom = Alignment.CenterStart),
+                                            exit = shrinkOut(shrinkTowards = Alignment.CenterStart) + fadeOut(),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                null,
+                                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                            )
+                                        }
                                     }
-                                } else {
-                                    null
-                                }
-                            )
+                                )
+                            }
                         }
                     }
                 }
