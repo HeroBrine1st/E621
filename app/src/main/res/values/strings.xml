@@ -98,7 +98,7 @@
     <string name="unknown_api_error">An unknown API error occurred</string>
     <string name="about">About</string>
     <string name="app_description">An android client for %s.</string>
-    <string name="license_brief">"Copyright © 2022-2023 HeroBrine1st Erquilenne
+    <string name="license_brief">"Copyright © 2022-2024 HeroBrine1st Erquilenne
 
 This application is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
