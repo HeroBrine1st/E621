@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compose)
 
-    alias(libs.plugins.protobuf)
     alias(libs.plugins.aboutlibraries)
 }
 
@@ -141,7 +140,7 @@ dependencies {
     ksp(libs.room.compiler)
 
     implementation(libs.datastore)
-    implementation(libs.protobuf.javalite)
+    implementation(libs.kotlinx.serialization.protobuf)
 
     implementation(libs.ktor.client.core)
     implementation(libs.ktor.client.cio)
@@ -182,21 +181,6 @@ dependencies {
     androidTestImplementation(libs.androidx.espresso.core)
     debugImplementation(libs.compose.ui.tooling.core)
     debugImplementation(libs.compose.ui.test.manifest)
-}
-
-protobuf {
-    protoc {
-        artifact = libs.protobuf.protoc.get().toString()
-    }
-    generateProtoTasks {
-        all().configureEach {
-            builtins {
-                create("java") {
-                    option("lite")
-                }
-            }
-        }
-    }
 }
 
 ksp {

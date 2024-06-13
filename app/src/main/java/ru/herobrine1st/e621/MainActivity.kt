@@ -88,7 +88,7 @@ class MainActivity : ComponentActivity() {
         // Also pre-read preferences early
         getPreferencesFlow()
             .onEach { preferences ->
-                val proxies = if (preferences.hasProxy() && preferences.proxy.enabled)
+                val proxies = if (preferences.proxy != null && preferences.proxy.enabled)
                     listOf(ProxyWithAuth(preferences.proxy)) else emptyList()
                 Authenticator.setDefault(AuthenticatorImpl(proxies))
                 // TODO add fall back preference (maybe after multiple proxies support)
@@ -146,7 +146,7 @@ class MainActivity : ComponentActivity() {
                     LicenseAndDisclaimerInitialDialogs(hasShownBefore = preferences.licenseAndNonAffiliationDisclaimerShown) {
                         coroutineScope.launch {
                             context.updatePreferences {
-                                licenseAndNonAffiliationDisclaimerShown = true
+                                copy(licenseAndNonAffiliationDisclaimerShown = true)
                             }
                         }
                     }

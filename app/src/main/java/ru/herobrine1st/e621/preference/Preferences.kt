@@ -20,43 +20,45 @@
 
 package ru.herobrine1st.e621.preference
 
+import kotlinx.serialization.Serializable
 
-import android.content.Context
-import androidx.compose.runtime.compositionLocalOf
-import androidx.datastore.core.DataStore
-import androidx.datastore.dataStore
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
-
-val Context.dataStore: DataStore<Preferences> by dataStore(
-    fileName = "preferences.pb",
-    serializer = PreferencesSerializer
+@Serializable
+data class Preferences(
+    val blacklistEnabled: Boolean = true,
+    val dataSaverModeEnabled: Boolean = false,
+    val dataSaverDisclaimerShown: Boolean = false,
+    val showRemainingTimeMedia: Boolean = true,
+    val muteSoundOnMedia: Boolean = false,
+    val auth: AuthorizationCredentials? = null,
+    val safeModeEnabled: Boolean = true,
+    val safeModeDisclaimerShown: Boolean = false,
+    val licenseAndNonAffiliationDisclaimerShown: Boolean = false,
+    val proxy: Proxy? = null,
+    val autoplayOnPostOpen: Boolean = true,
+    val autocompleteEnabled: Boolean = true
 )
 
-// dataStore.data is not a state flow so it causes first-frame issues
-val LocalPreferences = compositionLocalOf<Preferences> { error("No preferences in this scope") }
+@Serializable
+data class AuthorizationCredentials(
+    val username: String,
+    val password: String
+)
 
-// Helper functions to avoid boilerplate
+@Serializable
+data class Proxy(
+    val type: ProxyType,
+    val hostname: String,
+    val port: Int,
+    val enabled: Boolean = true,
+    val auth: ProxyAuth?
+)
 
-suspend inline fun Context.updatePreferences(
-    crossinline block: suspend Preferences.Builder.() -> Unit
-) = dataStore.updatePreferences(block)
+@Serializable
+data class ProxyAuth(
+    val username: String,
+    val password: String
+)
 
-inline fun <T> Context.getPreferencesFlow(
-    crossinline transform: suspend (Preferences) -> T
-): Flow<T> = dataStore.getPreferencesFlow(transform)
-
-fun Context.getPreferencesFlow() = dataStore.data
-
-// DataStore methods
-
-suspend inline fun DataStore<Preferences>.updatePreferences(
-    crossinline block: suspend Preferences.Builder.() -> Unit
-) = updateData { it.toBuilder().apply { block() }.build() }
-
-inline fun <T> DataStore<Preferences>.getPreferencesFlow(
-    crossinline transform: suspend (Preferences) -> T
-): Flow<T> = data.map(transform)
-
-
+enum class ProxyType {
+    SOCKS5;
+}

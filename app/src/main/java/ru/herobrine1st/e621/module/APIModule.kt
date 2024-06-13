@@ -51,7 +51,7 @@ import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.APIClient
 import ru.herobrine1st.e621.api.APIImpl
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
-import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass
+import ru.herobrine1st.e621.preference.AuthorizationCredentials
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.USER_AGENT
 import ru.herobrine1st.e621.util.credentials
@@ -124,7 +124,7 @@ class APIModule(
 
                 // Authorization interceptor
                 intercept { request ->
-                    var auth: AuthorizationCredentialsOuterClass.AuthorizationCredentials? = null
+                    var auth: AuthorizationCredentials? = null
                     if (request.headers[HttpHeaders.Authorization] == null) {
                         auth = authorizationRepository.getAccount()?.also {
                             request.header(HttpHeaders.Authorization, it.credentials)

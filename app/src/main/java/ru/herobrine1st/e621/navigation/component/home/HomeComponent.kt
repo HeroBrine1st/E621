@@ -46,7 +46,7 @@ import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
-import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
+import ru.herobrine1st.e621.preference.AuthorizationCredentials
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.InstanceBase
@@ -94,10 +94,7 @@ class HomeComponent(
         }
         lifecycleScope.launch {
             val state = instance.login(
-                AuthorizationCredentials.newBuilder()
-                    .setUsername(login)
-                    .setPassword(apiKey)
-                    .build()
+                AuthorizationCredentials(login, apiKey)
             )
             if (state is LoginState.Authorized) {
                 try {

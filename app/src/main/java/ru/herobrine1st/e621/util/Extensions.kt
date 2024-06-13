@@ -24,7 +24,7 @@ import android.app.Activity
 import okhttp3.Credentials
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.Tag
-import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
+import ru.herobrine1st.e621.preference.AuthorizationCredentials
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract

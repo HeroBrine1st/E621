@@ -91,7 +91,7 @@ import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
-import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
+import ru.herobrine1st.e621.preference.Preferences
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
@@ -373,11 +373,11 @@ fun Search(
                         trailingIcon = {
                             IconButton(onClick = {
                                 // TODO move to component
-                                if (component.favouritesOf.isEmpty() && preferences.hasAuth())
+                                if (component.favouritesOf.isEmpty() && preferences.auth != null)
                                     component.favouritesOf = preferences.auth.username
                                 else component.favouritesOf = ""
                             }) {
-                                if (component.favouritesOf.isEmpty() && preferences.hasAuth()) Icon(
+                                if (component.favouritesOf.isEmpty() && preferences.auth != null) Icon(
                                     Icons.Default.AccountCircle,
                                     contentDescription = stringResource(R.string.search_fill_myself)
                                 ) else Icon(
@@ -452,7 +452,7 @@ fun Search(
 @Composable
 @OptIn(PreviewUtils::class)
 fun SearchPreview() {
-    CompositionLocalProvider(LocalPreferences provides Preferences.getDefaultInstance()) {
+    CompositionLocalProvider(LocalPreferences provides Preferences()) {
         Search(
             screenSharedState = rememberScreenPreviewSharedState(),
             component = SearchComponent(

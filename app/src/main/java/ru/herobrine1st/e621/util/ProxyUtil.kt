@@ -21,24 +21,24 @@
 package ru.herobrine1st.e621.util
 
 import android.util.Log
-import ru.herobrine1st.e621.preference.proto.ProxyOuterClass
+import ru.herobrine1st.e621.preference.ProxyType
 import java.io.IOException
 import java.net.Authenticator
 import java.net.InetSocketAddress
 import java.net.PasswordAuthentication
 import java.net.Proxy
+
 import java.net.ProxySelector
 import java.net.SocketAddress
 import java.net.URI
 
-class ProxyWithAuth(proxy: ProxyOuterClass.Proxy) : Proxy(
+class ProxyWithAuth(proxy: ru.herobrine1st.e621.preference.Proxy) : Proxy(
     when (proxy.type) {
-        ProxyOuterClass.ProxyType.SOCKS5 -> Type.SOCKS
-        null -> throw RuntimeException("Got null from proxy.type, which is impossible")
+        ProxyType.SOCKS5 -> Type.SOCKS
     },
     InetSocketAddress(proxy.hostname, proxy.port)
 ) {
-    val auth = if (proxy.hasAuth()) PasswordAuthentication(
+    val auth = if (proxy.auth != null) PasswordAuthentication(
         proxy.auth.username,
         proxy.auth.password.toCharArray()
     ) else null

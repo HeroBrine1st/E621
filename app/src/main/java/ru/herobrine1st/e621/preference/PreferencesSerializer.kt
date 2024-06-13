@@ -22,21 +22,33 @@ package ru.herobrine1st.e621.preference
 
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
-import com.google.protobuf.InvalidProtocolBufferException
-import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.decodeFromByteArray
+import kotlinx.serialization.encodeToByteArray
+import kotlinx.serialization.protobuf.ProtoBuf
 import java.io.InputStream
 import java.io.OutputStream
 
 
+@OptIn(ExperimentalSerializationApi::class)
 object PreferencesSerializer : Serializer<Preferences> {
     override val defaultValue: Preferences
-        get() = Preferences.getDefaultInstance()
+        get() = Preferences()
 
     override suspend fun readFrom(input: InputStream): Preferences = try {
-        Preferences.parseFrom(input)
-    } catch (exception: InvalidProtocolBufferException) {
+        val bytes = withContext(Dispatchers.IO) { input.readBytes() }
+        ProtoBuf.decodeFromByteArray<Preferences>(bytes)
+    } catch (exception: SerializationException) {
         throw CorruptionException("Cannot read proto.", exception)
     }
 
-    override suspend fun writeTo(t: Preferences, output: OutputStream) = t.writeTo(output)
+    override suspend fun writeTo(t: Preferences, output: OutputStream) {
+        val ba = ProtoBuf.encodeToByteArray(t)
+        withContext(Dispatchers.IO) {
+            output.write(ba)
+        }
+    }
 }

@@ -125,7 +125,7 @@ fun Post(
 
     // Probably can't use refresh state to replace this variable at first frame
     val loadComments =
-        preferences.hasAuth() // Assuming there can't be invalid credentials in preferences
+        preferences.auth != null // Assuming there can't be invalid credentials in preferences
                 && (
                 // TODO automatic download is disabled due to fix below
                 // https://issuetracker.google.com/issues/299973349
@@ -376,7 +376,7 @@ fun Post(
                     Column(
                         Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = post.commentCount != 0 && preferences.hasAuth()) {
+                            .clickable(enabled = post.commentCount != 0 && preferences.auth != null) {
                                 coroutineScope.launch {
                                     if (comments.loadStates.refresh is LoadState.NotLoading) {
                                         comments.refresh()
@@ -413,7 +413,7 @@ fun Post(
                                 }
                             }
 
-                            !preferences.hasAuth() -> {
+                            preferences.auth == null -> {
                                 CommentsLoadingState.Forbidden
                             }
 

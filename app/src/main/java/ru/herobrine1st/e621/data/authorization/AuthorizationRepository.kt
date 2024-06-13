@@ -21,7 +21,7 @@
 package ru.herobrine1st.e621.data.authorization
 
 import kotlinx.coroutines.flow.Flow
-import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
+import ru.herobrine1st.e621.preference.AuthorizationCredentials
 
 // TODO Rename and move it somewhere (it isn't a repository because it may have internal state in future)
 interface AuthorizationRepository {

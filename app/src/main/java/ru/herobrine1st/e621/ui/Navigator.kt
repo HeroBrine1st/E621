@@ -101,13 +101,13 @@ fun Navigator(
             is PostListing -> Posts(
                 sharedState,
                 instance.component,
-                preferences.hasAuth()
+                preferences.auth != null
             )
 
             is Post -> Post(
                 screenSharedState = sharedState,
                 component = instance.component,
-                isAuthorized = preferences.hasAuth()
+                isAuthorized = preferences.auth != null
             )
 
             is Settings -> Settings(

@@ -106,7 +106,7 @@ fun Settings(
                     onCheckedChange = { enabled ->
                         coroutineScope.launch {
                             context.updatePreferences {
-                                blacklistEnabled = enabled
+                                copy(blacklistEnabled = enabled)
                             }
                         }
                     },
@@ -124,7 +124,7 @@ fun Settings(
                         if (preferences.dataSaverDisclaimerShown) {
                             coroutineScope.launch {
                                 context.updatePreferences {
-                                    dataSaverModeEnabled = checked
+                                    copy(dataSaverModeEnabled = checked)
                                 }
                             }
                         } else if (checked) {
@@ -142,7 +142,7 @@ fun Settings(
                     onCheckedChange = {
                         coroutineScope.launch {
                             context.updatePreferences {
-                                autocompleteEnabled = it
+                                copy(autocompleteEnabled = it)
                             }
                         }
                     }
@@ -159,7 +159,7 @@ fun Settings(
                             true
                         else coroutineScope.launch {
                             context.updatePreferences {
-                                safeModeEnabled = enabled
+                                copy(safeModeEnabled = enabled)
                             }
                         }
                     }
@@ -167,21 +167,19 @@ fun Settings(
             }
             item {
                 SettingLinkWithSwitch(
-                    checked = preferences.hasProxy() && preferences.proxy.enabled,
+                    checked = preferences.proxy != null && preferences.proxy.enabled,
                     title = stringResource(
                         R.string.proxy_server
                     ),
-                    subtitle = if (preferences.hasProxy()) with(preferences.proxy) {
+                    subtitle = if (preferences.proxy != null) with(preferences.proxy) {
                         "${type.toString().lowercase()}://$hostname:$port"
                     } else "",
                     icon = Icons.Default.Public,
                     onCheckedChange = {
-                        if (!preferences.hasProxy() && it) showProxySettingsDialog = true
+                        if (preferences.proxy == null && it) showProxySettingsDialog = true
                         else coroutineScope.launch {
                             context.updatePreferences {
-                                proxy = proxy.toBuilder().apply {
-                                    enabled = it
-                                }.build()
+                                copy(proxy = proxy?.copy(enabled = it))
                             }
                             (context as Activity).restart()
                         }
@@ -200,7 +198,7 @@ fun Settings(
                     onCheckedChange = {
                         coroutineScope.launch {
                             context.updatePreferences {
-                                autoplayOnPostOpen = it
+                                copy(autoplayOnPostOpen = it)
                             }
                         }
                     }
@@ -223,8 +221,10 @@ fun Settings(
                 showDataSaverModeDialog = false
                 coroutineScope.launch {
                     context.updatePreferences {
-                        dataSaverDisclaimerShown = true
-                        dataSaverModeEnabled = true
+                        copy(
+                            dataSaverDisclaimerShown = true,
+                            dataSaverModeEnabled = true
+                        )
                     }
                 }
             },
@@ -239,8 +239,10 @@ fun Settings(
                 showSafeModeDisclaimer = false
                 coroutineScope.launch {
                     context.updatePreferences {
-                        safeModeEnabled = false
-                        safeModeDisclaimerShown = true
+                        copy(
+                            safeModeEnabled = false,
+                            safeModeDisclaimerShown = true
+                        )
                     }
                 }
             },
@@ -252,11 +254,11 @@ fun Settings(
         // it returns default instance if not hasProxy()
         getInitialProxy = { preferences.proxy },
         onClose = { showProxySettingsDialog = false },
-        onApply = { proxy1 ->
+        onApply = { proxy ->
             showProxySettingsDialog = false
             coroutineScope.launch {
                 context.updatePreferences {
-                    proxy = proxy1
+                    copy(proxy = proxy)
                 }
                 (context as Activity).restart()
             }

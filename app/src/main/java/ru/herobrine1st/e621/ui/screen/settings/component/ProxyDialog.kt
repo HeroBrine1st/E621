@@ -56,16 +56,16 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.preference.LocalPreferences
-import ru.herobrine1st.e621.preference.proto.PreferencesOuterClass.Preferences
-import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.Proxy
-import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.ProxyAuth
-import ru.herobrine1st.e621.preference.proto.ProxyOuterClass.ProxyType
+import ru.herobrine1st.e621.preference.Preferences
+import ru.herobrine1st.e621.preference.Proxy
+import ru.herobrine1st.e621.preference.ProxyAuth
+import ru.herobrine1st.e621.preference.ProxyType
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProxyDialog(
-    getInitialProxy: () -> Proxy,
+    getInitialProxy: () -> Proxy?,
     onClose: () -> Unit,
     onApply: (Proxy) -> Unit
 ) {
@@ -199,9 +199,9 @@ fun ProxyDialog(
 @Composable
 private fun Preview() {
     MaterialTheme {
-        CompositionLocalProvider(LocalPreferences provides Preferences.getDefaultInstance()) {
+        CompositionLocalProvider(LocalPreferences provides Preferences()) {
             ProxyDialog(
-                getInitialProxy = { Proxy.getDefaultInstance() },
+                getInitialProxy = { null },
                 onClose = {},
                 onApply = {}
             )
@@ -216,13 +216,18 @@ class ProxyDialogState(
     initialUsername: String = "",
     initialPassword: String = ""
 ) {
-    constructor(proxy: Proxy) : this(
-        proxy.type,
-        proxy.hostname,
-        proxy.port,
-        proxy.auth.username,
-        proxy.auth.password
-    )
+
+    companion object {
+        operator fun invoke(proxy: Proxy?) = proxy?.let {
+            ProxyDialogState(
+                proxy.type,
+                proxy.hostname,
+                proxy.port,
+                proxy.auth?.username ?: "",
+                proxy.auth?.password ?: ""
+            )
+        } ?: ProxyDialogState()
+    }
 
     var type by mutableStateOf(initialType)
     var hostname by mutableStateOf(initialHostname)
@@ -235,14 +240,13 @@ class ProxyDialogState(
 
     val canBuildProxy get() = hostname.isNotBlank() && port > 0 && username.isBlank() xor password.isNotBlank()
 
-    fun buildProxy(): Proxy = Proxy.newBuilder().also { proxy ->
-        proxy.type = type
-        proxy.hostname = hostname
-        proxy.port = port
-        if (username.isNotBlank() && password.isNotBlank())
-            proxy.auth = ProxyAuth.newBuilder().also { auth ->
-                auth.username = username
-                auth.password = password
-            }.build()
-    }.build()
+    fun buildProxy(): Proxy = Proxy(
+        type = type,
+        hostname = hostname,
+        port = port,
+        auth = if (username.isNotBlank() && password.isNotBlank()) ProxyAuth(
+            username,
+            password
+        ) else null,
+    )
 }

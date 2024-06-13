@@ -70,7 +70,7 @@ class BlacklistTogglesDialogComponent(
     fun toggleBlacklist(enabled: Boolean) {
         lifecycleScope.launch {
             dataStore.updatePreferences {
-                blacklistEnabled = enabled
+                copy(blacklistEnabled = enabled)
             }
         }
     }

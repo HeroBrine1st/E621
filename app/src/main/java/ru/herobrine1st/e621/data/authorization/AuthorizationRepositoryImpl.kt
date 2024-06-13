@@ -24,9 +24,9 @@ import android.content.Context
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import ru.herobrine1st.e621.preference.AuthorizationCredentials
 import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.preference.getPreferencesFlow
-import ru.herobrine1st.e621.preference.proto.AuthorizationCredentialsOuterClass.AuthorizationCredentials
 import ru.herobrine1st.e621.preference.updatePreferences
 
 /**
@@ -35,10 +35,7 @@ import ru.herobrine1st.e621.preference.updatePreferences
 class AuthorizationRepositoryImpl(context: Context) : AuthorizationRepository {
 
     private val dataStore = context.dataStore
-    private val data = dataStore.getPreferencesFlow {
-        if(it.hasAuth()) it.auth
-        else null
-    }
+    private val data = dataStore.getPreferencesFlow { it.auth }
 
     override suspend fun getAccount(): AuthorizationCredentials? = data.first()
 
@@ -47,16 +44,13 @@ class AuthorizationRepositoryImpl(context: Context) : AuthorizationRepository {
     override suspend fun insertAccount(login: String, password: String) {
         if (getAccountCount() != 0) throw IllegalStateException()
         dataStore.updatePreferences {
-            auth = AuthorizationCredentials.newBuilder()
-                .setUsername(login)
-                .setPassword(password)
-                .build()
+            copy(auth = AuthorizationCredentials(login, password))
         }
     }
 
     override suspend fun logout() {
         dataStore.updatePreferences {
-            clearAuth()
+            copy(auth = null)
         }
     }
 

@@ -3,11 +3,9 @@ agp = "8.4.2"
 core = "1.5.0"
 kotlin = "2.0.0"
 ksp = "2.0.0-1.0.21"
-protobuf-plugin = "0.9.4"
 
 aboutlibraries = "11.2.0"
 room = "2.7.0-alpha03"
-protobuf = "4.27.0"
 ktor = "2.3.11"
 decompose = "2.2.2"
 coil = "2.6.0"
@@ -32,6 +30,7 @@ androidx-compose-tracing = "androidx.compose.runtime:runtime-tracing:1.0.0-beta0
 
 
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinx-serialization" }
+kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-serialization-protobuf", version.ref = "kotlinx-serialization" }
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 
@@ -51,9 +50,6 @@ room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
 datastore = { module = "androidx.datastore:datastore", version = "1.1.1" }
-
-protobuf-javalite = { module = "com.google.protobuf:protobuf-javalite", version.ref = "protobuf" }
-protobuf-protoc = { module = "com.google.protobuf:protoc", version.ref = "protobuf" }
 
 coil-core = { module = "io.coil-kt:coil", version.ref = "coil" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
@@ -92,7 +88,6 @@ robolectric = { module = "org.robolectric:robolectric", version = "4.12.2" }
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-symbolProcessing = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-protobuf = { id = "com.google.protobuf", version.ref = "protobuf-plugin" }
 aboutlibraries = { id = "com.mikepenz.aboutlibraries.plugin", version.ref = "aboutlibraries" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
