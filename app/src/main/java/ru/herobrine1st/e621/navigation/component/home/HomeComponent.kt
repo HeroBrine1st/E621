@@ -44,6 +44,7 @@ import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.navigation.LifecycleScope
+import ru.herobrine1st.e621.navigation.component.home.IHomeComponent.LoginState
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.preference.AuthorizationCredentials
@@ -55,13 +56,26 @@ import java.io.IOException
 
 
 interface IHomeComponent {
-    val state: HomeComponent.LoginState
+    val state: LoginState
 
-    fun login(login: String, apiKey: String, callback: (HomeComponent.LoginState) -> Unit = {})
+    fun login(login: String, apiKey: String, callback: (LoginState) -> Unit = {})
     fun logout(callback: () -> Unit = {})
     fun retryStoredAuth()
     fun navigateToSearch()
     fun navigateToFavourites()
+
+    // Can authorize is "can press login button"
+    sealed class LoginState(val canAuthorize: Boolean) {
+        data object Loading : LoginState(false)
+        data object IOError : LoginState(false)
+        data object InternalServerError : LoginState(false)
+        data object UnknownAPIError : LoginState(false)
+        data object APITemporarilyUnavailable : LoginState(false)
+        data object NoAuth : LoginState(true)
+        class Authorized(val username: String, val id: Int) : LoginState(false)
+
+        data object UnknownError : LoginState(false)
+    }
 }
 
 class HomeComponent(
@@ -311,19 +325,4 @@ class HomeComponent(
                 }.getOrThrow()
         }
     }
-
-    // Can authorize is "can press login button"
-    sealed class LoginState(val canAuthorize: Boolean) {
-        data object Loading : LoginState(false)
-        data object IOError : LoginState(false)
-        data object InternalServerError : LoginState(false)
-        data object UnknownAPIError : LoginState(false)
-        data object APITemporarilyUnavailable : LoginState(false)
-        data object NoAuth : LoginState(true)
-        class Authorized(val username: String, val id: Int) : LoginState(false)
-
-        data object UnknownError : LoginState(false)
-    }
-
-
 }

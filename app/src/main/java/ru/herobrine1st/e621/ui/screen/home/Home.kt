@@ -75,8 +75,8 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.navigation.component.home.HomeComponent.LoginState
 import ru.herobrine1st.e621.navigation.component.home.IHomeComponent
+import ru.herobrine1st.e621.navigation.component.home.IHomeComponent.LoginState
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.Base
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
