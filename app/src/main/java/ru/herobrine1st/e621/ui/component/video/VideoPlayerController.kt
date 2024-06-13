@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.ui.component.video
 
-import android.os.Build
 import android.text.format.DateUtils
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
@@ -57,16 +56,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.media3.common.Player
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.android.awaitFrame
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import ru.herobrine1st.e621.ui.component.OldSlider
-import kotlin.math.roundToLong
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -146,17 +143,12 @@ fun VideoPlayerController(
                 )
                 .padding(horizontal = 4.dp)
         ) {
-            val context = LocalContext.current
             val contentPositionMs by produceState(
                 initialValue = timestamp.contentPositionMs,
                 timestamp, isPlaying
             ) {
-                value = timestamp.contentPositionMs
-                // Use device frame rate if possible, else assume 60 Hz display
-                val frameTimeMs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R)
-                    (context.display?.refreshRate?.let { 1000 / it })?.roundToLong() ?: 16 else 16
                 while (isPlaying) {
-                    delay(frameTimeMs)
+                    awaitFrame()
                     with(timestamp) {
                         value =
                             contentPositionMs + ((System.currentTimeMillis() - anchorMs) * speed).toLong()
@@ -172,7 +164,7 @@ fun VideoPlayerController(
             )
             Box(
                 Modifier.weight(1f),
-                contentAlignment = Alignment.Center // idk why this line is needed, but without it works like Column (???)
+                contentAlignment = Alignment.Center
             ) {
                 LinearProgressIndicator(
                     progress = { if (contentDurationMs != 0L) getContentBufferedPositionMs().toFloat() / contentDurationMs else 0f },
