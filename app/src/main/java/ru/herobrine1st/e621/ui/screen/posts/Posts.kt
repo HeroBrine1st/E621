@@ -42,6 +42,7 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -109,8 +110,11 @@ fun Posts(
         val pullToRefreshState = rememberPullToRefreshState()
         val isLoading = posts.loadStates.refresh is LoadState.Loading
 
-        // STOPSHIP: isLoading being true on first frame triggers a bug in PullToRefresh
-        //           indicator is not visible until isLoading is false and true again
+        // Working around M3 bug (PullToRefreshModifierNode only handles updates, not initial state)
+        LaunchedEffect(pullToRefreshState) {
+            if (isLoading) pullToRefreshState.animateToThreshold()
+        }
+
         PullToRefreshBox(
             isRefreshing = isLoading,
             onRefresh = posts::refresh,
