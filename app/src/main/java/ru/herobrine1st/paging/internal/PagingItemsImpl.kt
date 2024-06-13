@@ -35,7 +35,7 @@ import ru.herobrine1st.paging.api.Snapshot
 import kotlin.math.absoluteValue
 import kotlin.math.sign
 
-private val TAG = "PagingItemsImpl"
+private const val TAG = "PagingItemsImpl"
 
 class PagingItemsImpl<Value : Any>(
     val flow: Flow<Snapshot<*, Value>>,
