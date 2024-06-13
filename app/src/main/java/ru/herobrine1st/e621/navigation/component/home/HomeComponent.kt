@@ -30,11 +30,7 @@ import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.jsonPrimitive
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
@@ -72,7 +68,7 @@ interface IHomeComponent {
         data object UnknownAPIError : LoginState(false)
         data object APITemporarilyUnavailable : LoginState(false)
         data object NoAuth : LoginState(true)
-        class Authorized(val username: String, val id: Int) : LoginState(false)
+        class Authorized(val username: String) : LoginState(false)
 
         data object UnknownError : LoginState(false)
     }
@@ -138,7 +134,7 @@ class HomeComponent(
 
     override fun retryStoredAuth() {
         lifecycleScope.launch {
-            val state = instance.tryStoredAuth()
+            val state = instance.loadStoredAuth()
             if (state != null) {
                 handleErrorStateForUI(state)
             }
@@ -149,10 +145,7 @@ class HomeComponent(
     override fun navigateToFavourites() = stackNavigator.pushIndexed { index ->
         (state as? LoginState.Authorized)?.let {
             Config.PostListing(
-                FavouritesSearchOptions(
-                    favouritesOf = it.username,
-                    id = it.id
-                ),
+                FavouritesSearchOptions(null),
                 index = index
             )
         } ?: error("Inconsistent state: state is not Authorized while is inferred to be so")
@@ -183,7 +176,10 @@ class HomeComponent(
             R.string.unknown_api_error, SnackbarDuration.Long
         )
 
-        LoginState.UnknownError -> snackbarAdapter.enqueueMessage(R.string.unknown_error, SnackbarDuration.Long)
+        LoginState.UnknownError -> snackbarAdapter.enqueueMessage(
+            R.string.unknown_error,
+            SnackbarDuration.Long
+        )
 
         LoginState.Loading -> throw IllegalStateException()
 
@@ -193,6 +189,7 @@ class HomeComponent(
         const val TAG = "HomeComponent"
     }
 
+    // TODO refactor to component, instance is unnecessary
     class HomeComponentInstance(
         authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
         apiProvider: Lazy<API>,
@@ -213,7 +210,7 @@ class HomeComponent(
         // So we first check auth at the start of this VM and then listen to logouts
         init {
             lifecycleScope.launch {
-                tryStoredAuth()
+                loadStoredAuth()
                 authorizationRepository.getAccountFlow().collect {
                     if (it == null) // Handle logout from AuthorizationInterceptor
                         state = LoginState.NoAuth
@@ -236,25 +233,17 @@ class HomeComponent(
         suspend fun logout() = authorizationRepository.logout()
 
         /**
-         * Fetch authorization credentials from local store and try them,
-         * returning [LoginState] or null if no credentials found.
+         * Fetch authorization credentials from local store,
+         * returning [LoginState.Authorized] or null if no credentials found.
          *
-         * @return null if no credentials, otherwise [LoginState] indicating success or failure
+         * @return null if no credentials, otherwise [LoginState.Authorized]
          */
-        suspend fun tryStoredAuth(): LoginState? {
+        suspend fun loadStoredAuth(): LoginState.Authorized? {
             state = LoginState.Loading
-            val entry = withContext(Dispatchers.Default) {
-                authorizationRepository
-            }.getAccountFlow()
-                .distinctUntilChanged()
-                .first()
-            return if (entry == null) null
-            else tryCredentials(entry).also {
-                if (it == LoginState.NoAuth) {
-                    authorizationRepository.logout()
-                }
-                assert(it != LoginState.Loading)
-                state = it
+            // Just assume that credentials in local store are good, or else they'll be invalidated in no time
+            return authorizationRepository.getAccount()?.let { entry ->
+                LoginState.Authorized(entry.username)
+                    .also { state = it }
             }
         }
 
@@ -277,13 +266,12 @@ class HomeComponent(
         }
 
         private suspend fun tryCredentials(
-            credentials: AuthorizationCredentials, // too connected to data store, should probably use own type
+            credentials: AuthorizationCredentials,
         ): LoginState {
             return api.getUser(credentials.username, credentials.credentials)
                 .map { body ->
                     LoginState.Authorized(
-                        body["name"]!!.jsonPrimitive.content,
-                        body["id"]!!.jsonPrimitive.content.toInt()
+                        body["name"]!!.jsonPrimitive.content
                     )
                 }
                 .recover {
