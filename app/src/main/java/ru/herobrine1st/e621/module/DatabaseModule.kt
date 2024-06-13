@@ -26,13 +26,15 @@ import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepositoryImpl
 import ru.herobrine1st.e621.data.vote.VoteRepositoryImpl
 import ru.herobrine1st.e621.database.Database
+import ru.herobrine1st.e621.database.instantiateImpl
 
 class DatabaseModule(applicationContext: Context) {
 
     val database by lazy {
-        Room.databaseBuilder(
+        Room.databaseBuilder<Database>(
             applicationContext,
-            Database::class.java, BuildConfig.DATABASE_NAME
+            BuildConfig.DATABASE_NAME,
+            factory = Database::class::instantiateImpl
         ).build()
     }
 
