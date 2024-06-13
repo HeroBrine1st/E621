@@ -87,7 +87,8 @@ class PagingItemsImpl<Value : Any>(
         }
         if (startPagingImmediately && snapshot.loadStates.refresh is LoadState.NotLoading) {
             // SAFETY: Upstream pager state is NotLoading; refresh method does not know that
-            uiChannel?.send(PagingRequest.Refresh)
+            // SAFETY: uiChannel is never null here
+            uiChannel!!.send(PagingRequest.Refresh)
             debug {
                 assert(
                     loadStates == LoadStates(
