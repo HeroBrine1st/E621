@@ -107,8 +107,12 @@ fun Posts(
         }
     ) {
         val pullToRefreshState = rememberPullToRefreshState()
+        val isLoading = posts.loadStates.refresh is LoadState.Loading
+
+        // STOPSHIP: isLoading being true on first frame triggers a bug in PullToRefresh
+        //           indicator is not visible until isLoading is false and true again
         PullToRefreshBox(
-            isRefreshing = posts.loadStates.refresh is LoadState.Loading,
+            isRefreshing = isLoading,
             onRefresh = posts::refresh,
             state = pullToRefreshState,
             indicator = {
@@ -116,14 +120,13 @@ fun Posts(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
                         .padding(it),
-                    isRefreshing = posts.loadStates.refresh is LoadState.Loading,
+                    isRefreshing = isLoading,
                     state = pullToRefreshState
                 )
             }
         ) {
             LazyColumn(
-                // Solution from https://issuetracker.google.com/issues/177245496#comment24
-                state = if (posts.size == 0) rememberLazyListState() else lazyListState,
+                state = lazyListState,
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = it,
                 modifier = Modifier

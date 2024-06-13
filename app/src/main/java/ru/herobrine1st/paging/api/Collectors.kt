@@ -30,10 +30,10 @@ import ru.herobrine1st.paging.internal.PagingItemsImpl
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.collectAsPagingItems(
     startImmediately: Boolean = true,
 ): PagingItems<Value> {
-    val pagingItems = remember { PagingItemsImpl(this) }
+    val pagingItems = remember { PagingItemsImpl(this, startImmediately) }
 
     LaunchedEffect(Unit) {
-        pagingItems.collectPagingData(startImmediately)
+        pagingItems.collectPagingData()
     }
 
     return pagingItems
