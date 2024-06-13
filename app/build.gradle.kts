@@ -90,6 +90,16 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
+        @Suppress("SpellCheckingInspection")
+        jniLibs {
+            // There's no use of multiprocess datastore, so this is not needed
+            excludes += "/lib/*/libdatastore_shared_counter.so"
+
+            // Required on API33- and on API34 for conic transform
+            // https://android.googlesource.com/platform/frameworks/support/+/refs/heads/androidx-main/graphics/graphics-path/src/main/java/androidx/graphics/path/PathIteratorImpl.kt#48
+            // Commit c7092daf5b7199c928c351af99c1ab5179370062
+            // excludes += "/lib/*/libandroidx.graphics.path.so"
+        }
     }
     @Suppress("UnstableApiUsage")
     testOptions {
