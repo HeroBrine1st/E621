@@ -104,8 +104,7 @@ fun Posts(
         },
         snackbarHost = {
             SnackbarHost(hostState = screenSharedState.snackbarHostState)
-        },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        }
     ) {
         val pullToRefreshState = rememberPullToRefreshState()
         PullToRefreshBox(
@@ -120,14 +119,16 @@ fun Posts(
                     isRefreshing = posts.loadStates.refresh is LoadState.Loading,
                     state = pullToRefreshState
                 )
-            },
-            modifier = Modifier.fillMaxWidth()
+            }
         ) {
             LazyColumn(
                 // Solution from https://issuetracker.google.com/issues/177245496#comment24
                 state = if (posts.size == 0) rememberLazyListState() else lazyListState,
                 horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = it
+                contentPadding = it,
+                modifier = Modifier
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
+                    .fillMaxWidth()
             ) {
                 when {
                     posts.loadStates.prepend is LoadState.Loading ||
