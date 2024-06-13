@@ -29,22 +29,22 @@ jobs:
         gradle-version: wrapper
     - name: Run tests
       run: ./gradlew testDebugUnitTest
-      #    - uses: actions/cache@v3
-      #      id: debug-key-cache
-      #      with:
-      #        path: ~/.android/debug.keystore
-      #        key: debug-keystore
+    - uses: actions/cache@v3
+      id: debug-key-cache
+      with:
+        path: ~/.android/debug.keystore
+        key: debug-keystore
     - name: Show signing report
       run: ./gradlew signingReport
     - name: Build snapshot
       run: ./gradlew assembleNightly
     - name: Upload APK
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v3 # v4 creates a zip archive of one file
       with:
         name: app-nightly.apk
         path: app/build/outputs/apk/nightly/app-nightly.apk
     - name: Upload proguard mappings
       uses: actions/upload-artifact@v4
       with:
-        name: proguard-mapping
+        name: proguard-mapping.zip
         path: app/build/outputs/mapping/nightly/
