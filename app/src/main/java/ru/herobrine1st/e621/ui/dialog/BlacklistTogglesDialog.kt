@@ -68,13 +68,14 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
-import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 import ru.herobrine1st.e621.ui.component.placeholder.material3.shimmer
 import kotlin.math.floor
 
+@OptIn(CachedDataStore::class)
 @Composable
 fun BlacklistTogglesDialog(
     component: BlacklistTogglesDialogComponent
@@ -115,7 +116,7 @@ fun BlacklistTogglesDialog(
             }
         }, onDismissRequest = component::onClose
     ) {
-        val isBlacklistEnabled = LocalPreferences.current.blacklistEnabled
+        val isBlacklistEnabled = component.preferences.collectAsState().value.blacklistEnabled
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.toggleable(

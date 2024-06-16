@@ -39,7 +39,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,8 +54,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.preference.LocalPreferences
-import ru.herobrine1st.e621.preference.Preferences
 import ru.herobrine1st.e621.preference.Proxy
 import ru.herobrine1st.e621.preference.ProxyAuth
 import ru.herobrine1st.e621.preference.ProxyType
@@ -199,13 +196,11 @@ fun ProxyDialog(
 @Composable
 private fun Preview() {
     MaterialTheme {
-        CompositionLocalProvider(LocalPreferences provides Preferences()) {
-            ProxyDialog(
-                getInitialProxy = { null },
-                onClose = {},
-                onApply = {}
-            )
-        }
+        ProxyDialog(
+            getInitialProxy = { null },
+            onClose = {},
+            onApply = {}
+        )
     }
 }
 

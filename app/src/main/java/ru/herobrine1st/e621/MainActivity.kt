@@ -35,7 +35,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.lifecycleScope
 import com.arkivanov.decompose.defaultComponentContext
@@ -46,9 +45,9 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.module.ActivityInjectionCompanion
+import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponentImpl
-import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.PreferencesSerializer
 import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.Navigator
@@ -77,6 +76,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -100,6 +100,9 @@ class MainActivity : ComponentActivity() {
             .take(1) // Looks like restart is required. I think OkHttp somehow handles proxy by itself.
             .launchIn(lifecycleScope)
 
+        @OptIn(CachedDataStore::class) // And also start StateFlow by initializing Lazy
+        injectionCompanion.dataStoreModule.cachedData
+
         val rootComponent = RootComponentImpl(
             injectionCompanion = injectionCompanion,
             componentContext = defaultComponentContext()
@@ -107,11 +110,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             E621Theme {
-                val context = LocalContext.current
                 val coroutineScope = rememberCoroutineScope()
-
-                // State
-                val preferences by rootComponent.dataStore.data.collectAsState(initial = PreferencesSerializer.defaultValue)
 
                 val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
                 SnackbarController(
@@ -120,8 +119,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 CompositionLocalProvider(
-                    LocalSnackbar provides injectionCompanion.snackbarModule.snackbarAdapter,
-                    LocalPreferences provides preferences
+                    LocalSnackbar provides injectionCompanion.snackbarModule.snackbarAdapter
                 ) {
                     Box(Modifier.background(MaterialTheme.colorScheme.background)) {
                         Navigator(rootComponent, snackbarHostState)
@@ -141,6 +139,7 @@ class MainActivity : ComponentActivity() {
                         null -> {}
                     }
 
+                    val preferences by rootComponent.dataStore.data.collectAsState(initial = PreferencesSerializer.defaultValue)
                     LicenseAndDisclaimerInitialDialogs(hasShownBefore = preferences.licenseAndNonAffiliationDisclaimerShown) {
                         coroutineScope.launch {
                             rootComponent.dataStore.updatePreferences {

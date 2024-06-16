@@ -22,22 +22,18 @@ package ru.herobrine1st.e621.preference
 
 
 import android.content.Context
-import androidx.compose.runtime.compositionLocalOf
-import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
+import ru.herobrine1st.e621.module.PreferencesStore
 
 
 @Deprecated(message = "Deprecated in favor of platform-independent module")
-val Context.dataStore: DataStore<Preferences> by dataStore(
+val Context.dataStore: PreferencesStore by dataStore(
     fileName = "preferences.pb",
     serializer = PreferencesSerializer
 )
 
-// dataStore.data is not a state flow so it causes first-frame issues
-val LocalPreferences = compositionLocalOf<Preferences> { error("No preferences in this scope") }
-
 // DataStore methods
-suspend inline fun DataStore<Preferences>.updatePreferences(
+suspend inline fun PreferencesStore.updatePreferences(
     crossinline block: suspend Preferences.() -> Preferences
 ) = updateData { it.block() }
 

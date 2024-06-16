@@ -50,6 +50,8 @@ import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.data.vote.VoteRepository
+import ru.herobrine1st.e621.module.CachedDataStore
+import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.config.Config
@@ -76,7 +78,7 @@ class PostListingComponent(
     private val searchOptions: SearchOptions,
     private val navigator: StackNavigator<Config>,
     componentContext: ComponentContext,
-    private val dataStore: PreferencesStore,
+    private val dataStoreModule: DataStoreModule,
     blacklistRepository: BlacklistRepository,
     private val voteRepository: VoteRepository,
 ) : ComponentContext by componentContext {
@@ -102,7 +104,7 @@ class PostListingComponent(
             favouritesCache,
             exceptionReporter,
             searchOptions,
-            dataStore,
+            dataStoreModule.dataStore,
             blacklistRepository
         )
     }
@@ -147,6 +149,10 @@ class PostListingComponent(
 
     suspend fun getVote(postId: PostId): Int? = voteRepository.getVote(postId)
 
+    @CachedDataStore
+    val isAuthorized
+        @Composable
+        get() = dataStoreModule.cachedData.collectAsState().value.auth != null
 
     private class Instance(
         api: API,

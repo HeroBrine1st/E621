@@ -76,6 +76,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -91,9 +92,9 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.CommentData
 import ru.herobrine1st.e621.api.model.isOriginal
+import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.post.PostState
-import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
 import ru.herobrine1st.e621.ui.component.RenderBB
@@ -111,15 +112,14 @@ import ru.herobrine1st.paging.api.collectAsPagingItems
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class)
 @Composable
 fun Post(
     screenSharedState: ScreenSharedState,
-    component: PostComponent,
-    isAuthorized: Boolean, // TODO move to component
+    component: PostComponent
 ) {
     val postState by component.postState.subscribeAsState()
-    val preferences = LocalPreferences.current
+    val preferences by component.preferences.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
 
@@ -186,7 +186,8 @@ fun Post(
                 (postState as? PostState.Ready)?.post?.let { post ->
                     CommentsBottomSheetContent(
                         comments = comments,
-                        post = post
+                        post = post,
+                        safeModeEnabled = preferences.safeModeEnabled
                     )
                 }
             },
@@ -296,7 +297,7 @@ fun Post(
                 item("actionbar") {
                     val favouriteState by component.isFavouriteAsState()
                     PostActionRow(
-                        post, favouriteState, isAuthorized,
+                        post, favouriteState, component.isAuthorized,
                         modifier = Modifier
                             .padding(horizontal = 8.dp)
                             .fillMaxWidth(),
@@ -435,6 +436,7 @@ fun Post(
                                 is CommentsLoadingState.Showable ->
                                     PostComment(
                                         state.commentData,
+                                        safeModeEnabled = preferences.safeModeEnabled,
                                         placeholder = state.commentData === CommentData.PLACEHOLDER,
                                         animateTextChange = true
                                     )

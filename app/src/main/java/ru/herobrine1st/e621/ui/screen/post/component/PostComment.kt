@@ -53,6 +53,7 @@ import ru.herobrine1st.e621.ui.component.placeholder.material3.shimmer
 @Composable
 fun PostComment(
     commentData: CommentData,
+    safeModeEnabled: Boolean,
     modifier: Modifier = Modifier,
     placeholder: Boolean = false,
     animateTextChange: Boolean = false,
@@ -64,6 +65,7 @@ fun PostComment(
         Row(verticalAlignment = Alignment.CenterVertically) {
             CommentAvatar(
                 commentData.author.avatarPost,
+                safeModeEnabled,
                 Modifier.size(24.dp),
                 placeholder = placeholder
             )

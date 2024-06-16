@@ -66,7 +66,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -89,10 +88,9 @@ import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
+import ru.herobrine1st.e621.module.CachedDataStore
+import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
-import ru.herobrine1st.e621.preference.LocalPreferences
-import ru.herobrine1st.e621.preference.Preferences
-import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
@@ -103,24 +101,12 @@ import ru.herobrine1st.e621.util.getPreviewStackNavigator
 import ru.herobrine1st.e621.util.text
 
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, CachedDataStore::class)
 @Composable
 fun Search(
     screenSharedState: ScreenSharedState,
     component: SearchComponent,
 ) {
-    val preferences = LocalPreferences.current
-
-    // TODO move to component
-    LaunchedEffect(preferences.safeModeEnabled) {
-        if (preferences.safeModeEnabled) {
-            component.rating.apply {
-                clear()
-                add(Rating.SAFE)
-            }
-        }
-    }
-
     var tagModificationState by rememberSaveable(saver = TagModificationState.Saver) {
         mutableStateOf(
             TagModificationState.None
@@ -293,7 +279,7 @@ fun Search(
                     title = stringResource(R.string.rating),
                     modifier = Modifier.selectableGroup()
                 ) {
-                    AnimatedVisibility(visible = preferences.safeModeEnabled) {
+                    AnimatedVisibility(visible = component.shouldBlockRatingChange) {
                         Text(stringResource(R.string.search_safe_mode))
                     }
 
@@ -315,7 +301,7 @@ fun Search(
                                         // or select none as it is the same
                                     },
                                     label = { Text(stringResource(v.descriptionId)) },
-                                    enabled = !preferences.safeModeEnabled,
+                                    enabled = !component.shouldBlockRatingChange,
                                     leadingIcon = {
                                         AnimatedVisibility(
                                             visible = selected,
@@ -372,13 +358,8 @@ fun Search(
                         label = { Text(stringResource(R.string.user)) },
                         singleLine = true,
                         trailingIcon = {
-                            IconButton(onClick = {
-                                // TODO move to component
-                                if (component.favouritesOf.isEmpty() && preferences.auth != null)
-                                    component.favouritesOf = preferences.auth.username
-                                else component.favouritesOf = ""
-                            }) {
-                                if (component.favouritesOf.isEmpty() && preferences.auth != null) Icon(
+                            IconButton(onClick = component::onFavouritesOfTrailingButtonClick) {
+                                if (component.shouldShowAccountFillInFavouritesOfField) Icon(
                                     Icons.Default.AccountCircle,
                                     contentDescription = stringResource(R.string.search_fill_myself)
                                 ) else Icon(
@@ -453,35 +434,33 @@ fun Search(
 @Composable
 @OptIn(PreviewUtils::class)
 fun SearchPreview() {
-    CompositionLocalProvider(LocalPreferences provides Preferences()) {
-        Search(
-            screenSharedState = rememberScreenPreviewSharedState(),
-            component = SearchComponent(
-                getPreviewComponentContext(),
-                getPreviewStackNavigator(),
-                PostsSearchOptions(
-                    allOf = @Suppress("SpellCheckingInspection") setOf(
-                        Tag("asdlkfjaskldjfasdf"),
-                        Tag("asddlkfjaslkdjfas"),
-                        Tag("test")
-                    )
-                ),
-                api = object : AutocompleteSuggestionsAPI {
-                    override suspend fun getAutocompleteSuggestions(query: String, expiry: Int) =
-                        Result.success(emptyList<TagAutocompleteSuggestion>())
-                },
-                exceptionReporter = object : ExceptionReporter {
-                    override suspend fun handleRequestException(
-                        t: Throwable,
-                        message: String,
-                        dontShowSnackbar: Boolean,
-                        showThrowable: Boolean,
-                    ) {
-                        // ignore
-                    }
-                },
-                dataStore = @Suppress("DEPRECATION") LocalContext.current.applicationContext.dataStore
-            )
+    Search(
+        screenSharedState = rememberScreenPreviewSharedState(),
+        component = SearchComponent(
+            getPreviewComponentContext(),
+            getPreviewStackNavigator(),
+            PostsSearchOptions(
+                allOf = @Suppress("SpellCheckingInspection") setOf(
+                    Tag("asdlkfjaskldjfasdf"),
+                    Tag("asddlkfjaslkdjfas"),
+                    Tag("test")
+                )
+            ),
+            api = object : AutocompleteSuggestionsAPI {
+                override suspend fun getAutocompleteSuggestions(query: String, expiry: Int) =
+                    Result.success(emptyList<TagAutocompleteSuggestion>())
+            },
+            exceptionReporter = object : ExceptionReporter {
+                override suspend fun handleRequestException(
+                    t: Throwable,
+                    message: String,
+                    dontShowSnackbar: Boolean,
+                    showThrowable: Boolean,
+                ) {
+                    // ignore
+                }
+            },
+            dataStoreModule = DataStoreModule(LocalContext.current.applicationContext)
         )
-    }
+    )
 }

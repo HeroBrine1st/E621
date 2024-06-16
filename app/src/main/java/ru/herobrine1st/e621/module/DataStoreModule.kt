@@ -32,13 +32,27 @@ import ru.herobrine1st.e621.preference.dataStore
 typealias PreferencesStore = DataStore<Preferences>
 
 class DataStoreModule(context: Context) {
+    // No need to cancel: android.app.Application is a singleton
     private val coroutineScope = CoroutineScope(Dispatchers.Main.immediate)
 
+    // context.applicationContext can't be used concurrently with initialization of context (android.app.Application in this case), so lazy
     @Suppress("DEPRECATION")
-    val dataStore: PreferencesStore = context.dataStore
+    val dataStore: PreferencesStore by lazy { context.dataStore }
 
     @CachedDataStore
-    val cachedData = dataStore.data.stateIn(coroutineScope, SharingStarted.Eagerly, Preferences())
+    val cachedData by lazy {
+        dataStore.data.stateIn(
+            coroutineScope,
+            SharingStarted.Eagerly,
+            Preferences()
+        )
+    }
+
+
+    // To avoid typing "dataStore" twice
+    inline val data get() = dataStore.data
+    suspend inline fun updateData(noinline transform: Preferences.() -> Preferences) =
+        dataStore.updateData(transform)
 }
 
 @RequiresOptIn("This API is intended for usage in UI-related (i.e. synchronous) code, and improper usage can cause ACID violations")

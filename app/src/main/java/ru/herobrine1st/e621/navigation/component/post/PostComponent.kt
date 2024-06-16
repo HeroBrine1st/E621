@@ -60,6 +60,8 @@ import ru.herobrine1st.e621.api.search.PoolSearchOptions
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.vote.VoteRepository
+import ru.herobrine1st.e621.module.CachedDataStore
+import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.module.IDownloadManager
 import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.navigation.LifecycleScope
@@ -94,9 +96,10 @@ class PostComponent(
     private val mediaOkHttpClientProvider: Lazy<OkHttpClient>,
     private val downloadManager: IDownloadManager,
     private val voteRepository: VoteRepository,
-    private val dataStore: PreferencesStore
+    private val dataStoreModule: DataStoreModule
 ) : ComponentContext by componentContext {
 
+    private val dataStore: PreferencesStore by dataStoreModule::dataStore
 
     private val instance = instanceKeeper.getOrCreate {
         Instance(postId, api, exceptionReporter)
@@ -153,6 +156,14 @@ class PostComponent(
 
 
     //endregion
+
+    @CachedDataStore
+    val preferences by dataStoreModule::cachedData
+
+    @CachedDataStore
+    val isAuthorized
+        @Composable
+        get() = preferences.collectAsState().value.auth != null
 
     init {
         assert(initialPost == null || initialPost.id == postId)

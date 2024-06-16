@@ -50,6 +50,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent.InfoState
 import ru.herobrine1st.e621.navigation.component.posts.UIPostListingItem
@@ -66,12 +67,11 @@ import ru.herobrine1st.paging.api.collectAsPagingItems
 import ru.herobrine1st.paging.api.contentType
 import ru.herobrine1st.paging.api.itemKey
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class)
 @Composable
 fun Posts(
     screenSharedState: ScreenSharedState,
-    component: PostListingComponent,
-    isAuthorized: Boolean, // TODO move to component
+    component: PostListingComponent
 ) {
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
@@ -194,7 +194,7 @@ fun Posts(
                         is UIPostListingItem.Post -> Post(
                             post = item.post,
                             favouriteState = favouritesCache.isFavourite(item.post),
-                            isAuthorized = isAuthorized,
+                            isAuthorized = component.isAuthorized,
                             onFavouriteChange = {
                                 component.handleFavouriteChange(item.post)
                             },

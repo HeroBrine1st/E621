@@ -39,20 +39,25 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
-import ru.herobrine1st.e621.module.PreferencesStore
+import ru.herobrine1st.e621.module.CachedDataStore
+import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.util.InstanceBase
 
 class BlacklistTogglesDialogComponent(
     onClose: () -> Unit,
     blacklistRepository: BlacklistRepository,
-    private val dataStore: PreferencesStore,
+    private val dataStoreModule: DataStoreModule,
     componentContext: ComponentContext
 ) : ComponentContext by componentContext {
 
     private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private val instance = instanceKeeper.getOrCreate { Instance(blacklistRepository) }
     private val _onClose = onClose
+    private val dataStore by dataStoreModule::dataStore
+
+    @CachedDataStore
+    val preferences by dataStoreModule::cachedData
 
     init {
         lifecycle.doOnDestroy {

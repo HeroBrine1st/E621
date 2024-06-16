@@ -38,7 +38,6 @@ import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 import ru.herobrine1st.e621.api.common.PostReducedCommon
 import ru.herobrine1st.e621.api.model.Rating
-import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
 import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
@@ -46,15 +45,14 @@ import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 @Composable
 fun CommentAvatar(
     avatarPost: PostReducedCommon?,
+    safeModeEnabled: Boolean,
     modifier: Modifier = Modifier,
     placeholder: Boolean = false,
     onAvatarClick: () -> Unit = {}
 ) {
-    val safeMode = LocalPreferences.current.safeModeEnabled
-
     var isPlaceholderActive by remember { mutableStateOf(true) }
     if (avatarPost != null &&
-        (avatarPost.rating == Rating.SAFE || !safeMode) &&
+        (avatarPost.rating == Rating.SAFE || !safeModeEnabled) &&
         (avatarPost.previewUrl != null || avatarPost.croppedUrl != null)
     ) {
         val url = avatarPost.previewUrl ?: avatarPost.croppedUrl

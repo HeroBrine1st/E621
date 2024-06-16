@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,8 +47,8 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.settings.SettingsComponent
-import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.component.preferences.SettingLink
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
@@ -55,9 +56,8 @@ import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
 import ru.herobrine1st.e621.ui.screen.settings.component.ProxyDialog
-import ru.herobrine1st.e621.util.restart
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class)
 @Composable
 fun Settings(
     screenSharedState: ScreenSharedState,
@@ -68,7 +68,7 @@ fun Settings(
     val coroutineScope = rememberCoroutineScope()
 
     // State
-    val preferences = LocalPreferences.current
+    val preferences by component.preferences.collectAsState()
     var showDataSaverModeDialog by remember { mutableStateOf(false) }
     var showSafeModeDisclaimer by remember { mutableStateOf(false) }
     var showProxySettingsDialog by remember { mutableStateOf(false) }
@@ -166,13 +166,15 @@ fun Settings(
             }
             item {
                 SettingLinkWithSwitch(
-                    checked = preferences.proxy != null && preferences.proxy.enabled,
+                    checked = preferences.proxy?.enabled == true,
                     title = stringResource(
                         R.string.proxy_server
                     ),
-                    subtitle = if (preferences.proxy != null) with(preferences.proxy) {
-                        "${type.toString().lowercase()}://$hostname:$port"
-                    } else "",
+                    subtitle = preferences.proxy?.run {
+                        "${
+                            type.toString().lowercase()
+                        }://$hostname:$port"
+                    } ?: "",
                     icon = Icons.Default.Public,
                     onCheckedChange = {
                         if (preferences.proxy == null && it) showProxySettingsDialog = true

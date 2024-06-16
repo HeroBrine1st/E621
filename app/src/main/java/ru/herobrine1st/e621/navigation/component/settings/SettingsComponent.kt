@@ -34,7 +34,7 @@ class SettingsComponent(
 
     private val lifecycleScope = LifecycleScope()
 
-    @OptIn(CachedDataStore::class)
+    @CachedDataStore
     val preferences by dataStoreModule::cachedData
 
     fun updatePreferences(transform: Preferences.() -> Preferences) {

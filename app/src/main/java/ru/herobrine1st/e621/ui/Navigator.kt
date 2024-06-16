@@ -39,7 +39,6 @@ import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Search
 import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Settings
 import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Wiki
 import ru.herobrine1st.e621.navigation.config.Config
-import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.ui.animation.reducedSlide
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenSharedState
 import ru.herobrine1st.e621.ui.screen.PostMediaScreen
@@ -60,7 +59,6 @@ fun Navigator(
     rootComponent: RootComponent,
     snackbarHostState: androidx.compose.material3.SnackbarHostState,
 ) {
-    val preferences = LocalPreferences.current
     val navigation = rootComponent.navigation
 
     val sharedState = rememberScreenSharedState(
@@ -94,20 +92,15 @@ fun Navigator(
             )
 
             is Search -> Search(sharedState, instance.component)
-            // There needs a centralized solution to cache preferences (particularly `hasAuth()`)
-            // Although it is said not to cache it, looks like "LocalPreferences" is cache itself
-            // So StateFlow should work too. Probably.
-            // Then `preferences.hasAuth()` can be safely moved to components.
+
             is PostListing -> Posts(
                 sharedState,
-                instance.component,
-                preferences.auth != null
+                instance.component
             )
 
             is Post -> Post(
                 screenSharedState = sharedState,
-                component = instance.component,
-                isAuthorized = preferences.auth != null
+                component = instance.component
             )
 
             is Settings -> Settings(

@@ -99,7 +99,7 @@ class RootComponentImpl(
                     initialSearchOptions = configuration.initialSearch,
                     api = injectionCompanion.apiModule.api,
                     exceptionReporter = injectionCompanion.exceptionReporter,
-                    dataStore = injectionCompanion.dataStoreModule.dataStore
+                    dataStoreModule = injectionCompanion.dataStoreModule
                 )
             )
 
@@ -112,7 +112,7 @@ class RootComponentImpl(
                     exceptionReporter = injectionCompanion.exceptionReporter,
                     searchOptions = configuration.search,
                     navigator = navigation,
-                    dataStore = injectionCompanion.dataStoreModule.dataStore,
+                    dataStoreModule = injectionCompanion.dataStoreModule,
                     blacklistRepository = injectionCompanion.databaseModule.blacklistRepository,
                     voteRepository = injectionCompanion.databaseModule.voteRepository
                 )
@@ -134,7 +134,7 @@ class RootComponentImpl(
                     injectionCompanion.mediaModule.mediaOkHttpClientLazy,
                     injectionCompanion.downloadManagerModule.downloadManager,
                     injectionCompanion.databaseModule.voteRepository,
-                    injectionCompanion.dataStoreModule.dataStore
+                    injectionCompanion.dataStoreModule
                 )
             )
 
@@ -206,7 +206,7 @@ class RootComponentImpl(
                         dialogNavigation.navigate { null }
                     },
                     injectionCompanion.databaseModule.blacklistRepository,
-                    injectionCompanion.dataStoreModule.dataStore,
+                    injectionCompanion.dataStoreModule,
                     componentContext
                 )
             )

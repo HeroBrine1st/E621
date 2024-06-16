@@ -58,6 +58,7 @@ import ru.herobrine1st.paging.api.PagingItems
 fun CommentsBottomSheetContent(
     comments: PagingItems<CommentData>,
     post: Post,
+    safeModeEnabled: Boolean
 ) {
     val commentsLazyListState = rememberLazyListState()
 
@@ -120,6 +121,7 @@ fun CommentsBottomSheetContent(
                         else comments[index]
                     PostComment(
                         comment,
+                        safeModeEnabled,
                         modifier = Modifier.padding(horizontal = BASE_PADDING_HORIZONTAL),
                         placeholder = comment === CommentData.PLACEHOLDER,
                         animateTextChange = true
