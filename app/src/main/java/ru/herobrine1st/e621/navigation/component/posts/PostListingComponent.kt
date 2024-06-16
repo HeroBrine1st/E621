@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.navigation.component.posts
 
-import android.content.Context
 import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -51,10 +50,10 @@ import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.data.vote.VoteRepository
+import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
-import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
@@ -77,7 +76,7 @@ class PostListingComponent(
     private val searchOptions: SearchOptions,
     private val navigator: StackNavigator<Config>,
     componentContext: ComponentContext,
-    applicationContext: Context,
+    private val dataStore: PreferencesStore,
     blacklistRepository: BlacklistRepository,
     private val voteRepository: VoteRepository,
 ) : ComponentContext by componentContext {
@@ -103,7 +102,7 @@ class PostListingComponent(
             favouritesCache,
             exceptionReporter,
             searchOptions,
-            applicationContext,
+            dataStore,
             blacklistRepository
         )
     }
@@ -154,7 +153,7 @@ class PostListingComponent(
         favouritesCache: FavouritesCache,
         exceptionReporter: ExceptionReporter,
         searchOptions: SearchOptions,
-        applicationContext: Context,
+        dataStore: PreferencesStore,
         blacklistRepository: BlacklistRepository,
     ) : InstanceBase() {
 
@@ -179,10 +178,10 @@ class PostListingComponent(
 
         val postsFlow = combine(
             pager.flow,
-            applicationContext.getPreferencesFlow { it.blacklistEnabled },
+            dataStore.data.map { it.blacklistEnabled },
             blacklistPredicateFlow,
             favouritesCache.flow,
-            applicationContext.getPreferencesFlow { it.safeModeEnabled }
+            dataStore.data.map { it.safeModeEnabled }
         ) { posts, isBlacklistEnabled, blacklistPredicate, favourites, safeModeEnabled ->
             // It is hard to understand
             // Briefly, it maps Post to either show-able Post or hidden (due to blacklist or safe mode) item

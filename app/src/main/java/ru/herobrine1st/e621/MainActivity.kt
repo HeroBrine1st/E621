@@ -50,8 +50,6 @@ import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponentImpl
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.PreferencesSerializer
-import ru.herobrine1st.e621.preference.dataStore
-import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.Navigator
 import ru.herobrine1st.e621.ui.component.legal.LicenseAndDisclaimerInitialDialogs
@@ -84,9 +82,12 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
+        val viewModel: ViewModelForRetaining by viewModels()
+        val injectionCompanion = viewModel.injectionCompanion
+
         // Set up proxy
         // Also pre-read preferences early
-        getPreferencesFlow()
+        injectionCompanion.dataStoreModule.dataStore.data
             .onEach { preferences ->
                 val proxies = if (preferences.proxy != null && preferences.proxy.enabled)
                     listOf(ProxyWithAuth(preferences.proxy)) else emptyList()
@@ -99,9 +100,6 @@ class MainActivity : ComponentActivity() {
             .take(1) // Looks like restart is required. I think OkHttp somehow handles proxy by itself.
             .launchIn(lifecycleScope)
 
-        val viewModel: ViewModelForRetaining by viewModels()
-        val injectionCompanion = viewModel.injectionCompanion
-
         val rootComponent = RootComponentImpl(
             injectionCompanion = injectionCompanion,
             componentContext = defaultComponentContext()
@@ -113,7 +111,7 @@ class MainActivity : ComponentActivity() {
                 val coroutineScope = rememberCoroutineScope()
 
                 // State
-                val preferences by context.dataStore.data.collectAsState(initial = PreferencesSerializer.defaultValue)
+                val preferences by rootComponent.dataStore.data.collectAsState(initial = PreferencesSerializer.defaultValue)
 
                 val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
                 SnackbarController(
@@ -145,7 +143,7 @@ class MainActivity : ComponentActivity() {
 
                     LicenseAndDisclaimerInitialDialogs(hasShownBefore = preferences.licenseAndNonAffiliationDisclaimerShown) {
                         coroutineScope.launch {
-                            context.updatePreferences {
+                            rootComponent.dataStore.updatePreferences {
                                 copy(licenseAndNonAffiliationDisclaimerShown = true)
                             }
                         }

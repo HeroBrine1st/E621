@@ -27,6 +27,7 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
+import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
 import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
@@ -79,5 +80,7 @@ interface RootComponent {
 
     val dialogNavigation: SlotNavigation<DialogConfig>
     val dialogSlot: Value<ChildSlot<DialogConfig, DialogChild>>
+
+    val dataStore: PreferencesStore
 }
 

@@ -92,6 +92,7 @@ import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.preference.LocalPreferences
 import ru.herobrine1st.e621.preference.Preferences
+import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
@@ -479,7 +480,7 @@ fun SearchPreview() {
                         // ignore
                     }
                 },
-                applicationContext = LocalContext.current.applicationContext
+                dataStore = @Suppress("DEPRECATION") LocalContext.current.applicationContext.dataStore
             )
         )
     }

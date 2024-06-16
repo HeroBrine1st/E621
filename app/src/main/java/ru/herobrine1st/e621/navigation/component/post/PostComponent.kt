@@ -61,13 +61,13 @@ import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.data.vote.VoteRepository
 import ru.herobrine1st.e621.module.IDownloadManager
+import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
 import ru.herobrine1st.e621.navigation.component.posts.handleFavouriteChange
 import ru.herobrine1st.e621.navigation.component.posts.handleVote
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
-import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
@@ -94,6 +94,7 @@ class PostComponent(
     private val mediaOkHttpClientProvider: Lazy<OkHttpClient>,
     private val downloadManager: IDownloadManager,
     private val voteRepository: VoteRepository,
+    private val dataStore: PreferencesStore
 ) : ComponentContext by componentContext {
 
 
@@ -171,7 +172,7 @@ class PostComponent(
             lifecycleScope.launch {
                 if (
                     state.value !is PostState.Ready
-                    || !applicationContext.getPreferencesFlow { it.dataSaverModeEnabled }.first()
+                    || !dataStore.data.map { it.dataSaverModeEnabled }.first()
                 )
                     refreshPostInternal()
                 useSample()
@@ -228,7 +229,8 @@ class PostComponent(
                 url = url,
                 applicationContext = applicationContext,
                 componentContext = childContext("VIDEO_COMPONENT"),
-                mediaOkHttpClient = mediaOkHttpClientProvider.value
+                mediaOkHttpClient = mediaOkHttpClientProvider.value,
+                dataStore = dataStore
             )
         }
         return videoPlayerComponent

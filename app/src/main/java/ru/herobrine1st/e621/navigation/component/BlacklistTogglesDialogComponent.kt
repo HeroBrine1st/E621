@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.navigation.component
 
-import android.content.Context
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -40,18 +39,17 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
-import ru.herobrine1st.e621.preference.dataStore
+import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.util.InstanceBase
 
 class BlacklistTogglesDialogComponent(
     onClose: () -> Unit,
     blacklistRepository: BlacklistRepository,
-    applicationContext: Context,
+    private val dataStore: PreferencesStore,
     componentContext: ComponentContext
 ) : ComponentContext by componentContext {
 
-    private val dataStore = applicationContext.dataStore
     private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private val instance = instanceKeeper.getOrCreate { Instance(blacklistRepository) }
     private val _onClose = onClose

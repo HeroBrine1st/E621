@@ -117,7 +117,8 @@ fun Navigator(
                 },
                 onNavigateToAbout = {
                     navigation.push(Config.Settings.About)
-                }
+                },
+                component = instance.component
             )
 
             is Settings.Blacklist ->

@@ -20,22 +20,20 @@
 
 package ru.herobrine1st.e621.data.authorization
 
-import android.content.Context
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.preference.AuthorizationCredentials
-import ru.herobrine1st.e621.preference.dataStore
-import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.preference.updatePreferences
 
 /**
  * Implementation without multi-account support (Maybe will be added in future)
  */
-class AuthorizationRepositoryImpl(context: Context) : AuthorizationRepository {
+class AuthorizationRepositoryImpl(private val dataStore: PreferencesStore) :
+    AuthorizationRepository {
 
-    private val dataStore = context.dataStore
-    private val data = dataStore.getPreferencesFlow { it.auth }
+    private val data = dataStore.data.map { it.auth }
 
     override suspend fun getAccount(): AuthorizationCredentials? = data.first()
 

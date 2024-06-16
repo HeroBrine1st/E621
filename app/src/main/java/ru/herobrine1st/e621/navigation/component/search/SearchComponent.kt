@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.navigation.component.search
 
-import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,15 +34,15 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
 import ru.herobrine1st.e621.api.Tokens
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
+import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
-import ru.herobrine1st.e621.preference.dataStore
-import ru.herobrine1st.e621.preference.getPreferencesFlow
 import ru.herobrine1st.e621.util.ExceptionReporter
 
 const val SEARCH_OPTIONS_STATE_KEY = "SEARCH_COMPONENT_OPTIONS_STATE_KEY"
@@ -54,10 +53,8 @@ class SearchComponent private constructor(
     private val navigator: StackNavigator<Config>,
     private val api: AutocompleteSuggestionsAPI,
     private val exceptionReporter: ExceptionReporter,
-    applicationContext: Context,
+    private val dataStore: PreferencesStore
 ) : ComponentContext by componentContext {
-
-    private val dataStore = applicationContext.dataStore
 
     val tags = initialSearchOptions.run {
         allOf.map { it.value } + anyOf.map { it.asAlternative } + noneOf.map { it.asExcluded }
@@ -82,7 +79,7 @@ class SearchComponent private constructor(
             .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
             .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
             // Delay is handled by interceptor
-            .combine(dataStore.getPreferencesFlow { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
+            .combine(dataStore.data.map { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
                 if (query.length < 3 || !isAutocompleteEnabled) {
                     return@combine Autocomplete.Ready(emptyList(), query)
 
@@ -130,7 +127,7 @@ class SearchComponent private constructor(
         initialSearchOptions: PostsSearchOptions,
         api: AutocompleteSuggestionsAPI,
         exceptionReporter: ExceptionReporter,
-        applicationContext: Context,
+        dataStore: PreferencesStore
     ) : this(
         componentContext,
         componentContext.stateKeeper.consume(
@@ -141,7 +138,7 @@ class SearchComponent private constructor(
         navigator,
         api,
         exceptionReporter,
-        applicationContext
+        dataStore
     )
 
     init {

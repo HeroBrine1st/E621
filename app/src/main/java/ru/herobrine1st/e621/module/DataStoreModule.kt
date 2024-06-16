@@ -18,32 +18,29 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.navigation.component.settings
+package ru.herobrine1st.e621.module
 
-import com.arkivanov.decompose.ComponentContext
-import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.module.CachedDataStore
-import ru.herobrine1st.e621.module.DataStoreModule
-import ru.herobrine1st.e621.navigation.LifecycleScope
+import android.content.Context
+import androidx.datastore.core.DataStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import ru.herobrine1st.e621.preference.Preferences
+import ru.herobrine1st.e621.preference.dataStore
 
-class SettingsComponent(
-    private val dataStoreModule: DataStoreModule,
-    componentContext: ComponentContext
-) : ComponentContext by componentContext {
+typealias PreferencesStore = DataStore<Preferences>
 
-    private val lifecycleScope = LifecycleScope()
+class DataStoreModule(context: Context) {
+    private val coroutineScope = CoroutineScope(Dispatchers.Main.immediate)
 
-    @OptIn(CachedDataStore::class)
-    val preferences by dataStoreModule::cachedData
+    @Suppress("DEPRECATION")
+    val dataStore: PreferencesStore = context.dataStore
 
-    fun updatePreferences(transform: Preferences.() -> Preferences) {
-        lifecycleScope.launch {
-            dataStoreModule.dataStore.updateData(transform)
-        }
-    }
-
-    fun restartApplication() {
-        TODO("Extract to module?")
-    }
+    @CachedDataStore
+    val cachedData = dataStore.data.stateIn(coroutineScope, SharingStarted.Eagerly, Preferences())
 }
+
+@RequiresOptIn("This API is intended for usage in UI-related (i.e. synchronous) code, and improper usage can cause ACID violations")
+@Retention(AnnotationRetention.BINARY)
+annotation class CachedDataStore

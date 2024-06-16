@@ -47,6 +47,7 @@ import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.navigation.component.VideoPlayerComponent
+import ru.herobrine1st.e621.preference.dataStore
 import ru.herobrine1st.e621.util.PreviewUtils
 import ru.herobrine1st.e621.util.getPreviewComponentContext
 
@@ -143,6 +144,8 @@ private fun Preview() {
                 LocalContext.current.applicationContext,
                 remember { OkHttpClient() },
                 getPreviewComponentContext(),
+                @Suppress("DEPRECATION")
+                LocalContext.current.dataStore
             )
         )
     }

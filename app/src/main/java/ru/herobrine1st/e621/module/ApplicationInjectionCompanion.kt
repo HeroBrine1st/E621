@@ -28,4 +28,5 @@ class ApplicationInjectionCompanion(val applicationContext: Context) {
     val databaseModule = DatabaseModule(applicationContext)
     val snackbarModule = SnackbarModule()
     val exceptionReporter: ExceptionReporter = ExceptionReporterImpl(snackbarModule.snackbarAdapter)
+    val dataStoreModule = DataStoreModule(applicationContext)
 }

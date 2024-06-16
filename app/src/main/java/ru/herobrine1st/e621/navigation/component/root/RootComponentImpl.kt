@@ -27,6 +27,7 @@ import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
 import ru.herobrine1st.e621.module.ActivityInjectionCompanion
+import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
 import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
@@ -72,6 +73,7 @@ class RootComponentImpl(
         childFactory = ::createDialogChild
         // handleBackButton = false - dialogs handle it themselves
     )
+    override val dataStore: PreferencesStore by injectionCompanion.dataStoreModule::dataStore
 
     private fun createChild(
         configuration: Config,
@@ -89,6 +91,7 @@ class RootComponentImpl(
                     context
                 )
             )
+
             is Search -> Child.Search(
                 SearchComponent(
                     componentContext = context,
@@ -96,9 +99,10 @@ class RootComponentImpl(
                     initialSearchOptions = configuration.initialSearch,
                     api = injectionCompanion.apiModule.api,
                     exceptionReporter = injectionCompanion.exceptionReporter,
-                    applicationContext = injectionCompanion.applicationContext
+                    dataStore = injectionCompanion.dataStoreModule.dataStore
                 )
             )
+
             is PostListing -> Child.PostListing(
                 PostListingComponent(
                     componentContext = context,
@@ -108,11 +112,12 @@ class RootComponentImpl(
                     exceptionReporter = injectionCompanion.exceptionReporter,
                     searchOptions = configuration.search,
                     navigator = navigation,
-                    applicationContext = injectionCompanion.applicationContext,
+                    dataStore = injectionCompanion.dataStoreModule.dataStore,
                     blacklistRepository = injectionCompanion.databaseModule.blacklistRepository,
                     voteRepository = injectionCompanion.databaseModule.voteRepository
                 )
             )
+
             is Post -> Child.Post(
                 PostComponent(
                     configuration.openComments,
@@ -128,10 +133,18 @@ class RootComponentImpl(
                     injectionCompanion.snackbarModule.snackbarAdapter,
                     injectionCompanion.mediaModule.mediaOkHttpClientLazy,
                     injectionCompanion.downloadManagerModule.downloadManager,
-                    injectionCompanion.databaseModule.voteRepository
+                    injectionCompanion.databaseModule.voteRepository,
+                    injectionCompanion.dataStoreModule.dataStore
                 )
             )
-            is Settings -> Child.Settings(SettingsComponent(context))
+
+            is Settings -> Child.Settings(
+                SettingsComponent(
+                    injectionCompanion.dataStoreModule,
+                    context
+                )
+            )
+
             is Settings.Blacklist -> Child.Settings.Blacklist(
                 SettingsBlacklistComponent(
                     injectionCompanion.databaseModule.blacklistRepository,
@@ -140,6 +153,7 @@ class RootComponentImpl(
                     context
                 )
             )
+
             is Settings.Blacklist.Entry ->
                 Child.Settings.Blacklist.Entry(
                     SettingsBlacklistEntryComponent(
@@ -151,6 +165,7 @@ class RootComponentImpl(
                         navigation
                     )
                 )
+
             is Settings.About -> Child.Settings.About(SettingsAboutComponent(context))
             is Settings.License -> Child.Settings.License(SettingsLicenseComponent(context))
             is Settings.AboutLibraries -> Child.Settings.AboutLibraries(
@@ -191,7 +206,7 @@ class RootComponentImpl(
                         dialogNavigation.navigate { null }
                     },
                     injectionCompanion.databaseModule.blacklistRepository,
-                    injectionCompanion.applicationContext,
+                    injectionCompanion.dataStoreModule.dataStore,
                     componentContext
                 )
             )
