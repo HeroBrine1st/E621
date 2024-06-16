@@ -26,7 +26,8 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import ru.herobrine1st.e621.preference.Preferences
@@ -35,10 +36,14 @@ import ru.herobrine1st.e621.preference.PreferencesSerializer
 typealias PreferencesStore = DataStore<Preferences>
 
 class DataStoreModule(context: Context) {
-    private val coroutineScope = CoroutineScope(Dispatchers.Main.immediate)
+    private val job = Job()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main.immediate + job)
 
     val dataStore: PreferencesStore =
-        DataStoreFactory.create(serializer = PreferencesSerializer, scope = coroutineScope) {
+        DataStoreFactory.create(
+            serializer = PreferencesSerializer,
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob(parent = job))
+        ) {
         context.filesDir.resolve("datastore/preferences.pb")
     }
 
@@ -55,8 +60,8 @@ class DataStoreModule(context: Context) {
         dataStore.updateData(transform)
 
     fun onDestroy() {
-        Log.d("DataStoreModule", "Cancelling coroutineScope")
-        coroutineScope.cancel()
+        Log.d("DataStoreModule", "Cancelling job")
+        job.cancel()
     }
 }
 
