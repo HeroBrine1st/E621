@@ -21,10 +21,8 @@
 package ru.herobrine1st.e621
 
 import android.app.Application
-import android.os.Build
 import coil.ImageLoader
 import coil.ImageLoaderFactory
-import coil.decode.GifDecoder
 import coil.decode.ImageDecoderDecoder
 import coil.disk.DiskCache
 import okhttp3.OkHttpClient
@@ -47,7 +45,7 @@ class Application : Application(), ImageLoaderFactory {
                 .build()
         }
         .components {
-            add(if (Build.VERSION.SDK_INT >= 28) ImageDecoderDecoder.Factory() else GifDecoder.Factory())
+            add(ImageDecoderDecoder.Factory())
         }
         .build()
 }
