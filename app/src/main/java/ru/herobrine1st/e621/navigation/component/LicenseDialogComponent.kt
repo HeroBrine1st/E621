@@ -18,14 +18,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.module
+package ru.herobrine1st.e621.navigation.component
 
-import android.content.Context
-import ru.herobrine1st.e621.util.ExceptionReporter
-import ru.herobrine1st.e621.util.ExceptionReporterImpl
+import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.slot.SlotNavigator
+import com.arkivanov.decompose.router.slot.activate
+import ru.herobrine1st.e621.navigation.component.root.RootComponent
 
-class ApplicationInjectionCompanion(val applicationContext: Context) {
-    val databaseModule = DatabaseModule(applicationContext)
-    val snackbarModule = SnackbarModule()
-    val exceptionReporter: ExceptionReporter = ExceptionReporterImpl(snackbarModule.snackbarAdapter)
+class LicenseDialogComponent(
+    private val dialogNavigator: SlotNavigator<RootComponent.DialogConfig>,
+    componentContext: ComponentContext
+) : ComponentContext by componentContext {
+    fun onClose() {
+        dialogNavigator.activate(RootComponent.DialogConfig.NonAffiliation)
+    }
 }
+
+

@@ -241,7 +241,7 @@ class PostComponent(
                 applicationContext = applicationContext,
                 componentContext = childContext("VIDEO_COMPONENT"),
                 mediaOkHttpClient = mediaOkHttpClientProvider.value,
-                dataStore = dataStore
+                dataStoreModule = dataStoreModule
             )
         }
         return videoPlayerComponent

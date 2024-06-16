@@ -41,7 +41,6 @@ import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.entity.BlacklistEntry
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.module.DataStoreModule
-import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.util.InstanceBase
 
 class BlacklistTogglesDialogComponent(
@@ -54,7 +53,6 @@ class BlacklistTogglesDialogComponent(
     private val lifecycleScope = CoroutineScope(Dispatchers.Main.immediate + SupervisorJob())
     private val instance = instanceKeeper.getOrCreate { Instance(blacklistRepository) }
     private val _onClose = onClose
-    private val dataStore by dataStoreModule::dataStore
 
     @CachedDataStore
     val preferences by dataStoreModule::cachedData
@@ -72,7 +70,7 @@ class BlacklistTogglesDialogComponent(
 
     fun toggleBlacklist(enabled: Boolean) {
         lifecycleScope.launch {
-            dataStore.updatePreferences {
+            dataStoreModule.updateData {
                 copy(blacklistEnabled = enabled)
             }
         }

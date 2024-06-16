@@ -30,10 +30,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.lifecycleScope
@@ -43,15 +41,13 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.module.ActivityInjectionCompanion
-import ru.herobrine1st.e621.module.CachedDataStore
+import ru.herobrine1st.e621.module.RestartModule
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponentImpl
-import ru.herobrine1st.e621.preference.PreferencesSerializer
-import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.ui.Navigator
-import ru.herobrine1st.e621.ui.component.legal.LicenseAndDisclaimerInitialDialogs
+import ru.herobrine1st.e621.ui.component.legal.LicenseDialog
+import ru.herobrine1st.e621.ui.component.legal.NonAffiliationDialog
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.ui.theme.snackbar.LocalSnackbar
@@ -87,7 +83,7 @@ class MainActivity : ComponentActivity() {
 
         // Set up proxy
         // Also pre-read preferences early
-        injectionCompanion.dataStoreModule.dataStore.data
+        injectionCompanion.dataStoreModule.data
             .onEach { preferences ->
                 val proxies = if (preferences.proxy != null && preferences.proxy.enabled)
                     listOf(ProxyWithAuth(preferences.proxy)) else emptyList()
@@ -100,18 +96,14 @@ class MainActivity : ComponentActivity() {
             .take(1) // Looks like restart is required. I think OkHttp somehow handles proxy by itself.
             .launchIn(lifecycleScope)
 
-        @OptIn(CachedDataStore::class) // And also start StateFlow by initializing Lazy
-        injectionCompanion.dataStoreModule.cachedData
-
         val rootComponent = RootComponentImpl(
             injectionCompanion = injectionCompanion,
+            restartModule = RestartModule(this),
             componentContext = defaultComponentContext()
         )
 
         setContent {
             E621Theme {
-                val coroutineScope = rememberCoroutineScope()
-
                 val snackbarHostState = remember { androidx.compose.material3.SnackbarHostState() }
                 SnackbarController(
                     injectionCompanion.snackbarModule.snackbarMessageFlow,
@@ -137,15 +129,8 @@ class MainActivity : ComponentActivity() {
                             BlacklistTogglesDialog(component = instance.component)
                         }
                         null -> {}
-                    }
-
-                    val preferences by rootComponent.dataStore.data.collectAsState(initial = PreferencesSerializer.defaultValue)
-                    LicenseAndDisclaimerInitialDialogs(hasShownBefore = preferences.licenseAndNonAffiliationDisclaimerShown) {
-                        coroutineScope.launch {
-                            rootComponent.dataStore.updatePreferences {
-                                copy(licenseAndNonAffiliationDisclaimerShown = true)
-                            }
-                        }
+                        is RootComponent.DialogChild.License -> LicenseDialog(instance.component)
+                        is RootComponent.DialogChild.NonAffiliation -> NonAffiliationDialog(instance.component)
                     }
                 }
             }

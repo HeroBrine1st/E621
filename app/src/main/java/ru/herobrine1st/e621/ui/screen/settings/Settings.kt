@@ -40,12 +40,10 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.settings.SettingsComponent
@@ -65,8 +63,6 @@ fun Settings(
     onNavigateToAbout: () -> Unit,
     component: SettingsComponent
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
     // State
     val preferences by component.preferences.collectAsState()
     var showDataSaverModeDialog by remember { mutableStateOf(false) }
@@ -103,10 +99,8 @@ fun Settings(
                     subtitle = stringResource(R.string.setting_blacklist_subtitle),
                     icon = Icons.Default.Block,
                     onCheckedChange = { enabled ->
-                        coroutineScope.launch {
-                            component.updatePreferences {
-                                copy(blacklistEnabled = enabled)
-                            }
+                        component.updatePreferences {
+                            copy(blacklistEnabled = enabled)
                         }
                     },
                     onClick = onNavigateToBlacklistSettings
@@ -121,10 +115,8 @@ fun Settings(
                     icon = Icons.Default.DataSaverOff,
                     onCheckedChange = { checked: Boolean ->
                         if (preferences.dataSaverDisclaimerShown) {
-                            coroutineScope.launch {
-                                component.updatePreferences {
-                                    copy(dataSaverModeEnabled = checked)
-                                }
+                            component.updatePreferences {
+                                copy(dataSaverModeEnabled = checked)
                             }
                         } else if (checked) {
                             showDataSaverModeDialog = true
@@ -139,10 +131,8 @@ fun Settings(
                     subtitle = stringResource(R.string.settings_search_tags_autocomplete_desc),
                     icon = Icons.Default.Assistant,
                     onCheckedChange = {
-                        coroutineScope.launch {
-                            component.updatePreferences {
-                                copy(autocompleteEnabled = it)
-                            }
+                        component.updatePreferences {
+                            copy(autocompleteEnabled = it)
                         }
                     }
                 )
@@ -156,10 +146,8 @@ fun Settings(
                     onCheckedChange = { enabled: Boolean ->
                         if (!enabled && !preferences.safeModeDisclaimerShown) showSafeModeDisclaimer =
                             true
-                        else coroutineScope.launch {
-                            component.updatePreferences {
-                                copy(safeModeEnabled = enabled)
-                            }
+                        else component.updatePreferences {
+                            copy(safeModeEnabled = enabled)
                         }
                     }
                 )
@@ -178,11 +166,8 @@ fun Settings(
                     icon = Icons.Default.Public,
                     onCheckedChange = {
                         if (preferences.proxy == null && it) showProxySettingsDialog = true
-                        else coroutineScope.launch {
-                            component.updatePreferences {
-                                copy(proxy = proxy?.copy(enabled = it))
-                            }
-                            component.restartApplication()
+                        else component.updatePreferencesAndRestart {
+                            copy(proxy = proxy?.copy(enabled = it))
                         }
                     },
                     onClick = {
@@ -197,10 +182,8 @@ fun Settings(
                     subtitle = stringResource(R.string.settings_autoplay_video_on_post_open_shortdesc),
                     icon = Icons.Default.PlayCircleOutline,
                     onCheckedChange = {
-                        coroutineScope.launch {
-                            component.updatePreferences {
-                                copy(autoplayOnPostOpen = it)
-                            }
+                        component.updatePreferences {
+                            copy(autoplayOnPostOpen = it)
                         }
                     }
                 )
@@ -220,13 +203,11 @@ fun Settings(
             text = { Text(stringResource(R.string.data_saver_mode_long_description)) },
             onApply = {
                 showDataSaverModeDialog = false
-                coroutineScope.launch {
-                    component.updatePreferences {
-                        copy(
-                            dataSaverDisclaimerShown = true,
-                            dataSaverModeEnabled = true
-                        )
-                    }
+                component.updatePreferences {
+                    copy(
+                        dataSaverDisclaimerShown = true,
+                        dataSaverModeEnabled = true
+                    )
                 }
             },
             onDismiss = {
@@ -238,13 +219,11 @@ fun Settings(
             text = { Text(stringResource(R.string.settings_safe_mode_disclaimer)) },
             onApply = {
                 showSafeModeDisclaimer = false
-                coroutineScope.launch {
-                    component.updatePreferences {
-                        copy(
-                            safeModeEnabled = false,
-                            safeModeDisclaimerShown = true
-                        )
-                    }
+                component.updatePreferences {
+                    copy(
+                        safeModeEnabled = false,
+                        safeModeDisclaimerShown = true
+                    )
                 }
             },
             onDismiss = {
@@ -257,11 +236,8 @@ fun Settings(
         onClose = { showProxySettingsDialog = false },
         onApply = { proxy ->
             showProxySettingsDialog = false
-            coroutineScope.launch {
-                component.updatePreferences {
-                    copy(proxy = proxy)
-                }
-                component.restartApplication()
+            component.updatePreferencesAndRestart {
+                copy(proxy = proxy)
             }
         }
     )

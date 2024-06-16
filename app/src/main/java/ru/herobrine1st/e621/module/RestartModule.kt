@@ -18,23 +18,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.preference
+package ru.herobrine1st.e621.module
 
+import androidx.activity.ComponentActivity
 
-import android.content.Context
-import androidx.datastore.dataStore
-import ru.herobrine1st.e621.module.PreferencesStore
-
-
-@Deprecated(message = "Deprecated in favor of platform-independent module")
-val Context.dataStore: PreferencesStore by dataStore(
-    fileName = "preferences.pb",
-    serializer = PreferencesSerializer
-)
-
-// DataStore methods
-suspend inline fun PreferencesStore.updatePreferences(
-    crossinline block: suspend Preferences.() -> Preferences
-) = updateData { it.block() }
-
-
+class RestartModule(private val activity: ComponentActivity) {
+    fun restart() {
+        val intent = activity.intent
+        activity.finish()
+        activity.viewModelStore.clear() // It is not cleared but new ViewModel is created. DataStore does not like that
+        activity.startActivity(intent)
+    }
+}

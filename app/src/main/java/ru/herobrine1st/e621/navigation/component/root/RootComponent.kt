@@ -27,8 +27,9 @@ import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
-import ru.herobrine1st.e621.module.PreferencesStore
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
+import ru.herobrine1st.e621.navigation.component.LicenseDialogComponent
+import ru.herobrine1st.e621.navigation.component.NonAffiliationDialogComponent
 import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
@@ -66,6 +67,10 @@ interface RootComponent {
     // I mean, only dialogs that are not bound to component (hence, bind 'em to the root component)
     sealed interface DialogChild {
         class BlacklistToggles(val component: BlacklistTogglesDialogComponent) : DialogChild
+
+        class License(val component: LicenseDialogComponent) : DialogChild
+
+        class NonAffiliation(val component: NonAffiliationDialogComponent) : DialogChild
     }
 
     @Serializable
@@ -73,6 +78,12 @@ interface RootComponent {
     sealed interface DialogConfig {
         @Serializable
         data object BlacklistToggles : DialogConfig
+
+        @Serializable
+        data object License : DialogConfig
+
+        @Serializable
+        data object NonAffiliation : DialogConfig
     }
 
     val navigation: StackNavigation<Config>
@@ -80,7 +91,5 @@ interface RootComponent {
 
     val dialogNavigation: SlotNavigation<DialogConfig>
     val dialogSlot: Value<ChildSlot<DialogConfig, DialogChild>>
-
-    val dataStore: PreferencesStore
 }
 

@@ -28,73 +28,63 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import ru.herobrine1st.e621.R
+import ru.herobrine1st.e621.navigation.component.LicenseDialogComponent
+import ru.herobrine1st.e621.navigation.component.NonAffiliationDialogComponent
 
 @Composable
-fun LicenseAndDisclaimerInitialDialogs(
-    hasShownBefore: Boolean,
-    onCompletion: () -> Unit
+fun LicenseDialog(
+    component: LicenseDialogComponent
 ) {
-    // Why: I want users to know that this application is free software
-    // Also non-affiliation disclaimer may be useful.. sometimes
     val context = LocalContext.current
-
-    var showLicenseDialog by remember(hasShownBefore) { mutableStateOf(!hasShownBefore) }
-    var showNonAffiliationDisclaimerDialog by remember { mutableStateOf(false) }
-
-    if (showLicenseDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                Toast.makeText(context, R.string.explicitly_click_button, Toast.LENGTH_SHORT).show()
-            },
-            title = {
-                Text(stringResource(R.string.license_word))
-            },
-            text = {
-                Text(stringResource(R.string.license_brief))
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showLicenseDialog = false
-                        showNonAffiliationDisclaimerDialog = true
-                    }
-                ) {
-                    Text(stringResource(R.string.i_understand))
+    AlertDialog(
+        onDismissRequest = {
+            Toast.makeText(context, R.string.explicitly_click_button, Toast.LENGTH_SHORT).show()
+        },
+        title = {
+            Text(stringResource(R.string.license_word))
+        },
+        text = {
+            Text(stringResource(R.string.license_brief))
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    component.onClose()
                 }
+            ) {
+                Text(stringResource(R.string.i_understand))
             }
-        )
-    }
-    if (showNonAffiliationDisclaimerDialog) {
-        AlertDialog(
-            onDismissRequest = {
-                Toast.makeText(context, R.string.explicitly_click_button, Toast.LENGTH_SHORT).show()
-            },
-            icon = {
-                Icon(Icons.Default.Warning, contentDescription = null)
-            },
-            title = {
-                Text(stringResource(R.string.disclaimer))
-            },
-            text = {
-                Text(stringResource(R.string.non_affiliation_disclaimer))
-            },
-            confirmButton = {
-                Button(
-                    onClick = {
-                        showNonAffiliationDisclaimerDialog = false
-                        onCompletion()
-                    }
-                ) {
-                    Text(stringResource(R.string.i_understand))
+        }
+    )
+}
+
+@Composable
+fun NonAffiliationDialog(component: NonAffiliationDialogComponent) {
+    val context = LocalContext.current
+    AlertDialog(
+        onDismissRequest = {
+            Toast.makeText(context, R.string.explicitly_click_button, Toast.LENGTH_SHORT).show()
+        },
+        icon = {
+            Icon(Icons.Default.Warning, contentDescription = null)
+        },
+        title = {
+            Text(stringResource(R.string.disclaimer))
+        },
+        text = {
+            Text(stringResource(R.string.non_affiliation_disclaimer))
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    component.onClose()
                 }
+            ) {
+                Text(stringResource(R.string.i_understand))
             }
-        )
-    }
+        }
+    )
 }

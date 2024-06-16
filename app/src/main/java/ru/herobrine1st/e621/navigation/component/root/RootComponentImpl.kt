@@ -22,13 +22,20 @@ package ru.herobrine1st.e621.navigation.component.root
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.SlotNavigation
+import com.arkivanov.decompose.router.slot.activate
 import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import ru.herobrine1st.e621.module.ActivityInjectionCompanion
-import ru.herobrine1st.e621.module.PreferencesStore
+import ru.herobrine1st.e621.module.RestartModule
+import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
+import ru.herobrine1st.e621.navigation.component.LicenseDialogComponent
+import ru.herobrine1st.e621.navigation.component.NonAffiliationDialogComponent
 import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
@@ -54,8 +61,11 @@ import ru.herobrine1st.e621.navigation.config.Config.Wiki
 
 class RootComponentImpl(
     private val injectionCompanion: ActivityInjectionCompanion,
+    private val restartModule: RestartModule,
     componentContext: ComponentContext
 ) : RootComponent, ComponentContext by componentContext {
+
+    private val lifecycleScope = LifecycleScope()
 
     override val navigation = StackNavigation<Config>()
     override val stack = childStack(
@@ -73,7 +83,17 @@ class RootComponentImpl(
         childFactory = ::createDialogChild
         // handleBackButton = false - dialogs handle it themselves
     )
-    override val dataStore: PreferencesStore by injectionCompanion.dataStoreModule::dataStore
+
+    init {
+        injectionCompanion.dataStoreModule.data
+            .take(1)
+            .onEach {
+                if (!it.licenseAndNonAffiliationDisclaimerShown) {
+                    dialogNavigation.activate(DialogConfig.License)
+                }
+            }
+            .launchIn(lifecycleScope)
+    }
 
     private fun createChild(
         configuration: Config,
@@ -141,6 +161,7 @@ class RootComponentImpl(
             is Settings -> Child.Settings(
                 SettingsComponent(
                     injectionCompanion.dataStoreModule,
+                    restartModule,
                     context
                 )
             )
@@ -198,14 +219,28 @@ class RootComponentImpl(
         configuration: DialogConfig,
         componentContext: ComponentContext
     ): DialogChild =
-        @Suppress("USELESS_IS_CHECK")
         when (configuration) {
-            is DialogConfig -> DialogChild.BlacklistToggles(
+            is DialogConfig.BlacklistToggles -> DialogChild.BlacklistToggles(
                 BlacklistTogglesDialogComponent(
                     onClose = {
                         dialogNavigation.navigate { null }
                     },
                     injectionCompanion.databaseModule.blacklistRepository,
+                    injectionCompanion.dataStoreModule,
+                    componentContext
+                )
+            )
+
+            DialogConfig.License -> DialogChild.License(
+                LicenseDialogComponent(
+                    dialogNavigation,
+                    componentContext
+                )
+            )
+
+            DialogConfig.NonAffiliation -> DialogChild.NonAffiliation(
+                NonAffiliationDialogComponent(
+                    dialogNavigation,
                     injectionCompanion.dataStoreModule,
                     componentContext
                 )

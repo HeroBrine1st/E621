@@ -23,17 +23,16 @@ package ru.herobrine1st.e621.data.authorization
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import ru.herobrine1st.e621.module.PreferencesStore
+import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.preference.AuthorizationCredentials
-import ru.herobrine1st.e621.preference.updatePreferences
 
 /**
  * Implementation without multi-account support (Maybe will be added in future)
  */
-class AuthorizationRepositoryImpl(private val dataStore: PreferencesStore) :
+class AuthorizationRepositoryImpl(private val dataStoreModule: DataStoreModule) :
     AuthorizationRepository {
 
-    private val data = dataStore.data.map { it.auth }
+    private val data = dataStoreModule.data.map { it.auth }
 
     override suspend fun getAccount(): AuthorizationCredentials? = data.first()
 
@@ -41,13 +40,13 @@ class AuthorizationRepositoryImpl(private val dataStore: PreferencesStore) :
 
     override suspend fun insertAccount(login: String, password: String) {
         if (getAccountCount() != 0) throw IllegalStateException()
-        dataStore.updatePreferences {
+        dataStoreModule.updateData {
             copy(auth = AuthorizationCredentials(login, password))
         }
     }
 
     override suspend fun logout() {
-        dataStore.updatePreferences {
+        dataStoreModule.updateData {
             copy(auth = null)
         }
     }

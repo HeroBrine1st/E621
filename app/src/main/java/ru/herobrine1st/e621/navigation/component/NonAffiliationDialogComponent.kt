@@ -18,37 +18,30 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.navigation.component.settings
+package ru.herobrine1st.e621.navigation.component
 
 import com.arkivanov.decompose.ComponentContext
+import com.arkivanov.decompose.router.slot.SlotNavigator
+import com.arkivanov.decompose.router.slot.dismiss
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.module.DataStoreModule
-import ru.herobrine1st.e621.module.RestartModule
 import ru.herobrine1st.e621.navigation.LifecycleScope
-import ru.herobrine1st.e621.preference.Preferences
+import ru.herobrine1st.e621.navigation.component.root.RootComponent
 
-class SettingsComponent(
+class NonAffiliationDialogComponent(
+    private val dialogNavigator: SlotNavigator<RootComponent.DialogConfig>,
     private val dataStoreModule: DataStoreModule,
-    private val restartModule: RestartModule,
     componentContext: ComponentContext
 ) : ComponentContext by componentContext {
 
     private val lifecycleScope = LifecycleScope()
 
-    @CachedDataStore
-    val preferences by dataStoreModule::cachedData
-
-    fun updatePreferences(transform: Preferences.() -> Preferences) {
+    fun onClose() {
         lifecycleScope.launch {
-            dataStoreModule.updateData(transform)
-        }
-    }
-
-    fun updatePreferencesAndRestart(transform: Preferences.() -> Preferences) {
-        lifecycleScope.launch {
-            dataStoreModule.updateData(transform)
-            restartModule.restart()
+            dataStoreModule.updateData {
+                copy(licenseAndNonAffiliationDisclaimerShown = true)
+            }
+            dialogNavigator.dismiss()
         }
     }
 }

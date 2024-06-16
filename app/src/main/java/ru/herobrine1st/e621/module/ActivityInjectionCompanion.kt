@@ -31,7 +31,7 @@ class ActivityInjectionCompanion(
     val applicationContext by applicationInjectionCompanion::applicationContext
 
     val authorizationRepositoryLazy = lazy {
-        AuthorizationRepositoryImpl(applicationInjectionCompanion.dataStoreModule.dataStore)
+        AuthorizationRepositoryImpl(dataStoreModule)
     }
 
     private val authorizationNotifierLazy = lazy {
@@ -52,9 +52,10 @@ class ActivityInjectionCompanion(
     val databaseModule by applicationInjectionCompanion::databaseModule
     val snackbarModule by applicationInjectionCompanion::snackbarModule
     val exceptionReporter by applicationInjectionCompanion::exceptionReporter
-    val dataStoreModule by applicationInjectionCompanion::dataStoreModule
+    val dataStoreModule = DataStoreModule(applicationContext)
 
     fun onDestroy() {
         apiModule.onDestroy()
+        dataStoreModule.onDestroy()
     }
 }

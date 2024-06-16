@@ -21,38 +21,43 @@
 package ru.herobrine1st.e621.module
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.DataStoreFactory
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
 import ru.herobrine1st.e621.preference.Preferences
-import ru.herobrine1st.e621.preference.dataStore
+import ru.herobrine1st.e621.preference.PreferencesSerializer
 
 typealias PreferencesStore = DataStore<Preferences>
 
 class DataStoreModule(context: Context) {
-    // No need to cancel: android.app.Application is a singleton
     private val coroutineScope = CoroutineScope(Dispatchers.Main.immediate)
 
-    // context.applicationContext can't be used concurrently with initialization of context (android.app.Application in this case), so lazy
-    @Suppress("DEPRECATION")
-    val dataStore: PreferencesStore by lazy { context.dataStore }
-
-    @CachedDataStore
-    val cachedData by lazy {
-        dataStore.data.stateIn(
-            coroutineScope,
-            SharingStarted.Eagerly,
-            Preferences()
-        )
+    val dataStore: PreferencesStore =
+        DataStoreFactory.create(serializer = PreferencesSerializer, scope = coroutineScope) {
+        context.filesDir.resolve("datastore/preferences.pb")
     }
 
+    @CachedDataStore
+    val cachedData = dataStore.data.stateIn(
+        coroutineScope,
+        SharingStarted.Eagerly,
+        Preferences()
+    )
 
     // To avoid typing "dataStore" twice
     inline val data get() = dataStore.data
     suspend inline fun updateData(noinline transform: Preferences.() -> Preferences) =
         dataStore.updateData(transform)
+
+    fun onDestroy() {
+        Log.d("DataStoreModule", "Cancelling coroutineScope")
+        coroutineScope.cancel()
+    }
 }
 
 @RequiresOptIn("This API is intended for usage in UI-related (i.e. synchronous) code, and improper usage can cause ACID violations")

@@ -46,9 +46,8 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
-import ru.herobrine1st.e621.module.PreferencesStore
+import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.navigation.LifecycleScope
-import ru.herobrine1st.e621.preference.updatePreferences
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.debug
 
@@ -59,7 +58,7 @@ class VideoPlayerComponent(
     applicationContext: Context,
     mediaOkHttpClient: OkHttpClient,
     componentContext: ComponentContext,
-    private val dataStore: PreferencesStore,
+    private val dataStoreModule: DataStoreModule,
     private val controlsTimeoutMs: Long = CONTROLS_TIMEOUT_MS
 ) : ComponentContext by componentContext, Player.Listener, Lifecycle.Callbacks {
     private val instance = instanceKeeper.getOrCreate {
@@ -111,7 +110,7 @@ class VideoPlayerComponent(
         set(v) {
             _showRemainingInsteadOfTotalTime = v
             lifecycleScope.launch {
-                dataStore.updatePreferences {
+                dataStoreModule.updateData {
                     copy(showRemainingTimeMedia = v)
                 }
             }
@@ -150,7 +149,7 @@ class VideoPlayerComponent(
     init {
         lifecycle.subscribe(this)
         player.addListener(this)
-        dataStore.data.take(1)
+        dataStoreModule.data.take(1)
             .onEach {
                 isMuted = it.muteSoundOnMedia
                 showRemainingInsteadOfTotalTime = it.showRemainingTimeMedia
@@ -174,7 +173,7 @@ class VideoPlayerComponent(
 
             PlaybackSavedState.UNCHANGED -> {}
             PlaybackSavedState.EMPTY -> {
-                dataStore.data.map({ it.autoplayOnPostOpen })
+                dataStoreModule.data.map { it.autoplayOnPostOpen }
                     .take(1)
                     .onEach {
                         if (lifecycle.state == Lifecycle.State.RESUMED)
