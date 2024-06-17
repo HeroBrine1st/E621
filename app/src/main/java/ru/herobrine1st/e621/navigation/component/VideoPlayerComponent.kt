@@ -186,11 +186,9 @@ class VideoPlayerComponent(
     }
 
     override fun onPause() {
-        if (!instance.destroyed) {
-            instance.playbackSavedState =
-                if (playWhenReady) PlaybackSavedState.PAUSED else PlaybackSavedState.UNCHANGED
-            playWhenReady = false
-        }
+        instance.playbackSavedState =
+            if (playWhenReady) PlaybackSavedState.PAUSED else PlaybackSavedState.UNCHANGED
+        playWhenReady = false
     }
 
     override fun onDestroy() {
@@ -277,13 +275,8 @@ class VideoPlayerComponent(
 
         var playbackSavedState = PlaybackSavedState.EMPTY
 
-        var destroyed = false
-            private set
-
         override fun onDestroy() {
             super.onDestroy()
-            // https://github.com/arkivanov/Decompose/issues/383
-            destroyed = true
             player.release()
         }
     }
