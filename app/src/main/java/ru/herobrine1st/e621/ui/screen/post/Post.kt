@@ -393,34 +393,27 @@ fun Post(
                         )
                         Spacer(Modifier.width(4.dp))
                         val commentState = when {
-                            post.commentCount == 0 -> {
-                                CommentsLoadingState.Empty
-                            }
+                            post.commentCount == 0 -> CommentsLoadingState.Empty
 
                             comments.loadStates.refresh !is LoadState.NotLoading -> {
                                 when (comments.loadStates.refresh) {
-                                    is LoadState.Loading -> {
-                                        CommentsLoadingState.Showable.Loading
-                                    }
+                                    is LoadState.Loading -> CommentsLoadingState.Showable.Loading
 
-                                    is LoadState.Complete -> {
+                                    is LoadState.Complete ->
                                         if (comments.items.isEmpty()) CommentsLoadingState.Empty
                                         else CommentsLoadingState.Showable.Success(comments.peek(0))
-                                    }
 
-                                    is LoadState.Error -> CommentsLoadingState.Failed
-                                    // Both not possible
-                                    is LoadState.Idle, is LoadState.NotLoading -> CommentsLoadingState.Failed
+                                    // Paging is not initialized yet
+                                    is LoadState.Idle -> CommentsLoadingState.NotLoading
+
+
+                                    is LoadState.Error, is LoadState.NotLoading -> CommentsLoadingState.Failed
                                 }
                             }
 
-                            preferences.auth == null -> {
-                                CommentsLoadingState.Forbidden
-                            }
+                            preferences.auth == null -> CommentsLoadingState.Forbidden
 
-                            else -> {
-                                CommentsLoadingState.NotLoading
-                            }
+                            else -> CommentsLoadingState.NotLoading
                         }
                         val transition = updateTransition(
                             targetState = commentState,
