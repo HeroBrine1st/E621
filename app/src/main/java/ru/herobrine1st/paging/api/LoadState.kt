@@ -24,8 +24,9 @@ sealed interface LoadState {
     /**
      * State is not initialized and no requests are in fly
      *
-     * - For [LoadStates.append] and [LoadStates.prepend] it means that first refresh is [NotLoading], is [Loading], is [Error]ed or isn't [Complete]
-     * - For [LoadStates.refresh] it isn't possible
+     * - For [LoadStates.append] and [LoadStates.prepend] it means that first refresh isn't [Complete].
+     * - For [LoadStates.refresh] it is a special case for brief initialization period, possible
+     * only if paging is not started immediately (synchronously). Indicates that [PagingItems.refresh] request will do nothing.
      */
     data object Idle : LoadState
 
