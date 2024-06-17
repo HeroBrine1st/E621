@@ -75,7 +75,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -127,11 +126,8 @@ fun Post(
     val loadComments =
         preferences.auth != null // Assuming there can't be invalid credentials in preferences
                 && (
-                // TODO automatic download is disabled due to fix below
-                // https://issuetracker.google.com/issues/299973349
-//                    !preferences.dataSaverModeEnabled // Do not make excessive API calls on user preference
-//                    ||
-                component.openComments)
+                !preferences.dataSaverModeEnabled // Do not make excessive API calls on user preference
+                        || component.openComments)
     val comments = component.commentsFlow.collectAsPagingItems(startImmediately = loadComments)
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -143,16 +139,6 @@ fun Post(
         else SheetValue.Hidden,
         skipHiddenState = false
     )
-
-    LaunchedEffect(
-        bottomSheetState.currentValue,
-        comments.loadStates.refresh is LoadState.NotLoading
-    ) {
-        // Attempt to work https://issuetracker.google.com/issues/299973349 around
-        if (bottomSheetState.currentValue != SheetValue.Hidden && comments.loadStates.refresh is LoadState.NotLoading) {
-            bottomSheetState.hide()
-        }
-    }
 
     val bottomSheetScaffoldState = rememberBottomSheetScaffoldState(
         bottomSheetState = bottomSheetState,
