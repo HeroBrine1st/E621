@@ -28,7 +28,7 @@ import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.value.ObserveLifecycleMode
 import com.arkivanov.decompose.value.Value
-import com.arkivanov.decompose.value.observe
+import com.arkivanov.decompose.value.subscribe
 import com.arkivanov.essenty.lifecycle.subscribe
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -74,9 +74,9 @@ class PoolsComponentImpl(
     private var downloadJob: Job? = null
 
     init {
-        postState.observe(lifecycle, ObserveLifecycleMode.START_STOP) { state ->
-            if (state !is PostState.Ready) return@observe
-            if (pools.map { it.id } == state.post.pools) return@observe
+        postState.subscribe(lifecycle, ObserveLifecycleMode.START_STOP) { state ->
+            if (state !is PostState.Ready) return@subscribe
+            if (pools.map { it.id } == state.post.pools) return@subscribe
 
             // Reuse old pools
             val loadedPoolsCache = pools.toList()
