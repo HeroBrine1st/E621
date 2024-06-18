@@ -56,7 +56,7 @@ class DataStoreModule(context: Context) {
 
     // To avoid typing "dataStore" twice
     inline val data get() = dataStore.data
-    suspend inline fun updateData(noinline transform: Preferences.() -> Preferences) =
+    suspend inline fun updateData(noinline transform: suspend Preferences.() -> Preferences) =
         dataStore.updateData(transform)
 
     fun onDestroy() {
