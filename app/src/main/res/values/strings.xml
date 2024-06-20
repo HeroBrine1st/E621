@@ -168,4 +168,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="post_updated">Last updated %s</string>
     <string name="about_build_info">Build info</string>
     <string name="about_build_info_content">"Version: %1$s\nBuild type: %2$s\nUser-Agent: %3$s"</string>
+    <string name="blacklist_fetch_error">Couldn\'t fetch blacklist from user account</string>
 </resources>

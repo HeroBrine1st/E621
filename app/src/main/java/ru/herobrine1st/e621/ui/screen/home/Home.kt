@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -147,62 +146,10 @@ fun Home(
                             ) {
                                 Text(text = stringResource(R.string.favourites))
                             }
-
-
                         }
 
                         LoginState.NoAuth -> AuthorizationMenu { u, p, cb ->
                             component.login(u, p, cb)
-                        }
-
-                        LoginState.IOError -> {
-                            Text(stringResource(R.string.network_error))
-                            Button(onClick = component::retryStoredAuth) {
-                                Text(stringResource(R.string.retry))
-                            }
-                        }
-
-                        LoginState.InternalServerError -> {
-                            Text(stringResource(R.string.internal_server_error))
-                            Button(
-                                onClick = component::retryStoredAuth
-                            ) {
-                                Text(stringResource(R.string.retry))
-                            }
-                        }
-
-                        LoginState.APITemporarilyUnavailable -> {
-                            Text(stringResource(R.string.api_temporarily_unavailable))
-                            Button(
-                                onClick = component::retryStoredAuth
-                            ) {
-                                Text(stringResource(R.string.retry))
-                            }
-                        }
-
-                        LoginState.UnknownAPIError -> {
-                            Text(stringResource(R.string.unknown_api_error))
-                            Row {
-                                Button(onClick = component::retryStoredAuth) {
-                                    Text(stringResource(R.string.retry))
-                                }
-                                Spacer(Modifier.size(8.dp))
-                                FilledTonalButton(
-                                    onClick = {
-                                        showLogoutConfirmation = true
-                                    },
-                                    colors = ButtonDefaults.elevatedButtonColors(
-                                        containerColor = MaterialTheme.colorScheme.errorContainer,
-                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                                    )
-                                ) {
-                                    Text(stringResource(R.string.login_logout))
-                                }
-                            }
-                        }
-
-                        LoginState.UnknownError -> {
-                            Text(stringResource(R.string.unknown_error))
                         }
                     }
                 }
@@ -244,7 +191,7 @@ fun Home(
 
 @Composable
 fun AuthorizationMenu(
-    onLogin: (username: String, password: String, onSuccess: (LoginState) -> Unit) -> Unit
+    onLogin: (username: String, password: String, callback: (isSuccess: Boolean) -> Unit) -> Unit
 ) {
     var username by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
@@ -261,7 +208,7 @@ fun AuthorizationMenu(
             focusManager.clearFocus()
             onLogin(username, password) {
                 isLoggingIn = false
-                if (it is LoginState.Authorized) {
+                if (it) {
                     username = ""
                     password = ""
                 }
@@ -353,7 +300,7 @@ fun PreviewAuthorizationMenu() {
         AuthorizationMenu { _, _, cb ->
             scope.launch {
                 delay(5000L)
-                cb(LoginState.Authorized("test", 1))
+                cb(true)
             }
         }
     }

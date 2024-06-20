@@ -169,4 +169,5 @@
     <string name="post_updated">Обновлено %s</string>
     <string name="about_build_info">Информация о сборке</string>
     <string name="about_build_info_content">"Версия: %1$s\nТип сборки: %2$s\nUser-Agent: %3$s"</string>
+    <string name="blacklist_fetch_error">Не удалось получить чёрный список из аккаунта</string>
 </resources>

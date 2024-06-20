@@ -28,7 +28,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
-import com.arkivanov.essenty.instancekeeper.getOrCreate
+import com.arkivanov.essenty.lifecycle.doOnResume
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.jsonPrimitive
@@ -45,30 +45,23 @@ import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
-import ru.herobrine1st.e621.util.InstanceBase
 import java.io.IOException
 
+private const val TAG = "HomeComponent"
 
 interface IHomeComponent {
     val state: LoginState
 
-    fun login(login: String, apiKey: String, callback: (LoginState) -> Unit = {})
+    fun login(username: String, apiKey: String, callback: (isSuccess: Boolean) -> Unit = {})
     fun logout(callback: () -> Unit = {})
-    fun retryStoredAuth()
     fun navigateToSearch()
     fun navigateToFavourites()
 
     // Can authorize is "can press login button"
     sealed class LoginState(val canAuthorize: Boolean) {
         data object Loading : LoginState(false)
-        data object IOError : LoginState(false)
-        data object InternalServerError : LoginState(false)
-        data object UnknownAPIError : LoginState(false)
-        data object APITemporarilyUnavailable : LoginState(false)
         data object NoAuth : LoginState(true)
         class Authorized(val username: String, val id: Int) : LoginState(false)
-
-        data object UnknownError : LoginState(false)
     }
 }
 
@@ -76,36 +69,46 @@ class HomeComponent(
     authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
     apiProvider: Lazy<API>,
     private val snackbarAdapter: SnackbarAdapter,
-    blacklistRepository: BlacklistRepository,
+    private val blacklistRepository: BlacklistRepository,
     private val stackNavigator: StackNavigator<Config>,
     private val exceptionReporter: ExceptionReporter,
     componentContext: ComponentContext,
 ) : ComponentContext by componentContext, IHomeComponent {
 
-    private val instance = instanceKeeper.getOrCreate {
-        HomeComponentInstance(
-            authorizationRepositoryProvider,
-            apiProvider,
-            blacklistRepository
-        )
-    }
-
+    private val authorizationRepository by authorizationRepositoryProvider
+    private val api by apiProvider
     private val lifecycleScope = LifecycleScope()
 
-    override val state: LoginState
-        get() = instance.state
+    override var state by mutableStateOf<LoginState>(LoginState.Loading)
 
-    override fun login(login: String, apiKey: String, callback: (LoginState) -> Unit) {
+    init {
+        lifecycle.doOnResume {
+            lifecycleScope.launch {
+                authorizationRepository.getAccount()?.let { entry ->
+                    LoginState.Authorized(entry.username, entry.id)
+                        .also { state = it }
+                }
+                authorizationRepository.getAccountFlow().collect {
+                    if (it == null) // Handle logout from AuthorizationInterceptor
+                        state = LoginState.NoAuth
+                }
+            }
+        }
+    }
+
+    override fun login(username: String, apiKey: String, callback: (isSuccess: Boolean) -> Unit) {
         if (!state.canAuthorize) {
             Log.wtf(TAG, "Login attempted while impossible")
             return
         }
         lifecycleScope.launch {
-            val state = instance.login(login, apiKey)
-            if (state is LoginState.Authorized) {
+            val state = testCredentials(username, apiKey)
+            if (state is CredentialsTestState.Authorized) {
+                this@HomeComponent.state =
+                    LoginState.Authorized(username = state.username, id = state.id)
                 try {
                     // TODO preference, dialog, idk
-                    instance.fetchBlacklistFromAccount(state)
+                    fetchBlacklistFromAccount(state)
                 } catch (e: SQLiteException) {
                     snackbarAdapter.enqueueMessage(
                         R.string.database_error_updating_blacklist,
@@ -116,28 +119,19 @@ class HomeComponent(
                     exceptionReporter.handleRequestException(t, showThrowable = true)
                 }
             } else handleErrorStateForUI(state)
-            callback(state)
+            callback(state is CredentialsTestState.Authorized)
         }
     }
 
-
     override fun logout(callback: () -> Unit) {
         lifecycleScope.launch {
-            instance.logout()
+            authorizationRepository.logout()
             callback()
         }
     }
 
-    override fun retryStoredAuth() {
-        lifecycleScope.launch {
-            val state = instance.loadStoredAuth()
-            if (state != null) {
-                handleErrorStateForUI(state)
-            }
-        }
-    }
-
     override fun navigateToSearch() = stackNavigator.pushIndexed { Config.Search(index = it) }
+
     override fun navigateToFavourites() = stackNavigator.pushIndexed { index ->
         (state as? LoginState.Authorized)?.let {
             Config.PostListing(
@@ -150,144 +144,90 @@ class HomeComponent(
         } ?: error("Inconsistent state: state is not Authorized while is inferred to be so")
     }
 
-    private suspend fun handleErrorStateForUI(state: LoginState) = when (state) {
-        is LoginState.Authorized -> {} // Success
+    private fun handleErrorStateForUI(state: CredentialsTestState) = lifecycleScope.launch {
+        when (state) {
+            is CredentialsTestState.Authorized -> {} // Success
 
-        LoginState.IOError -> snackbarAdapter.enqueueMessage(
-            R.string.network_error,
-            SnackbarDuration.Long
-        )
+            CredentialsTestState.IOError -> snackbarAdapter.enqueueMessage(
+                R.string.network_error,
+                SnackbarDuration.Long
+            )
 
-        LoginState.NoAuth -> snackbarAdapter.enqueueMessage(
-            R.string.login_unauthorized,
-            SnackbarDuration.Long
-        )
+            CredentialsTestState.NoAuth -> snackbarAdapter.enqueueMessage(
+                R.string.login_unauthorized,
+                SnackbarDuration.Long
+            )
 
-        LoginState.InternalServerError -> snackbarAdapter.enqueueMessage(
-            R.string.internal_server_error, SnackbarDuration.Long
-        )
+            CredentialsTestState.InternalServerError -> snackbarAdapter.enqueueMessage(
+                R.string.internal_server_error, SnackbarDuration.Long
+            )
 
-        LoginState.APITemporarilyUnavailable -> snackbarAdapter.enqueueMessage(
-            R.string.api_temporarily_unavailable, SnackbarDuration.Long
-        )
+            CredentialsTestState.APITemporarilyUnavailable -> snackbarAdapter.enqueueMessage(
+                R.string.api_temporarily_unavailable, SnackbarDuration.Long
+            )
 
-        LoginState.UnknownAPIError -> snackbarAdapter.enqueueMessage(
-            R.string.unknown_api_error, SnackbarDuration.Long
-        )
+            CredentialsTestState.UnknownAPIError -> snackbarAdapter.enqueueMessage(
+                R.string.unknown_api_error, SnackbarDuration.Long
+            )
 
-        LoginState.UnknownError -> snackbarAdapter.enqueueMessage(
-            R.string.unknown_error,
-            SnackbarDuration.Long
-        )
-
-        LoginState.Loading -> throw IllegalStateException()
-
+            CredentialsTestState.UnknownError -> snackbarAdapter.enqueueMessage(
+                R.string.unknown_error,
+                SnackbarDuration.Long
+            )
+        }
     }
 
-    companion object {
-        const val TAG = "HomeComponent"
+    private suspend fun fetchBlacklistFromAccount(state: CredentialsTestState.Authorized) {
+        if (blacklistRepository.count() != 0) return
+
+        api.getUser(name = state.username)
+            .mapCatching { response ->
+                response["blacklisted_tags"]!!.jsonPrimitive
+                    .content.split("\n")
+                    .map { BlacklistEntry(query = it, enabled = true) }
+            }.onFailure {
+                Log.e(TAG, "An error occurred while trying to fetch blacklist", it)
+                lifecycleScope.launch {
+                    snackbarAdapter.enqueueMessage(R.string.blacklist_fetch_error)
+                }
+            }.mapCatching {
+                blacklistRepository.insertEntries(it)
+            }.onFailure {
+                Log.e(TAG, "Database error occurred while trying to insert fetched blacklist", it)
+            }.getOrThrow()
     }
 
-    // TODO refactor to component, instance is unnecessary
-    class HomeComponentInstance(
-        authorizationRepositoryProvider: Lazy<AuthorizationRepository>,
-        apiProvider: Lazy<API>,
-        private val blacklistRepository: BlacklistRepository,
-    ) : InstanceBase() {
-
-        var state by mutableStateOf<LoginState>(LoginState.Loading)
-            private set
-        var username: String? = null
-        var id: Int? = null
-
-        private val authorizationRepository by authorizationRepositoryProvider
-        private val api by apiProvider
-
-        // Sources of authorization:
-        // This VM: login/logout
-        // AuthorizationInterceptor: logout only
-        // So we first check auth at the start of this VM and then listen to logouts
-        init {
-            lifecycleScope.launch {
-                loadStoredAuth()
-                authorizationRepository.getAccountFlow().collect {
-                    if (it == null) // Handle logout from AuthorizationInterceptor
-                        state = LoginState.NoAuth
+    private suspend fun testCredentials(
+        username: String, apiKey: String
+    ): CredentialsTestState = api.authenticate(username, apiKey)
+        .onSuccess { authorizationRepository.insertAccount(it) }
+        .map {
+            CredentialsTestState.Authorized(
+                username = it.username,
+                id = it.id
+            )
+        }
+        .getOrElse {
+            when (it) {
+                is ApiException -> when {
+                    it.status == HttpStatusCode.Unauthorized -> CredentialsTestState.NoAuth
+                    it.status == HttpStatusCode.ServiceUnavailable -> CredentialsTestState.APITemporarilyUnavailable
+                    it.status.value in 500..599 -> CredentialsTestState.InternalServerError
+                    else -> CredentialsTestState.UnknownAPIError
                 }
+
+                is IOException -> CredentialsTestState.IOError
+                else -> CredentialsTestState.UnknownError
             }
         }
 
-        suspend fun login(username: String, apiKey: String): LoginState {
-            if (!state.canAuthorize) throw IllegalStateException()
-            val result = loginWithCredentials(username, apiKey)
-
-            if (result is LoginState.Authorized) {
-                state = result
-            }
-
-            return result
-        }
-
-        suspend fun logout() = authorizationRepository.logout()
-
-        /**
-         * Fetch authorization credentials from local store,
-         * returning [LoginState.Authorized] or null if no credentials found.
-         *
-         * @return null if no credentials, otherwise [LoginState.Authorized]
-         */
-        suspend fun loadStoredAuth(): LoginState.Authorized? {
-            state = LoginState.Loading
-
-            // Just assume that credentials in local store are good, or else they'll be invalidated in no time
-            return authorizationRepository.getAccount()?.let { entry ->
-                LoginState.Authorized(entry.username, entry.id)
-                    .also { state = it }
-            }
-        }
-
-        suspend fun fetchBlacklistFromAccount(state: LoginState.Authorized) {
-            if (blacklistRepository.count() != 0) return
-
-            api.getUser(name = state.username)
-                .mapCatching { response ->
-                    response["blacklisted_tags"]!!.jsonPrimitive
-                        .content.split("\n")
-                        .map { BlacklistEntry(query = it, enabled = true) }
-                }.onFailure {
-                    Log.e(TAG, "An error occurred while trying to fetch blacklist", it)
-                    throw it
-                }.mapCatching {
-                    blacklistRepository.insertEntries(it)
-                }.onFailure {
-                    Log.e(TAG, "Database error while trying to insert fetched blacklist", it)
-                }.getOrThrow()
-        }
-
-        private suspend fun loginWithCredentials(
-            username: String, apiKey: String
-        ): LoginState {
-            return api.authenticate(username, apiKey)
-                .onSuccess { authorizationRepository.insertAccount(it) }
-                .map {
-                    LoginState.Authorized(
-                        username = it.username,
-                        id = it.id
-                    )
-                }
-                .getOrElse {
-                    when (it) {
-                        is ApiException -> when {
-                            it.status == HttpStatusCode.Unauthorized -> LoginState.NoAuth
-                            it.status == HttpStatusCode.ServiceUnavailable -> LoginState.APITemporarilyUnavailable
-                            it.status.value in 500..599 -> LoginState.InternalServerError
-                            else -> LoginState.UnknownAPIError
-                        }
-
-                        is IOException -> LoginState.IOError
-                        else -> LoginState.UnknownError
-                    }
-                }
-        }
+    sealed interface CredentialsTestState {
+        data object IOError : CredentialsTestState
+        data object InternalServerError : CredentialsTestState
+        data object UnknownAPIError : CredentialsTestState
+        data object APITemporarilyUnavailable : CredentialsTestState
+        data object NoAuth : CredentialsTestState
+        class Authorized(val username: String, val id: Int) : CredentialsTestState
+        data object UnknownError : CredentialsTestState
     }
 }
