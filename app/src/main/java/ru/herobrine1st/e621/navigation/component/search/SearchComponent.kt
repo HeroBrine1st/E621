@@ -89,7 +89,7 @@ class SearchComponent private constructor(
     @CachedDataStore
     val shouldShowAccountFillInFavouritesOfField
         @Composable
-        get() = dataStoreModule.cachedData.collectAsState().value.auth != null && favouritesOf.isNotEmpty()
+        get() = dataStoreModule.cachedData.collectAsState().value.auth != null && favouritesOf.isEmpty()
 
     fun onFavouritesOfTrailingButtonClick() {
         lifecycleScope.launch {
