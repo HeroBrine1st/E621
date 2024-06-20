@@ -28,13 +28,13 @@ import ru.herobrine1st.e621.api.model.Post
 
 @Serializable
 data class FavouritesSearchOptions(
-    val favouritesOf: String?,
+    val favouritesOf: String,
     private var id: Int? = null,
 ) : SearchOptions {
     override val maxLimit: Int get() = E621_MAX_POSTS_IN_QUERY
 
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
-        id = id ?: favouritesOf?.let {
+        id = id ?: favouritesOf.let {
             api.getUser(favouritesOf).getOrThrow()["id"]!!.jsonPrimitive.content.toInt()
         }
         return api.getFavourites(userId = id, page = page, limit = limit).getOrThrow().posts

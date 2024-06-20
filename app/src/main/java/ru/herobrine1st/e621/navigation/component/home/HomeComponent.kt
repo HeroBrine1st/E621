@@ -141,7 +141,10 @@ class HomeComponent(
     override fun navigateToFavourites() = stackNavigator.pushIndexed { index ->
         (state as? LoginState.Authorized)?.let {
             Config.PostListing(
-                FavouritesSearchOptions(null),
+                FavouritesSearchOptions(
+                    favouritesOf = it.username,
+                    id = it.id
+                ),
                 index = index
             )
         } ?: error("Inconsistent state: state is not Authorized while is inferred to be so")
