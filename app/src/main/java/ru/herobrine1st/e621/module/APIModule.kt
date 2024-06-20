@@ -24,6 +24,7 @@ import android.content.Context
 import android.util.Log
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.cio.CIO
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.cache.HttpCache
@@ -41,9 +42,6 @@ import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
@@ -51,7 +49,6 @@ import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.APIImpl
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
-import ru.herobrine1st.e621.preference.AuthorizationCredentials
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.USER_AGENT
 import ru.herobrine1st.e621.util.debug
@@ -64,9 +61,6 @@ class APIModule(
 ) {
     private val authorizationRepository by authorizationRepositoryLazy
     private val authorizationNotifier by authorizationNotifierLazy
-
-    private val requestDelayMs = 667 // 1.5 req/s, and server limit is 2 req/s
-    private val mutex = Mutex()
 
     @OptIn(ExperimentalSerializationApi::class)
     private val ktorClient by lazy {
@@ -87,6 +81,13 @@ class APIModule(
             }
 
             install(Resources)
+
+            install(HttpRequestRetry) {
+                retryIf { _, httpResponse ->
+                    httpResponse.status == HttpStatusCode.TooManyRequests
+                }
+                delayMillis { 500L }
+            }
 
             defaultRequest {
                 url(BuildConfig.API_BASE_URL)
@@ -109,25 +110,16 @@ class APIModule(
             }
         }.apply {
             plugin(HttpSend).apply {
-                // Rate limit
-                var lastRequestTimeMs = 0L
-                intercept { request ->
-                    mutex.withLock {
-                        if (lastRequestTimeMs + requestDelayMs > System.currentTimeMillis()) {
-                            delay(lastRequestTimeMs + requestDelayMs - System.currentTimeMillis())
-                        }
-                        lastRequestTimeMs = System.currentTimeMillis()
-                    }
-                    execute(request)
-                }
-
                 // Authorization interceptor
                 intercept { request ->
-                    var auth: AuthorizationCredentials? = null
-                    if (request.headers[HttpHeaders.Authorization] == null) {
-                        auth = authorizationRepository.getAccount()?.also {
-                            request.basicAuth(it.username, it.apiKey)
+                    val auth = when {
+                        request.headers[HttpHeaders.Authorization] == null -> {
+                            authorizationRepository.getAccount()?.also {
+                                request.basicAuth(it.username, it.apiKey)
+                            }
                         }
+
+                        else -> null
                     }
                     val call = execute(request)
                     when (call.response.status) {

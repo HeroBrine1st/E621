@@ -113,11 +113,11 @@ class SearchComponent private constructor(
         return currentTextFlow
             .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
             .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
-            // Delay is handled by interceptor
+            // delay handled by round-trip time and server (via retry plugin)
+            // delaying here is wrong: response can be cached and so delay is pointless yet dispatched
             .combine(dataStoreModule.dataStore.data.map { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
                 if (query.length < 3 || !isAutocompleteEnabled) {
                     return@combine Autocomplete.Ready(emptyList(), query)
-
                 }
 
                 api.getAutocompleteSuggestions(query).map {
