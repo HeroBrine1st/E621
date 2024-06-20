@@ -43,11 +43,9 @@ import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.home.IHomeComponent.LoginState
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
-import ru.herobrine1st.e621.preference.AuthorizationCredentials
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.InstanceBase
-import ru.herobrine1st.e621.util.credentials
 import java.io.IOException
 
 
@@ -68,7 +66,7 @@ interface IHomeComponent {
         data object UnknownAPIError : LoginState(false)
         data object APITemporarilyUnavailable : LoginState(false)
         data object NoAuth : LoginState(true)
-        class Authorized(val username: String) : LoginState(false)
+        class Authorized(val username: String, val id: Int) : LoginState(false)
 
         data object UnknownError : LoginState(false)
     }
@@ -103,9 +101,7 @@ class HomeComponent(
             return
         }
         lifecycleScope.launch {
-            val state = instance.login(
-                AuthorizationCredentials(login, apiKey)
-            )
+            val state = instance.login(login, apiKey)
             if (state is LoginState.Authorized) {
                 try {
                     // TODO preference, dialog, idk
@@ -218,12 +214,11 @@ class HomeComponent(
             }
         }
 
-        suspend fun login(credentials: AuthorizationCredentials): LoginState {
+        suspend fun login(username: String, apiKey: String): LoginState {
             if (!state.canAuthorize) throw IllegalStateException()
-            val result = tryCredentials(credentials)
+            val result = loginWithCredentials(username, apiKey)
 
             if (result is LoginState.Authorized) {
-                authorizationRepository.insertAccount(credentials.username, credentials.password)
                 state = result
             }
 
@@ -240,9 +235,10 @@ class HomeComponent(
          */
         suspend fun loadStoredAuth(): LoginState.Authorized? {
             state = LoginState.Loading
+
             // Just assume that credentials in local store are good, or else they'll be invalidated in no time
             return authorizationRepository.getAccount()?.let { entry ->
-                LoginState.Authorized(entry.username)
+                LoginState.Authorized(entry.username, entry.id)
                     .also { state = it }
             }
         }
@@ -265,52 +261,30 @@ class HomeComponent(
                 }.getOrThrow()
         }
 
-        private suspend fun tryCredentials(
-            credentials: AuthorizationCredentials,
+        private suspend fun loginWithCredentials(
+            username: String, apiKey: String
         ): LoginState {
-            return api.getUser(credentials.username, credentials.credentials)
-                .map { body ->
+            return api.authenticate(username, apiKey)
+                .onSuccess { authorizationRepository.insertAccount(it) }
+                .map {
                     LoginState.Authorized(
-                        body["name"]!!.jsonPrimitive.content
+                        username = it.username,
+                        id = it.id
                     )
                 }
-                .recover {
+                .getOrElse {
                     when (it) {
-                        is ApiException -> {
-                            val status = it.status
-                            when {
-                                status == HttpStatusCode.Unauthorized -> LoginState.NoAuth
-                                status == HttpStatusCode.ServiceUnavailable -> LoginState.APITemporarilyUnavailable // Likely DDoS protection, but not always
-                                status.value in 500..599 -> LoginState.InternalServerError
-                                else -> {
-                                    Log.w(
-                                        TAG,
-                                        "Unknown API error occurred while authenticating: $status"
-                                    )
-                                    LoginState.UnknownAPIError
-                                }
-                            }
+                        is ApiException -> when {
+                            it.status == HttpStatusCode.Unauthorized -> LoginState.NoAuth
+                            it.status == HttpStatusCode.ServiceUnavailable -> LoginState.APITemporarilyUnavailable
+                            it.status.value in 500..599 -> LoginState.InternalServerError
+                            else -> LoginState.UnknownAPIError
                         }
 
-                        is IOException -> {
-                            Log.e(
-                                TAG,
-                                "A network exception occurred while checking authorization data",
-                                it
-                            )
-                            LoginState.IOError
-                        }
-
-                        else -> {
-                            Log.e(
-                                TAG,
-                                "Unknown error occurred while checking authorization data",
-                                it
-                            )
-                            LoginState.UnknownError
-                        }
+                        is IOException -> LoginState.IOError
+                        else -> LoginState.UnknownError
                     }
-                }.getOrThrow()
+                }
         }
     }
 }

@@ -353,7 +353,7 @@ fun PreviewAuthorizationMenu() {
         AuthorizationMenu { _, _, cb ->
             scope.launch {
                 delay(5000L)
-                cb(LoginState.Authorized("test"))
+                cb(LoginState.Authorized("test", 1))
             }
         }
     }

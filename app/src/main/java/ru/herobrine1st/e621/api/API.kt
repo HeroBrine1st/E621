@@ -34,6 +34,7 @@ import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
 import ru.herobrine1st.e621.api.model.WikiPage
+import ru.herobrine1st.e621.preference.AuthorizationCredentials
 
 interface AutocompleteSuggestionsAPI {
     suspend fun getAutocompleteSuggestions(
@@ -45,8 +46,7 @@ interface AutocompleteSuggestionsAPI {
 interface API : AutocompleteSuggestionsAPI {
     // TODO proper model
     suspend fun getUser(
-        name: String,
-        authorization: String? = null,
+        name: String
     ): Result<JsonObject>
 
     suspend fun getPosts(
@@ -98,4 +98,6 @@ interface API : AutocompleteSuggestionsAPI {
 
 
     suspend fun getPool(poolId: Int): Result<Pool>
+
+    suspend fun authenticate(username: String, apiKey: String): Result<AuthorizationCredentials>
 }

@@ -21,10 +21,8 @@
 package ru.herobrine1st.e621.util
 
 import android.app.Activity
-import okhttp3.Credentials
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.model.Tag
-import ru.herobrine1st.e621.preference.AuthorizationCredentials
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.InvocationKind
 import kotlin.contracts.contract
@@ -47,8 +45,6 @@ inline fun debug(block: () -> Unit) {
     }
     if (BuildConfig.DEBUG) block()
 }
-
-val AuthorizationCredentials.credentials get() = Credentials.basic(username, password)
 
 fun Activity.restart() {
     val intent = intent

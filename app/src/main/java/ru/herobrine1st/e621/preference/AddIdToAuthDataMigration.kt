@@ -18,35 +18,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.data.authorization
+package ru.herobrine1st.e621.preference
 
-import kotlinx.coroutines.flow.Flow
-import ru.herobrine1st.e621.preference.AuthorizationCredentials
+import androidx.datastore.core.DataMigration
 
-// TODO Rename and move it somewhere (it isn't a repository because it may have internal state in future)
-interface AuthorizationRepository {
-    /**
-     * @return This session's credentials
-     */
-    suspend fun getAccount(): AuthorizationCredentials?
+class AddIdToAuthDataMigration : DataMigration<Preferences> {
+    override suspend fun cleanUp() {}
 
-    /**
-     * @return Flow of this session's credentials
-     */
-    fun getAccountFlow(): Flow<AuthorizationCredentials?>
+    override suspend fun shouldMigrate(currentData: Preferences) = currentData.auth?.id == -1
 
-    /**
-     * Inserts new credentials
-     */
-    suspend fun insertAccount(credentials: AuthorizationCredentials)
-
-    /**
-     * Logs out from this session's credentials
-     */
-    suspend fun logout()
-
-    /**
-     * @return Available accounts count
-     */
-    suspend fun getAccountCount(): Int
+    override suspend fun migrate(currentData: Preferences) = currentData.copy(auth = null)
 }

@@ -30,6 +30,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.stateIn
+import ru.herobrine1st.e621.preference.AddIdToAuthDataMigration
 import ru.herobrine1st.e621.preference.Preferences
 import ru.herobrine1st.e621.preference.PreferencesSerializer
 
@@ -42,7 +43,8 @@ class DataStoreModule(context: Context) {
     val dataStore: PreferencesStore =
         DataStoreFactory.create(
             serializer = PreferencesSerializer,
-            scope = CoroutineScope(Dispatchers.IO + SupervisorJob(parent = job))
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob(parent = job)),
+            migrations = listOf(AddIdToAuthDataMigration())
         ) {
         context.filesDir.resolve("datastore/preferences.pb")
     }

@@ -18,8 +18,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+@file:OptIn(ExperimentalSerializationApi::class)
+
 package ru.herobrine1st.e621.preference
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -41,7 +44,9 @@ data class Preferences(
 @Serializable
 data class AuthorizationCredentials(
     val username: String,
-    val password: String
+    val apiKey: String,
+    // TODO remove default value and migration after a couple of releases
+    val id: Int = -1
 )
 
 @Serializable

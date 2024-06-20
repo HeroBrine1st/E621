@@ -25,12 +25,13 @@ import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.resources.request
 import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.request.header
+import io.ktor.client.request.basicAuth
 import io.ktor.client.request.setBody
-import io.ktor.http.HttpHeaders
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.serializer
 import ru.herobrine1st.e621.api.endpoint.APIEndpoint
 import ru.herobrine1st.e621.api.endpoint.favourites.AddToFavouritesEndpoint
@@ -48,6 +49,7 @@ import ru.herobrine1st.e621.api.endpoint.wiki.GetWikiPageEndpoint
 import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
+import ru.herobrine1st.e621.preference.AuthorizationCredentials
 
 class APIClient(
     @PublishedApi internal val httpClient: HttpClient,
@@ -66,25 +68,7 @@ class APIClient(
         return try {
             Result.success(requestInternal(endpoint, body, builder))
         } catch (e: ResponseException) {
-            val status = e.response.status
-            val responseBody = try {
-                e.response.body<JsonObject>()
-            } catch (t: Throwable) {
-                // Suppress, it is not the cause neither the actual error
-                return Result.failure(ApiException(
-                    "Got unsuccessful response $status and could not get response body",
-                    status
-                ).apply {
-                    addSuppressed(t)
-                })
-            }
-            Result.failure(
-                ApiException(
-                    (responseBody["message"] as? JsonPrimitive?)?.content
-                        ?: responseBody.toString(),
-                    status
-                )
-            )
+            Result.failure(e.toApiException())
         } catch (t: Throwable) {
             Result.failure(t)
         }
@@ -111,7 +95,7 @@ class APIClient(
 //                    pathSegments = segments
 //                }
 //            }
-            this.method = io.ktor.http.HttpMethod.parse(method.method.name)
+            this.method = method.toKtorMethod()
             if (body != Unit) setBody(body)
             builder()
         }
@@ -127,10 +111,8 @@ class APIClient(
 }
 
 class APIImpl(val client: APIClient) : API {
-    override suspend fun getUser(name: String, authorization: String?) =
-        client.request(GetUserEndpoint(name)) {
-            header(HttpHeaders.Authorization, authorization)
-        }
+    override suspend fun getUser(name: String) =
+        client.request(GetUserEndpoint(name))
 
     override suspend fun getPosts(
         tags: String?,
@@ -172,4 +154,41 @@ class APIImpl(val client: APIClient) : API {
 
     override suspend fun getPool(poolId: Int): Result<Pool> =
         client.request(GetPoolEndpoint(poolId))
+
+    override suspend fun authenticate(username: String, apiKey: String) =
+        client.request(GetUserEndpoint(username)) {
+            basicAuth(username, apiKey)
+        }.map {
+            AuthorizationCredentials(
+                username = it["name"]!!.jsonPrimitive.content,
+                apiKey = apiKey,
+                id = it["id"]!!.jsonPrimitive.int
+            )
+        }
+}
+
+suspend fun ResponseException.toApiException(): ApiException {
+    val status = response.status
+    val responseBody = try {
+        response.body<JsonObject>()
+    } catch (t: Throwable) {
+        // Suppress, it is not the cause neither the actual error
+        return ApiException(
+            "Got unsuccessful response $status and could not get response body",
+            status,
+            cause = this
+        ).apply {
+            addSuppressed(t)
+        }
+    }
+    return ApiException(
+        (responseBody["message"] as? JsonPrimitive?)?.content
+            ?: responseBody.toString(),
+        status,
+        cause = this
+    )
+}
+
+fun HttpMethod.toKtorMethod(): io.ktor.http.HttpMethod {
+    return io.ktor.http.HttpMethod.parse(method.name)
 }

@@ -36,6 +36,7 @@ import io.ktor.client.plugins.logging.Logging
 import io.ktor.client.plugins.logging.MessageLengthLimitingLogger
 import io.ktor.client.plugins.plugin
 import io.ktor.client.plugins.resources.Resources
+import io.ktor.client.request.basicAuth
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
@@ -54,7 +55,6 @@ import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.preference.AuthorizationCredentials
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.USER_AGENT
-import ru.herobrine1st.e621.util.credentials
 import ru.herobrine1st.e621.util.debug
 import java.io.File
 
@@ -63,7 +63,6 @@ class APIModule(
     authorizationRepositoryLazy: Lazy<AuthorizationRepository>,
     authorizationNotifierLazy: Lazy<AuthorizationNotifier>
 ) {
-
     private val authorizationRepository by authorizationRepositoryLazy
     private val authorizationNotifier by authorizationNotifierLazy
 
@@ -92,6 +91,7 @@ class APIModule(
 
             defaultRequest {
                 url(BuildConfig.API_BASE_URL)
+                header(HttpHeaders.Origin, BuildConfig.API_BASE_URL.removeSuffix("/"))
             }
 
             expectSuccess = true
@@ -105,7 +105,7 @@ class APIModule(
                             }
                         }
                     )
-                    level = LogLevel.INFO
+                    level = LogLevel.ALL
                 }
             }
         }.apply {
@@ -127,7 +127,7 @@ class APIModule(
                     var auth: AuthorizationCredentials? = null
                     if (request.headers[HttpHeaders.Authorization] == null) {
                         auth = authorizationRepository.getAccount()?.also {
-                            request.header(HttpHeaders.Authorization, it.credentials)
+                            request.basicAuth(it.username, it.apiKey)
                         }
                     }
                     val call = execute(request)

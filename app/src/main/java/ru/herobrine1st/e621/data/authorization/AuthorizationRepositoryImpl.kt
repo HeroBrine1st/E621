@@ -38,10 +38,10 @@ class AuthorizationRepositoryImpl(private val dataStoreModule: DataStoreModule) 
 
     override fun getAccountFlow(): Flow<AuthorizationCredentials?> = data
 
-    override suspend fun insertAccount(login: String, password: String) {
+    override suspend fun insertAccount(credentials: AuthorizationCredentials) {
         if (getAccountCount() != 0) throw IllegalStateException()
         dataStoreModule.updateData {
-            copy(auth = AuthorizationCredentials(login, password))
+            copy(auth = credentials)
         }
     }
 
