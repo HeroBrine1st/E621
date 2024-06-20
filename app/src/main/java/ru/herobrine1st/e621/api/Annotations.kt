@@ -24,13 +24,11 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialInfo
 
 @OptIn(ExperimentalSerializationApi::class)
-@Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
 @SerialInfo
 annotation class HttpMethod(val method: HttpMethodType)
 
 @OptIn(ExperimentalSerializationApi::class)
-@Retention(AnnotationRetention.RUNTIME)
 @Target(AnnotationTarget.CLASS)
 @SerialInfo
 annotation class JsonFormatSuffix
