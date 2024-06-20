@@ -86,6 +86,7 @@ fun ModifyTagDialog(
             textValue.text
                 .removePrefix(Tokens.ALTERNATIVE)
                 .removePrefix(Tokens.EXCLUDED)
+                .lowercase()
         }
     }
     // suggestions open again after clicking one
@@ -98,6 +99,12 @@ fun ModifyTagDialog(
                 autocompleteExpanded = it.result.isNotEmpty()
         }
     }.value
+
+    fun apply() {
+        if (' ' in textValue.text)
+            Log.wtf(TAG, "Found spaces in tag, which should not be possible: ${textValue.text}")
+        onApply(textValue.text.lowercase().trimEnd('_'))
+    }
 
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
         TextButton(onClick = onClose) {
@@ -112,11 +119,7 @@ fun ModifyTagDialog(
                 Text(stringResource(R.string.remove))
             }
         }
-        TextButton(onClick = {
-            if (' ' in textValue.text)
-                Log.wtf(TAG, "Found spaces in tag, which should not be possible: ${textValue.text}")
-            onApply(textValue.text)
-        }) {
+        TextButton(onClick = ::apply) {
             Text(stringResource(if (onDelete == null) R.string.add else R.string.apply))
         }
     }, onDismissRequest = onClose) {
@@ -132,7 +135,7 @@ fun ModifyTagDialog(
                     val actuallyChanged =
                         it.text != textValue.text || it.selection != textValue.selection
                     // Single tag in single object
-                    textValue = it.copy(text = it.text.replace(' ', '_').let { query ->
+                    textValue = it.copy(text = it.text.lowercase().replace(' ', '_').let { query ->
                         // sanitize input
                         val prefix =
                             if (query.startsWith(Tokens.ALTERNATIVE)) Tokens.ALTERNATIVE
@@ -162,7 +165,7 @@ fun ModifyTagDialog(
                 modifier = Modifier
                     .menuAnchor(MenuAnchorType.PrimaryEditable)
                     .fillMaxWidth(),
-                keyboardActions = KeyboardActions { onApply(textValue.text) },
+                keyboardActions = KeyboardActions { apply() },
                 visualTransformation = {
                     TransformedText(
                         text = AnnotatedString(
