@@ -23,7 +23,6 @@ package ru.herobrine1st.e621.api
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
-import io.ktor.client.plugins.resources.request
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.basicAuth
 import io.ktor.client.request.setBody
@@ -50,67 +49,9 @@ import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.preference.AuthorizationCredentials
+import io.ktor.client.plugins.resources.request as ktorRequest
 
-class APIClient(
-    @PublishedApi internal val httpClient: HttpClient,
-) {
-    suspend inline fun <reified Endpoint : APIEndpoint<Unit, Response>, reified Response> request(
-        endpoint: Endpoint,
-        builder: HttpRequestBuilder.() -> Unit = {},
-    ) = request(endpoint, Unit, builder)
-
-
-    suspend inline fun <reified Endpoint : APIEndpoint<Request, Response>, reified Request, reified Response> request(
-        endpoint: Endpoint,
-        body: Request,
-        builder: HttpRequestBuilder.() -> Unit = {},
-    ): Result<Response> {
-        return try {
-            Result.success(requestInternal(endpoint, body, builder))
-        } catch (e: ResponseException) {
-            Result.failure(e.toApiException())
-        } catch (t: Throwable) {
-            Result.failure(t)
-        }
-    }
-
-
-    @OptIn(ExperimentalSerializationApi::class)
-    @PublishedApi
-    internal suspend inline fun <reified Endpoint : APIEndpoint<Request, Response>, reified Request, reified Response> requestInternal(
-        endpoint: Endpoint,
-        body: Request,
-        builder: HttpRequestBuilder.() -> Unit = {},
-    ): Response {
-        val response = httpClient.request(endpoint) {
-            val annotations = serializer<Endpoint>().descriptor.annotations
-            val method = annotations.filterIsInstance<HttpMethod>()
-                .firstOrNull() ?: error("APIEndpoint requires @HttpMethod annotation")
-            // ktor doesn't understand "{param}.json" format
-            // looks like ".json" isn't needed anymore
-//            if (annotations.any { it is JsonFormatSuffix }) {
-//                url {
-//                    val segments = pathSegments.toMutableList()
-//                    segments[segments.lastIndex] = segments[segments.lastIndex] + ".json"
-//                    pathSegments = segments
-//                }
-//            }
-            this.method = method.toKtorMethod()
-            if (body != Unit) setBody(body)
-            builder()
-        }
-
-
-
-        return response.body()
-    }
-
-    companion object {
-        const val TAG = "API"
-    }
-}
-
-class APIImpl(val client: APIClient) : API {
+class APIImpl(val client: HttpClient) : API {
     override suspend fun getUser(name: String) =
         client.request(GetUserEndpoint(name))
 
@@ -167,7 +108,49 @@ class APIImpl(val client: APIClient) : API {
         }
 }
 
-suspend fun ResponseException.toApiException(): ApiException {
+private suspend inline fun <reified Endpoint : APIEndpoint<Unit, Response>, reified Response> HttpClient.request(
+    endpoint: Endpoint,
+    builder: HttpRequestBuilder.() -> Unit = {},
+) = request(endpoint, Unit, builder)
+
+private suspend inline fun <reified Endpoint : APIEndpoint<Request, Response>, reified Request, reified Response> HttpClient.request(
+    endpoint: Endpoint,
+    body: Request,
+    builder: HttpRequestBuilder.() -> Unit = {},
+): Result<Response> {
+    return try {
+        Result.success(requestInternal(endpoint, body, builder))
+    } catch (e: ResponseException) {
+        Result.failure(e.toApiException())
+    } catch (t: Throwable) {
+        Result.failure(t)
+    }
+}
+
+
+@OptIn(ExperimentalSerializationApi::class)
+private suspend inline fun <reified Endpoint : APIEndpoint<Request, Response>, reified Request, reified Response> HttpClient.requestInternal(
+    endpoint: Endpoint,
+    body: Request,
+    builder: HttpRequestBuilder.() -> Unit = {},
+): Response {
+    val response = ktorRequest(endpoint) {
+        val annotations = serializer<Endpoint>().descriptor.annotations
+        val method = annotations.filterIsInstance<HttpMethod>()
+            .firstOrNull() ?: error("APIEndpoint requires @HttpMethod annotation")
+        this.method = method.toKtorMethod()
+        if (body != Unit) setBody(body)
+        builder()
+    }
+
+    return response.body()
+}
+
+private fun HttpMethod.toKtorMethod(): io.ktor.http.HttpMethod {
+    return io.ktor.http.HttpMethod.parse(method.name)
+}
+
+private suspend fun ResponseException.toApiException(): ApiException {
     val status = response.status
     val responseBody = try {
         response.body<JsonObject>()
@@ -187,8 +170,4 @@ suspend fun ResponseException.toApiException(): ApiException {
         status,
         cause = this
     )
-}
-
-fun HttpMethod.toKtorMethod(): io.ktor.http.HttpMethod {
-    return io.ktor.http.HttpMethod.parse(method.name)
 }

@@ -49,7 +49,6 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNamingStrategy
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.APIClient
 import ru.herobrine1st.e621.api.APIImpl
 import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.preference.AuthorizationCredentials
@@ -146,9 +145,7 @@ class APIModule(
         }
     }
 
-    val apiLazy: Lazy<API> = lazy {
-        APIImpl(APIClient(ktorClient))
-    }
+    val apiLazy: Lazy<API> = lazy { APIImpl(ktorClient) }
 
     val api by apiLazy
 
