@@ -13,8 +13,7 @@ decompile, change url and assemble back. It is complicated though.
 Releases are available [here](https://github.com/HeroBrine1st/E621/releases).
 
 Get latest **development** snapshot [here](https://github.com/HeroBrine1st/E621/actions/workflows/snapshot-build.yml) (select
-last passed workflow and see artifacts). Keep in mind that snapshot builds aren't compatible with
-release builds (they use different signing keys), but you can reinstall if you want.
+last passed workflow and see artifacts). Keep in mind that snapshot build is a different application (has different package name), so you can have both snapshot and release build on the same device.
 
 # Features
 
@@ -32,33 +31,30 @@ read-only and has some harmless bugs.
     * [x] Search favourites
         * [x] Server-side
         * [ ] Local
-    * [ ] "Micro-search" (fast local search though current results)
+    * [ ] "Micro-search" (fast local search through current results)
   * [x] Pools support
 - [x] Safe mode on (probably) every screen with images, enabled by default with disclaimer on disable.
 - [x] Autocomplete tags
 - [x] Authorization by API key
-    - [ ] Authorization by regular username and password (I'm not sure it won't break ToS, but it is
-      possible without any difficulty... I think)
+  - ~~Authorization by regular username and password~~ failed to circumvent CSRF despite having no browser sandboxing :-/
+    For that reason, this feature is no longer planned.
 - [x] Blacklisting
     - [ ] Fancy UI to configure blacklist
     - [x] Support for extended syntax (still incubating)
 - [ ] Hiding posts at the click of button
-    - Analyzing hidden posts to build new blacklist entries? (just an idea, it is not planned yet)
 - [x] Favorites
     * [x] Add and remove
     * [x] View
 - [x] Post screen
     * [x] Comments
         * [x] Read
-            * [x] Formatting (but issues are still there, especially with old posts like from 2010)
-        * [ ] Write
+            * [x] Basic formatting (bold, italic, quotes)
+            * [ ] Advanced formatting (sub/sup, colors, inline post previews, links)
     * [x] Tags
         * [x] Add to/exclude from search
         * [x] View wiki
-            * [x] Formatting
+            * [x] Formatting (the same as in comments)
 - [x] Up/down score
-- [ ] Possibility to make changes visible to another users, like tag editing, commenting etc
-    - Will probably never be implemented
 - [x] Basic SOCKS5 proxy support. **WARNING**: it *will* fall back to direct connection if proxy is
   unreachable in any way
     - [ ] Preference to control fall back behavior
@@ -70,7 +66,7 @@ read-only and has some harmless bugs.
 - [x] GIF
 - [x] WEBM
 - [x] MP4
-- [ ] SWF - can't be supported
+- SWF - can't be supported
 
 # License
 
