@@ -82,24 +82,30 @@ data class Post(
 
 @Serializable
 data class PostReduced(
-    val status: String,
+    val id: Int,
     val flags: String,
+    val tags: String,
+    val rating: Rating,
     @SerialName("file_ext")
     val type: FileType,
-    val id: Int,
-    val createdAt: Instant,
-    val rating: Rating,
-    val previewWidth: Int,
-    val previewHeight: Int,
     val width: Int,
     val height: Int,
-    val tags: String,
-    val score: Int,
-    val uploaderId: Int,
+    val size: Int,
+    val createdAt: Instant,
     val uploader: String,
-    val md5: String? = null, // o_O
-    val previewUrl: String? = null,
-    val croppedUrl: String? = null
+    val uploaderId: Int,
+    val score: Int,
+    @SerialName("fav_count")
+    val favoriteCount: Int,
+    @SerialName("is_favorited")
+    val isFavourite: Boolean,
+    val pools: List<PoolId>,
+    val md5: String?,
+    val previewUrl: String,
+    val largeUrl: String,
+    val fileUrl: String,
+    val previewWidth: Int,
+    val previewHeight: Int
 )
 
 fun Post.selectSample() = when {

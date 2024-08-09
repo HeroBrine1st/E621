@@ -23,10 +23,10 @@ package ru.herobrine1st.e621.api.common
 import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.Rating
 
-data class PostReducedCommon(
+data class AvatarImageCommon(
     val id: Int,
-    val previewUrl: String? = null,
-    val croppedUrl: String? = null,
+    val url: String,
     val rating: Rating,
 )
-fun PostReduced.toCommon() = PostReducedCommon(id = id, previewUrl = previewUrl, croppedUrl = croppedUrl, rating = rating)
+
+fun PostReduced.toCommon() = AvatarImageCommon(id = id, url = previewUrl, rating = rating)

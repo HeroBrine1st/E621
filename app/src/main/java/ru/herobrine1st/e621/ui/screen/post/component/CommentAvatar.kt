@@ -36,7 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
-import ru.herobrine1st.e621.api.common.PostReducedCommon
+import ru.herobrine1st.e621.api.common.AvatarImageCommon
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
@@ -44,21 +44,17 @@ import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 
 @Composable
 fun CommentAvatar(
-    avatarPost: PostReducedCommon?,
+    avatarPost: AvatarImageCommon?,
     safeModeEnabled: Boolean,
     modifier: Modifier = Modifier,
     placeholder: Boolean = false,
     onAvatarClick: () -> Unit = {}
 ) {
     var isPlaceholderActive by remember { mutableStateOf(true) }
-    if (avatarPost != null &&
-        (avatarPost.rating == Rating.SAFE || !safeModeEnabled) &&
-        (avatarPost.previewUrl != null || avatarPost.croppedUrl != null)
-    ) {
-        val url = avatarPost.previewUrl ?: avatarPost.croppedUrl
+    if (avatarPost != null && (avatarPost.rating == Rating.SAFE || !safeModeEnabled)) {
         AsyncImage(
             model = ImageRequest.Builder(LocalContext.current)
-                .data(url)
+                .data(avatarPost.url)
                 .crossfade(true)
                 .transformations(CircleCropTransformation()) // clip(CircleShape) is wrong (white/black zones are present)
                 .build(),
