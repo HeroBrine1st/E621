@@ -22,6 +22,7 @@ package ru.herobrine1st.e621.api.model
 
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 
 @Serializable
 data class WikiPage(
@@ -36,5 +37,6 @@ data class WikiPage(
     val isLocked: Boolean,
     val isDeleted: Boolean,
     val otherNames: List<String>,
+    val parent: JsonElement? = null, // idk, couldn't find non-null value
     val categoryId: Int,
 )
