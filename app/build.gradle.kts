@@ -41,7 +41,17 @@ android {
             "%s/%s (Android/%s; %s build; +https://github.com/HeroBrine1st/E621) Ktor/${libs.versions.ktor.get()}"
         )
     }
+    signingConfigs {
+        create("release") {
+            storeFile = file("keystore.jks")
+            storePassword = System.getenv("SIGNING_STORE_PASSWORD")
+            keyAlias = System.getenv("SIGNING_KEY_ALIAS")
+            keyPassword = System.getenv("SIGNING_KEY_PASSWORD")
 
+            // Apk will be in app/build/outputs/apk/release/app-release.apk
+            // or app-release-unsigned.apk, if unsigned
+        }
+    }
     buildTypes {
         release {
             isMinifyEnabled = true
@@ -50,6 +60,7 @@ android {
                 "proguard-rules.pro",
                 "intellij-idea-does-not-like-these-proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
         debug {
             applicationIdSuffix = ".debug"
