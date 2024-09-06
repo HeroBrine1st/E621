@@ -19,7 +19,7 @@ android {
         applicationId = "ru.herobrine1st.e621"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = getCommitIndexNumber()
+        versionCode = 780
         versionName = "1.0.0-alpha-6"
 
         vectorDrawables {
@@ -207,9 +207,6 @@ fun executeCommand(vararg argv: String): String {
     }
     return byteArrayOutputStream.toString()
 }
-
-fun getCommitIndexNumber(revision: String = "HEAD") =
-    executeCommand("git", "rev-list", "--count", "--first-parent", revision).trim().toInt()
 
 fun getCommitShortHash(revision: String = "HEAD") =
     executeCommand("git", "rev-parse", "--short", revision).trim()
