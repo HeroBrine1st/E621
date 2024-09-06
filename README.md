@@ -10,9 +10,6 @@ decompile, change url and assemble back. It is complicated though.
 
 Releases are available [here](https://github.com/HeroBrine1st/E621/releases).
 
-Get latest **development** snapshot [here](https://github.com/HeroBrine1st/E621/actions/workflows/snapshot-build.yml) (select
-last passed workflow and see artifacts). Keep in mind that snapshot build is a different application (has different package name), so you can have both snapshot and release build on the same device.
-
 # Features
 
 TL;DR you can browse, search and save ("Favorite" button) posts and view wiki. This client is mostly
