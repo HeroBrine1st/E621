@@ -1,5 +1,3 @@
-[![Snapshot build](https://github.com/HeroBrine1st/E621/actions/workflows/snapshot-build.yml/badge.svg)](https://github.com/HeroBrine1st/E621/actions/workflows/snapshot-build.yml)
-
 # E621
 
 Android client for e621.net
