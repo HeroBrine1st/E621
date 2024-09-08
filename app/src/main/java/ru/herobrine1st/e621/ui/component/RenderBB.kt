@@ -135,6 +135,9 @@ fun RenderBB(data: MessageData, onWikiLinkClick: ((Tag) -> Unit)? = null) {
                         layoutResult = it
                     },
                     modifier = Modifier
+                        // TODO new APIs, they probably can replace this code
+                        // https://developer.android.com/jetpack/androidx/releases/compose-foundation#1.7.0
+                        // The ClickableText has been deprecated. To add clickable links to your text, use BasicText with the new LinkAnnotation annotation in your AnnotatedString. LinkAnnotation allows for custom styling based on link state (e.g. focused, hovered).
                         .pointerInput(onWikiLinkClick) {
                             // Reason to not use detectTapGestures: SelectionContainer does not get tap gestures
                             awaitEachGesture {
