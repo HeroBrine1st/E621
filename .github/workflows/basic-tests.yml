@@ -2,7 +2,7 @@ name: Basic tests # Basically check that it can be run
 
 on:
   pull_request:
-    types: [ opened, reopened ]
+    types: [ opened, reopened, synchronize ]
 jobs:
   build-test:
     name: "Basic build tests"
