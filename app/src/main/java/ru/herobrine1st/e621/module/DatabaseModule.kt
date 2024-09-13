@@ -26,7 +26,6 @@ import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.data.blacklist.BlacklistRepositoryImpl
 import ru.herobrine1st.e621.data.vote.VoteRepositoryImpl
 import ru.herobrine1st.e621.database.Database
-import ru.herobrine1st.e621.database.instantiateImpl
 
 class DatabaseModule(applicationContext: Context) {
 
@@ -34,7 +33,7 @@ class DatabaseModule(applicationContext: Context) {
         Room.databaseBuilder<Database>(
             applicationContext,
             BuildConfig.DATABASE_NAME,
-            factory = Database::class::instantiateImpl
+            factory = { ru.herobrine1st.e621.database.Database_Impl() }
         ).build()
     }
 
