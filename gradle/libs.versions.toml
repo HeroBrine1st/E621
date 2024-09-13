@@ -2,7 +2,7 @@
 agp = "8.6.0"
 core = "1.6.1"
 kotlin = "2.0.20"
-ksp = "2.0.0-1.0.21"
+ksp = "2.0.20-1.0.25"
 
 aboutlibraries = "11.2.0"
 room = "2.7.0-alpha07" # alpha06 requires KMP project due to expect/actual factory injection
