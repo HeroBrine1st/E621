@@ -350,7 +350,7 @@ fun Search(
                 }
             }
             item("favourites of") {
-                SettingCard(title = stringResource(R.string.favourites_of)) {
+                SettingCard(title = stringResource(R.string.favourite_of)) {
                     // TODO autocomplete
                     OutlinedTextField(
                         value = component.favouritesOf,

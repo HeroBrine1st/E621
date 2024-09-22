@@ -50,7 +50,7 @@
     <string name="expand">Развернуть</string>
     <string name="collapse">Свернуть</string>
     <string name="post">Пост</string>
-    <string name="favourites_of">Избранное пользователя</string>
+    <string name="favourite_of">Избранное пользователя</string>
     <string name="user">Пользователь</string>
     <string name="favourites">Избранное</string>
     <string name="data_saver_mode">Экономия данных</string>
