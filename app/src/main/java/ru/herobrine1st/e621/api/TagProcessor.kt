@@ -106,7 +106,7 @@ fun createTagProcessor(query: String): Predicate<Post> {
     }.reduceOrNull { a, b -> a.or(b) } ?: Predicate { true }
     val second = noneOf.map {
         createPredicateFromTag(it.substring(Tokens.EXCLUDED.length))
-    }.reduceOrNull { a, b -> a.and(b) }?.negate() ?: Predicate { true }
+    }.reduceOrNull { a, b -> a.or(b) }?.negate() ?: Predicate { true }
     val third = allOf.map { createPredicateFromTag(it) }
         .reduceOrNull { a, b -> a.and(b) } ?: Predicate { true }
 

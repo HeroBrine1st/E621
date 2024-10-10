@@ -130,6 +130,7 @@ class TagProcessorTest {
         test(true, "tom_fischbach conditional_dnp")
         test(true, "tom_fischbach conditional_dnp -my_little_pony")
         test(true, "tom_fischbach conditional_dnp -my_little_pony rating:s")
+        test(false, "-tom_fischbach conditional_dnp -my_little_pony rating:s")
     }
 
     @Test
