@@ -58,6 +58,7 @@ val samplePost = """{
           "conditional_dnp",
           "tom_fischbach"
         ],
+        "contributor": [],
         "invalid": [],
         "lore": [],
         "meta": [
