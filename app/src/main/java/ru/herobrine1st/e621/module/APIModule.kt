@@ -69,6 +69,7 @@ class APIModule(
                 json(Json {
                     namingStrategy = JsonNamingStrategy.SnakeCase
                     coerceInputValues = true
+                    ignoreUnknownKeys = !BuildConfig.DEBUG
                 })
             }
             install(HttpCache) {
