@@ -34,7 +34,8 @@ data class Tags(
     val artist: List<Tag>,
     val lore: List<Tag>,
     val meta: List<Tag>,
-    val invalid: List<Tag>
+    val invalid: List<Tag>,
+    val contributor: List<Tag>
 ) {
     val all by lazy {
         artist + copyright + character + species + general + lore + meta + invalid

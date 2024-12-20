@@ -54,22 +54,13 @@ fun LazyListScope.tags(
     onWikiClick: (Tag) -> Unit,
 ) {
     tags(R.string.artist_tags, post.tags.artist, onModificationClick, onWikiClick)
-    tags(
-        R.string.copyright_tags,
-        post.tags.copyright,
-        onModificationClick,
-        onWikiClick
-    )
-    tags(
-        R.string.character_tags,
-        post.tags.character,
-        onModificationClick,
-        onWikiClick
-    )
+    tags(R.string.copyright_tags, post.tags.copyright, onModificationClick, onWikiClick)
+    tags(R.string.character_tags, post.tags.character, onModificationClick, onWikiClick)
     tags(R.string.species_tags, post.tags.species, onModificationClick, onWikiClick)
     tags(R.string.general_tags, post.tags.general, onModificationClick, onWikiClick)
     tags(R.string.lore_tags, post.tags.lore, onModificationClick, onWikiClick)
     tags(R.string.meta_tags, post.tags.meta, onModificationClick, onWikiClick)
+    tags(R.string.contributor_tags, post.tags.contributor, onModificationClick, onWikiClick)
 }
 
 @OptIn(ExperimentalFoundationApi::class)
