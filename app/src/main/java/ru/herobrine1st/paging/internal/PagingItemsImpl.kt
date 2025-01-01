@@ -155,4 +155,10 @@ class PagingItemsImpl<Value : Any>(
         if (loadStates.refresh == LoadState.Loading) return
         uiChannel?.send(PagingRequest.Refresh)
     }
+
+    override fun retry() {
+        if (loadStates.refresh is LoadState.Error || loadStates.append is LoadState.Error || loadStates.prepend is LoadState.Error) {
+            uiChannel?.send(PagingRequest.Retry)
+        }
+    }
 }

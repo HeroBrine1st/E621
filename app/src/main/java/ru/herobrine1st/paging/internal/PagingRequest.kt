@@ -29,4 +29,6 @@ sealed interface PagingRequest {
     data object AppendPage : PushPage
 
     data object PrependPage : PushPage
+
+    data object Retry : PagingRequest
 }

@@ -24,6 +24,7 @@ import android.util.Log
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
+import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.paging.api.LoadResult
 import ru.herobrine1st.paging.api.LoadState
 import ru.herobrine1st.paging.api.LoadStates
@@ -58,25 +59,72 @@ class Pager<Key : Any, Value : Any>(
             refresh = LoadState.NotLoading
         )
 
+        // Pager entry point
         suspend fun startPaging() {
             notifyObservers(UpdateKind.StateChange)
             uiChannel.flow.collect { event ->
                 when (event) {
                     is PagingRequest.PushPage -> push(event)
                     is PagingRequest.Refresh -> refresh()
+                    PagingRequest.Retry -> retry()
                 }
             }
         }
 
+        // "Public" API called via uiChannel
         suspend fun refresh() {
-            // TODO add error check
+            if (loadStates.refresh is LoadState.Error) {
+                // It is NOT expected for UI part to retry repeatedly
+                Log.w(TAG, "Tried to refresh without retry: $loadStates")
+                debug {
+                    // fail-fast
+                    Log.wtf(TAG, "Tried to refresh without retry: $loadStates")
+                }
+                return
+            }
             refreshUnsafe()
         }
 
         suspend fun push(event: PagingRequest.PushPage) {
-            // TODO add error check
+            when (event) {
+                PagingRequest.AppendPage -> if (loadStates.append is LoadState.Error) {
+                    // It is NOT expected for UI part to retry repeatedly
+                    Log.w(TAG, "Tried to append without retry: $loadStates")
+                    debug {
+                        // fail-fast
+                        Log.wtf(TAG, "Tried to append without retry: $loadStates")
+                    }
+                    return
+                }
+
+                PagingRequest.PrependPage -> if (loadStates.prepend is LoadState.Error) {
+                    // It is NOT expected for UI part to retry repeatedly
+                    Log.w(TAG, "Tried to prepend without retry: $loadStates")
+                    debug {
+                        // fail-fast
+                        Log.wtf(TAG, "Tried to prepend without retry: $loadStates")
+                    }
+                    return
+                }
+            }
             pushUnsafe(event)
         }
+
+        suspend fun retry() {
+            if (loadStates.refresh is LoadState.Error) {
+                refreshUnsafe()
+            } else {
+                // it may be both directions
+                if (loadStates.append is LoadState.Error) {
+                    pushUnsafe(PagingRequest.AppendPage)
+                }
+                if (loadStates.prepend is LoadState.Error) {
+                    pushUnsafe(PagingRequest.PrependPage)
+                }
+            }
+        }
+
+        // Private helper methods
 
         private suspend fun notifyObservers(updateKind: UpdateKind) {
             channel.send(
@@ -89,6 +137,10 @@ class Pager<Key : Any, Value : Any>(
                 )
             )
         }
+
+        // Unsafety means it is not safe to automatically call those methods without error check,
+        // as otherwise pager may repeatedly error on the same endpoint
+        // Otherwise they are safe
 
         private suspend fun refreshUnsafe() {
             // Reset state
