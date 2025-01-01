@@ -104,7 +104,7 @@ fun CommentsBottomSheetContent(
                 }
             ) {
                 item {}
-                endOfPagePlaceholder(comments.loadStates.prepend)
+                endOfPagePlaceholder(comments.loadStates.prepend, onRetry = comments::retry)
                 items(
                     // TODO Move placeholders to pager
                     count = if (comments.loadStates.refresh is LoadState.Loading) post.commentCount
@@ -127,7 +127,7 @@ fun CommentsBottomSheetContent(
                         animateTextChange = true
                     )
                 }
-                endOfPagePlaceholder(comments.loadStates.append)
+                endOfPagePlaceholder(comments.loadStates.append, onRetry = comments::retry)
                 item {}
             }
         }
