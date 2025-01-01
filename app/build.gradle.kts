@@ -30,6 +30,7 @@ android {
         resValue("string", "deep_link_host", "e621.net")
         buildConfigField("int", "PAGER_PAGE_SIZE", "500")
         buildConfigField("int", "PAGER_PREFETCH_DISTANCE", "50")
+        buildConfigField("int", "PAGER_MAX_PAGES_IN_MEMORY", "3")
         // Replaces all underscores in tags with spaces
         buildConfigField("boolean", "HIDE_UNDERSCORES_FROM_USER", "true")
         stringBuildConfigField("DATABASE_NAME", "DATABASE")

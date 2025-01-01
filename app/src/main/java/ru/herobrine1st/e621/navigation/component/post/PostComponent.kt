@@ -358,7 +358,8 @@ class PostComponent(
         val commentsFlow = createPager(
             PagingConfig(
                 pageSize = BuildConfig.PAGER_PAGE_SIZE,
-                initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
+                initialLoadSize = BuildConfig.PAGER_PAGE_SIZE,
+                maxPagesInMemory = BuildConfig.PAGER_MAX_PAGES_IN_MEMORY
             ),
             initialKey = Int.MIN_VALUE,
             PostCommentsSource(api, exceptionReporter, postId)

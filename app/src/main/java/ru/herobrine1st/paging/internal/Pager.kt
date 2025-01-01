@@ -213,6 +213,8 @@ class Pager<Key : Any, Value : Any>(
         )
 
         val updateKind: UpdateKind
+        val appended: Int
+        val prepended: Int
 
         // Apply result
         when (result) {
@@ -220,8 +222,41 @@ class Pager<Key : Any, Value : Any>(
                 pages = buildList(capacity = pages.size + 1) {
                     addAll(pages)
                     when (event) {
-                        PagingRequest.AppendPage -> add(Page.from(result, key))
-                        PagingRequest.PrependPage -> add(0, Page.from(result, key))
+                        PagingRequest.AppendPage -> {
+                            add(Page.from(result, key))
+                            appended = 1
+                            if (size > config.maxPagesInMemory) {
+                                debug {
+                                    Log.d(
+                                        TAG,
+                                        "Dropping first page due to page count ($size) being larger than configured (${config.maxPagesInMemory})"
+                                    )
+                                }
+                                prepended = -1
+                                // drop first page
+                                removeAt(0)
+                            } else {
+                                prepended = 0
+                            }
+                        }
+
+                        PagingRequest.PrependPage -> {
+                            add(0, Page.from(result, key))
+                            prepended = 1
+                            if (size > config.maxPagesInMemory) {
+                                debug {
+                                    Log.d(
+                                        TAG,
+                                        "Dropping last page due to page count ($size) being larger than configured (${config.maxPagesInMemory})"
+                                    )
+                                }
+                                appended = -1
+                                // drop last page
+                                removeAt(lastIndex)
+                            } else {
+                                appended = 0
+                            }
+                        }
                     }
                 }
 
@@ -234,18 +269,21 @@ class Pager<Key : Any, Value : Any>(
                         prepend = LoadState.NotLoading(result.previousKey == null)
                     )
                 }
-
-                updateKind = when (event) {
-                    PagingRequest.AppendPage -> UpdateKind.DataChange(
-                        appended = 1,
-                        prepended = 0
-                    )
-
-                    PagingRequest.PrependPage -> UpdateKind.DataChange(
-                        appended = 0,
-                        prepended = 1
-                    )
-                }
+                updateKind = UpdateKind.DataChange(
+                    appended = appended,
+                    prepended = prepended
+                )
+//                updateKind = when (event) {
+//                    PagingRequest.AppendPage -> UpdateKind.DataChange(
+//                        appended = 1,
+//                        prepended = 0
+//                    )
+//
+//                    PagingRequest.PrependPage -> UpdateKind.DataChange(
+//                        appended = 0,
+//                        prepended = 1
+//                    )
+//                }
             }
 
             is LoadResult.Error<Key, Value> -> {

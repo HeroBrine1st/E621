@@ -176,7 +176,8 @@ class PostListingComponent(
                 PagingConfig(
                     pageSize = BuildConfig.PAGER_PAGE_SIZE,
                     prefetchDistance = BuildConfig.PAGER_PREFETCH_DISTANCE,
-                    initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
+                    initialLoadSize = BuildConfig.PAGER_PAGE_SIZE,
+                    maxPagesInMemory = BuildConfig.PAGER_MAX_PAGES_IN_MEMORY
                 ),
                 initialKey = 1,
                 PostsSource(api, exceptionReporter, searchOptions)
