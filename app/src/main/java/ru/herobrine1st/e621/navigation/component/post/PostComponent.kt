@@ -75,9 +75,9 @@ import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.isFavourite
-import ru.herobrine1st.paging.Pager
 import ru.herobrine1st.paging.api.PagingConfig
 import ru.herobrine1st.paging.api.cachedIn
+import ru.herobrine1st.paging.createPager
 
 private const val POST_STATE_KEY = "POST_STATE_KEY"
 
@@ -354,16 +354,15 @@ class PostComponent(
         api: API,
         exceptionReporter: ExceptionReporter,
     ) : InstanceBase() {
-        private val pager = Pager(
+
+        val commentsFlow = createPager(
             PagingConfig(
                 pageSize = BuildConfig.PAGER_PAGE_SIZE,
                 initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
             ),
             initialKey = Int.MIN_VALUE,
             PostCommentsSource(api, exceptionReporter, postId)
-        )
-
-        val commentsFlow = pager.flow.cachedIn(lifecycleScope)
+        ).cachedIn(lifecycleScope)
     }
 }
 

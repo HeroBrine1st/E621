@@ -63,11 +63,11 @@ import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState.Determined.UNFAV
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.accumulate
 import ru.herobrine1st.e621.util.isFavourite
-import ru.herobrine1st.paging.Pager
 import ru.herobrine1st.paging.api.PagingConfig
 import ru.herobrine1st.paging.api.applyPageBoundary
 import ru.herobrine1st.paging.api.cachedIn
 import ru.herobrine1st.paging.api.transform
+import ru.herobrine1st.paging.createPager
 import java.util.function.Predicate
 
 class PostListingComponent(
@@ -162,17 +162,6 @@ class PostListingComponent(
         dataStore: PreferencesStore,
         blacklistRepository: BlacklistRepository,
     ) : InstanceBase() {
-
-        private val pager = Pager(
-            PagingConfig(
-                pageSize = BuildConfig.PAGER_PAGE_SIZE,
-                prefetchDistance = BuildConfig.PAGER_PREFETCH_DISTANCE,
-                initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
-            ),
-            initialKey = 1,
-            PostsSource(api, exceptionReporter, searchOptions)
-        )
-
         private val blacklistPredicateFlow =
             blacklistRepository.getEntriesFlow()
                 .map { list ->
@@ -183,7 +172,15 @@ class PostListingComponent(
                 .flowOn(Dispatchers.Default)
 
         val postsFlow = combine(
-            pager.flow,
+            createPager(
+                PagingConfig(
+                    pageSize = BuildConfig.PAGER_PAGE_SIZE,
+                    prefetchDistance = BuildConfig.PAGER_PREFETCH_DISTANCE,
+                    initialLoadSize = BuildConfig.PAGER_PAGE_SIZE
+                ),
+                initialKey = 1,
+                PostsSource(api, exceptionReporter, searchOptions)
+            ),
             dataStore.data.map { it.blacklistEnabled },
             blacklistPredicateFlow,
             favouritesCache.flow,
