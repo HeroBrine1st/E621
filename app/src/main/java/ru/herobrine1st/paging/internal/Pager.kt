@@ -44,8 +44,8 @@ class Pager<Key : Any, Value : Any>(
     private val config: PagingConfig,
     private val initialKey: Key,
     private val pagingSource: PagingSource<Key, Value>,
-    val channel: SendChannel<Snapshot<Key, Value>>,
-    val uiChannel: SynchronizedBus<PagingRequest>,
+    val snapshotChannel: SendChannel<Snapshot<Key, Value>>,
+    val requestChannel: SynchronizedBus<PagingRequest>,
     var pages: List<Page<Key, Value>> = emptyList(),
     var loadStates: LoadStates = defaultLoadStates()
 ) {
@@ -58,7 +58,7 @@ class Pager<Key : Any, Value : Any>(
 //        )
         // Probably it is enough as createPager emits `Refresh` itself
         notifyObservers(UpdateKind.StateChange)
-        uiChannel.flow.collect { event ->
+        requestChannel.flow.collect { event ->
             when (event) {
                 is PagingRequest.PushPage -> push(event)
                 is PagingRequest.Refresh -> refresh()
@@ -129,13 +129,13 @@ class Pager<Key : Any, Value : Any>(
         // - State preservation feature requires passing Snapshot instance down the flow synchronously
         //   ru.herobrine1st.paging.createPager
         // Remember to update
-        channel.send(
+        snapshotChannel.send(
             Snapshot(
                 pages = pages,
                 updateKind = updateKind,
                 pagingConfig = config,
                 loadStates = loadStates,
-                uiChannel = uiChannel
+                requestChannel = requestChannel
             )
         )
     }

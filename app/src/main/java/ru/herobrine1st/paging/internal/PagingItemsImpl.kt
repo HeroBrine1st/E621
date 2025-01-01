@@ -42,7 +42,7 @@ class PagingItemsImpl<Value : Any>(
     private val startPagingImmediately: Boolean
 ) : PagingItems<Value> {
 
-    private var uiChannel: SynchronizedBus<PagingRequest>? = null
+    private var requestChannel: SynchronizedBus<PagingRequest>? = null
     private var pagingConfig: PagingConfig? = null
 
     override var loadStates by mutableStateOf(
@@ -80,15 +80,15 @@ class PagingItemsImpl<Value : Any>(
     }
 
     private fun processSnapshot(snapshot: Snapshot<*, Value>) {
-        if (uiChannel == null) {
+        if (requestChannel == null) {
             debug { Log.d(TAG, "Got uiChannel and pagingConfig") }
-            uiChannel = snapshot.uiChannel
+            requestChannel = snapshot.requestChannel
             pagingConfig = snapshot.pagingConfig
         }
         if (startPagingImmediately && snapshot.loadStates.refresh is LoadState.NotLoading) {
             // SAFETY: Upstream pager state is NotLoading; refresh method does not know that
             // SAFETY: uiChannel is never null here
-            uiChannel!!.send(PagingRequest.Refresh)
+            requestChannel!!.send(PagingRequest.Refresh)
             debug {
                 assert(
                     loadStates == LoadStates(
@@ -138,9 +138,9 @@ class PagingItemsImpl<Value : Any>(
     private fun triggerPageLoad() {
         val prefetchDistance = pagingConfig?.prefetchDistance ?: 1
         if (lastAccessedIndex < prefetchDistance && loadStates.prepend == LoadState.NotLoading) {
-            uiChannel?.send(PagingRequest.PrependPage)
+            requestChannel?.send(PagingRequest.PrependPage)
         } else if (lastAccessedIndex >= size - prefetchDistance && loadStates.append == LoadState.NotLoading) {
-            uiChannel?.send(PagingRequest.AppendPage)
+            requestChannel?.send(PagingRequest.AppendPage)
         }
     }
 
@@ -156,12 +156,12 @@ class PagingItemsImpl<Value : Any>(
 
     override fun refresh() {
         if (loadStates.refresh == LoadState.Loading) return
-        uiChannel?.send(PagingRequest.Refresh)
+        requestChannel?.send(PagingRequest.Refresh)
     }
 
     override fun retry() {
         if (loadStates.refresh is LoadState.Error || loadStates.append is LoadState.Error || loadStates.prepend is LoadState.Error) {
-            uiChannel?.send(PagingRequest.Retry)
+            requestChannel?.send(PagingRequest.Retry)
         }
     }
 }

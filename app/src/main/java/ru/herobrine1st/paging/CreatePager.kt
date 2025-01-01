@@ -56,8 +56,8 @@ fun <Key : Any, Value : Any> createPager(
         config = config,
         initialKey = initialKey,
         pagingSource = pagingSource,
-        channel = channel,
-        uiChannel = SynchronizedBus<PagingRequest>()
+        snapshotChannel = channel,
+        requestChannel = SynchronizedBus<PagingRequest>()
     ).startPaging()
 }
 
@@ -77,7 +77,7 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
     pagingSource: PagingSource<Key, Value>,
     initialState: Pair<List<Page<Key, Value>>, LoadStates>?
 ): SharedFlow<Snapshot<Key, Value>> {
-    val uiChannel = SynchronizedBus<PagingRequest>()
+    val requestChannel = SynchronizedBus<PagingRequest>()
     val flow = channelFlow {
         Pager(
             config = config,
@@ -86,8 +86,8 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
             // if this particular line is extracted from constructor and delayed, code below will be safe as we can reuse Pager code
             // to create Snapshot instance
             // But delaying channel provision creates problems on its own
-            channel = channel,
-            uiChannel = uiChannel,
+            snapshotChannel = channel,
+            requestChannel = requestChannel,
             pages = initialState?.first ?: emptyList<Page<Key, Value>>(),
             loadStates = initialState?.second ?: defaultLoadStates()
         ).startPaging()
@@ -104,7 +104,7 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
                 updateKind = UpdateKind.Refresh,
                 pagingConfig = config,
                 loadStates = initialState.second,
-                uiChannel = uiChannel
+                requestChannel = requestChannel
             )
         )
     }
