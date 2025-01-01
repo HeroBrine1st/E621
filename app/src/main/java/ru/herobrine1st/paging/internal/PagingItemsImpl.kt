@@ -118,6 +118,9 @@ class PagingItemsImpl<Value : Any>(
                     // It may be unnecessary, but it is harmless, I think
                     val pages = updateKind.prepended.absoluteValue
                     val sign = updateKind.prepended.sign
+                    // FIXME undefined behavior on negative numbers if PagingSource returns pages with different item count
+                    //       this code was NOT used and this behavior was NOT tested
+                    // TODO replace "lastAccessedIndex" with proper LazyListState.layoutInfo connection for reliable future-proof fix
                     lastAccessedIndex = sign * snapshot.pages.take(pages).sumOf { it.data.size }
                 }
                 items = snapshot.pages.flatMap { it.data }
