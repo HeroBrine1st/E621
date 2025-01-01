@@ -135,9 +135,9 @@ class PagingItemsImpl<Value : Any>(
     private fun triggerPageLoad() {
         val prefetchDistance = pagingConfig?.prefetchDistance ?: 1
         if (lastAccessedIndex < prefetchDistance && loadStates.prepend == LoadState.NotLoading) {
-            uiChannel?.send(PagingRequest.Prepend)
+            uiChannel?.send(PagingRequest.PrependPage)
         } else if (lastAccessedIndex >= size - prefetchDistance && loadStates.append == LoadState.NotLoading) {
-            uiChannel?.send(PagingRequest.Append)
+            uiChannel?.send(PagingRequest.AppendPage)
         }
     }
 

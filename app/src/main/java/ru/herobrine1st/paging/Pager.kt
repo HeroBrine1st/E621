@@ -20,6 +20,8 @@
 
 package ru.herobrine1st.paging
 
+import android.util.Log
+import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import ru.herobrine1st.paging.api.LoadResult
@@ -34,181 +36,173 @@ import ru.herobrine1st.paging.internal.PagingRequest
 import ru.herobrine1st.paging.internal.SynchronizedBus
 import ru.herobrine1st.paging.internal.UpdateKind
 
+private const val TAG = "Pager"
+
 class Pager<Key : Any, Value : Any>(
     private val config: PagingConfig,
     private val initialKey: Key,
     private val pagingSource: PagingSource<Key, Value>,
 ) {
     val flow: Flow<Snapshot<Key, Value>> = channelFlow {
-        val uiChannel = SynchronizedBus<PagingRequest>()
+        PagerState(channel).startPaging()
+    }
 
-        var pages = emptyList<Page<Key, Value>>()
-        var loadStates = LoadStates(
+    private inner class PagerState(
+        val channel: SendChannel<Snapshot<Key, Value>>
+    ) {
+        val uiChannel: SynchronizedBus<PagingRequest> = SynchronizedBus<PagingRequest>()
+        var pages: List<Page<Key, Value>> = emptyList()
+        var loadStates: LoadStates = LoadStates(
             prepend = LoadState.Idle,
             append = LoadState.Idle,
             refresh = LoadState.NotLoading
         )
 
-        send(
-            Snapshot(
-                pages,
-                UpdateKind.StateChange,
-                config,
-                loadStates,
-                uiChannel
-            )
-        )
-
-        uiChannel.flow.collect { event ->
-            when (event) {
-                is PagingRequest.AppendOrPrepend -> {
-                    // TODO if LoadState is error for requested direction, do not retry implicitly
-                    //      also add retry request
-                    val key = when (event) {
-                        is PagingRequest.Append -> pages.last().nextKey
-                        is PagingRequest.Prepend -> pages.first().prevKey
-                    } ?: return@collect
-
-                    loadStates = when (event) {
-                        is PagingRequest.Append -> loadStates.copy(append = LoadState.Loading)
-                        is PagingRequest.Prepend -> loadStates.copy(prepend = LoadState.Loading)
-                    }
-
-                    send(
-                        Snapshot(
-                            pages,
-                            updateKind = UpdateKind.StateChange,
-                            pagingConfig = config,
-                            loadStates = loadStates,
-                            uiChannel = uiChannel
-                        )
-                    )
-
-                    val result = pagingSource.getPage(
-                        LoadParamsImpl(
-                            key = key,
-                            requestedSize = config.pageSize
-                        )
-                    )
-
-                    val updateKind: UpdateKind
-
-                    // Apply result
-                    when (result) {
-                        is LoadResult.Page<Key, Value> -> {
-                            pages = buildList(capacity = pages.size + 1) {
-                                addAll(pages)
-                                when (event) {
-                                    PagingRequest.Append -> add(Page.from(result, key))
-                                    PagingRequest.Prepend -> add(0, Page.from(result, key))
-                                }
-                            }
-
-                            loadStates = when (event) {
-                                is PagingRequest.Append -> loadStates.copy(
-                                    append = LoadState.NotLoading(result.nextKey == null)
-                                )
-
-                                is PagingRequest.Prepend -> loadStates.copy(
-                                    prepend = LoadState.NotLoading(result.previousKey == null)
-                                )
-                            }
-
-                            updateKind = when (event) {
-                                PagingRequest.Append -> UpdateKind.DataChange(
-                                    appended = 1,
-                                    prepended = 0
-                                )
-
-                                PagingRequest.Prepend -> UpdateKind.DataChange(
-                                    appended = 0,
-                                    prepended = 1
-                                )
-                            }
-                        }
-
-                        is LoadResult.Error<Key, Value> -> {
-                            loadStates = loadStates.copy(
-                                append = LoadState.Error(result.throwable)
-                            )
-                            updateKind = UpdateKind.StateChange
-                        }
-                    }
-                    // Notify observers
-                    send(
-                        Snapshot(
-                            pages = pages,
-                            updateKind = updateKind,
-                            pagingConfig = config,
-                            loadStates = loadStates,
-                            uiChannel = uiChannel
-                        )
-                    )
-                }
-
-                is PagingRequest.Refresh -> {
-                    val key = initialKey
-
-                    // Reset state
-                    loadStates = LoadStates(
-                        prepend = LoadState.Idle,
-                        append = LoadState.Idle,
-                        refresh = LoadState.Loading
-                    )
-
-                    // Notify observers
-                    send(
-                        Snapshot(
-                            pages = pages, // do not clear pages (should probably be configurable)
-                            updateKind = UpdateKind.StateChange,
-                            pagingConfig = config,
-                            loadStates = loadStates,
-                            uiChannel = uiChannel
-                        )
-                    )
-
-                    val result = pagingSource.getPage(
-                        LoadParamsImpl(
-                            key = key,
-                            requestedSize = config.initialLoadSize
-                        )
-                    )
-
-                    // Apply result
-                    val updateKind: UpdateKind
-                    when (result) {
-                        is LoadResult.Error -> {
-                            loadStates = loadStates.copy(
-                                prepend = LoadState.Idle,
-                                append = LoadState.Idle,
-                                refresh = LoadState.Error(result.throwable)
-                            )
-                            updateKind = UpdateKind.StateChange
-                        }
-
-                        is LoadResult.Page -> {
-                            pages = listOf(Page.from(result, key))
-                            loadStates = loadStates.copy(
-                                prepend = LoadState.NotLoading(result.previousKey == null),
-                                append = LoadState.NotLoading(result.nextKey == null),
-                                refresh = LoadState.Complete
-                            )
-                            updateKind = UpdateKind.Refresh
-                        }
-                    }
-
-                    // Notify observers
-                    send(
-                        Snapshot(
-                            pages = pages,
-                            updateKind = updateKind,
-                            pagingConfig = config,
-                            loadStates = loadStates,
-                            uiChannel = uiChannel
-                        )
-                    )
+        suspend fun startPaging() {
+            notifyObservers(UpdateKind.StateChange)
+            uiChannel.flow.collect { event ->
+                when (event) {
+                    is PagingRequest.PushPage -> push(event)
+                    is PagingRequest.Refresh -> refresh()
                 }
             }
+        }
+
+        suspend fun refresh() {
+            // TODO add error check
+            refreshUnsafe()
+        }
+
+        suspend fun push(event: PagingRequest.PushPage) {
+            // TODO add error check
+            pushUnsafe(event)
+        }
+
+        private suspend fun notifyObservers(updateKind: UpdateKind) {
+            channel.send(
+                Snapshot(
+                    pages = pages,
+                    updateKind = updateKind,
+                    pagingConfig = config,
+                    loadStates = loadStates,
+                    uiChannel = uiChannel
+                )
+            )
+        }
+
+        private suspend fun refreshUnsafe() {
+            // Reset state
+            loadStates = LoadStates(
+                prepend = LoadState.Idle,
+                append = LoadState.Idle,
+                refresh = LoadState.Loading
+            )
+
+            // do not clear pages (should probably be configurable)
+
+            notifyObservers(UpdateKind.StateChange)
+
+            val result = pagingSource.getPage(
+                LoadParamsImpl(
+                    key = initialKey,
+                    requestedSize = config.initialLoadSize
+                )
+            )
+
+            // Apply result
+            val updateKind: UpdateKind
+            when (result) {
+                is LoadResult.Error -> {
+                    loadStates = loadStates.copy(
+                        prepend = LoadState.Idle,
+                        append = LoadState.Idle,
+                        refresh = LoadState.Error(result.throwable)
+                    )
+                    updateKind = UpdateKind.StateChange
+                }
+
+                is LoadResult.Page -> {
+                    pages = listOf(Page.from(result, initialKey))
+                    loadStates = loadStates.copy(
+                        prepend = LoadState.NotLoading(result.previousKey == null),
+                        append = LoadState.NotLoading(result.nextKey == null),
+                        refresh = LoadState.Complete
+                    )
+                    updateKind = UpdateKind.Refresh
+                }
+            }
+
+            notifyObservers(updateKind)
+        }
+
+        private suspend fun pushUnsafe(event: PagingRequest.PushPage) {
+            val key = when (event) {
+                is PagingRequest.AppendPage -> pages.last().nextKey
+                is PagingRequest.PrependPage -> pages.first().prevKey
+            } ?: run {
+                Log.w(TAG, "Requested page push without key available: $event")
+                return
+            }
+
+            loadStates = when (event) {
+                is PagingRequest.AppendPage -> loadStates.copy(append = LoadState.Loading)
+                is PagingRequest.PrependPage -> loadStates.copy(prepend = LoadState.Loading)
+            }
+
+            notifyObservers(UpdateKind.StateChange)
+
+            val result = pagingSource.getPage(
+                LoadParamsImpl(
+                    key = key,
+                    requestedSize = config.pageSize
+                )
+            )
+
+            val updateKind: UpdateKind
+
+            // Apply result
+            when (result) {
+                is LoadResult.Page<Key, Value> -> {
+                    pages = buildList(capacity = pages.size + 1) {
+                        addAll(pages)
+                        when (event) {
+                            PagingRequest.AppendPage -> add(Page.from(result, key))
+                            PagingRequest.PrependPage -> add(0, Page.from(result, key))
+                        }
+                    }
+
+                    loadStates = when (event) {
+                        is PagingRequest.AppendPage -> loadStates.copy(
+                            append = LoadState.NotLoading(result.nextKey == null)
+                        )
+
+                        is PagingRequest.PrependPage -> loadStates.copy(
+                            prepend = LoadState.NotLoading(result.previousKey == null)
+                        )
+                    }
+
+                    updateKind = when (event) {
+                        PagingRequest.AppendPage -> UpdateKind.DataChange(
+                            appended = 1,
+                            prepended = 0
+                        )
+
+                        PagingRequest.PrependPage -> UpdateKind.DataChange(
+                            appended = 0,
+                            prepended = 1
+                        )
+                    }
+                }
+
+                is LoadResult.Error<Key, Value> -> {
+                    loadStates = loadStates.copy(
+                        append = LoadState.Error(result.throwable)
+                    )
+                    updateKind = UpdateKind.StateChange
+                }
+            }
+
+            notifyObservers(updateKind)
         }
     }
 }

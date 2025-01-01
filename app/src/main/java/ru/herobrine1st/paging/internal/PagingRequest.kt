@@ -24,9 +24,9 @@ sealed interface PagingRequest {
     data object Refresh : PagingRequest
 
     // A workaround for lack of union type in type checker
-    sealed interface AppendOrPrepend : PagingRequest
+    sealed interface PushPage : PagingRequest
 
-    data object Append : AppendOrPrepend
+    data object AppendPage : PushPage
 
-    data object Prepend : AppendOrPrepend
+    data object PrependPage : PushPage
 }
