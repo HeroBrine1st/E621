@@ -37,12 +37,12 @@ import kotlin.math.sign
 
 private const val TAG = "PagingItemsImpl"
 
-class PagingItemsImpl<Value : Any>(
-    val flow: Flow<Snapshot<*, Value>>,
+class PagingItemsImpl<Key : Any, Value : Any>(
+    val flow: Flow<Snapshot<Key, Value>>,
     private val startPagingImmediately: Boolean
 ) : PagingItems<Value> {
 
-    private var requestChannel: SynchronizedBus<PagingRequest>? = null
+    private var requestChannel: SynchronizedBus<PagingRequest<Key>>? = null
     private var pagingConfig: PagingConfig? = null
 
     override var loadStates by mutableStateOf(
@@ -61,9 +61,11 @@ class PagingItemsImpl<Value : Any>(
 
 
     private var lastAccessedIndex = -1
+    private var firstKey: Key? = null
+    private var lastKey: Key? = null
 
     init {
-        if (flow is SharedFlow<Snapshot<*, Value>>) {
+        if (flow is SharedFlow<Snapshot<Key, Value>>) {
             // Assuming it is a result of cachedIn, process cached value synchronously
             val cachedSnapshot = flow.replayCache.firstOrNull()
             if (cachedSnapshot != null) {
@@ -79,7 +81,7 @@ class PagingItemsImpl<Value : Any>(
         }
     }
 
-    private fun processSnapshot(snapshot: Snapshot<*, Value>) {
+    private fun processSnapshot(snapshot: Snapshot<Key, Value>) {
         if (requestChannel == null) {
             debug { Log.d(TAG, "Got uiChannel and pagingConfig") }
             requestChannel = snapshot.requestChannel
@@ -110,6 +112,8 @@ class PagingItemsImpl<Value : Any>(
             is UpdateKind.Refresh -> {
                 lastAccessedIndex = -1
                 items = snapshot.pages.flatMap { it.data }
+                firstKey = snapshot.pages.first().prevKey
+                lastKey = snapshot.pages.last().nextKey
             }
 
             is UpdateKind.DataChange -> {
@@ -123,6 +127,8 @@ class PagingItemsImpl<Value : Any>(
                     // TODO replace "lastAccessedIndex" with proper LazyListState.layoutInfo connection for reliable future-proof fix
                     lastAccessedIndex = sign * snapshot.pages.take(pages).sumOf { it.data.size }
                 }
+                firstKey = snapshot.pages.first().prevKey
+                lastKey = snapshot.pages.last().nextKey
                 items = snapshot.pages.flatMap { it.data }
                 // Fix possible edge cases where user otherwise have to violently scroll to trigger load
                 // Also it immediately requests new page if appended page is empty, avoiding visual bugs
@@ -138,9 +144,9 @@ class PagingItemsImpl<Value : Any>(
     private fun triggerPageLoad() {
         val prefetchDistance = pagingConfig?.prefetchDistance ?: 1
         if (lastAccessedIndex < prefetchDistance && loadStates.prepend == LoadState.NotLoading) {
-            requestChannel?.send(PagingRequest.PrependPage)
+            requestChannel?.send(PagingRequest.PrependPage(firstKey ?: return))
         } else if (lastAccessedIndex >= size - prefetchDistance && loadStates.append == LoadState.NotLoading) {
-            requestChannel?.send(PagingRequest.AppendPage)
+            requestChannel?.send(PagingRequest.AppendPage(lastKey ?: return))
         }
     }
 

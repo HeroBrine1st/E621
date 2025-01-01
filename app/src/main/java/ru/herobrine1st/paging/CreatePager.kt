@@ -57,7 +57,7 @@ fun <Key : Any, Value : Any> createPager(
         initialKey = initialKey,
         pagingSource = pagingSource,
         snapshotChannel = channel,
-        requestChannel = SynchronizedBus<PagingRequest>()
+        requestChannel = SynchronizedBus<PagingRequest<Key>>()
     ).startPaging()
 }
 
@@ -77,7 +77,7 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
     pagingSource: PagingSource<Key, Value>,
     initialState: Pair<List<Page<Key, Value>>, LoadStates>?
 ): SharedFlow<Snapshot<Key, Value>> {
-    val requestChannel = SynchronizedBus<PagingRequest>()
+    val requestChannel = SynchronizedBus<PagingRequest<Key>>()
     val flow = channelFlow {
         Pager(
             config = config,

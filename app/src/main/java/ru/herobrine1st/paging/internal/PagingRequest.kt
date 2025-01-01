@@ -20,15 +20,15 @@
 
 package ru.herobrine1st.paging.internal
 
-sealed interface PagingRequest {
-    data object Refresh : PagingRequest
+sealed interface PagingRequest<out Key> {
+    data object Refresh : PagingRequest<Nothing>
 
     // A workaround for lack of union type in type checker
-    sealed interface PushPage : PagingRequest
+    sealed interface PushPage<Key> : PagingRequest<Key>
 
-    data object AppendPage : PushPage
+    data class AppendPage<Key>(val lastKey: Key) : PushPage<Key>
 
-    data object PrependPage : PushPage
+    data class PrependPage<Key>(val firstKey: Key) : PushPage<Key>
 
-    data object Retry : PagingRequest
+    data object Retry : PagingRequest<Nothing>
 }

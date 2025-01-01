@@ -30,5 +30,5 @@ data class Snapshot<Key : Any, Value : Any>(
     val updateKind: UpdateKind,
     val pagingConfig: PagingConfig,
     val loadStates: LoadStates,
-    val requestChannel: SynchronizedBus<PagingRequest>,
+    val requestChannel: SynchronizedBus<PagingRequest<Key>>,
 )

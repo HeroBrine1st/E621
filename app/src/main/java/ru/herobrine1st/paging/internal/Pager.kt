@@ -45,7 +45,7 @@ class Pager<Key : Any, Value : Any>(
     private val initialKey: Key,
     private val pagingSource: PagingSource<Key, Value>,
     val snapshotChannel: SendChannel<Snapshot<Key, Value>>,
-    val requestChannel: SynchronizedBus<PagingRequest>,
+    val requestChannel: SynchronizedBus<PagingRequest<Key>>,
     var pages: List<Page<Key, Value>> = emptyList(),
     var loadStates: LoadStates = defaultLoadStates()
 ) {
@@ -82,9 +82,9 @@ class Pager<Key : Any, Value : Any>(
         refreshUnsafe()
     }
 
-    suspend fun push(event: PagingRequest.PushPage) {
+    suspend fun push(event: PagingRequest.PushPage<Key>) {
         when (event) {
-            PagingRequest.AppendPage -> if (loadStates.append is LoadState.Error) {
+            is PagingRequest.AppendPage -> if (loadStates.append is LoadState.Error) {
                 // It is NOT expected for UI part to retry repeatedly
                 Log.w(TAG, "Tried to append without retry: $loadStates")
                 debug {
@@ -92,9 +92,10 @@ class Pager<Key : Any, Value : Any>(
                     Log.wtf(TAG, "Tried to append without retry: $loadStates")
                 }
                 return
-            }
+                // Ignore repeated requests
+            } else if (pages.last().nextKey != event.lastKey) return
 
-            PagingRequest.PrependPage -> if (loadStates.prepend is LoadState.Error) {
+            is PagingRequest.PrependPage -> if (loadStates.prepend is LoadState.Error) {
                 // It is NOT expected for UI part to retry repeatedly
                 Log.w(TAG, "Tried to prepend without retry: $loadStates")
                 debug {
@@ -102,7 +103,8 @@ class Pager<Key : Any, Value : Any>(
                     Log.wtf(TAG, "Tried to prepend without retry: $loadStates")
                 }
                 return
-            }
+                // Ignore repeated requests
+            } else if (pages.first().prevKey != event.firstKey) return
         }
         pushUnsafe(event)
     }
@@ -113,10 +115,10 @@ class Pager<Key : Any, Value : Any>(
         } else {
             // it may be both directions
             if (loadStates.append is LoadState.Error) {
-                pushUnsafe(PagingRequest.AppendPage)
+                pushUnsafe(PagingRequest.AppendPage(pages.last().nextKey ?: return))
             }
             if (loadStates.prepend is LoadState.Error) {
-                pushUnsafe(PagingRequest.PrependPage)
+                pushUnsafe(PagingRequest.PrependPage(pages.first().prevKey ?: return))
             }
         }
     }
@@ -189,7 +191,8 @@ class Pager<Key : Any, Value : Any>(
         notifyObservers(updateKind)
     }
 
-    private suspend fun pushUnsafe(event: PagingRequest.PushPage) {
+    // TODO as it utilises only type of event, use boolean
+    private suspend fun pushUnsafe(event: PagingRequest.PushPage<Key>) {
         val key = when (event) {
             is PagingRequest.AppendPage -> pages.last().nextKey
             is PagingRequest.PrependPage -> pages.first().prevKey
@@ -222,37 +225,37 @@ class Pager<Key : Any, Value : Any>(
                 pages = buildList(capacity = pages.size + 1) {
                     addAll(pages)
                     when (event) {
-                        PagingRequest.AppendPage -> {
+                        is PagingRequest.AppendPage -> {
                             add(Page.from(result, key))
                             appended = 1
                             if (size > config.maxPagesInMemory) {
-                                debug {
-                                    Log.d(
-                                        TAG,
-                                        "Dropping first page due to page count ($size) being larger than configured (${config.maxPagesInMemory})"
-                                    )
-                                }
                                 prepended = -1
                                 // drop first page
                                 removeAt(0)
+                                debug {
+                                    Log.d(
+                                        TAG,
+                                        "Dropping first page due to page count being larger than configured (${config.maxPagesInMemory}) and now it is $size"
+                                    )
+                                }
                             } else {
                                 prepended = 0
                             }
                         }
 
-                        PagingRequest.PrependPage -> {
+                        is PagingRequest.PrependPage -> {
                             add(0, Page.from(result, key))
                             prepended = 1
                             if (size > config.maxPagesInMemory) {
-                                debug {
-                                    Log.d(
-                                        TAG,
-                                        "Dropping last page due to page count ($size) being larger than configured (${config.maxPagesInMemory})"
-                                    )
-                                }
                                 appended = -1
                                 // drop last page
                                 removeAt(lastIndex)
+                                debug {
+                                    Log.d(
+                                        TAG,
+                                        "Dropping last page due to page count being larger than configured (${config.maxPagesInMemory}) and now it is $size"
+                                    )
+                                }
                             } else {
                                 appended = 0
                             }
