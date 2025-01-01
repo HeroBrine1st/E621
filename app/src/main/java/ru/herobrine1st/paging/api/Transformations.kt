@@ -30,6 +30,11 @@ import ru.herobrine1st.paging.internal.Page
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.cachedIn(scope: CoroutineScope) =
     shareIn(scope, SharingStarted.Lazily, replay = 1)
 
+/**
+ * This function returns pager state that can be saved to survive process recreation and then provided to [ru.herobrine1st.paging.createPager].
+ *
+ * This extension function is intended to be called on result of exactly [ru.herobrine1st.paging.createPager], otherwise behavior of state preservation is undefined.
+ */
 fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.getStateForPreservation(): Pair<List<Page<Key, Value>>, LoadStates>? {
     val snapshot = this.replayCache.firstOrNull() ?: return null
     return snapshot.pages to snapshot.loadStates
