@@ -22,12 +22,18 @@ package ru.herobrine1st.paging.api
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.shareIn
 import ru.herobrine1st.paging.internal.Page
 
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.cachedIn(scope: CoroutineScope) =
     shareIn(scope, SharingStarted.Lazily, replay = 1)
+
+fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.getStateForPreservation(): Pair<List<Page<Key, Value>>, LoadStates>? {
+    val snapshot = this.replayCache.firstOrNull() ?: return null
+    return snapshot.pages to snapshot.loadStates
+}
 
 inline fun <Key : Any, Value : Any, R : Any> Snapshot<Key, Value>.transform(
     block: (List<Value>) -> List<R>,

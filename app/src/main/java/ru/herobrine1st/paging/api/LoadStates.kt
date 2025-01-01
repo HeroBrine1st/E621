@@ -20,6 +20,9 @@
 
 package ru.herobrine1st.paging.api
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class LoadStates(
     val prepend: LoadState,
     val append: LoadState,

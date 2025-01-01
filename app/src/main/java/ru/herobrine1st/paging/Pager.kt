@@ -43,25 +43,55 @@ class Pager<Key : Any, Value : Any>(
     private val config: PagingConfig,
     private val initialKey: Key,
     private val pagingSource: PagingSource<Key, Value>,
+    /**
+     * This parameter is used to restore state previously saved with [ru.herobrine1st.paging.api.getStateForPreservation]
+     */
+    private var initialState: Pair<List<Page<Key, Value>>, LoadStates>? = null
 ) {
+    // TODO thread unsafety is largely introduced not by mutable data but by class used as a mere function, which encourages instance reuse
+    //      Replace this class with function returning flow, and rename PagerState to Pager as it is actual Pager
+    //      If this class were a function, initialState could be a simple non-mutable parameter with side-effect of restoring state on each collection
+    //      which can be mitigated by explicitly saying that multi-collection leads to undefined behavior and recommendation to use cachedIn
+    // side-note: we can create function returning Flow, preserve cachedIn function and also create function returning StateFlow
+    // that combines state restoration and custom implementation of cachedIn to incorporate synchronous state restoration
+
     val flow: Flow<Snapshot<Key, Value>> = channelFlow {
-        PagerState(channel).startPaging()
+        val state = initialState?.let { state ->
+            // SAFETY: in worst case scenario, concurrent usage can create multiple Flows with the same initial state
+            //         but PagerState is copy-on-write, so no harm is possible
+            // The main goal is not harmed either: for initial state reuse there needs a concurrent usage while this
+            // code ensures that state can't go back in time e.g. when this flow is collected second time,
+            // and concurrent usage is in the same point of time - so time travel is impossible.
+            // Also this is intended to be used with cachedIn, which ensures singular collection.
+            initialState = null
+            PagerState(
+                channel,
+                pages = state.first,
+                loadStates = state.second
+            )
+        } ?: PagerState(channel)
+
+        state.startPaging()
     }
 
     private inner class PagerState(
-        val channel: SendChannel<Snapshot<Key, Value>>
-    ) {
-        val uiChannel: SynchronizedBus<PagingRequest> = SynchronizedBus<PagingRequest>()
-        var pages: List<Page<Key, Value>> = emptyList()
+        val channel: SendChannel<Snapshot<Key, Value>>,
+        var pages: List<Page<Key, Value>> = emptyList(),
         var loadStates: LoadStates = LoadStates(
             prepend = LoadState.Idle,
             append = LoadState.Idle,
             refresh = LoadState.NotLoading
         )
+    ) {
+        val uiChannel: SynchronizedBus<PagingRequest> = SynchronizedBus<PagingRequest>()
 
         // Pager entry point
-        suspend fun startPaging() {
-            notifyObservers(UpdateKind.StateChange)
+        // WARNING: This method is to be called ONCE PER INSTANCE. If violated, behavior is unspecified
+        suspend fun startPaging(): Nothing {
+            notifyObservers(
+                if (pages.isNotEmpty()) UpdateKind.Refresh // it's like we made a request to server and got all the data synchronously
+                else UpdateKind.StateChange
+            )
             uiChannel.flow.collect { event ->
                 when (event) {
                     is PagingRequest.PushPage -> push(event)
@@ -69,6 +99,7 @@ class Pager<Key : Any, Value : Any>(
                     PagingRequest.Retry -> retry()
                 }
             }
+            error("UI event channel collection is complete, which should not happen")
         }
 
         // "Public" API called via uiChannel
@@ -168,7 +199,7 @@ class Pager<Key : Any, Value : Any>(
                     loadStates = loadStates.copy(
                         prepend = LoadState.Idle,
                         append = LoadState.Idle,
-                        refresh = LoadState.Error(result.throwable)
+                        refresh = LoadState.Error(result.throwable.message)
                     )
                     updateKind = UpdateKind.StateChange
                 }
@@ -248,7 +279,7 @@ class Pager<Key : Any, Value : Any>(
 
                 is LoadResult.Error<Key, Value> -> {
                     loadStates = loadStates.copy(
-                        append = LoadState.Error(result.throwable)
+                        append = LoadState.Error(result.throwable.message)
                     )
                     updateKind = UpdateKind.StateChange
                 }
