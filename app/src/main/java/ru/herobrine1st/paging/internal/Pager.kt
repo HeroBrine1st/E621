@@ -45,19 +45,19 @@ class Pager<Key : Any, Value : Any>(
     private val initialKey: Key,
     private val pagingSource: PagingSource<Key, Value>,
     val channel: SendChannel<Snapshot<Key, Value>>,
+    val uiChannel: SynchronizedBus<PagingRequest>,
     var pages: List<Page<Key, Value>> = emptyList(),
     var loadStates: LoadStates = defaultLoadStates()
 ) {
-
-    val uiChannel: SynchronizedBus<PagingRequest> = SynchronizedBus<PagingRequest>()
-
     // Pager entry point
     // WARNING: This method is to be called ONCE PER INSTANCE. If violated, behavior is unspecified
     suspend fun startPaging(): Nothing {
-        notifyObservers(
-            if (pages.isNotEmpty()) UpdateKind.Refresh // it's like we made a request to server and got all the data synchronously
-            else UpdateKind.StateChange
-        )
+//        notifyObservers(
+//            if (pages.isNotEmpty()) UpdateKind.Refresh // it's like we made a request to server and got all the data instantly
+//            else UpdateKind.StateChange
+//        )
+        // Probably it is enough as createPager emits `Refresh` itself
+        notifyObservers(UpdateKind.StateChange)
         uiChannel.flow.collect { event ->
             when (event) {
                 is PagingRequest.PushPage -> push(event)
@@ -124,6 +124,11 @@ class Pager<Key : Any, Value : Any>(
     // Private helper methods
 
     private suspend fun notifyObservers(updateKind: UpdateKind) {
+        // WARNING: This is not the only place where snapshot is sourced
+        // Other places:
+        // - State preservation feature requires passing Snapshot instance down the flow synchronously
+        //   ru.herobrine1st.paging.createPager
+        // Remember to update
         channel.send(
             Snapshot(
                 pages = pages,

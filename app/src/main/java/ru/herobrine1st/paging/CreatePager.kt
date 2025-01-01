@@ -22,15 +22,20 @@ package ru.herobrine1st.paging
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.launch
 import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingConfig
 import ru.herobrine1st.paging.api.PagingSource
 import ru.herobrine1st.paging.api.Snapshot
-import ru.herobrine1st.paging.api.cachedIn
 import ru.herobrine1st.paging.internal.Page
 import ru.herobrine1st.paging.internal.Pager
+import ru.herobrine1st.paging.internal.PagingRequest
+import ru.herobrine1st.paging.internal.SynchronizedBus
+import ru.herobrine1st.paging.internal.UpdateKind
 import ru.herobrine1st.paging.internal.defaultLoadStates
 
 /**
@@ -48,10 +53,11 @@ fun <Key : Any, Value : Any> createPager(
     pagingSource: PagingSource<Key, Value>
 ): Flow<Snapshot<Key, Value>> = channelFlow {
     Pager(
-        config,
-        initialKey,
-        pagingSource,
-        channel
+        config = config,
+        initialKey = initialKey,
+        pagingSource = pagingSource,
+        channel = channel,
+        uiChannel = SynchronizedBus<PagingRequest>()
     ).startPaging()
 }
 
@@ -71,23 +77,42 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
     pagingSource: PagingSource<Key, Value>,
     initialState: Pair<List<Page<Key, Value>>, LoadStates>?
 ): SharedFlow<Snapshot<Key, Value>> {
+    val uiChannel = SynchronizedBus<PagingRequest>()
     val flow = channelFlow {
-        // SAFETY:
-        //     - thread safety is guaranteed by cachedIn, which prohibits concurrent collection starting
-        //     - logic safety *will* be guaranteed by custom implementation of cachedIn, which will prohibit multi-collection across long time durations
-        //       or (if Sharing.WhileSubscribed) consume initialState so that it is not reused
         Pager(
-            config,
-            initialKey,
-            pagingSource,
-            channel,
+            config = config,
+            initialKey = initialKey,
+            pagingSource = pagingSource,
+            // if this particular line is extracted from constructor and delayed, code below will be safe as we can reuse Pager code
+            // to create Snapshot instance
+            // But delaying channel provision creates problems on its own
+            channel = channel,
+            uiChannel = uiChannel,
             pages = initialState?.first ?: emptyList<Page<Key, Value>>(),
             loadStates = initialState?.second ?: defaultLoadStates()
         ).startPaging()
     }
-        // TODO implement custom synchronous state restoration
-        .cachedIn(this)
+    val sharedFlow = MutableSharedFlow<Snapshot<Key, Value>>(replay = 1)
+    if (initialState != null) {
+        // SAFETY: UNSAFE
+        // See Pager comments on Snapshot creation (notifyObservers method)
+        //
+        // Synchronously create Snapshot and pass it to replayCache for PagingItemsImpl to pick it up also synchronously
+        sharedFlow.tryEmit(
+            Snapshot(
+                pages = initialState.first,
+                updateKind = UpdateKind.Refresh,
+                pagingConfig = config,
+                loadStates = initialState.second,
+                uiChannel = uiChannel
+            )
+        )
+    }
 
-    return flow
+    // SAFETY: uiChannel reuse is prohibited by not exposing initial pager flow
+    // and so this line is guaranteed to be the only one single collection of that flow.
+    launch { flow.collect(sharedFlow) }
+
+    return sharedFlow.asSharedFlow()
 }
 
