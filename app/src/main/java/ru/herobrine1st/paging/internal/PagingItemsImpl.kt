@@ -32,8 +32,6 @@ import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingConfig
 import ru.herobrine1st.paging.api.PagingItems
 import ru.herobrine1st.paging.api.Snapshot
-import kotlin.math.absoluteValue
-import kotlin.math.sign
 
 private const val TAG = "PagingItemsImpl"
 
@@ -121,14 +119,14 @@ class PagingItemsImpl<Key : Any, Value : Any>(
 
             is UpdateKind.DataChange -> {
                 if (updateKind.prepended != 0) {
-                    // Change lastAccessedIndex accordingly
-                    // It may be unnecessary, but it is harmless, I think
-                    val pages = updateKind.prepended.absoluteValue
-                    val sign = updateKind.prepended.sign
-                    // FIXME undefined behavior on negative numbers if PagingSource returns pages with different item count
-                    //       this code was NOT used and this behavior was NOT tested
-                    // TODO replace "lastAccessedIndex" with proper LazyListState.layoutInfo connection for reliable future-proof fix
-                    lastAccessedIndex = sign * snapshot.pages.take(pages).sumOf { it.data.size }
+                    // Change lastAccessedIndex accordingly so that triggerPageLoad has proper index
+                    lastAccessedIndex += if (updateKind.prepended < 0) {
+                        // FIXME undefined behavior on negative numbers if PagingSource returns pages with different item count
+                        // TODO replace "lastAccessedIndex" with proper LazyListState.layoutInfo connection for reliable future-proof fix
+                        snapshot.pages.first().data.size * updateKind.prepended
+                    } else {
+                        snapshot.pages.take(updateKind.prepended).sumOf { it.data.size }
+                    }
                 }
                 firstKey = snapshot.pages.first().prevKey
                 lastKey = snapshot.pages.last().nextKey
