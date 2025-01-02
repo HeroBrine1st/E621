@@ -76,12 +76,12 @@ fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.connectToDecomposeCompon
 
 /**
  * The state preservation feature of Paging allows to save paging state across process recreations.
- * This function saves [ru.herobrine1st.paging.Pager] state in [StateKeeper].
+ * This function saves pager state in [StateKeeper].
  *
- * @param key a key to be associated with the [ru.herobrine1st.paging.Pager] state value.
+ * @param key a key to be associated with the pager state value.
  * @param keySerializer a [KSerializer] for serializing the key.
  * @param valueSerializer a [KSerializer] for serializing the value.
- * @param supplier a supplier of the cached [ru.herobrine1st.paging.Pager.flow].
+ * @param supplier a supplier of strictly the result of [ru.herobrine1st.paging.createPager]. If violated, behavior is undefined.
  */
 fun <Key : Any, Value : Any> StateKeeper.registerPagingState(
     key: String,
@@ -101,20 +101,20 @@ fun <Key : Any, Value : Any> StateKeeper.registerPagingState(
 
 /**
  * The state preservation feature of Paging allows to save paging state across process recreations.
- * This function restores [ru.herobrine1st.paging.Pager] from [StateKeeper] and returns its state to be provided to Pager constructor.
+ * This function restores pager from [StateKeeper] and returns its state to be provided to [ru.herobrine1st.paging.createPager].
  *
- * This function should be called every time component is [Lifecycle.State.CREATED] even if its result will be dropped instantly
+ * This function should be called every time component is [Lifecycle.State.INITIALIZED] even if its result will be dropped instantly
  * due to [com.arkivanov.essenty.instancekeeper.InstanceKeeper.Instance] holding the same (or newer) state. The reason to do that is large memory footprint
  * of Paging, and while serialized, it consumes memory in StateKeeper despite being not used.
  *
  * @param key a key to look up.
  * @param keySerializer a [KSerializer] for deserializing the key.
  * @param valueSerializer a [KSerializer] for deserializing the value.
- * @return [ru.herobrine1st.paging.Pager] state to be provided to its constructor.
+ * @return Pager state to be provided to [ru.herobrine1st.paging.createPager].
  */
 fun <Key : Any, Value : Any> StateKeeper.consumePagingState(
     key: String,
-    // using KSerializer instead of SerializationStrategy as it is incredibly hard to create
+    // using KSerializer instead of DeserializationStrategy as it is incredibly hard to create
     // ListDeserializationStrategy and PairDeserializationStrategy without using internals of kotlinx.serialization
     keySerializer: KSerializer<Key>,
     valueSerializer: KSerializer<Value>,

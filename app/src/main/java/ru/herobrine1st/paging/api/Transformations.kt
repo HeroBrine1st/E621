@@ -27,6 +27,9 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.shareIn
 import ru.herobrine1st.paging.internal.Page
 
+/**
+ * This function configures flow sharing in a way [PagingItems] can restore its state on subsequent instantiations via replayCache.
+ */
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.cachedIn(scope: CoroutineScope) =
     shareIn(scope, SharingStarted.Lazily, replay = 1)
 

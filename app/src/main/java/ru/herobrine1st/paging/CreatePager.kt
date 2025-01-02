@@ -44,7 +44,8 @@ import ru.herobrine1st.paging.internal.defaultLoadStates
 /**
  * This function creates an instance of pager, ready to be connected to UI.
  *
- * This variant of pager does not support state preservation feature.
+ * This variant of pager does not support state preservation feature and is not cached by default.
+ * Use [ru.herobrine1st.paging.api.cachedIn] to persist this pager across collections.
  *
  * @param config Pager configuration.
  * @param initialKey Key used for getting initial paging data (i.e. refreshing).
@@ -68,6 +69,7 @@ fun <Key : Any, Value : Any> createPager(
  * This function creates an instance of pager, ready to be connected to UI.
  *
  * This variant of pager supports state preservation feature. Provide [initialState] to enable it.
+ * This pager is cached by default.
  *
  * @param config Pager configuration.
  * @param initialKey Key used for getting initial paging data (i.e. refreshing).
