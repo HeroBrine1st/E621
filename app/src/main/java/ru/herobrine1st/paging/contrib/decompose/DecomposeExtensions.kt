@@ -29,14 +29,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
-import kotlinx.serialization.builtins.ListSerializer
-import kotlinx.serialization.builtins.PairSerializer
-import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingItems
 import ru.herobrine1st.paging.api.Snapshot
 import ru.herobrine1st.paging.api.getStateForPreservation
-import ru.herobrine1st.paging.internal.Page
 import ru.herobrine1st.paging.internal.PagingItemsImpl
+import ru.herobrine1st.paging.internal.SavedPagerState
 
 /**
  * Collects this pager as PagingItems in Decompose component
@@ -86,15 +83,12 @@ fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.connectToDecomposeCompon
 fun <Key : Any, Value : Any> StateKeeper.registerPagingState(
     key: String,
     // using KSerializer instead of SerializationStrategy as it is incredibly hard to create
-    // ListSerializationStrategy and PairSerializationStrategy without using internals of kotlinx.serialization
+    // ListSerializationStrategy without using internals of kotlinx.serialization
     keySerializer: KSerializer<Key>,
     valueSerializer: KSerializer<Value>,
     supplier: () -> SharedFlow<Snapshot<Key, Value>>
 ) {
-    val stateSerializer = PairSerializer(
-        ListSerializer(Page.serializer(keySerializer, valueSerializer)),
-        LoadStates.serializer()
-    )
+    val stateSerializer = SavedPagerState.serializer(keySerializer, valueSerializer)
 
     register(key, stateSerializer) { supplier().getStateForPreservation() }
 }
@@ -115,13 +109,11 @@ fun <Key : Any, Value : Any> StateKeeper.registerPagingState(
 fun <Key : Any, Value : Any> StateKeeper.consumePagingState(
     key: String,
     // using KSerializer instead of DeserializationStrategy as it is incredibly hard to create
-    // ListDeserializationStrategy and PairDeserializationStrategy without using internals of kotlinx.serialization
+    // ListDeserializationStrategy without using internals of kotlinx.serialization
     keySerializer: KSerializer<Key>,
     valueSerializer: KSerializer<Value>,
-): Pair<List<Page<Key, Value>>, LoadStates>? {
-    val stateSerializer = PairSerializer(
-        ListSerializer(Page.serializer(keySerializer, valueSerializer)),
-        LoadStates.serializer()
-    )
+): SavedPagerState<Key, Value>? {
+    val stateSerializer = SavedPagerState.serializer(keySerializer, valueSerializer)
+
     return consume(key, stateSerializer)
 }

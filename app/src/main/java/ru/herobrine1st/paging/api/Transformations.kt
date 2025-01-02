@@ -28,6 +28,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.runBlocking
 import ru.herobrine1st.paging.internal.Page
+import ru.herobrine1st.paging.internal.SavedPagerState
 
 /**
  * This function configures flow sharing in a way [PagingItems] can restore its state on subsequent instantiations via replayCache.
@@ -40,9 +41,28 @@ fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.cachedIn(scope: Coroutin
  *
  * This extension function is intended to be called on result of exactly [ru.herobrine1st.paging.createPager], otherwise behavior of state preservation is undefined.
  */
-fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.getStateForPreservation(): Pair<List<Page<Key, Value>>, LoadStates>? {
+fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.getStateForPreservation(): SavedPagerState<Key, Value>? {
     val snapshot = this.replayCache.firstOrNull() ?: return null
-    return snapshot.pages to snapshot.loadStates
+    if (snapshot.pages.isEmpty()) return null // empty pages - nothing to persist
+    if (snapshot.loadStates.refresh !is LoadState.Complete) return null // if refreshing, current state will soon be not valid - nothing to persist
+    return SavedPagerState(snapshot.pages, snapshot.loadStates.sanitize())
+}
+
+internal fun LoadStates.sanitize() = LoadStates(
+    refresh = refresh.sanitize(),
+    append = append.sanitize(),
+    prepend = prepend.sanitize()
+)
+
+internal fun LoadState.sanitize() = when (this) {
+    // Normal cases: no network activity
+    LoadState.NotLoading -> this
+    LoadState.Complete -> this
+
+    // Edge cases
+    is LoadState.Error -> LoadState.NotLoading
+    LoadState.Loading -> LoadState.NotLoading
+    LoadState.Idle -> error("Can't sanitize uninitialized state")
 }
 
 /**
@@ -72,7 +92,7 @@ fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.getStateForPreserv
  */
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.waitStateRestorationAndCacheIn(
     scope: CoroutineScope,
-    initialState: Pair<List<Page<*, *>>, LoadStates>?
+    initialState: SavedPagerState<*, *>?
 ): SharedFlow<Snapshot<Key, Value>> {
     // P.s. another solution is to set SharingStarter.Eagerly, but it implies race condition
     val flow = cachedIn(scope)

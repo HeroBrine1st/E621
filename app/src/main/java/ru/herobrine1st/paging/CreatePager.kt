@@ -31,13 +31,14 @@ import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.util.debug
-import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingConfig
 import ru.herobrine1st.paging.api.PagingSource
 import ru.herobrine1st.paging.api.Snapshot
+import ru.herobrine1st.paging.api.sanitize
 import ru.herobrine1st.paging.internal.Page
 import ru.herobrine1st.paging.internal.Pager
 import ru.herobrine1st.paging.internal.PagingRequest
+import ru.herobrine1st.paging.internal.SavedPagerState
 import ru.herobrine1st.paging.internal.SynchronizedBus
 import ru.herobrine1st.paging.internal.UpdateKind
 import ru.herobrine1st.paging.internal.defaultLoadStates
@@ -83,8 +84,15 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
     config: PagingConfig,
     initialKey: Key,
     pagingSource: PagingSource<Key, Value>,
-    initialState: Pair<List<Page<Key, Value>>, LoadStates>?
+    initialState: SavedPagerState<Key, Value>?
 ): SharedFlow<Snapshot<Key, Value>> {
+    debug {
+        initialState?.let {
+            // probably `internal` modifier is very helpful here
+            check(it.loadStates.sanitize() == it.loadStates) { "Intervention detected: persisted data is inconsistent with internal constraints" }
+        }
+    }
+
     val requestChannel = SynchronizedBus<PagingRequest<Key>>()
     val flow = channelFlow {
         Pager(
@@ -96,8 +104,8 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
             // But delaying channel provision creates problems on its own
             snapshotChannel = channel,
             requestChannel = requestChannel,
-            pages = initialState?.first ?: emptyList<Page<Key, Value>>(),
-            loadStates = initialState?.second ?: defaultLoadStates()
+            pages = initialState?.pages ?: emptyList<Page<Key, Value>>(),
+            loadStates = initialState?.loadStates ?: defaultLoadStates()
         ).startPaging()
     }
     val sharedFlow = MutableSharedFlow<Snapshot<Key, Value>>(replay = 1)
@@ -111,10 +119,10 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
         // Synchronously create Snapshot and pass it to replayCache for PagingItemsImpl to pick it up also synchronously
         sharedFlow.tryEmit(
             Snapshot(
-                pages = initialState.first,
+                pages = initialState.pages,
                 updateKind = UpdateKind.Refresh,
                 pagingConfig = config,
-                loadStates = initialState.second,
+                loadStates = initialState.loadStates,
                 requestChannel = requestChannel
             )
         ).also {

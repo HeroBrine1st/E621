@@ -67,7 +67,6 @@ import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.accumulate
 import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.isFavourite
-import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingConfig
 import ru.herobrine1st.paging.api.Snapshot
 import ru.herobrine1st.paging.api.applyPageBoundary
@@ -77,7 +76,7 @@ import ru.herobrine1st.paging.contrib.decompose.connectToDecomposeComponentAsPag
 import ru.herobrine1st.paging.contrib.decompose.consumePagingState
 import ru.herobrine1st.paging.contrib.decompose.registerPagingState
 import ru.herobrine1st.paging.createPager
-import ru.herobrine1st.paging.internal.Page
+import ru.herobrine1st.paging.internal.SavedPagerState
 import java.util.function.Predicate
 
 private const val TAG = "PostListingComponent"
@@ -191,7 +190,7 @@ class PostListingComponent(
         searchOptions: SearchOptions,
         dataStore: PreferencesStore,
         blacklistRepository: BlacklistRepository,
-        pagerState: Pair<List<Page<Int, Post>>, LoadStates>?
+        pagerState: SavedPagerState<Int, Post>?
     ) : InstanceBase() {
         private val blacklistPredicateFlow =
             blacklistRepository.getEntriesFlow()
