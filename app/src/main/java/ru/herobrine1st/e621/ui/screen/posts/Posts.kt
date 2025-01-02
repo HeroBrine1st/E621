@@ -68,7 +68,6 @@ import ru.herobrine1st.e621.ui.screen.posts.component.Post
 import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.paging.api.LoadState
-import ru.herobrine1st.paging.api.collectAsPagingItems
 import ru.herobrine1st.paging.api.contentType
 import ru.herobrine1st.paging.api.itemKey
 import kotlin.math.max
@@ -82,7 +81,7 @@ fun Posts(
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
 
-    val posts = component.postsFlow.collectAsPagingItems(startImmediately = true)
+    val posts = component.pagingItems
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 

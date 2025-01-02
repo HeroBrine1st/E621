@@ -68,6 +68,9 @@ class PagingItemsImpl<Key : Any, Value : Any>(
         if (flow is SharedFlow<Snapshot<Key, Value>>) {
             // Assuming it is a result of cachedIn, process cached value synchronously
             val cachedSnapshot = flow.replayCache.firstOrNull()
+            debug {
+                Log.d(TAG, "Cached snapshot presence: ${cachedSnapshot != null}")
+            }
             if (cachedSnapshot != null) {
                 processSnapshot(cachedSnapshot)
             } else if (startPagingImmediately) {

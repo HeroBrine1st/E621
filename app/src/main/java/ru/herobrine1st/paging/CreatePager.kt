@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingConfig
 import ru.herobrine1st.paging.api.PagingSource
@@ -40,6 +41,8 @@ import ru.herobrine1st.paging.internal.PagingRequest
 import ru.herobrine1st.paging.internal.SynchronizedBus
 import ru.herobrine1st.paging.internal.UpdateKind
 import ru.herobrine1st.paging.internal.defaultLoadStates
+
+private const val TAG = "CreatePager"
 
 /**
  * This function creates an instance of pager, ready to be connected to UI.
@@ -99,6 +102,9 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
     }
     val sharedFlow = MutableSharedFlow<Snapshot<Key, Value>>(replay = 1)
     if (initialState != null) {
+        debug {
+            Log.d(TAG, "Got initial state, emitting synchronously")
+        }
         // SAFETY: UNSAFE
         // See Pager comments on Snapshot creation (notifyObservers method)
         //
@@ -119,6 +125,7 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
                 )
             }
         }
+
     }
 
     launch {
@@ -129,6 +136,8 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
         flow.collect(sharedFlow)
     }
 
-    return sharedFlow.asSharedFlow()
+    return sharedFlow.asSharedFlow().debug {
+        check(initialState == null || replayCache.size == 1) { "Initial state is dropped, bailing out" }
+    }
 }
 

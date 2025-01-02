@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.navigation.component.posts
 
+import android.util.Log
 import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -31,10 +32,12 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
 import com.arkivanov.essenty.lifecycle.doOnResume
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlinx.serialization.builtins.serializer
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.MessageData
@@ -62,13 +65,22 @@ import ru.herobrine1st.e621.util.FavouritesCache
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState.Determined.UNFAVOURITE
 import ru.herobrine1st.e621.util.InstanceBase
 import ru.herobrine1st.e621.util.accumulate
+import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.isFavourite
+import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingConfig
+import ru.herobrine1st.paging.api.Snapshot
 import ru.herobrine1st.paging.api.applyPageBoundary
-import ru.herobrine1st.paging.api.cachedIn
 import ru.herobrine1st.paging.api.transform
+import ru.herobrine1st.paging.api.waitStateRestorationAndCacheIn
+import ru.herobrine1st.paging.contrib.decompose.connectToDecomposeComponentAsPagingItems
+import ru.herobrine1st.paging.contrib.decompose.consumePagingState
+import ru.herobrine1st.paging.contrib.decompose.registerPagingState
 import ru.herobrine1st.paging.createPager
+import ru.herobrine1st.paging.internal.Page
 import java.util.function.Predicate
+
+private const val TAG = "PostListingComponent"
 
 class PostListingComponent(
     private val api: API,
@@ -83,7 +95,39 @@ class PostListingComponent(
     private val voteRepository: VoteRepository,
 ) : ComponentContext by componentContext {
 
-    val postsFlow get() = instance.postsFlow
+    private val lifecycleScope = LifecycleScope()
+    private val instance: Instance = run {
+        // Consume unconditionally to save memory
+        val pagerState =
+            stateKeeper.consumePagingState("postPager", Int.serializer(), Post.serializer())
+        debug {
+            Log.d(TAG, "PagerState presence: ${pagerState != null}")
+        }
+        instanceKeeper.getOrCreate {
+            Instance(
+                api,
+                favouritesCache,
+                exceptionReporter,
+                searchOptions,
+                dataStoreModule.dataStore,
+                blacklistRepository,
+                pagerState
+            )
+        }.also { instance ->
+            stateKeeper.registerPagingState(
+                "postPager",
+                Int.serializer(),
+                Post.serializer(),
+                instance::pagerSupplier
+            )
+        }
+    }
+
+    val pagingItems = instance.postsFlow.connectToDecomposeComponentAsPagingItems(
+        lifecycleScope,
+        lifecycle,
+        startImmediately = true
+    )
 
     var infoState by mutableStateOf<InfoState>(InfoState.None)
         private set
@@ -96,20 +140,6 @@ class PostListingComponent(
             }
         }
     }
-
-
-    private val instance = instanceKeeper.getOrCreate {
-        Instance(
-            api,
-            favouritesCache,
-            exceptionReporter,
-            searchOptions,
-            dataStoreModule.dataStore,
-            blacklistRepository
-        )
-    }
-
-    private val lifecycleScope = LifecycleScope()
 
     fun onOpenPost(post: Post, openComments: Boolean) {
         navigator.pushIndexed {
@@ -161,6 +191,7 @@ class PostListingComponent(
         searchOptions: SearchOptions,
         dataStore: PreferencesStore,
         blacklistRepository: BlacklistRepository,
+        pagerState: Pair<List<Page<Int, Post>>, LoadStates>?
     ) : InstanceBase() {
         private val blacklistPredicateFlow =
             blacklistRepository.getEntriesFlow()
@@ -171,17 +202,27 @@ class PostListingComponent(
                 }
                 .flowOn(Dispatchers.Default)
 
-        val postsFlow = combine(
-            createPager(
-                PagingConfig(
-                    pageSize = BuildConfig.PAGER_PAGE_SIZE,
-                    prefetchDistance = BuildConfig.PAGER_PREFETCH_DISTANCE,
-                    initialLoadSize = BuildConfig.PAGER_PAGE_SIZE,
-                    maxPagesInMemory = BuildConfig.PAGER_MAX_PAGES_IN_MEMORY
-                ),
-                initialKey = 1,
-                PostsSource(api, exceptionReporter, searchOptions)
+        private val pager = lifecycleScope.createPager(
+            PagingConfig(
+                pageSize = BuildConfig.PAGER_PAGE_SIZE,
+                prefetchDistance = BuildConfig.PAGER_PREFETCH_DISTANCE,
+                initialLoadSize = BuildConfig.PAGER_PAGE_SIZE,
+                maxPagesInMemory = BuildConfig.PAGER_MAX_PAGES_IN_MEMORY
             ),
+            initialKey = 1,
+            PostsSource(api, exceptionReporter, searchOptions),
+            pagerState
+        )
+
+        fun pagerSupplier(): SharedFlow<Snapshot<Int, Post>> {
+            debug {
+                Log.d("$TAG-Instance", "Got pager supply request")
+            }
+            return pager
+        }
+
+        val postsFlow = combine(
+            pager,
             dataStore.data.map { it.blacklistEnabled },
             blacklistPredicateFlow,
             favouritesCache.flow,
@@ -246,7 +287,7 @@ class PostListingComponent(
             }
         }
             .flowOn(Dispatchers.Default)
-            .cachedIn(lifecycleScope)
+            .waitStateRestorationAndCacheIn(lifecycleScope, pagerState)
     }
 
     sealed interface InfoState {
