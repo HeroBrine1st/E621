@@ -27,4 +27,11 @@ data class LoadStates(
     val prepend: LoadState,
     val append: LoadState,
     val refresh: LoadState,
-)
+) {
+    init {
+        if (refresh !is LoadState.Complete) {
+            require(append is LoadState.Idle)
+            require(prepend is LoadState.Idle)
+        }
+    }
+}
