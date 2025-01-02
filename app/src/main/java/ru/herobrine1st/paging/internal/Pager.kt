@@ -68,7 +68,7 @@ class Pager<Key : Any, Value : Any>(
         error("UI event channel collection is complete, which should not happen")
     }
 
-    // "Public" API called via uiChannel
+    // "Public" API called via requestChannel
     suspend fun refresh() {
         if (loadStates.refresh is LoadState.Error) {
             // It is NOT expected for UI part to retry repeatedly
@@ -84,29 +84,46 @@ class Pager<Key : Any, Value : Any>(
 
     suspend fun push(event: PagingRequest.PushPage<Key>) {
         when (event) {
-            is PagingRequest.AppendPage -> if (loadStates.append is LoadState.Error) {
-                // It is NOT expected for UI part to retry repeatedly
-                Log.w(TAG, "Tried to append without retry: $loadStates")
-                debug {
-                    // fail-fast
-                    Log.wtf(TAG, "Tried to append without retry: $loadStates")
-                }
-                return
+            is PagingRequest.AppendPage -> when {
                 // Ignore repeated requests
-            } else if (pages.last().nextKey != event.lastKey) return
+                pages.last().nextKey != event.lastKey -> {
+                    debug {
+                        Log.w(
+                            TAG,
+                            "Got repeated append request: $event but last key is ${pages.last().nextKey}"
+                        )
+                    }
+                    return
+                }
 
-            is PagingRequest.PrependPage -> if (loadStates.prepend is LoadState.Error) {
-                // It is NOT expected for UI part to retry repeatedly
-                Log.w(TAG, "Tried to prepend without retry: $loadStates")
-                debug {
-                    // fail-fast
-                    Log.wtf(TAG, "Tried to prepend without retry: $loadStates")
+                loadStates.append is LoadState.Error -> {
+                    // It is NOT expected for UI part to retry repeatedly
+                    Log.w(TAG, "Tried to append without retry: $loadStates")
+                    return
                 }
-                return
+            }
+
+            is PagingRequest.PrependPage -> when {
                 // Ignore repeated requests
-            } else if (pages.first().prevKey != event.firstKey) return
+                pages.first().prevKey != event.firstKey -> {
+                    debug {
+                        Log.w(
+                            TAG,
+                            "Got repeated prepend request: $event but first key is ${pages.first().prevKey}"
+                        )
+                    }
+                    return
+                }
+
+                loadStates.prepend is LoadState.Error -> {
+                    // It is NOT expected for UI part to retry repeatedly
+                    Log.w(TAG, "Tried to prepend without retry: $loadStates")
+                    return
+                }
+
+            }
         }
-        pushUnsafe(event)
+        pushUnsafe(event.toPushType())
     }
 
     suspend fun retry() {
@@ -115,10 +132,10 @@ class Pager<Key : Any, Value : Any>(
         } else {
             // it may be both directions
             if (loadStates.append is LoadState.Error) {
-                pushUnsafe(PagingRequest.AppendPage(pages.last().nextKey ?: return))
+                pushUnsafe(PushType.APPEND)
             }
             if (loadStates.prepend is LoadState.Error) {
-                pushUnsafe(PagingRequest.PrependPage(pages.first().prevKey ?: return))
+                pushUnsafe(PushType.PREPEND)
             }
         }
     }
@@ -130,7 +147,7 @@ class Pager<Key : Any, Value : Any>(
         // Other places:
         // - State preservation feature requires passing Snapshot instance down the flow synchronously
         //   ru.herobrine1st.paging.createPager
-        // Remember to update
+        // Remember to update accordingly
         snapshotChannel.send(
             Snapshot(
                 pages = pages,
@@ -191,19 +208,18 @@ class Pager<Key : Any, Value : Any>(
         notifyObservers(updateKind)
     }
 
-    // TODO as it utilises only type of event, use boolean
-    private suspend fun pushUnsafe(event: PagingRequest.PushPage<Key>) {
-        val key = when (event) {
-            is PagingRequest.AppendPage -> pages.last().nextKey
-            is PagingRequest.PrependPage -> pages.first().prevKey
+    private suspend fun pushUnsafe(type: PushType) {
+        val key = when (type) {
+            PushType.APPEND -> pages.last().nextKey
+            PushType.PREPEND -> pages.first().prevKey
         } ?: run {
-            Log.w(TAG, "Requested page push without key available: $event")
+            Log.w(TAG, "Requested page push without key available: $type")
             return
         }
 
-        loadStates = when (event) {
-            is PagingRequest.AppendPage -> loadStates.copy(append = LoadState.Loading)
-            is PagingRequest.PrependPage -> loadStates.copy(prepend = LoadState.Loading)
+        loadStates = when (type) {
+            PushType.APPEND -> loadStates.copy(append = LoadState.Loading)
+            PushType.PREPEND -> loadStates.copy(prepend = LoadState.Loading)
         }
 
         notifyObservers(UpdateKind.StateChange)
@@ -216,16 +232,17 @@ class Pager<Key : Any, Value : Any>(
         )
 
         val updateKind: UpdateKind
-        val appended: Int
-        val prepended: Int
+
 
         // Apply result
         when (result) {
             is LoadResult.Page<Key, Value> -> {
+                val appended: Int
+                val prepended: Int
                 pages = buildList(capacity = pages.size + 1) {
                     addAll(pages)
-                    when (event) {
-                        is PagingRequest.AppendPage -> {
+                    when (type) {
+                        PushType.APPEND -> {
                             add(Page.from(result, key))
                             appended = 1
                             if (size > config.maxPagesInMemory) {
@@ -243,7 +260,7 @@ class Pager<Key : Any, Value : Any>(
                             }
                         }
 
-                        is PagingRequest.PrependPage -> {
+                        PushType.PREPEND -> {
                             add(0, Page.from(result, key))
                             prepended = 1
                             if (size > config.maxPagesInMemory) {
@@ -263,12 +280,12 @@ class Pager<Key : Any, Value : Any>(
                     }
                 }
 
-                loadStates = when (event) {
-                    is PagingRequest.AppendPage -> loadStates.copy(
+                loadStates = when (type) {
+                    PushType.APPEND -> loadStates.copy(
                         append = LoadState.NotLoading(result.nextKey == null)
                     )
 
-                    is PagingRequest.PrependPage -> loadStates.copy(
+                    PushType.PREPEND -> loadStates.copy(
                         prepend = LoadState.NotLoading(result.previousKey == null)
                     )
                 }
@@ -276,17 +293,6 @@ class Pager<Key : Any, Value : Any>(
                     appended = appended,
                     prepended = prepended
                 )
-//                updateKind = when (event) {
-//                    PagingRequest.AppendPage -> UpdateKind.DataChange(
-//                        appended = 1,
-//                        prepended = 0
-//                    )
-//
-//                    PagingRequest.PrependPage -> UpdateKind.DataChange(
-//                        appended = 0,
-//                        prepended = 1
-//                    )
-//                }
             }
 
             is LoadResult.Error<Key, Value> -> {
@@ -294,6 +300,7 @@ class Pager<Key : Any, Value : Any>(
                     append = LoadState.Error(result.throwable.message)
                 )
                 updateKind = UpdateKind.StateChange
+                Log.e(TAG, "PagingSource returned LoadResult.Error", result.throwable)
             }
         }
 
@@ -301,4 +308,13 @@ class Pager<Key : Any, Value : Any>(
     }
 }
 
+private enum class PushType {
+    APPEND,
+    PREPEND;
+}
+
+private fun PagingRequest.PushPage<*>.toPushType() = when (this) {
+    is PagingRequest.AppendPage -> PushType.APPEND
+    is PagingRequest.PrependPage -> PushType.PREPEND
+}
 
