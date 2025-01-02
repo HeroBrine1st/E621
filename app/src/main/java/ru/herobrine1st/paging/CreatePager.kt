@@ -20,12 +20,15 @@
 
 package ru.herobrine1st.paging
 
+import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.dropWhile
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingConfig
@@ -106,12 +109,23 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
                 loadStates = initialState.second,
                 requestChannel = requestChannel
             )
-        )
+        ).also {
+            if (it == false) {
+                Log.wtf(
+                    "CreatePager",
+                    "Could not populate replay cache with initial state, this must never happen!"
+                )
+            }
+        }
     }
 
-    // SAFETY: uiChannel reuse is prohibited by not exposing initial pager flow
-    // and so this line is guaranteed to be the only one single collection of that flow.
-    launch { flow.collect(sharedFlow) }
+    launch {
+        // emulate SharingStarted.LAZILY
+        sharedFlow.subscriptionCount.dropWhile { it == 0 }.first()
+        // SAFETY: uiChannel reuse is prohibited by not exposing initial pager flow
+        // and so this line is guaranteed to be the only collection of that flow.
+        flow.collect(sharedFlow)
+    }
 
     return sharedFlow.asSharedFlow()
 }
