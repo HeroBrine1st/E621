@@ -81,7 +81,7 @@ fun CommentsBottomSheetContent(
                 Icon(Icons.Outlined.Error, contentDescription = null)
                 Text(stringResource(R.string.comments_load_failed))
                 Button(onClick = {
-                    comments.refresh()
+                    comments.retry()
                 }) {
                     Text(stringResource(R.string.retry))
                 }

@@ -194,6 +194,9 @@ fun Posts(
                         is LoadState.Error -> {
                             Icon(Icons.Outlined.Error, contentDescription = null)
                             Text(stringResource(R.string.unknown_error))
+                            Button(onClick = { posts.retry() }) {
+                                Text(stringResource(R.string.retry))
+                            }
                         }
 
                         LoadState.Complete -> Text(stringResource(R.string.empty_results))
