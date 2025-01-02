@@ -28,8 +28,9 @@ android {
 
         // Application properties
         resValue("string", "deep_link_host", "e621.net")
-        buildConfigField("int", "PAGER_PAGE_SIZE", "500")
-        buildConfigField("int", "PAGER_PREFETCH_DISTANCE", "50")
+        // https://issuetracker.google.com/issues/380805025 120 is max
+        buildConfigField("int", "PAGER_PAGE_SIZE", "100")
+        buildConfigField("int", "PAGER_PREFETCH_DISTANCE", "25")
         buildConfigField("int", "PAGER_MAX_PAGES_IN_MEMORY", "3")
         // Replaces all underscores in tags with spaces
         buildConfigField("boolean", "HIDE_UNDERSCORES_FROM_USER", "true")
