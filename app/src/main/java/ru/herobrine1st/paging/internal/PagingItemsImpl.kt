@@ -32,17 +32,15 @@ import ru.herobrine1st.paging.api.LoadStates
 import ru.herobrine1st.paging.api.PagingConfig
 import ru.herobrine1st.paging.api.PagingItems
 import ru.herobrine1st.paging.api.Snapshot
-import kotlin.math.absoluteValue
-import kotlin.math.sign
 
 private const val TAG = "PagingItemsImpl"
 
-class PagingItemsImpl<Value : Any>(
-    val flow: Flow<Snapshot<*, Value>>,
+class PagingItemsImpl<Key : Any, Value : Any>(
+    val flow: Flow<Snapshot<Key, Value>>,
     private val startPagingImmediately: Boolean
 ) : PagingItems<Value> {
 
-    private var uiChannel: SynchronizedBus<PagingRequest>? = null
+    private var requestChannel: SynchronizedBus<PagingRequest<Key>>? = null
     private var pagingConfig: PagingConfig? = null
 
     override var loadStates by mutableStateOf(
@@ -61,11 +59,16 @@ class PagingItemsImpl<Value : Any>(
 
 
     private var lastAccessedIndex = -1
+    private var firstKey: Key? = null
+    private var lastKey: Key? = null
 
     init {
-        if (flow is SharedFlow<Snapshot<*, Value>>) {
+        if (flow is SharedFlow<Snapshot<Key, Value>>) {
             // Assuming it is a result of cachedIn, process cached value synchronously
             val cachedSnapshot = flow.replayCache.firstOrNull()
+            debug {
+                Log.d(TAG, "Cached snapshot presence: ${cachedSnapshot != null}")
+            }
             if (cachedSnapshot != null) {
                 processSnapshot(cachedSnapshot)
             } else if (startPagingImmediately) {
@@ -79,16 +82,16 @@ class PagingItemsImpl<Value : Any>(
         }
     }
 
-    private fun processSnapshot(snapshot: Snapshot<*, Value>) {
-        if (uiChannel == null) {
+    private fun processSnapshot(snapshot: Snapshot<Key, Value>) {
+        if (requestChannel == null) {
             debug { Log.d(TAG, "Got uiChannel and pagingConfig") }
-            uiChannel = snapshot.uiChannel
+            requestChannel = snapshot.requestChannel
             pagingConfig = snapshot.pagingConfig
         }
         if (startPagingImmediately && snapshot.loadStates.refresh is LoadState.NotLoading) {
             // SAFETY: Upstream pager state is NotLoading; refresh method does not know that
             // SAFETY: uiChannel is never null here
-            uiChannel!!.send(PagingRequest.Refresh)
+            requestChannel!!.send(PagingRequest.Refresh)
             debug {
                 assert(
                     loadStates == LoadStates(
@@ -110,16 +113,23 @@ class PagingItemsImpl<Value : Any>(
             is UpdateKind.Refresh -> {
                 lastAccessedIndex = -1
                 items = snapshot.pages.flatMap { it.data }
+                firstKey = snapshot.pages.first().prevKey
+                lastKey = snapshot.pages.last().nextKey
             }
 
             is UpdateKind.DataChange -> {
                 if (updateKind.prepended != 0) {
-                    // Change lastAccessedIndex accordingly
-                    // It may be unnecessary, but it is harmless, I think
-                    val pages = updateKind.prepended.absoluteValue
-                    val sign = updateKind.prepended.sign
-                    lastAccessedIndex = sign * snapshot.pages.take(pages).sumOf { it.data.size }
+                    // Change lastAccessedIndex accordingly so that triggerPageLoad has proper index
+                    lastAccessedIndex += if (updateKind.prepended < 0) {
+                        // FIXME undefined behavior on negative numbers if PagingSource returns pages with different item count
+                        // TODO replace "lastAccessedIndex" with proper LazyListState.layoutInfo connection for reliable future-proof fix
+                        snapshot.pages.first().data.size * updateKind.prepended
+                    } else {
+                        snapshot.pages.take(updateKind.prepended).sumOf { it.data.size }
+                    }
                 }
+                firstKey = snapshot.pages.first().prevKey
+                lastKey = snapshot.pages.last().nextKey
                 items = snapshot.pages.flatMap { it.data }
                 // Fix possible edge cases where user otherwise have to violently scroll to trigger load
                 // Also it immediately requests new page if appended page is empty, avoiding visual bugs
@@ -135,9 +145,9 @@ class PagingItemsImpl<Value : Any>(
     private fun triggerPageLoad() {
         val prefetchDistance = pagingConfig?.prefetchDistance ?: 1
         if (lastAccessedIndex < prefetchDistance && loadStates.prepend == LoadState.NotLoading) {
-            uiChannel?.send(PagingRequest.Prepend)
+            requestChannel?.send(PagingRequest.PrependPage(firstKey ?: return))
         } else if (lastAccessedIndex >= size - prefetchDistance && loadStates.append == LoadState.NotLoading) {
-            uiChannel?.send(PagingRequest.Append)
+            requestChannel?.send(PagingRequest.AppendPage(lastKey ?: return))
         }
     }
 
@@ -153,6 +163,12 @@ class PagingItemsImpl<Value : Any>(
 
     override fun refresh() {
         if (loadStates.refresh == LoadState.Loading) return
-        uiChannel?.send(PagingRequest.Refresh)
+        requestChannel?.send(PagingRequest.Refresh)
+    }
+
+    override fun retry() {
+        if (loadStates.refresh is LoadState.Error || loadStates.append is LoadState.Error || loadStates.prepend is LoadState.Error) {
+            requestChannel?.send(PagingRequest.Retry)
+        }
     }
 }

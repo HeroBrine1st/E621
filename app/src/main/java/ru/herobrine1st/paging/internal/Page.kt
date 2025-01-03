@@ -20,9 +20,11 @@
 
 package ru.herobrine1st.paging.internal
 
+import kotlinx.serialization.Serializable
 import ru.herobrine1st.paging.api.LoadResult
 
 // A page with associated key
+@Serializable
 data class Page<Key : Any, Value : Any>(
     val key: Key,
     val nextKey: Key?,

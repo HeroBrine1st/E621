@@ -20,6 +20,9 @@
 
 package ru.herobrine1st.paging.api
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 sealed interface LoadState {
     /**
      * State is not initialized and no requests are in fly
@@ -28,6 +31,7 @@ sealed interface LoadState {
      * - For [LoadStates.refresh] it is a special case for brief initialization period, possible
      * only if paging is not started immediately (synchronously). Indicates that [PagingItems.refresh] request will do nothing.
      */
+    @Serializable
     data object Idle : LoadState
 
     /**
@@ -36,6 +40,7 @@ sealed interface LoadState {
      * - For [LoadStates.append] and [LoadStates.prepend] it means that additional pages can be fetched but it isn't requested
      * - For [LoadStates.refresh] it means that paging isn't started yet. [LoadStates.refresh] can't be [NotLoading] once it's not [NotLoading]
      */
+    @Serializable
     data object NotLoading : LoadState {
         operator fun invoke(endOfPaginationReached: Boolean) = when (endOfPaginationReached) {
             true -> Complete
@@ -49,15 +54,18 @@ sealed interface LoadState {
      * - For [LoadStates.append] and [LoadStates.prepend] it means that end of pagination is reached and no additional pages can be loaded
      * - For [LoadStates.refresh] it means that refresh is [Complete]
      */
+    @Serializable
     data object Complete : LoadState
 
     /**
      * State is initialized and [PagingSource] is performing request
      */
+    @Serializable
     data object Loading : LoadState
 
     /**
      * State is initialized, but [PagingSource] couldn't fetch pages. This state is recoverable.
      */
-    data class Error(val throwable: Throwable) : LoadState
+    @Serializable
+    data class Error(val message: String?) : LoadState
 }

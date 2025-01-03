@@ -26,7 +26,14 @@ import androidx.compose.runtime.Stable
 interface PagingItems<Value : Any> {
 
     val loadStates: LoadStates
+
     fun refresh()
+
+
+    /**
+     * Triggers retrying on any error state
+     */
+    fun retry()
 
     val size: Int
 
@@ -42,6 +49,9 @@ interface PagingItems<Value : Any> {
      */
     operator fun get(index: Int): Value
 
+    /**
+     * Equivalent of accessing [items]
+     */
     fun peek(index: Int): Value
 }
 

@@ -23,6 +23,7 @@ package ru.herobrine1st.e621.ui.component
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
@@ -32,7 +33,7 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.paging.api.LoadState
 
 // edge of page, start and end of page or anything, it just doesn't matter while the name is clear
-fun LazyListScope.endOfPagePlaceholder(loadState: LoadState) {
+fun LazyListScope.endOfPagePlaceholder(loadState: LoadState, onRetry: () -> Unit) {
     when (loadState) {
         is LoadState.Loading -> {
             item {
@@ -48,6 +49,9 @@ fun LazyListScope.endOfPagePlaceholder(loadState: LoadState) {
                 Base {
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(stringResource(R.string.unknown_error))
+                    Button(onClick = onRetry) {
+                        Text(stringResource(R.string.retry))
+                    }
                     Spacer(modifier = Modifier.height(4.dp))
                 }
             }

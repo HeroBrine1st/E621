@@ -24,7 +24,5 @@ data class PagingConfig(
     val pageSize: Int,
     val prefetchDistance: Int = pageSize,
     val initialLoadSize: Int = pageSize,
-    // TODO unimplemented
-    //val maxPagesInMemory: Int = Int.MAX_VALUE,
-    //
+    val maxPagesInMemory: Int = Int.MAX_VALUE,
 )

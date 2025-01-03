@@ -29,10 +29,12 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Error
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.Text
@@ -44,6 +46,8 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -61,11 +65,12 @@ import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.screen.post.component.PoolInfoCard
 import ru.herobrine1st.e621.ui.screen.posts.component.HiddenItems
 import ru.herobrine1st.e621.ui.screen.posts.component.Post
+import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.e621.util.isFavourite
 import ru.herobrine1st.paging.api.LoadState
-import ru.herobrine1st.paging.api.collectAsPagingItems
 import ru.herobrine1st.paging.api.contentType
 import ru.herobrine1st.paging.api.itemKey
+import kotlin.math.max
 
 @OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class)
 @Composable
@@ -76,7 +81,7 @@ fun Posts(
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
 
-    val posts = component.postsFlow.collectAsPagingItems(startImmediately = true)
+    val posts = component.pagingItems
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
@@ -87,6 +92,18 @@ fun Posts(
                     Text(stringResource(R.string.posts))
                 },
                 actions = {
+                    debug {
+                        val maxPosts by produceState(posts.size) {
+                            snapshotFlow { posts.size }
+                                .collect {
+                                    value = max(value, it)
+                                }
+                        }
+                        Text(
+                            "Items in memory: ${posts.size}, max: $maxPosts",
+                            style = MaterialTheme.typography.labelSmall
+                        )
+                    }
                     IconButton(onClick = {
                         component.onOpenSearch()
                     }) {
@@ -148,6 +165,9 @@ fun Posts(
                     posts.loadStates.prepend is LoadState.Error -> item {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(stringResource(R.string.unknown_error))
+                        Button(onClick = { posts.retry() }) {
+                            Text(stringResource(R.string.retry))
+                        }
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
@@ -174,6 +194,9 @@ fun Posts(
                         is LoadState.Error -> {
                             Icon(Icons.Outlined.Error, contentDescription = null)
                             Text(stringResource(R.string.unknown_error))
+                            Button(onClick = { posts.retry() }) {
+                                Text(stringResource(R.string.retry))
+                            }
                         }
 
                         LoadState.Complete -> Text(stringResource(R.string.empty_results))
@@ -215,7 +238,7 @@ fun Posts(
                         Spacer(Modifier.height(4.dp))
 
                 }
-                endOfPagePlaceholder(posts.loadStates.append)
+                endOfPagePlaceholder(posts.loadStates.append, onRetry = posts::retry)
             }
         }
     }
