@@ -46,7 +46,7 @@ class PostsSource(
             LoadResult.Page(
                 data = posts,
                 previousKey = if (page == 1) null else page - 1,
-                nextKey = if (posts.isNotEmpty()) page + 1 else null
+                nextKey = if (posts.size == params.requestedSize) page + 1 else null
             )
         } catch (t: Throwable) {
             exceptionReporter.handleRequestException(t)
