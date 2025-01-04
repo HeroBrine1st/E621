@@ -22,6 +22,7 @@ package ru.herobrine1st.paging
 
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -39,7 +40,6 @@ import ru.herobrine1st.paging.internal.Page
 import ru.herobrine1st.paging.internal.Pager
 import ru.herobrine1st.paging.internal.PagingRequest
 import ru.herobrine1st.paging.internal.SavedPagerState
-import ru.herobrine1st.paging.internal.SynchronizedBus
 import ru.herobrine1st.paging.internal.UpdateKind
 import ru.herobrine1st.paging.internal.defaultLoadStates
 
@@ -60,12 +60,16 @@ fun <Key : Any, Value : Any> createPager(
     initialKey: Key,
     pagingSource: PagingSource<Key, Value>
 ): Flow<Snapshot<Key, Value>> = channelFlow {
+    val requestChannel = Channel<PagingRequest<Key>>(capacity = Channel.CONFLATED)
+    invokeOnClose {
+        requestChannel.cancel()
+    }
     Pager(
         config = config,
         initialKey = initialKey,
         pagingSource = pagingSource,
         snapshotChannel = channel,
-        requestChannel = SynchronizedBus<PagingRequest<Key>>()
+        requestChannel = requestChannel
     ).startPaging()
 }
 
@@ -93,7 +97,11 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
         }
     }
 
-    val requestChannel = SynchronizedBus<PagingRequest<Key>>()
+    // SAFETY: this channel is consumed by Pager
+    val requestChannel = Channel<PagingRequest<Key>>(capacity = Channel.CONFLATED)
+    // channelFlow is used to simplify channel provision and subsequent collection
+    //
+    // TODO it is possible to provision channel synchronously, which means safe state restoration code via DRY
     val flow = channelFlow {
         Pager(
             config = config,
@@ -127,7 +135,7 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
         ).also {
             if (it == false) {
                 Log.wtf(
-                    "CreatePager",
+                    TAG,
                     "Could not populate replay cache with initial state, this must never happen!"
                 )
             }
@@ -138,9 +146,10 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
     launch {
         // emulate SharingStarted.LAZILY
         sharedFlow.subscriptionCount.dropWhile { it == 0 }.first()
-        // SAFETY: uiChannel reuse is prohibited by not exposing initial pager flow
+        // SAFETY: requestChannel reuse is prohibited by not exposing initial pager flow
         // and so this line is guaranteed to be the only collection of that flow.
         flow.collect(sharedFlow)
+        Log.wtf(TAG, "Pager flow collection is completed, this must never happen!")
     }
 
     return sharedFlow.asSharedFlow().debug {

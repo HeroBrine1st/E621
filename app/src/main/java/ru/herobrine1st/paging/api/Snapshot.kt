@@ -20,9 +20,9 @@
 
 package ru.herobrine1st.paging.api
 
+import kotlinx.coroutines.channels.SendChannel
 import ru.herobrine1st.paging.internal.Page
 import ru.herobrine1st.paging.internal.PagingRequest
-import ru.herobrine1st.paging.internal.SynchronizedBus
 import ru.herobrine1st.paging.internal.UpdateKind
 
 data class Snapshot<Key : Any, Value : Any>(
@@ -30,5 +30,5 @@ data class Snapshot<Key : Any, Value : Any>(
     val updateKind: UpdateKind,
     val pagingConfig: PagingConfig,
     val loadStates: LoadStates,
-    val requestChannel: SynchronizedBus<PagingRequest<Key>>,
+    val requestChannel: SendChannel<PagingRequest<Key>>,
 )

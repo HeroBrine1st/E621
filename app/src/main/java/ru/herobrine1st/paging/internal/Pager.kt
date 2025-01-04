@@ -21,7 +21,9 @@
 package ru.herobrine1st.paging.internal
 
 import android.util.Log
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.consumeEach
 import ru.herobrine1st.e621.util.debug
 import ru.herobrine1st.paging.api.LoadResult
 import ru.herobrine1st.paging.api.LoadState
@@ -45,27 +47,23 @@ class Pager<Key : Any, Value : Any>(
     private val initialKey: Key,
     private val pagingSource: PagingSource<Key, Value>,
     val snapshotChannel: SendChannel<Snapshot<Key, Value>>,
-    val requestChannel: SynchronizedBus<PagingRequest<Key>>,
+    // both send and receive as we send this channel via snapshotChannel
+    val requestChannel: Channel<PagingRequest<Key>>,
     var pages: List<Page<Key, Value>> = emptyList(),
     var loadStates: LoadStates = defaultLoadStates()
 ) {
     // Pager entry point
     // WARNING: This method is to be called ONCE PER INSTANCE. If violated, behavior is unspecified
     suspend fun startPaging(): Nothing {
-//        notifyObservers(
-//            if (pages.isNotEmpty()) UpdateKind.Refresh // it's like we made a request to server and got all the data instantly
-//            else UpdateKind.StateChange
-//        )
-        // Probably it is enough as createPager emits `Refresh` itself
         notifyObservers(UpdateKind.StateChange)
-        requestChannel.flow.collect { event ->
+        requestChannel.consumeEach { event ->
             when (event) {
                 is PagingRequest.PushPage -> push(event)
                 is PagingRequest.Refresh -> refresh()
                 PagingRequest.Retry -> retry()
             }
         }
-        error("UI event channel collection is complete, which should not happen")
+        error("UI request channel is cancelled or closed, which should not happen")
     }
 
     // "Public" API called via requestChannel

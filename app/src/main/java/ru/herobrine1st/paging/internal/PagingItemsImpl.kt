@@ -24,6 +24,11 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.channels.ChannelResult
+import kotlinx.coroutines.channels.SendChannel
+import kotlinx.coroutines.channels.onClosed
+import kotlinx.coroutines.channels.onFailure
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import ru.herobrine1st.e621.util.debug
@@ -40,7 +45,7 @@ class PagingItemsImpl<Key : Any, Value : Any>(
     private val startPagingImmediately: Boolean
 ) : PagingItems<Value> {
 
-    private var requestChannel: SynchronizedBus<PagingRequest<Key>>? = null
+    private var requestChannel: SendChannel<PagingRequest<Key>>? = null
     private var pagingConfig: PagingConfig? = null
 
     override var loadStates by mutableStateOf(
@@ -70,6 +75,11 @@ class PagingItemsImpl<Key : Any, Value : Any>(
                 Log.d(TAG, "Cached snapshot presence: ${cachedSnapshot != null}")
             }
             if (cachedSnapshot != null) {
+                // SAFETY: Delicate API is used to fail fast
+                @OptIn(DelicateCoroutinesApi::class)
+                if (cachedSnapshot.requestChannel.isClosedForSend) {
+                    error("Cached channel is closed!")
+                }
                 processSnapshot(cachedSnapshot)
             } else if (startPagingImmediately) {
                 // If there's no cached value, assume it is first usage of this particular pager
@@ -90,8 +100,9 @@ class PagingItemsImpl<Key : Any, Value : Any>(
         }
         if (startPagingImmediately && snapshot.loadStates.refresh is LoadState.NotLoading) {
             // SAFETY: Upstream pager state is NotLoading; refresh method does not know that
-            // SAFETY: uiChannel is never null here
-            requestChannel!!.send(PagingRequest.Refresh)
+            // SAFETY: requestChannel is never null here
+            requestChannel!!.trySend(PagingRequest.Refresh)
+                .ensureSuccess(note = "Initial refresh request") { PagingRequest.Refresh }
             debug {
                 assert(
                     loadStates == LoadStates(
@@ -144,11 +155,21 @@ class PagingItemsImpl<Key : Any, Value : Any>(
 
     private fun triggerPageLoad() {
         val prefetchDistance = pagingConfig?.prefetchDistance ?: 1
-        if (lastAccessedIndex < prefetchDistance && loadStates.prepend == LoadState.NotLoading) {
-            requestChannel?.send(PagingRequest.PrependPage(firstKey ?: return))
-        } else if (lastAccessedIndex >= size - prefetchDistance && loadStates.append == LoadState.NotLoading) {
-            requestChannel?.send(PagingRequest.AppendPage(lastKey ?: return))
+        val request = when {
+            lastAccessedIndex < prefetchDistance && loadStates.prepend == LoadState.NotLoading -> {
+                PagingRequest.PrependPage(firstKey ?: return)
+            }
+
+            lastAccessedIndex >= size - prefetchDistance && loadStates.append == LoadState.NotLoading -> {
+                PagingRequest.AppendPage(lastKey ?: return)
+            }
+
+            else -> return
         }
+        debug {
+            Log.d(TAG, "Sending $request to trigger page load")
+        }
+        requestChannel?.trySend(request)?.ensureSuccess { request }
     }
 
     override fun get(index: Int): Value {
@@ -163,12 +184,27 @@ class PagingItemsImpl<Key : Any, Value : Any>(
 
     override fun refresh() {
         if (loadStates.refresh == LoadState.Loading) return
-        requestChannel?.send(PagingRequest.Refresh)
+        requestChannel?.trySend(PagingRequest.Refresh)?.ensureSuccess { PagingRequest.Refresh }
     }
 
     override fun retry() {
         if (loadStates.refresh is LoadState.Error || loadStates.append is LoadState.Error || loadStates.prepend is LoadState.Error) {
-            requestChannel?.send(PagingRequest.Retry)
+            requestChannel?.trySend(PagingRequest.Retry)?.ensureSuccess { PagingRequest.Retry }
         }
+    }
+
+    private inline fun ChannelResult<*>.ensureSuccess(
+        note: String = "no note",
+        action: () -> PagingRequest<Key>
+    ) = onClosed {
+        throw IllegalStateException(
+            "RequestChannel is closed, make sure you cache your pager or don't call collectPagingData multiple times on the same instance!",
+            it
+        )
+    }.onFailure {
+        throw IllegalStateException(
+            "Failed sending ${action()} ($note), make sure requestChannel is conflated!",
+            it
+        )
     }
 }
