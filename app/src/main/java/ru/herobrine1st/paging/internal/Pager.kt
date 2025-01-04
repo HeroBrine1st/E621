@@ -280,11 +280,13 @@ class Pager<Key : Any, Value : Any>(
 
                 loadStates = when (type) {
                     PushType.APPEND -> loadStates.copy(
-                        append = LoadState.NotLoading(result.nextKey == null)
+                        append = LoadState.NotLoading(result.nextKey == null),
+                        prepend = if (prepended < 0) LoadState.NotLoading else loadStates.prepend
                     )
 
                     PushType.PREPEND -> loadStates.copy(
-                        prepend = LoadState.NotLoading(result.previousKey == null)
+                        prepend = LoadState.NotLoading(result.previousKey == null),
+                        append = if (appended < 0) LoadState.NotLoading else loadStates.append
                     )
                 }
                 updateKind = UpdateKind.DataChange(

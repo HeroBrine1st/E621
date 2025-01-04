@@ -72,7 +72,7 @@ class PagingItemsImpl<Key : Any, Value : Any>(
             // Assuming it is a result of cachedIn, process cached value synchronously
             val cachedSnapshot = flow.replayCache.firstOrNull()
             debug {
-                Log.d(TAG, "Cached snapshot presence: ${cachedSnapshot != null}")
+                Log.d(TAG, "Cached snapshot: $cachedSnapshot")
             }
             if (cachedSnapshot != null) {
                 // SAFETY: Delicate API is used to fail fast
@@ -93,6 +93,16 @@ class PagingItemsImpl<Key : Any, Value : Any>(
     }
 
     private fun processSnapshot(snapshot: Snapshot<Key, Value>) {
+        debug {
+            Log.d(
+                TAG,
+                "Got snapshot (page items are erased for easier reading): ${
+                    snapshot.copy(pages = snapshot.pages.map {
+                        it.copy(data = emptyList())
+                    })
+                }}, page sizes: ${snapshot.pages.map { it.data.size }}"
+            )
+        }
         if (requestChannel == null) {
             debug { Log.d(TAG, "Got uiChannel and pagingConfig") }
             requestChannel = snapshot.requestChannel
@@ -157,10 +167,16 @@ class PagingItemsImpl<Key : Any, Value : Any>(
         val prefetchDistance = pagingConfig?.prefetchDistance ?: 1
         val request = when {
             lastAccessedIndex < prefetchDistance && loadStates.prepend == LoadState.NotLoading -> {
+                debug {
+                    Log.d(TAG, "Prepend requested, first key: $firstKey")
+                }
                 PagingRequest.PrependPage(firstKey ?: return)
             }
 
             lastAccessedIndex >= size - prefetchDistance && loadStates.append == LoadState.NotLoading -> {
+                debug {
+                    Log.d(TAG, "Append requested, last key: $lastKey")
+                }
                 PagingRequest.AppendPage(lastKey ?: return)
             }
 
