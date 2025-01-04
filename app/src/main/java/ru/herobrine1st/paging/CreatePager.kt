@@ -113,11 +113,10 @@ fun <Key : Any, Value : Any> CoroutineScope.createPager(
         debug {
             Log.d(TAG, "Got initial state, emitting synchronously")
         }
-        // SAFETY: UNSAFE
-        // See Pager comments on Snapshot creation (notifyObservers method)
-        //
         // Synchronously create Snapshot and pass it to replayCache for PagingItemsImpl to pick it up also synchronously
         sharedFlow.tryEmit(
+            // SAFETY: UNSAFE
+            // See Pager comments on Snapshot creation (notifyObservers method)
             Snapshot(
                 pages = initialState.pages,
                 updateKind = UpdateKind.Refresh,

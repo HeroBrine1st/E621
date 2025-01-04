@@ -32,19 +32,24 @@ import ru.herobrine1st.paging.internal.SavedPagerState
 
 /**
  * This function configures flow sharing in a way [PagingItems] can restore its state on subsequent instantiations via replayCache.
+ *
+ * @see waitStateRestorationAndCacheIn
  */
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.cachedIn(scope: CoroutineScope) =
     shareIn(scope, SharingStarted.Lazily, replay = 1)
 
 /**
- * This function returns pager state that can be saved to survive process recreation and then provided to [ru.herobrine1st.paging.createPager].
+ * This function returns pager state that can be saved to survive process recreation and then provided to [ru.herobrine1st.paging.createPager], enabling state preservation.
  *
- * This extension function is intended to be called on result of exactly [ru.herobrine1st.paging.createPager], otherwise behavior of state preservation is undefined.
+ * The state preservation feature of Paging allows to save paging state across process recreations.
+ * It is not a cache like [cachedIn]. Contrariwise, state preservation relies on state caching via synchronous cache population.
+ *
+ * This extension function is intended to be called on result of exactly [ru.herobrine1st.paging.createPager], otherwise **behavior** of state preservation feature **is undefined**.
  */
 fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.getStateForPreservation(): SavedPagerState<Key, Value>? {
     val snapshot = this.replayCache.firstOrNull() ?: return null
     if (snapshot.pages.isEmpty()) return null // empty pages - nothing to persist
-    if (snapshot.loadStates.refresh !is LoadState.Complete) return null // if refreshing, current state will soon be not valid - nothing to persist
+    if (snapshot.loadStates.refresh !is LoadState.Complete) return null // if refreshing, current state will be invalid soon - nothing to persist
     return SavedPagerState(snapshot.pages, snapshot.loadStates.sanitize())
 }
 
@@ -69,14 +74,14 @@ internal fun LoadState.sanitize() = when (this) {
  * This function configures flow sharing in a way [PagingItems] can restore its state on subsequent instantiations via replayCache,
  * waiting on transformations after state restoration is complete, mitigating first-frame issues at the cost of negligibly longer restoration time.
  *
- * It is intended to be used with [ru.herobrine1st.paging.createPager] variant that restores state after process recreation.
+ * This variant of [cachedIn] is intended to be used with [ru.herobrine1st.paging.createPager] variant that restores state after process recreation.
  * That variant caches flow itself, but it is not the case when
  * there are transformations between it and [PagingItems] and so flow is not cached anymore. This can be mitigated
  * by making them synchronised at the time of Pager creation, but it will not work if transformations
  * are dependent on other flows, e.g. from DataStore or Jetpack Room.
  *
  * This function fixes first-frame issues by waiting on first emission if [initialState] is not null,
- * assuming the same [initialState] is provided to [ru.herobrine1st.paging.createPager]. If violated, the behavior is undefined.
+ * assuming the same [initialState] is provided to [ru.herobrine1st.paging.createPager]. If violated, **behavior is undefined**.
  *
  * It is blocking, meaning all transformations between [ru.herobrine1st.paging.createPager] and this function
  * should be near-instant to avoid blocking process recreation. It is also possible to make dependencies
@@ -88,7 +93,7 @@ internal fun LoadState.sanitize() = when (this) {
  * it is a good compromise: user waits negligibly longer, but is rewarded with restored state.
  *
  * @param scope coroutine scope to start sharing in.
- * @param initialState the same state provided to [ru.herobrine1st.paging.createPager]. If violated, the behavior is undefined.
+ * @param initialState the same state provided to [ru.herobrine1st.paging.createPager]. If violated, **behavior is undefined**.
  */
 fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.waitStateRestorationAndCacheIn(
     scope: CoroutineScope,

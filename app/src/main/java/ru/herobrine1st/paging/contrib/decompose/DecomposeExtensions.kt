@@ -25,24 +25,29 @@ import com.arkivanov.essenty.lifecycle.doOnPause
 import com.arkivanov.essenty.lifecycle.doOnResume
 import com.arkivanov.essenty.statekeeper.StateKeeper
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.KSerializer
 import ru.herobrine1st.paging.api.PagingItems
 import ru.herobrine1st.paging.api.Snapshot
+import ru.herobrine1st.paging.api.cachedIn
 import ru.herobrine1st.paging.api.getStateForPreservation
 import ru.herobrine1st.paging.internal.PagingItemsImpl
 import ru.herobrine1st.paging.internal.SavedPagerState
 
 /**
- * Collects this pager as PagingItems in Decompose component
+ * Collects this pager as PagingItems in Decompose component.
+ *
+ * The pager must be cached using [cachedIn] or its variants, and also cache should have equal or longer
+ * lifespan than component itself. If violated, **behavior is undefined**.
  *
  * @param coroutineScope scope to launch coroutine in
  * @param lifecycle Essenty [Lifecycle] of calling component
  * @param startImmediately If set to true, refresh is started as soon as component is RESUMED. If false, first refresh should be done manually via [PagingItems.refresh] method
+ *
+ * @return [PagingItems] ready to be used in UI
  */
-fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.connectToDecomposeComponentAsPagingItems(
+fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.connectToDecomposeComponentAsPagingItems(
     coroutineScope: CoroutineScope,
     lifecycle: Lifecycle,
     startImmediately: Boolean = true
@@ -72,18 +77,20 @@ fun <Key : Any, Value : Any> Flow<Snapshot<Key, Value>>.connectToDecomposeCompon
 
 
 /**
- * The state preservation feature of Paging allows to save paging state across process recreations.
- * This function saves pager state in [StateKeeper].
+ * This function saves pager state in [StateKeeper], enabling state preservation.
  *
  * @param key a key to be associated with the pager state value.
  * @param keySerializer a [KSerializer] for serializing the key.
  * @param valueSerializer a [KSerializer] for serializing the value.
- * @param supplier a supplier of strictly the result of [ru.herobrine1st.paging.createPager]. If violated, behavior is undefined.
+ * @param supplier a supplier of strictly the result of [ru.herobrine1st.paging.createPager], without any transformations.
+ * If violated, **behavior is undefined**.
+ *
+ * @see getStateForPreservation
  */
 fun <Key : Any, Value : Any> StateKeeper.registerPagingState(
     key: String,
     // using KSerializer instead of SerializationStrategy as it is incredibly hard to create
-    // ListSerializationStrategy without using internals of kotlinx.serialization
+    // generic SerializationStrategy without using internals of kotlinx.serialization
     keySerializer: KSerializer<Key>,
     valueSerializer: KSerializer<Value>,
     supplier: () -> SharedFlow<Snapshot<Key, Value>>
@@ -94,8 +101,7 @@ fun <Key : Any, Value : Any> StateKeeper.registerPagingState(
 }
 
 /**
- * The state preservation feature of Paging allows to save paging state across process recreations.
- * This function restores pager from [StateKeeper] and returns its state to be provided to [ru.herobrine1st.paging.createPager].
+ * This function restores pager from [StateKeeper] and returns its state to be provided to [ru.herobrine1st.paging.createPager], enabling state preservation.
  *
  * This function should be called every time component is [Lifecycle.State.INITIALIZED] even if its result will be dropped instantly
  * due to [com.arkivanov.essenty.instancekeeper.InstanceKeeper.Instance] holding the same (or newer) state. The reason to do that is large memory footprint
@@ -105,11 +111,12 @@ fun <Key : Any, Value : Any> StateKeeper.registerPagingState(
  * @param keySerializer a [KSerializer] for deserializing the key.
  * @param valueSerializer a [KSerializer] for deserializing the value.
  * @return Pager state to be provided to [ru.herobrine1st.paging.createPager].
+ * @see getStateForPreservation
  */
 fun <Key : Any, Value : Any> StateKeeper.consumePagingState(
     key: String,
     // using KSerializer instead of DeserializationStrategy as it is incredibly hard to create
-    // ListDeserializationStrategy without using internals of kotlinx.serialization
+    // generic DeserializationStrategy without using internals of kotlinx.serialization
     keySerializer: KSerializer<Key>,
     valueSerializer: KSerializer<Value>,
 ): SavedPagerState<Key, Value>? {
