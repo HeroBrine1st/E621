@@ -20,6 +20,8 @@
 
 package ru.herobrine1st.e621.ui.screen.posts
 
+import androidx.compose.foundation.gestures.scrollBy
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -44,15 +46,22 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
@@ -78,6 +87,7 @@ fun Posts(
     screenSharedState: ScreenSharedState,
     component: PostListingComponent
 ) {
+    val coroutineScope = rememberCoroutineScope()
     val favouritesCache by component.collectFavouritesCacheAsState()
     val lazyListState = rememberLazyListState()
 
@@ -155,8 +165,7 @@ fun Posts(
                     .fillMaxWidth()
             ) {
                 when {
-                    posts.loadStates.prepend is LoadState.Loading ||
-                            component.infoState is InfoState.Loading -> item {
+                    component.infoState is InfoState.Loading -> item {
                         Spacer(modifier = Modifier.height(4.dp))
                         CircularProgressIndicator()
                         Spacer(modifier = Modifier.height(4.dp))
@@ -210,6 +219,41 @@ fun Posts(
                     key = posts.itemKey { post -> post.key },
                     contentType = posts.contentType { post -> post.contentType }
                 ) { index ->
+                    // Due to first item with index zero being able to vanish scroll position
+                    // resets every prepend when user sees at least a pixel of loading indicator or even its padding
+                    // Moving it inside element which will not vanish resolves problem with scroll reset
+                    // leaving only a small problem of snapping scroll to the size of loading indicator (i.e.
+                    // posts are suddenly higher and user don't immediately see that loading is complete)
+                    // This issue is fixed with scrollBy, leaving even more small problem that the problem
+                    // described above it not fixed for one frame
+                    // Likely onDispose is only called after the frame it is disposed
+                    // So that we have one frame without indicator but when onDispose is not called yet
+                    //
+                    // The proper solution is to use NestedScroll and manually manage CircularProgressIndicator position based on it
+                    // It is possible if changing contentPadding does not change scroll position, as it involves
+                    // adding beforeContentPadding. Also custom vertical arrangement may help here. If it is not possible to remove beforeContentPadding
+                    // without changing scroll position, this solution is doomed and will be equal to the solution below without DisposableEffect
+                    //
+                    // Other solutions:
+                    // - Animate exit of CircularProgressIndicator, while also animating scroll
+                    // - https://issuetracker.google.com/issues/273025639 may be useful if it allows negative offsets
+                    //   (also fix for snapping due to big page sizes)
+                    if (index == 0 && posts.loadStates.prepend is LoadState.Loading) {
+                        var height by remember { mutableIntStateOf(-1) }
+                        Column(Modifier.onSizeChanged { height = it.height }) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+                        DisposableEffect(Unit) {
+                            onDispose {
+                                // this lags for one frame
+                                coroutineScope.launch {
+                                    lazyListState.scrollBy(-height.toFloat())
+                                }
+                            }
+                        }
+                    }
                     val item = posts[index]
                     when (item) {
                         is UIPostListingItem.HiddenItemsBridge -> HiddenItems(item)
