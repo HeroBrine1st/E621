@@ -4,7 +4,7 @@ core = "1.6.1"
 kotlin = "2.0.20"
 ksp = "2.1.0-1.0.29"
 
-aboutlibraries = "11.2.3"
+aboutlibraries = "11.4.0"
 room = "2.7.0-alpha12" # alpha06 requires KMP project due to expect/actual factory injection
 ktor = "2.3.13"
 decompose = "3.2.2"
