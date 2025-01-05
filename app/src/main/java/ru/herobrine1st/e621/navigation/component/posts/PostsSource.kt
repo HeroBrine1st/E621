@@ -32,18 +32,13 @@ import ru.herobrine1st.paging.api.PagingSource
 class PostsSource(
     private val api: API,
     private val exceptionReporter: ExceptionReporter,
-    private val searchOptions: SearchOptions?,
+    private val searchOptions: SearchOptions,
 ) : PagingSource<Int, Post> {
 //    override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
 //        return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
 //    }
 
     override suspend fun getPage(params: LoadParams<Int>): LoadResult<Int, Post> {
-        if (searchOptions == null) {
-            return LoadResult.Page(
-                emptyList(), null, null
-            )
-        }
         val limit = params.requestedSize.coerceAtMost(searchOptions.maxLimit)
         return try {
             val page = params.key
@@ -51,7 +46,7 @@ class PostsSource(
             LoadResult.Page(
                 data = posts,
                 previousKey = if (page == 1) null else page - 1,
-                nextKey = if (posts.isNotEmpty()) page + 1 else null
+                nextKey = if (posts.size == params.requestedSize) page + 1 else null
             )
         } catch (t: Throwable) {
             exceptionReporter.handleRequestException(t)
