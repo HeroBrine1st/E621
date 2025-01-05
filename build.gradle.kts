@@ -21,7 +21,7 @@ buildscript {
 
 
 tasks {
-    create<Delete>("clean") {
+    register<Delete>("clean") {
         delete(layout.buildDirectory)
     }
 }

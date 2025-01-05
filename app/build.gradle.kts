@@ -1,5 +1,5 @@
+
 import com.android.build.api.dsl.VariantDimension
-import java.io.ByteArrayOutputStream
 
 plugins {
     alias(libs.plugins.android.application)
@@ -10,6 +10,11 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 
     alias(libs.plugins.aboutlibraries)
+}
+
+val gitCommitShortHashProvider = providers.exec {
+    commandLine = listOf("git", "rev-parse", "--short", "HEAD")
+    isIgnoreExitValue = false
 }
 
 android {
@@ -82,7 +87,10 @@ android {
             matchingFallbacks.add("release")
             signingConfig = signingConfigs.getByName("debug")
             applicationIdSuffix = ".nightly"
-            versionNameSuffix = "-${getCommitShortHash()}"
+            val shortHashResult = gitCommitShortHashProvider.result.get()
+            shortHashResult.rethrowFailure()
+            shortHashResult.assertNormalExitValue()
+            versionNameSuffix = "-${gitCommitShortHashProvider.standardOutput.asText.get().trim()}"
         }
     }
     compileOptions {
@@ -199,19 +207,6 @@ dependencies {
 ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
-
-fun executeCommand(vararg argv: String): String {
-    val byteArrayOutputStream = ByteArrayOutputStream()
-    exec {
-        commandLine = argv.toList()
-        standardOutput = byteArrayOutputStream
-        isIgnoreExitValue = false
-    }
-    return byteArrayOutputStream.toString()
-}
-
-fun getCommitShortHash(revision: String = "HEAD") =
-    executeCommand("git", "rev-parse", "--short", revision).trim()
 
 fun VariantDimension.stringBuildConfigField(name: String, value: String) =
     buildConfigField("String", name, "\"${value.replace("\"", "\\\"")}\"")
