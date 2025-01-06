@@ -49,7 +49,6 @@ import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.common.VoteResult
-import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.Post
@@ -111,16 +110,7 @@ class PostComponent(
     // private var rememberedPositionMs = -1L
     private val state = MutableValue<PostState>(PostState.Loading)
 
-    var currentFile by mutableStateOf(
-        NormalizedFile(
-            "stub",
-            0,
-            0,
-            FileType.UNDEFINED,
-            0,
-            emptyList()
-        )
-    )
+    var currentFile by mutableStateOf(NormalizedFile.STUB)
         private set
 
 
@@ -173,7 +163,7 @@ class PostComponent(
         state.value = stateKeeper.consume(POST_STATE_KEY, strategy = PostState.serializer())
             ?: initialPost?.let { PostState.Ready(it) } ?: PostState.Loading
 
-        if (state.value is PostState.Ready) useSample()
+        if (state.value is PostState.Ready) useSampleAsDefault()
 
         lifecycle.doOnResume {
             // TODO behavior preference
@@ -186,7 +176,7 @@ class PostComponent(
                     || !dataStore.data.map { it.dataSaverModeEnabled }.first()
                 )
                     refreshPostInternal()
-                useSample()
+                useSampleAsDefault()
             }
 
         }
@@ -215,9 +205,10 @@ class PostComponent(
         }
     }
 
-    private fun useSample() {
+    private fun useSampleAsDefault() {
         val state = state.value
         assert(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
+        if (currentFile !== NormalizedFile.STUB) return
         state as PostState.Ready
         setFile(state.post.selectSample())
     }
