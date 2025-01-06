@@ -76,8 +76,7 @@ class SearchComponent private constructor(
     var orderAscending by mutableStateOf(initialSearchOptions.orderAscending)
     val rating = initialSearchOptions.rating.toMutableStateList()
     var favouritesOf by mutableStateOf(initialSearchOptions.favouritesOf ?: "")
-    var fileType by mutableStateOf(initialSearchOptions.fileType)
-    var fileTypeInvert by mutableStateOf(initialSearchOptions.fileTypeInvert)
+    val postTypes = initialSearchOptions.types.toMutableStateList()
     var parentPostId by mutableIntStateOf(initialSearchOptions.parent.value)
     var poolId by mutableIntStateOf(initialSearchOptions.poolId)
 
@@ -234,8 +233,7 @@ class SearchComponent private constructor(
             orderAscending = orderAscending,
             rating = rating.toSet(),
             favouritesOf = favouritesOf.ifBlank { null },
-            fileType = fileType,
-            fileTypeInvert = fileTypeInvert,
+            types = postTypes.toSet(),
             parent = PostId(parentPostId),
             poolId = poolId
         )

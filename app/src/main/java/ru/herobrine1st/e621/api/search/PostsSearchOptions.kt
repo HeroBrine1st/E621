@@ -33,6 +33,13 @@ import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.util.debug
 
+// A simplification of filetype, as there's actually no need to differ between png and jpg
+enum class PostType {
+    IMAGE, // png, jpg
+    ANIMATION, // gif
+    VIDEO // webm
+}
+
 @Serializable
 data class PostsSearchOptions(
     val allOf: Set<Tag> = emptySet(),
@@ -42,8 +49,7 @@ data class PostsSearchOptions(
     val orderAscending: Boolean = false,
     val rating: Set<Rating> = emptySet(),
     val favouritesOf: String? = null, // "favorited_by" in api
-    val fileType: FileType? = null,
-    val fileTypeInvert: Boolean = false,
+    val types: Set<PostType> = emptySet(),
     val parent: PostId = PostId.INVALID,
     val poolId: PoolId = -1,
 ) : SearchOptions {
@@ -56,7 +62,21 @@ data class PostsSearchOptions(
         cache += noneOf.map { it.asExcluded }
         cache += anyOf.map { it.asAlternative }
         cache += optimizeRatingSelection(rating)
-        fileType?.extension?.let { cache += (if (fileTypeInvert) "-" else "") + "type:" + it }
+        val fileTypes = types.flatMap {
+            when (it) {
+                PostType.IMAGE -> listOf(FileType.PNG, FileType.JPG)
+                PostType.ANIMATION -> listOf(FileType.GIF)
+                PostType.VIDEO -> listOf(FileType.WEBM)
+            }
+        }
+        // API does not support OR-ing file types. Alternative tags work, but on common conditions,
+        // so e.g. `~type:png ~type:jpg ~anthro ~feral` returns posts that have `anthro` despite being a video)
+        // De Morgan's Law is here to save the day
+        if (fileTypes.size == 1) {
+            cache += "filetype:${fileTypes.single().extension}"
+        } else if (fileTypes.size > 1) {
+            cache += (FileType.entries - fileTypes - FileType.UNDEFINED).map { "-filetype:${it.extension}" }
+        }
         favouritesOf?.let { cache += "fav:$it" }
         (if (orderAscending) order.ascendingApiName else order.apiName)?.let { cache += "order:$it" }
         if (parent != PostId.INVALID) cache += "parent:${parent.value}"
@@ -107,8 +127,7 @@ data class PostsSearchOptions(
                     orderAscending = orderAscending,
                     rating = rating.toSet(),
                     favouritesOf = favouritesOf,
-                    fileType = fileType,
-                    fileTypeInvert = fileTypeInvert,
+                    types = types,
                     parent = parent,
                     poolId = poolId
                 )
@@ -131,8 +150,7 @@ data class PostsSearchOptions(
         var orderAscending: Boolean = false,
         var rating: MutableSet<Rating> = mutableSetOf(),
         var favouritesOf: String? = null,
-        var fileType: FileType? = null,
-        var fileTypeInvert: Boolean = false,
+        var types: Set<PostType> = mutableSetOf(),
         var parent: PostId = PostId.INVALID,
         var poolId: PoolId = -1,
     ) {
@@ -145,8 +163,7 @@ data class PostsSearchOptions(
                 orderAscending = orderAscending,
                 rating = rating,
                 favouritesOf = favouritesOf,
-                fileType = fileType,
-                fileTypeInvert = fileTypeInvert,
+                types = this@Builder.types,
                 parent = parent,
                 poolId = poolId
             )
@@ -162,8 +179,7 @@ data class PostsSearchOptions(
                         orderAscending = orderAscending,
                         rating = rating.toMutableSet(),
                         favouritesOf = favouritesOf,
-                        fileType = fileType,
-                        fileTypeInvert = fileTypeInvert,
+                        types = types,
                         parent = parent,
                         poolId = poolId
                     )
