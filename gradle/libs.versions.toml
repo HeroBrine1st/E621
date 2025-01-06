@@ -11,7 +11,7 @@ decompose = "3.2.2"
 coil = "2.7.0"
 media3 = "1.5.1"
 
-kotlinx-serialization = "1.7.3"
+kotlinx-serialization = "1.8.0"
 kotlinx-datetime = "0.6.1"
 
 android-compileSdk = "35"
