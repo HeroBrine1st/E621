@@ -82,11 +82,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
-import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
+import ru.herobrine1st.e621.api.search.PostType
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.module.DataStoreModule
@@ -323,29 +323,51 @@ fun Search(
             }
             item("file type") {
                 SettingCard(
-                    title = stringResource(R.string.file_type),
+                    title = stringResource(R.string.post_type),
                     modifier = Modifier.selectableGroup()
                 ) {
-                    ItemSelectionRadioButton(
-                        selected = component.fileType == null,
-                        text = stringResource(R.string.any)
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        component.fileType = null
-                        component.fileTypeInvert = false
-                    }
-                    for (v in FileType.supportedValues()) {
-                        ItemSelectionRadioButton(
-                            selected = v == component.fileType,
-                            text = v.extension
-                        ) {
-                            component.fileType = v
+                        CompositionLocalProvider(LocalRippleConfiguration provides null) {
+                            for (type in PostType.entries) {
+                                val selected = type in component.postTypes
+                                FilterChip(
+                                    selected = selected,
+                                    onClick = {
+                                        if (selected)
+                                            component.postTypes.remove(type)
+                                        else
+                                            component.postTypes.add(type)
+                                        // Do not force any behavior: users are free to select all
+                                        // or select none as it is the same
+                                    },
+                                    label = {
+                                        Text(
+                                            when (type) {
+                                                PostType.IMAGE -> stringResource(R.string.post_type_image)
+                                                PostType.ANIMATION -> stringResource(R.string.post_type_animation)
+                                                PostType.VIDEO -> stringResource(R.string.post_type_video)
+                                            }
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        AnimatedVisibility(
+                                            visible = selected,
+                                            enter = fadeIn() + expandIn(expandFrom = Alignment.CenterStart),
+                                            exit = shrinkOut(shrinkTowards = Alignment.CenterStart) + fadeOut(),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Check,
+                                                null,
+                                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                            )
+                                        }
+                                    }
+                                )
+                            }
                         }
-                    }
-                    ItemSelectionCheckbox(
-                        checked = component.fileTypeInvert,
-                        text = stringResource(R.string.file_type_invert_selection)
-                    ) {
-                        component.fileTypeInvert = it
                     }
                 }
             }

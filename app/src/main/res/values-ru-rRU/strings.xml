@@ -119,8 +119,7 @@
     <string name="proxy_port">Порт</string>
     <string name="proxy_username">Имя пользователя</string>
     <string name="proxy_password">Пароль</string>
-    <string name="file_type">Тип файла</string>
-    <string name="file_type_invert_selection">Исключить</string>
+    <string name="post_type">Тип публикации</string>
     <string name="wiki_page_not_found">К сожалению, данной вики-страницы не существует. Возможно, она еще не была создана.</string>
     <string name="screen_settings_blacklist_entry">Запись чёрного списка</string>
     <string name="create_new_fab">Создать</string>
@@ -170,4 +169,7 @@
     <string name="about_build_info">Информация о сборке</string>
     <string name="about_build_info_content">"Версия: %1$s\nТип сборки: %2$s\nUser-Agent: %3$s"</string>
     <string name="blacklist_fetch_error">Не удалось получить чёрный список из аккаунта</string>
+    <string name="post_type_image">Изображение</string>
+    <string name="post_type_video">Видео</string>
+    <string name="post_type_animation">Анимация</string>
 </resources>
