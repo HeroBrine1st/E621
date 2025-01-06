@@ -28,7 +28,7 @@ import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.decompose.router.stack.navigate
-import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.pushNew
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -114,7 +114,7 @@ class SettingsBlacklistComponent(
     }
 
     fun editEntry(entry: BlacklistEntry) {
-        navigator.push(
+        navigator.pushNew(
             Config.Settings.Blacklist.Entry(
                 id = entry.id,
                 query = entry.query,

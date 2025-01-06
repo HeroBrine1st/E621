@@ -30,7 +30,7 @@ import com.arkivanov.decompose.extensions.compose.stack.animation.plus
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.navigate
-import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.pushNew
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Home
 import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Post
@@ -106,10 +106,10 @@ fun Navigator(
             is Settings -> Settings(
                 screenSharedState = sharedState,
                 onNavigateToBlacklistSettings = {
-                    navigation.push(Config.Settings.Blacklist)
+                    navigation.pushNew(Config.Settings.Blacklist)
                 },
                 onNavigateToAbout = {
-                    navigation.push(Config.Settings.About)
+                    navigation.pushNew(Config.Settings.About)
                 },
                 component = instance.component
             )
@@ -128,10 +128,10 @@ fun Navigator(
             is Settings.About -> SettingsAbout(
                 screenSharedState = sharedState,
                 navigateToLicense = {
-                    navigation.push(Config.Settings.License)
+                    navigation.pushNew(Config.Settings.License)
                 },
                 navigateToOssLicenses = {
-                    navigation.push(Config.Settings.AboutLibraries)
+                    navigation.pushNew(Config.Settings.AboutLibraries)
                 }
             )
 

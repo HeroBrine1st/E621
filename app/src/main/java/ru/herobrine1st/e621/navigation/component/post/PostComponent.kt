@@ -32,7 +32,7 @@ import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.stack.StackNavigator
-import com.arkivanov.decompose.router.stack.push
+import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.getOrCreate
@@ -328,7 +328,7 @@ class PostComponent(
 
     fun openToFullscreen() {
         val post = (state.value as PostState.Ready).post
-        navigator.push(
+        navigator.pushNew(
             Config.PostMedia(
                 post = post,
                 initialFile = currentFile
