@@ -180,7 +180,7 @@ fun Posts(
                         Spacer(modifier = Modifier.height(4.dp))
                     }
 
-                    posts.loadStates.prepend is LoadState.Complete &&
+                    (posts.loadStates.prepend is LoadState.Complete || posts.loadStates.prepend is LoadState.Idle) &&
                             component.infoState is InfoState.PoolInfo -> item(
                         "PoolInfoCard",
                         contentType = "PoolInfoCard"
