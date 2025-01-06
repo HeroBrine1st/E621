@@ -57,6 +57,17 @@ data class NormalizedFile(
             this(name, file.width, file.height, file.normalizedType, 0, file.urls.filterNotNull())
 
     val aspectRatio get() = width.toFloat() / height.toFloat()
+
+    companion object {
+        val STUB = NormalizedFile(
+            "stub",
+            0,
+            0,
+            FileType.UNDEFINED,
+            0,
+            emptyList()
+        )
+    }
 }
 
 fun NormalizedFile.isOriginal() = name == "original"
