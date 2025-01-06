@@ -9,7 +9,7 @@ room = "2.7.0-alpha12" # alpha06 requires KMP project due to expect/actual facto
 ktor = "2.3.13"
 decompose = "3.2.2"
 coil = "2.7.0"
-media3 = "1.4.1"
+media3 = "1.5.1"
 
 kotlinx-serialization = "1.7.3"
 kotlinx-datetime = "0.6.1"
