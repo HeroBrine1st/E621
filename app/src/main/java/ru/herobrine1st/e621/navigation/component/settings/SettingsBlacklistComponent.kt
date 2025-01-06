@@ -86,6 +86,7 @@ class SettingsBlacklistComponent(
                 }
             } catch (t: Throwable) {
                 snackbar.enqueueMessage(R.string.database_error_updating_blacklist)
+                Log.w(TAG, "Unknown database error occurred while toggling blacklist entry", t)
             }
             job.cancel()
             onComplete()
