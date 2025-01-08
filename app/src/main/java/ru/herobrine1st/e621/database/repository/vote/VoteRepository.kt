@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2024 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2025 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,13 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.data
+package ru.herobrine1st.e621.database.repository.vote
 
-import androidx.room.withTransaction
-import ru.herobrine1st.e621.database.Database
+import ru.herobrine1st.e621.api.model.PostId
+import ru.herobrine1st.e621.database.repository.BaseRepository
 
-abstract class BaseRepositoryImpl(val database: Database): BaseRepository {
-    override suspend fun <R> withTransaction(block: suspend () -> R) =
-        database.withTransaction(block)
+interface VoteRepository : BaseRepository {
+    suspend fun getVote(postId: PostId): Int?
+
+    suspend fun setVote(postId: PostId, vote: Int)
 }

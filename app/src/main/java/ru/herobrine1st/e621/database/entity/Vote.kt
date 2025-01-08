@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2024 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2025 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,19 +18,25 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.data.vote
+package ru.herobrine1st.e621.database.entity
 
-import ru.herobrine1st.e621.api.model.PostId
-import ru.herobrine1st.e621.dao.VoteDao
-import ru.herobrine1st.e621.data.BaseRepositoryImpl
-import ru.herobrine1st.e621.database.Database
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
-class VoteRepositoryImpl(database: Database, private val dao: VoteDao) :
-    BaseRepositoryImpl(database), VoteRepository {
-
-    override suspend fun getVote(postId: PostId) = dao.getVote(postId.value)
-
-    override suspend fun setVote(postId: PostId, vote: Int) {
-        dao.insertOrUpdate(postId.value, vote)
+@Entity(
+    tableName = "votes",
+    indices = [
+        Index("postId", unique = true)
+    ]
+)
+data class Vote(
+    @ColumnInfo val postId: Int,
+    @ColumnInfo var vote: Int,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+) {
+    init {
+        assert(vote in -1..1)
     }
 }

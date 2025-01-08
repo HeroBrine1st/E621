@@ -18,8 +18,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.data
+package ru.herobrine1st.e621.database.repository
 
-interface BaseRepository {
-    suspend fun <R> withTransaction(block: suspend () -> R): R
+import androidx.room.withTransaction
+import ru.herobrine1st.e621.database.Database
+
+abstract class BaseRepositoryImpl(val database: Database): BaseRepository {
+    override suspend fun <R> withTransaction(block: suspend () -> R) =
+        database.withTransaction(block)
 }

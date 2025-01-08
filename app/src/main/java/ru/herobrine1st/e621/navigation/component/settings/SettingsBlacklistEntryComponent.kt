@@ -29,8 +29,8 @@ import com.arkivanov.decompose.router.stack.pop
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.repository.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.LifecycleScope
 
 class SettingsBlacklistEntryComponent(

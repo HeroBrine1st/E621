@@ -37,8 +37,8 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.launch
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.repository.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.util.InstanceBase

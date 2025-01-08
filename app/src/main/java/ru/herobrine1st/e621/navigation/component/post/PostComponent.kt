@@ -58,7 +58,7 @@ import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.api.search.PoolSearchOptions
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
-import ru.herobrine1st.e621.data.vote.VoteRepository
+import ru.herobrine1st.e621.database.repository.vote.VoteRepository
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.module.IDownloadManager

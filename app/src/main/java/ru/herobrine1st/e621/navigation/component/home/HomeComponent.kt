@@ -36,9 +36,9 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
 import ru.herobrine1st.e621.api.search.FavouritesSearchOptions
-import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.repository.authorization.AuthorizationRepository
+import ru.herobrine1st.e621.database.repository.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.home.IHomeComponent.LoginState
 import ru.herobrine1st.e621.navigation.config.Config

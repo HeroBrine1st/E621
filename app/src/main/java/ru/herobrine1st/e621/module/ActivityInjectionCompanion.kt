@@ -20,7 +20,7 @@
 
 package ru.herobrine1st.e621.module
 
-import ru.herobrine1st.e621.data.authorization.AuthorizationRepositoryImpl
+import ru.herobrine1st.e621.database.repository.authorization.AuthorizationRepositoryImpl
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.FavouritesCache
 

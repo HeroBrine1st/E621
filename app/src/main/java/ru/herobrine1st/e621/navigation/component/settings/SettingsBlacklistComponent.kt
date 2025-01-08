@@ -38,8 +38,8 @@ import kotlinx.coroutines.flow.runningFold
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
-import ru.herobrine1st.e621.data.blacklist.BlacklistRepository
-import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.repository.blacklist.BlacklistRepository
 import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter

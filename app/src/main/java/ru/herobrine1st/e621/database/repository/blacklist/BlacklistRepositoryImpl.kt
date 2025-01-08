@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2024 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2025 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +18,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.data.blacklist
+package ru.herobrine1st.e621.database.repository.blacklist
 
 import kotlinx.coroutines.flow.Flow
-import ru.herobrine1st.e621.dao.BlacklistDao
-import ru.herobrine1st.e621.data.BaseRepositoryImpl
+
 import ru.herobrine1st.e621.database.Database
-import ru.herobrine1st.e621.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.dao.BlacklistDao
+import ru.herobrine1st.e621.database.entity.BlacklistEntry
+import ru.herobrine1st.e621.database.repository.BaseRepositoryImpl
 
 class BlacklistRepositoryImpl(
     database: Database,

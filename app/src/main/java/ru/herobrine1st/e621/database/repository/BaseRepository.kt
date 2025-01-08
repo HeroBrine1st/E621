@@ -18,28 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.data.blacklist
+package ru.herobrine1st.e621.database.repository
 
-import kotlinx.coroutines.flow.Flow
-import ru.herobrine1st.e621.data.BaseRepository
-import ru.herobrine1st.e621.entity.BlacklistEntry
-
-interface BlacklistRepository: BaseRepository {
-    fun getEntriesFlow(): Flow<List<BlacklistEntry>>
-
-    suspend fun getAllEntries(): List<BlacklistEntry>
-
-    suspend fun updateEntry(entry: BlacklistEntry)
-
-    suspend fun insertEntry(entry: BlacklistEntry): Long
-
-    suspend fun insertEntries(entries: List<BlacklistEntry>)
-
-    suspend fun deleteEntry(entry: BlacklistEntry)
-
-    suspend fun deleteEntryById(id: Long)
-
-    suspend fun updateEntries(entries: List<BlacklistEntry>)
-
-    suspend fun count(): Int
+interface BaseRepository {
+    suspend fun <R> withTransaction(block: suspend () -> R): R
 }

@@ -48,7 +48,7 @@ import kotlinx.serialization.json.JsonNamingStrategy
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.APIImpl
-import ru.herobrine1st.e621.data.authorization.AuthorizationRepository
+import ru.herobrine1st.e621.database.repository.authorization.AuthorizationRepository
 import ru.herobrine1st.e621.util.AuthorizationNotifier
 import ru.herobrine1st.e621.util.USER_AGENT
 import ru.herobrine1st.e621.util.debug

@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package ru.herobrine1st.e621.data.authorization
+package ru.herobrine1st.e621.database.repository.authorization
 
 import kotlinx.coroutines.flow.Flow
 import ru.herobrine1st.e621.preference.AuthorizationCredentials
