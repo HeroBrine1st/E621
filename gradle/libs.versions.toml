@@ -8,7 +8,7 @@ aboutlibraries = "11.5.0"
 room = "2.7.0-alpha13" # alpha06 requires KMP project due to expect/actual factory injection
 ktor = "2.3.13"
 decompose = "3.2.2"
-coil = "2.7.0"
+coil = "3.1.0"
 media3 = "1.5.1"
 
 kotlinx-serialization = "1.8.0"
@@ -51,10 +51,10 @@ room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 
 datastore = { module = "androidx.datastore:datastore-core", version = "1.1.2" }
 
-coil-core = { module = "io.coil-kt:coil", version.ref = "coil" }
-coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coil" }
-coil-gif = { module = "io.coil-kt:coil-gif", version.ref = "coil" }
-okhttp = "com.squareup.okhttp3:okhttp:4.12.0"
+coil-core = { module = "io.coil-kt.coil3:coil-core", version.ref = "coil" }
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
+coil-gif = { module = "io.coil-kt.coil3:coil-gif", version.ref = "coil" }
+coil-network-ktor2 = { module = "io.coil-kt.coil3:coil-network-ktor2", version.ref = "coil" }
 
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
@@ -66,7 +66,7 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 media3-exoplayer = { module = "androidx.media3:media3-exoplayer", version.ref = "media3" }
 media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
 media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3" }
-
+okhttp = "com.squareup.okhttp3:okhttp:4.12.0"
 
 
 jsoup = "org.jsoup:jsoup:1.18.3"

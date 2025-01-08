@@ -37,6 +37,7 @@ import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,21 +47,22 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import coil.compose.AsyncImagePainter
-import coil.compose.AsyncImagePainter.State.Empty
-import coil.compose.AsyncImagePainter.State.Error
-import coil.compose.AsyncImagePainter.State.Loading
-import coil.compose.AsyncImagePainter.State.Success
-import coil.request.ImageRequest
+import androidx.core.net.toUri
+import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.compose.AsyncImagePainter.State.Empty
+import coil3.compose.AsyncImagePainter.State.Error
+import coil3.compose.AsyncImagePainter.State.Loading
+import coil3.compose.AsyncImagePainter.State.Success
+import coil3.request.ImageRequest
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
-import ru.herobrine1st.e621.net.collectDownloadProgressAsState
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
 import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
+import ru.herobrine1st.e621.util.progressCallbackExtra
 
 private const val TAG = "PostImage"
 
@@ -74,17 +76,20 @@ fun PostImage(
     setSizeOriginal: Boolean = false,
 ) {
     val aspectRatio = file.aspectRatio
-    val url = file.urls.firstNotNullOfOrNull { it.toHttpUrlOrNull() }
 
     var painterState by remember { mutableStateOf<AsyncImagePainter.State>(Empty) }
-    val progress by collectDownloadProgressAsState(url)
+    var progress by remember { mutableFloatStateOf(-1f) }
 
     val context = LocalContext.current
-    val imageRequest = remember(url) {
+    val imageRequest = remember(file.urls) {
         ImageRequest.Builder(context)
-            .data(url)
+            // toHttpUrlOrNull - because toUri does not throw
+            .data(file.urls.first { it.toHttpUrlOrNull() != null }.toUri())
             .apply {
-                if (setSizeOriginal) size(coil.size.Size.ORIGINAL)
+                if (setSizeOriginal) size(coil3.size.Size.ORIGINAL)
+                extras[progressCallbackExtra] = { received, total ->
+                    progress = received.toFloat() / total
+                }
             }
             .build()
     }
@@ -132,7 +137,7 @@ fun PostImage(
             }
 
             is Loading -> Crossfade(
-                progress == null,
+                progress < 0,
                 label = "Crossfade between indeterminate and determinate progress indicators"
             ) {
                 when (it) {
@@ -141,7 +146,7 @@ fun PostImage(
                         val progress1 by animateFloatAsState(
                             // Non-nullability is guaranteed by collectDownloadProgressByState,
                             // which internally uses non-nullable SharedFlow
-                            targetValue = progress!!.progress,
+                            targetValue = progress,
                             animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
                             label = "Progress animation"
                         )

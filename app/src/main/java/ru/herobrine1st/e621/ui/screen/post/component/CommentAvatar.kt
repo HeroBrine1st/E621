@@ -33,9 +33,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import coil.transform.CircleCropTransformation
+import coil3.compose.AsyncImage
+import coil3.request.ImageRequest
+import coil3.request.crossfade
+import coil3.request.transformations
+import coil3.transform.CircleCropTransformation
 import ru.herobrine1st.e621.api.common.AvatarImageCommon
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
