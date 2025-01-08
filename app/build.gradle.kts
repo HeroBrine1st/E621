@@ -154,6 +154,7 @@ dependencies {
     implementation(libs.coil.core)
     implementation(libs.coil.compose)
     implementation(libs.coil.gif)
+    implementation(libs.coil.network.ktor2)
     implementation(libs.okhttp)
 
     implementation(libs.room.runtime)

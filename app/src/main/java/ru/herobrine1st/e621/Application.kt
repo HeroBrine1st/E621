@@ -21,31 +21,38 @@
 package ru.herobrine1st.e621
 
 import android.app.Application
-import coil.ImageLoader
-import coil.ImageLoaderFactory
-import coil.decode.ImageDecoderDecoder
-import coil.disk.DiskCache
-import okhttp3.OkHttpClient
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.annotation.ExperimentalCoilApi
+import coil3.disk.DiskCache
+import coil3.gif.AnimatedImageDecoder
+import coil3.network.NetworkFetcher
+import coil3.request.crossfade
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.cio.CIO
+import okio.Path.Companion.toOkioPath
 import ru.herobrine1st.e621.module.ApplicationInjectionCompanion
-import ru.herobrine1st.e621.net.DownloadProgressInterceptor
+import ru.herobrine1st.e621.util.CoilKtorNetworkFetcher
 
-class Application : Application(), ImageLoaderFactory {
+class Application : Application(), SingletonImageLoader.Factory {
     val injectionCompanion = ApplicationInjectionCompanion(this)
 
-    override fun newImageLoader(): ImageLoader = ImageLoader.Builder(this)
+    override fun newImageLoader(context: PlatformContext): ImageLoader = ImageLoader.Builder(this)
         .crossfade(true)
-        .okHttpClient {
-            OkHttpClient.Builder()
-                .addInterceptor(DownloadProgressInterceptor)
-                .build()
+        .components {
+            add(
+                @OptIn(ExperimentalCoilApi::class) // is not declared, just a warning out of the air
+                NetworkFetcher.Factory(
+                    networkClient = { CoilKtorNetworkFetcher(HttpClient(CIO)) },
+                )
+            )
+            add(AnimatedImageDecoder.Factory())
         }
         .diskCache {
             DiskCache.Builder()
-                .directory(cacheDir.resolve("coilCache"))
+                .directory(cacheDir.resolve("coilCache").toOkioPath())
                 .build()
-        }
-        .components {
-            add(ImageDecoderDecoder.Factory())
         }
         .build()
 }
