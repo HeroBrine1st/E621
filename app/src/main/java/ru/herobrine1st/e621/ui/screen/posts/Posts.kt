@@ -48,6 +48,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.produceState
@@ -283,6 +284,23 @@ fun Posts(
 
                 }
                 endOfPagePlaceholder(posts.loadStates.append, onRetry = posts::retry)
+            }
+            // Fix snapping on page dropping
+            // https://issuetracker.google.com/issues/273025639
+            // P.s. idk why it works in this case. This SideEffect is the only thing that has dependencies on state in this restartable block
+            // and SideEffect is not executed on its own, only after a (re)composition, when Applier has done its work - and there's no work in this block.
+            SideEffect {
+                val oldFirstItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
+                if (oldFirstItem != null && posts.items.getOrNull(oldFirstItem.index)?.key != oldFirstItem.key) {
+                    // TODO this code can be provided with dropped page item count - making it O(1) instead of O(n)
+                    val newIndex = posts.items.indexOfFirst { it.key == oldFirstItem.key }
+                    if (newIndex != -1) {
+                        lazyListState.requestScrollToItem(
+                            newIndex,
+                            lazyListState.firstVisibleItemScrollOffset
+                        )
+                    }
+                }
             }
         }
     }
