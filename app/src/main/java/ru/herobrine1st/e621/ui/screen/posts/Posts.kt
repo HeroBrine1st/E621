@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.ui.screen.posts
 
+import android.util.Log
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -51,6 +52,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -285,21 +287,48 @@ fun Posts(
                 }
                 endOfPagePlaceholder(posts.loadStates.append, onRetry = posts::retry)
             }
-            // Fix snapping on page dropping
-            // https://issuetracker.google.com/issues/273025639
-            // P.s. idk why it works in this case. This SideEffect is the only thing that has dependencies on state in this restartable block
-            // and SideEffect is not executed on its own, only after a (re)composition, when Applier has done its work - and there's no work in this block.
-            SideEffect {
+
+            val firstKey = posts.items.firstOrNull()?.key
+            var recentFirstKey by remember { mutableStateOf(firstKey) }
+            // detect page dropping or prepending
+            if (recentFirstKey != firstKey) SideEffect {
+                // side effect is called after composition, but before layout
+                recentFirstKey = firstKey
+                Log.d(
+                    "PostsScreenSideEffect",
+                    "Detected first page change - trying to restore scrolling position"
+                )
                 val oldFirstItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
-                if (oldFirstItem != null && posts.items.getOrNull(oldFirstItem.index)?.key != oldFirstItem.key) {
-                    // TODO this code can be provided with dropped page item count - making it O(1) instead of O(n)
-                    val newIndex = posts.items.indexOfFirst { it.key == oldFirstItem.key }
-                    if (newIndex != -1) {
-                        lazyListState.requestScrollToItem(
-                            newIndex,
-                            lazyListState.firstVisibleItemScrollOffset
-                        )
+                if (oldFirstItem == null || posts.items.getOrNull(oldFirstItem.index)?.key == oldFirstItem.key) {
+                    Log.w(
+                        "PostsScreenSideEffect",
+                        "Scroll restoration side effect is called without reason, it is not normal!"
+                    )
+                    debug {
+                        error("Impossible!") // or possible? idk, that's why it is not included in release builds
                     }
+                    return@SideEffect
+                }
+                debug {
+                    Log.d(
+                        "PostsScreenSideEffect",
+                        "Restoring key ${oldFirstItem.key}, current imposter is ${
+                            posts.items.getOrNull(oldFirstItem.index)?.key
+                        }"
+                    )
+                }
+                // TODO this code can be provided with dropped page item count - making it O(1) instead of O(n)
+                val newIndex = posts.items.indexOfFirst { it.key == oldFirstItem.key }
+                if (newIndex != -1) {
+                    debug {
+                        Log.d("PostsScreenSideEffect", "Successfully restored scroll position")
+                    }
+                    lazyListState.requestScrollToItem(
+                        newIndex,
+                        lazyListState.firstVisibleItemScrollOffset
+                    )
+                } else debug {
+                    Log.d("PostsScreenSideEffect", "Didn't find post for key ${oldFirstItem.key}")
                 }
             }
         }
