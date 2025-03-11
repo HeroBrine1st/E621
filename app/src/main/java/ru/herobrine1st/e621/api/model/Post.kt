@@ -25,7 +25,6 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
-import kotlinx.serialization.json.JsonElement
 
 @JvmInline
 @Serializable
@@ -42,7 +41,7 @@ data class Post(
     val createdAt: Instant,
     val updatedAt: Instant?,
     val file: File,
-    val preview: JsonElement, // TODO
+    val preview: Preview,
     val sample: Sample,
     val score: Score,
     val tags: Tags,
