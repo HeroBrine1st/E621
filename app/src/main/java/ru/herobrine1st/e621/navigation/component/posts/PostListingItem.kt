@@ -21,17 +21,66 @@
 package ru.herobrine1st.e621.navigation.component.posts
 
 import ru.herobrine1st.e621.api.model.PostId
-import ru.herobrine1st.e621.api.model.Post as ModelPost
 
-sealed interface InternalPostListingItem {
+sealed interface UIPostListingItem {
     val contentType: String
     val key: Any
 
-    data class Post(val post: ModelPost) : InternalPostListingItem {
+    data class Post(val post: TransientPost) : UIPostListingItem {
         override val contentType: String
             get() = "Post"
         override val key: Any
             get() = post.id.value
+    }
+
+
+    // The logic in Empty and HiddenItemsBridge is that a single bridge and then series of Empty
+    // are generated from one HiddenItems
+    // This behavior will allow LazyList to restore position under (hopefully) any circumstances
+    data class Empty(val id: PostId) : UIPostListingItem {
+        override val contentType: String
+            get() = "Empty"
+
+        override val key: Any
+            get() = id.value
+
+    }
+
+    data class HiddenItemsBridge(
+        val id: PostId,
+        /**
+         * True if there's a shown post above
+         */
+//        val hasUp: Boolean,
+        /**
+         * True if there's a shown post below
+         */
+//        val hasDown: Boolean,
+        val hiddenDueToBlacklistNumber: Int,
+        val hiddenDueToSafeModeNumber: Int,
+    ) : UIPostListingItem {
+
+        override val contentType: String
+            get() = "HiddenItemsBridge"
+
+        override val key: Any
+            get() = id.value
+    }
+}
+
+sealed interface IntermediatePostListingItem {
+    val contentType: String
+    val key: Any
+
+    fun toUi(): List<UIPostListingItem>
+
+    data class Post(val post: TransientPost) : IntermediatePostListingItem {
+        override val contentType: String
+            get() = "Post"
+        override val key: Any
+            get() = post.id.value
+
+        override fun toUi() = listOf(UIPostListingItem.Post(post))
     }
 
     data class HiddenItems(
@@ -47,7 +96,7 @@ sealed interface InternalPostListingItem {
 //        val hasDown: Boolean,
         val hiddenDueToBlacklistNumber: Int,
         val hiddenDueToSafeModeNumber: Int,
-    ) : InternalPostListingItem {
+    ) : IntermediatePostListingItem {
         fun merge(other: HiddenItems) = HiddenItems(
             postIds = this.postIds + other.postIds,
 //            hasUp = this.hasUp || other.hasUp,
@@ -61,8 +110,23 @@ sealed interface InternalPostListingItem {
         override val key: Any
             get() = postIds
 
+        override fun toUi(): List<UIPostListingItem> = buildList(postIds.size) {
+            add(
+                UIPostListingItem.HiddenItemsBridge(
+                    id = postIds[0],
+                    hiddenDueToBlacklistNumber = hiddenDueToBlacklistNumber,
+                    hiddenDueToSafeModeNumber = hiddenDueToSafeModeNumber
+                )
+            )
+            postIds.drop(1).map { id ->
+                UIPostListingItem.Empty(id)
+            }.let { list ->
+                addAll(list)
+            }
+        }
+
         companion object {
-            fun ofBlacklisted(post: ModelPost) = HiddenItems(
+            fun ofBlacklisted(post: TransientPost) = HiddenItems(
                 postIds = listOf(post.id),
 //                hasUp = false,
 //                hasDown = false,
@@ -70,7 +134,7 @@ sealed interface InternalPostListingItem {
                 hiddenDueToSafeModeNumber = 0
             )
 
-            fun ofUnsafe(post: ModelPost) = HiddenItems(
+            fun ofUnsafe(post: TransientPost) = HiddenItems(
                 postIds = listOf(post.id),
 //                hasUp = false,
 //                hasDown = false,
@@ -82,18 +146,18 @@ sealed interface InternalPostListingItem {
 }
 
 fun mergePostListingItems(
-    previous: InternalPostListingItem,
-    current: InternalPostListingItem,
-): Pair<InternalPostListingItem, InternalPostListingItem?> {
+    previous: IntermediatePostListingItem,
+    current: IntermediatePostListingItem,
+): Pair<IntermediatePostListingItem, IntermediatePostListingItem?> {
     return when (previous) {
-        is InternalPostListingItem.HiddenItems -> when (current) {
-            is InternalPostListingItem.HiddenItems -> previous.merge(current) to null
-            is InternalPostListingItem.Post -> previous/*.copy(hasDown = true)*/ to current
+        is IntermediatePostListingItem.HiddenItems -> when (current) {
+            is IntermediatePostListingItem.HiddenItems -> previous.merge(current) to null
+            is IntermediatePostListingItem.Post -> previous/*.copy(hasDown = true)*/ to current
         }
 
-        is InternalPostListingItem.Post -> when (current) {
-            is InternalPostListingItem.HiddenItems -> previous to current/*.copy(hasUp = true)*/
-            is InternalPostListingItem.Post -> previous to current
+        is IntermediatePostListingItem.Post -> when (current) {
+            is IntermediatePostListingItem.HiddenItems -> previous to current/*.copy(hasUp = true)*/
+            is IntermediatePostListingItem.Post -> previous to current
         }
     }
 }

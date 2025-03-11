@@ -42,7 +42,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.VoteResult
-import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.navigation.component.posts.TransientPost
 import ru.herobrine1st.e621.ui.component.post.InvalidPost
 import ru.herobrine1st.e621.ui.component.post.PostActionRow
 import ru.herobrine1st.e621.ui.component.post.PostImage
@@ -52,7 +52,7 @@ import ru.herobrine1st.e621.util.text
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun Post(
-    post: Post,
+    post: TransientPost,
     favouriteState: FavouritesCache.FavouriteState,
     isAuthorized: Boolean,
     onFavouriteChange: () -> Unit,
@@ -64,7 +64,7 @@ fun Post(
         modifier = Modifier.fillMaxWidth()
     ) {
         Column {
-            val file = post.normalizedSample
+            val file = post.sample
             when {
                 file.type.isImage -> PostImage(
                     file = file,
@@ -72,7 +72,7 @@ fun Post(
                     modifier = Modifier.clickable {
                         openPost(false)
                     },
-                    actualPostFileType = post.file.type
+                    actualPostFileType = post.actualFileType
                 )
 
                 else -> {

@@ -44,8 +44,6 @@ import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.common.VoteResult
 import ru.herobrine1st.e621.api.createTagProcessor
 import ru.herobrine1st.e621.api.model.Pool
-import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.parseBBCode
 import ru.herobrine1st.e621.api.search.PoolSearchOptions
@@ -98,7 +96,11 @@ class PostListingComponent(
     private val instance: Instance = run {
         // Consume unconditionally to save memory
         val pagerState =
-            stateKeeper.consumePagingState("postPager", Int.serializer(), Post.serializer())
+            stateKeeper.consumePagingState(
+                "postPager",
+                Int.serializer(),
+                TransientPost.serializer()
+            )
         debug {
             Log.d(TAG, "PagerState presence: ${pagerState != null}")
         }
@@ -116,7 +118,7 @@ class PostListingComponent(
             stateKeeper.registerPagingState(
                 "postPager",
                 Int.serializer(),
-                Post.serializer(),
+                TransientPost.serializer(),
                 instance::pagerSupplier
             )
         }
@@ -140,11 +142,11 @@ class PostListingComponent(
         }
     }
 
-    fun onOpenPost(post: Post, openComments: Boolean) {
+    fun onOpenPost(item: UIPostListingItem.Post, openComments: Boolean) {
         navigator.pushIndexed {
             Config.Post(
-                id = post.id,
-                post = post,
+                id = item.post.id,
+                post = item.post.originalPost,
                 openComments = openComments,
                 query = searchOptions,
                 index = it
@@ -164,19 +166,23 @@ class PostListingComponent(
     @Composable
     fun collectFavouritesCacheAsState() = favouritesCache.flow.collectAsState()
 
-    fun handleFavouriteChange(post: Post) {
+    fun handleFavouriteChange(item: UIPostListingItem.Post) {
         lifecycleScope.launch {
-            handleFavouriteChange(favouritesCache, api, snackbar, post)
+            handleFavouriteChange(favouritesCache, api, snackbar, item.post)
         }
     }
 
-    suspend fun vote(postId: PostId, @IntRange(from = -1, to = 1) vote: Int): VoteResult? {
+    suspend fun vote(
+        item: UIPostListingItem.Post,
+        @IntRange(from = -1, to = 1) vote: Int
+    ): VoteResult? {
+        val postId = item.post.id
         val response = handleVote(postId, vote, api, exceptionReporter)
         if (response != null) voteRepository.setVote(postId, response.ourScore)
         return response?.let { VoteResult(it.ourScore, it.total) }
     }
 
-    suspend fun getVote(postId: PostId): Int? = voteRepository.getVote(postId)
+    suspend fun getVote(item: UIPostListingItem.Post): Int? = voteRepository.getVote(item.post.id)
 
     @CachedDataStore
     val isAuthorized
@@ -190,7 +196,7 @@ class PostListingComponent(
         searchOptions: SearchOptions,
         dataStore: PreferencesStore,
         blacklistRepository: BlacklistRepository,
-        pagerState: SavedPagerState<Int, Post>?
+        pagerState: SavedPagerState<Int, TransientPost>?
     ) : InstanceBase() {
         private val blacklistPredicateFlow =
             blacklistRepository.getEntriesFlow()
@@ -213,7 +219,7 @@ class PostListingComponent(
             pagerState
         )
 
-        fun pagerSupplier(): SharedFlow<Snapshot<Int, Post>> {
+        fun pagerSupplier(): SharedFlow<Snapshot<Int, TransientPost>> {
             debug {
                 Log.d("$TAG-Instance", "Got pager supply request")
             }
@@ -239,13 +245,13 @@ class PostListingComponent(
                 it.map { post ->
                     when {
                         safeModeEnabled && post.rating != Rating.SAFE ->
-                            InternalPostListingItem.HiddenItems.ofUnsafe(post)
+                            IntermediatePostListingItem.HiddenItems.ofUnsafe(post)
 
                         isBlacklistEnabled && favourites.isFavourite(post) == UNFAVOURITE // Show post if it is either favourite
                                 && blacklistPredicate.test(post) ->                       //           or is not blacklisted
-                            InternalPostListingItem.HiddenItems.ofBlacklisted(post)
+                            IntermediatePostListingItem.HiddenItems.ofBlacklisted(post)
 
-                        else -> InternalPostListingItem.Post(post)
+                        else -> IntermediatePostListingItem.Post(post)
                     }
                 }.accumulate { previous, current ->
                     val (first, second) = mergePostListingItems(previous, current)
@@ -259,30 +265,7 @@ class PostListingComponent(
             }.applyPageBoundary { lastElementInPrevious, firstElementInNext ->
                 mergePostListingItems(lastElementInPrevious, firstElementInNext)
             }.transform {
-                it.flatMap<InternalPostListingItem, UIPostListingItem> { item ->
-                    when (item) {
-                        is InternalPostListingItem.HiddenItems -> {
-                            buildList(item.postIds.size) {
-                                add(
-                                    UIPostListingItem.HiddenItemsBridge(
-                                        id = item.postIds[0],
-                                        hiddenDueToBlacklistNumber = item.hiddenDueToBlacklistNumber,
-                                        hiddenDueToSafeModeNumber = item.hiddenDueToSafeModeNumber
-                                    )
-                                )
-                                item.postIds.drop(1).map { id ->
-                                    UIPostListingItem.Empty(id)
-                                }.let { list ->
-                                    addAll(list)
-                                }
-                            }
-                        }
-
-                        is InternalPostListingItem.Post -> {
-                            listOf(UIPostListingItem.Post(item.post))
-                        }
-                    }
-                }
+                it.flatMap(IntermediatePostListingItem::toUi)
             }
         }
             .flowOn(Dispatchers.Default)
@@ -297,4 +280,3 @@ class PostListingComponent(
         data class PoolInfo(val pool: Pool, val description: List<MessageData>) : InfoState
     }
 }
-

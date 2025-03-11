@@ -94,6 +94,7 @@ import ru.herobrine1st.e621.api.model.isOriginal
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.post.PostState
+import ru.herobrine1st.e621.navigation.component.posts.TransientPost
 import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
 import ru.herobrine1st.e621.ui.component.CollapsibleColumn
 import ru.herobrine1st.e621.ui.component.RenderBB
@@ -283,7 +284,9 @@ fun Post(
                 item("actionbar") {
                     val favouriteState by component.isFavouriteAsState()
                     PostActionRow(
-                        post, favouriteState, component.isAuthorized,
+                        remember(post) { TransientPost(post) },
+                        favouriteState,
+                        component.isAuthorized,
                         modifier = Modifier
                             .padding(horizontal = 8.dp)
                             .fillMaxWidth(),

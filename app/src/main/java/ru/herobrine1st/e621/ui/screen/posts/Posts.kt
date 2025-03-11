@@ -298,16 +298,16 @@ fun Posts(
                             favouriteState = favouritesCache.isFavourite(item.post),
                             isAuthorized = component.isAuthorized,
                             onFavouriteChange = {
-                                component.handleFavouriteChange(item.post)
+                                component.handleFavouriteChange(item)
                             },
                             openPost = { openComments ->
-                                component.onOpenPost(item.post, openComments)
+                                component.onOpenPost(item, openComments)
                             },
                             onVote = {
-                                component.vote(item.post.id, it)
+                                component.vote(item, it)
                             },
                             getVote = {
-                                component.getVote(item.post.id) ?: 0
+                                component.getVote(item) ?: 0
                             }
                         )
 

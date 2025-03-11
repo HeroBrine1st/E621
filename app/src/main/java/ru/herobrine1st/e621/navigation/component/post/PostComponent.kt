@@ -79,6 +79,7 @@ import ru.herobrine1st.paging.api.cachedIn
 import ru.herobrine1st.paging.createPager
 
 private const val POST_STATE_KEY = "POST_STATE_KEY"
+private const val TAG = "PostComponent"
 
 class PostComponent(
     val openComments: Boolean,

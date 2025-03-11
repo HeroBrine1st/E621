@@ -20,12 +20,22 @@
 
 package ru.herobrine1st.e621.api
 
-import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.model.Score
 import ru.herobrine1st.e621.api.model.Tag
+import ru.herobrine1st.e621.api.model.Tags
 import java.util.function.Predicate
 import java.util.regex.Pattern
 
+interface TagProcessablePost {
+    val id: PostId
+    val score: Score
+    val tags: Tags
+    val rating: Rating
+    val favoriteCount: Int
+    val commentCount: Int
+}
 
 // A bunch of useful links
 // https://github.com/e621ng/e621ng/blob/master/app/logical/post_sets/post.rb
@@ -50,7 +60,7 @@ val operation = { i1: Int, operator: String, i2: Int ->
     }
 }
 
-val metaTagToNumber = mapOf<String, (Post) -> Int>(
+val metaTagToNumber = mapOf<String, (TagProcessablePost) -> Int>(
     "id" to { it.id.value },
     "score" to { it.score.total },
     "favcount" to { it.favoriteCount },
@@ -58,7 +68,7 @@ val metaTagToNumber = mapOf<String, (Post) -> Int>(
     // others ?
 )
 
-fun createPredicateFromTag(tag: String): Predicate<Post> {
+fun createPredicateFromTag(tag: String): Predicate<TagProcessablePost> {
     val matcher = integerMetaTagPattern.matcher(tag)
     if (matcher.matches() &&
         // Regexes have condition statements, but java doesn't support it
@@ -93,7 +103,7 @@ fun createPredicateFromTag(tag: String): Predicate<Post> {
     }
 }
 
-fun createTagProcessor(query: String): Predicate<Post> {
+fun createTagProcessor(query: String): Predicate<TagProcessablePost> {
     val tags = query.split(" ")
     // We should remove "-" and "~" either here or when passing to createPredicateFromTag
     // If first, creation of allOf involves adding these prefixes

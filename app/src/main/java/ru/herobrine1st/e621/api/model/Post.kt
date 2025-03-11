@@ -25,6 +25,8 @@ import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
+import ru.herobrine1st.e621.api.TagProcessablePost
+import ru.herobrine1st.e621.util.FavourablePost
 
 @JvmInline
 @Serializable
@@ -37,33 +39,33 @@ value class PostId(val value: Int) {
 @Immutable
 @Serializable
 data class Post(
-    val id: PostId,
+    override val id: PostId,
     val createdAt: Instant,
     val updatedAt: Instant?,
     val file: File,
     val preview: Preview,
     val sample: Sample,
-    val score: Score,
-    val tags: Tags,
+    override val score: Score,
+    override val tags: Tags,
     val lockedTags: List<String> = emptyList(),
     @SerialName("change_seq")
     val changeSequence: Int,
     val flags: PostFlags,
-    val rating: Rating,
+    override val rating: Rating,
     @SerialName("fav_count")
-    val favoriteCount: Int,
+    override val favoriteCount: Int,
     val sources: List<String>,
     val pools: List<PoolId>,
     val relationships: Relationships,
     val approverId: Int?,
     val uploaderId: Int,
     val description: String,
-    val commentCount: Int,
+    override val commentCount: Int,
     @SerialName("isFavorited")
-    val isFavourite: Boolean = false,
+    override val isFavourite: Boolean = false,
     val hasNotes: Boolean = false,
     val duration: Float = 0f,
-) {
+) : TagProcessablePost, FavourablePost {
     @Transient
     val normalizedSample = NormalizedFile(sample)
 

@@ -26,8 +26,8 @@ import io.ktor.http.HttpStatusCode
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
+import ru.herobrine1st.e621.util.FavourablePost
 import ru.herobrine1st.e621.util.FavouritesCache
 import java.io.IOException
 
@@ -41,7 +41,7 @@ suspend fun handleFavouriteChange(
     favouritesCache: FavouritesCache,
     api: API,
     snackbar: SnackbarAdapter,
-    post: Post,
+    post: FavourablePost,
 ) {
     val wasFavourite: FavouritesCache.FavouriteState = favouritesCache.isFavourite(post)
     when (wasFavourite) {

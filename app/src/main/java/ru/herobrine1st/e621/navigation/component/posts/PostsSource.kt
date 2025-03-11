@@ -22,7 +22,6 @@ package ru.herobrine1st.e621.navigation.component.posts
 
 
 import ru.herobrine1st.e621.api.API
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.search.SearchOptions
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.paging.api.LoadParams
@@ -33,18 +32,18 @@ class PostsSource(
     private val api: API,
     private val exceptionReporter: ExceptionReporter,
     private val searchOptions: SearchOptions,
-) : PagingSource<Int, Post> {
+) : PagingSource<Int, TransientPost> {
 //    override fun getRefreshKey(state: PagingState<Int, Post>): Int? {
 //        return state.anchorPosition?.div(state.config.pageSize)?.plus(1)
 //    }
 
-    override suspend fun getPage(params: LoadParams<Int>): LoadResult<Int, Post> {
+    override suspend fun getPage(params: LoadParams<Int>): LoadResult<Int, TransientPost> {
         val limit = params.requestedSize.coerceAtMost(searchOptions.maxLimit)
         return try {
             val page = params.key
-            val posts: List<Post> = searchOptions.getPosts(api, page = page, limit = limit)
+            val posts = searchOptions.getPosts(api, page = page, limit = limit)
             LoadResult.Page(
-                data = posts,
+                data = posts.map { TransientPost(it) },
                 previousKey = if (page == 1) null else page - 1,
                 nextKey = if (posts.size == params.requestedSize) page + 1 else null
             )

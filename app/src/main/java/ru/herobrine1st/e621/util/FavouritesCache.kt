@@ -23,7 +23,6 @@ package ru.herobrine1st.e621.util
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.getAndUpdate
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
 
 /**
@@ -41,7 +40,7 @@ class FavouritesCache {
         }
     }
 
-    fun isFavourite(post: Post) = flow.value.isFavourite(post)
+    fun isFavourite(post: FavourablePost) = flow.value.isFavourite(post)
 
     sealed interface FavouriteState {
         val isFavourite: Boolean
@@ -71,7 +70,13 @@ class FavouritesCache {
     }
 }
 
-fun Map<PostId, FavouritesCache.FavouriteState>.isFavourite(post: Post) = this.getOrDefault(
+interface FavourablePost {
+    val id: PostId
+    val isFavourite: Boolean
+}
+
+fun Map<PostId, FavouritesCache.FavouriteState>.isFavourite(post: FavourablePost) =
+    this.getOrDefault(
     post.id,
     FavouritesCache.FavouriteState.Determined.fromBoolean(post.isFavourite)
 )

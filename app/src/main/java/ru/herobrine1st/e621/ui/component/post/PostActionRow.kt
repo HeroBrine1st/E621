@@ -62,13 +62,13 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.VoteResult
-import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.navigation.component.posts.TransientPost
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState
 import ru.herobrine1st.e621.util.debug
 
 @Composable
 fun PostActionRow(
-    post: Post,
+    post: TransientPost,
     favouriteState: FavouriteState,
     isAuthorized: Boolean,
     modifier: Modifier = Modifier,
