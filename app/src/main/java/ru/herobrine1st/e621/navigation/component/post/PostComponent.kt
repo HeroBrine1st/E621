@@ -156,7 +156,7 @@ class PostComponent(
         get() = preferences.collectAsState().value.auth != null
 
     init {
-        assert(initialPost == null || initialPost.id == postId)
+        check(initialPost == null || initialPost.id == postId)
         stateKeeper.register(POST_STATE_KEY, strategy = PostState.serializer()) { state.value }
 
 
@@ -207,14 +207,13 @@ class PostComponent(
 
     private fun useSampleAsDefault() {
         val state = state.value
-        assert(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
+        require(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
         if (currentFile !== NormalizedFile.STUB) return
-        state as PostState.Ready
         setFile(state.post.selectSample())
     }
 
     fun getVideoPlayerComponent(file: NormalizedFile): VideoPlayerComponent {
-        assert(file.type.isVideo) {
+        require(file.type.isVideo) {
             "File is not video"
         }
         // This function can be called in a result of scrolling down and back
