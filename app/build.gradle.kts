@@ -120,7 +120,6 @@ android {
             // excludes += "/lib/*/libandroidx.graphics.path.so"
         }
     }
-    @Suppress("UnstableApiUsage")
     testOptions {
         unitTests {
             isIncludeAndroidResources = true
