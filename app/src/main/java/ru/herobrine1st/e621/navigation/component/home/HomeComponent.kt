@@ -185,16 +185,25 @@ class HomeComponent(
                 response["blacklisted_tags"]!!.jsonPrimitive
                     .content.split("\n")
                     .map { BlacklistEntry(query = it, enabled = true) }
-            }.onFailure {
+            }
+            .onFailure {
                 Log.e(TAG, "An error occurred while trying to fetch blacklist", it)
                 lifecycleScope.launch {
                     snackbarAdapter.enqueueMessage(R.string.blacklist_fetch_error)
                 }
-            }.mapCatching {
-                blacklistRepository.insertEntries(it)
-            }.onFailure {
-                Log.e(TAG, "Database error occurred while trying to insert fetched blacklist", it)
-            }.getOrThrow()
+            }
+            .onSuccess {
+                runCatching {
+                    blacklistRepository.insertEntries(it)
+                }.onFailure {
+                    Log.e(
+                        TAG,
+                        "Database error occurred while trying to insert fetched blacklist",
+                        it
+                    )
+                }.getOrThrow()
+            }
+
     }
 
     private suspend fun testCredentials(
