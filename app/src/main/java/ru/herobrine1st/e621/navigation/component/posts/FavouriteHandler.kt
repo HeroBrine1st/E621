@@ -88,6 +88,11 @@ suspend fun handleFavouriteChange(
         )
         snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
     } catch (e: Throwable) {
+        Log.e(
+            TAG,
+            "An unknown error occurred while trying to (un)favourite post (id=${post.id}, wasFavourite=$wasFavourite)",
+            e
+        )
         favouritesCache.setFavourite(post.id, wasFavourite)
     }
 }
