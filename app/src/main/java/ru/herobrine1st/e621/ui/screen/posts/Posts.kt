@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.ui.screen.posts
 
-import android.util.Log
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -49,7 +48,6 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -61,6 +59,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -159,6 +158,8 @@ fun Posts(
                 )
             }
         ) {
+            var recentFirstKey by remember { mutableStateOf<Any?>(null) }
+
             LazyColumn(
                 state = lazyListState,
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -166,6 +167,36 @@ fun Posts(
                 modifier = Modifier
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .fillMaxWidth()
+                    // This layout modifier blocks runs on both measurement due to page append/prepend
+                    // and also due to scroll
+                    // As scroll is asynchronous, this modifier holds the scroll until our code is complete
+                    // SideEffect doesn't fire on scroll, and this fires. That is.
+                    .layout { measurable, constraints ->
+                        // it's a shame there's no analogue to SideEffect here, but I think layout phase can't be interrupted
+                        // if it can, then we can simply remove this optimization and read layoutInfo every time
+                        val firstKey = posts.items.firstOrNull()?.key
+                        if (firstKey != recentFirstKey) {
+                            recentFirstKey = firstKey
+                            val oldFirstItem =
+                                lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
+                            if (oldFirstItem != null) {
+                                // TODO handle infoState and other items before post listing
+                                if (posts.items.getOrNull(oldFirstItem.index)?.key != oldFirstItem.key) {
+                                    val newIndex =
+                                        posts.items.indexOfFirst { it.key == oldFirstItem.key }
+                                    if (newIndex != -1)
+                                        lazyListState.requestScrollToItem(
+                                            newIndex,
+                                            lazyListState.firstVisibleItemScrollOffset
+                                        )
+                                }
+                            }
+                        }
+                        val placeable = measurable.measure(constraints)
+                        layout(placeable.width, placeable.height) {
+                            placeable.place(0, 0)
+                        }
+                    }
             ) {
                 when {
                     component.infoState is InfoState.Loading -> item {
@@ -286,50 +317,6 @@ fun Posts(
 
                 }
                 endOfPagePlaceholder(posts.loadStates.append, onRetry = posts::retry)
-            }
-
-            val firstKey = posts.items.firstOrNull()?.key
-            var recentFirstKey by remember { mutableStateOf(firstKey) }
-            // detect page dropping or prepending
-            if (recentFirstKey != firstKey) SideEffect {
-                // side effect is called after composition, but before layout
-                recentFirstKey = firstKey
-                Log.d(
-                    "PostsScreenSideEffect",
-                    "Detected first page change - trying to restore scrolling position"
-                )
-                val oldFirstItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
-                if (oldFirstItem == null || posts.items.getOrNull(oldFirstItem.index)?.key == oldFirstItem.key) {
-                    Log.w(
-                        "PostsScreenSideEffect",
-                        "Scroll restoration side effect is called without reason, it is not normal!"
-                    )
-                    debug {
-                        error("Impossible!") // or possible? idk, that's why it is not included in release builds
-                    }
-                    return@SideEffect
-                }
-                debug {
-                    Log.d(
-                        "PostsScreenSideEffect",
-                        "Restoring key ${oldFirstItem.key}, current imposter is ${
-                            posts.items.getOrNull(oldFirstItem.index)?.key
-                        }"
-                    )
-                }
-                // TODO this code can be provided with dropped page item count - making it O(1) instead of O(n)
-                val newIndex = posts.items.indexOfFirst { it.key == oldFirstItem.key }
-                if (newIndex != -1) {
-                    debug {
-                        Log.d("PostsScreenSideEffect", "Successfully restored scroll position")
-                    }
-                    lazyListState.requestScrollToItem(
-                        newIndex,
-                        lazyListState.firstVisibleItemScrollOffset
-                    )
-                } else debug {
-                    Log.d("PostsScreenSideEffect", "Didn't find post for key ${oldFirstItem.key}")
-                }
             }
         }
     }
