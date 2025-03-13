@@ -1,19 +1,13 @@
 # E621
 
-Android client for e621.net
-
-This project is a work in progress. It may contain bugs, slow code or even features. Use at your own
-risk, but it is harmless as this client is mostly read-only :-)
-
-e926 is also supported, but there's no switch in settings, i.e. rebuild required, although you can
-decompile, change url and assemble back. It is complicated though.
+Read-only Android client for e621.net. e926 is also supported but requires rebuild.
 
 Releases are available [here](https://github.com/HeroBrine1st/E621/releases).
 
 # Features
 
 TL;DR you can browse, search and save ("Favorite" button) posts and view wiki. This client is mostly
-read-only and has some harmless bugs.
+read-only.
 
 - [x] Search posts
     * [x] Search by arbitrary tags
