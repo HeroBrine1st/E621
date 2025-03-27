@@ -39,30 +39,21 @@
 package ru.herobrine1st.e621.util
 
 import coil3.Extras
-import coil3.network.NetworkClient
-import coil3.network.NetworkHeaders
-import coil3.network.NetworkRequest
-import coil3.network.NetworkResponse
-import coil3.network.NetworkResponseBody
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.onDownload
-import io.ktor.client.request.prepareRequest
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsChannel
-import io.ktor.http.HttpMethod
-import io.ktor.http.takeFrom
-import io.ktor.utils.io.ByteReadChannel
-import io.ktor.utils.io.cancel
-import io.ktor.utils.io.jvm.nio.copyTo
+import coil3.network.*
+import io.ktor.client.*
+import io.ktor.client.content.*
+import io.ktor.client.plugins.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
+import io.ktor.utils.io.*
 import okio.Buffer
 import okio.BufferedSink
 import okio.FileSystem
 import okio.Path
 import java.io.RandomAccessFile
-import kotlin.jvm.JvmInline
 
-val progressCallbackExtra =
-    Extras.Key<(bytesSentTotal: Long, contentLength: Long) -> Unit>(default = { _, _ -> })
+val progressCallbackExtra = Extras.Key(default = ProgressListener { _, _ -> })
 
 @JvmInline
 value class CoilKtorNetworkFetcher(
@@ -94,9 +85,9 @@ value class CoilKtorNetworkFetcher(
                 code = response.status.value,
                 requestMillis = response.requestTime.timestamp,
                 responseMillis = response.responseTime.timestamp,
-                headers = NetworkHeaders.Builder().apply<NetworkHeaders.Builder> {
+                headers = NetworkHeaders.Builder().apply {
                     response.headers.entries()
-                        .forEach<Map.Entry<String, List<String>>> { (key, values) ->
+                        .forEach { (key, values) ->
                             this[key] = values
                         }
                 }.build(),

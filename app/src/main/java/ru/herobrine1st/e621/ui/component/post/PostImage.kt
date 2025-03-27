@@ -28,19 +28,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ProgressIndicatorDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -50,11 +39,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
-import coil3.compose.AsyncImagePainter.State.Empty
-import coil3.compose.AsyncImagePainter.State.Error
-import coil3.compose.AsyncImagePainter.State.Loading
-import coil3.compose.AsyncImagePainter.State.Success
+import coil3.compose.AsyncImagePainter.State.*
 import coil3.request.ImageRequest
+import io.ktor.client.content.*
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.FileType
@@ -87,8 +74,8 @@ fun PostImage(
             .data(file.urls.first { it.toHttpUrlOrNull() != null }.toUri())
             .apply {
                 if (setSizeOriginal) size(coil3.size.Size.ORIGINAL)
-                extras[progressCallbackExtra] = { received, total ->
-                    progress = received.toFloat() / total
+                extras[progressCallbackExtra] = ProgressListener { received, total ->
+                    if (total != null) progress = received.toFloat() / total
                 }
             }
             .build()
