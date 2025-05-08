@@ -77,7 +77,7 @@ androidx-junit = { module = "androidx.test.ext:junit", version = "1.2.1" }
 androidx-espresso-core = { module = "androidx.test.espresso:espresso-core", version = "3.6.1" }
 compose-ui-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version = "1.8.1" }
 compose-ui-tooling-core = { module = "androidx.compose.ui:ui-tooling", version = "1.8.1" }
-compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version = "1.8.0" }
+compose-ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version = "1.8.1" }
 mockito-core = { module = "org.mockito:mockito-core", version = "5.17.0" }
 mockito-inline = { module = "org.mockito:mockito-inline", version = "5.2.0" }
 mockito-kotlin = { module = "org.mockito.kotlin:mockito-kotlin", version = "5.4.0" }
