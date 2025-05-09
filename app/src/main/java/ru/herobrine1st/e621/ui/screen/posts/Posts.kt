@@ -20,58 +20,41 @@
 
 package ru.herobrine1st.e621.ui.screen.posts
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent.InfoState
 import ru.herobrine1st.e621.navigation.component.posts.UIPostListingItem
-import ru.herobrine1st.e621.ui.component.BASE_PADDING_HORIZONTAL
+import ru.herobrine1st.e621.preference.Preferences
 import ru.herobrine1st.e621.ui.component.endOfPagePlaceholder
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.screen.post.component.PoolInfoCard
+import ru.herobrine1st.e621.ui.screen.posts.PostsScreenDefaults.EDGE_PADDING
+import ru.herobrine1st.e621.ui.screen.posts.PostsScreenDefaults.HORIZONTAL_SPACING
+import ru.herobrine1st.e621.ui.screen.posts.PostsScreenDefaults.VERTICAL_SPACING
 import ru.herobrine1st.e621.ui.screen.posts.component.HiddenItems
 import ru.herobrine1st.e621.ui.screen.posts.component.Post
 import ru.herobrine1st.e621.util.debug
@@ -81,15 +64,20 @@ import ru.herobrine1st.paging.api.contentType
 import ru.herobrine1st.paging.api.itemKey
 import kotlin.math.max
 
+object PostsScreenDefaults {
+    val EDGE_PADDING = 4.dp
+    val HORIZONTAL_SPACING = 4.dp
+    val VERTICAL_SPACING = 4.dp
+}
+
 @OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class)
 @Composable
 fun Posts(
     screenSharedState: ScreenSharedState,
     component: PostListingComponent
 ) {
-    val coroutineScope = rememberCoroutineScope()
     val favouritesCache by component.collectFavouritesCacheAsState()
-    val lazyListState = rememberLazyListState()
+    val gridState = rememberLazyStaggeredGridState()
 
     val posts = component.pagingItems
 
@@ -133,7 +121,7 @@ fun Posts(
         snackbarHost = {
             SnackbarHost(hostState = screenSharedState.snackbarHostState)
         }
-    ) {
+    ) { paddingValues ->
         val pullToRefreshState = rememberPullToRefreshState()
         val isLoading = posts.loadStates.refresh is LoadState.Loading
 
@@ -141,6 +129,8 @@ fun Posts(
         LaunchedEffect(pullToRefreshState) {
             if (isLoading) pullToRefreshState.animateToThreshold()
         }
+
+
 
         PullToRefreshBox(
             isRefreshing = isLoading,
@@ -150,18 +140,41 @@ fun Posts(
                 PullToRefreshDefaults.Indicator(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-                        .padding(it),
+                        .padding(paddingValues),
                     isRefreshing = isLoading,
                     state = pullToRefreshState
                 )
             }
         ) {
-            var recentFirstKey by remember { mutableStateOf<Any?>(null) }
+            val columns = when (val layout = component.layoutPreference) {
+                is Preferences.PostsColumns.Adaptive -> StaggeredGridCells.Adaptive(layout.widthDp.dp)
+                is Preferences.PostsColumns.Fixed -> StaggeredGridCells.Fixed(layout.columnCount)
+            }
 
-            LazyColumn(
-                state = lazyListState,
-                horizontalAlignment = Alignment.CenterHorizontally,
-                contentPadding = it,
+            val density = LocalDensity.current
+            // avoiding SubcomposeLayout because one is already there
+            var lazyListConstraints by remember { mutableStateOf(Constraints()) }
+            val columnCount by remember {
+                derivedStateOf {
+                    if (!lazyListConstraints.hasBoundedWidth) error("lazyListConstraints is infinite! Did you forget to set it?")
+                    with(columns) {
+                        with(density) {
+                            density.calculateCrossAxisCellSizes(
+                                lazyListConstraints.maxWidth - EDGE_PADDING.roundToPx(),
+                                HORIZONTAL_SPACING.roundToPx()
+                            ).size
+                        }
+                    }
+                }
+            }
+
+            var recentFirstKey by remember { mutableStateOf<Any?>(null) }
+            LazyVerticalStaggeredGrid(
+                columns = columns,
+                state = gridState,
+                // all non-full-lane elements use edge padding, using negative spacing to remove extra padding
+                horizontalArrangement = Arrangement.spacedBy(HORIZONTAL_SPACING - EDGE_PADDING * 2),
+                contentPadding = paddingValues,
                 modifier = Modifier
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
                     .fillMaxWidth()
@@ -176,20 +189,23 @@ fun Posts(
                         if (firstKey != recentFirstKey) {
                             recentFirstKey = firstKey
                             val oldFirstItem =
-                                lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
+                                gridState.layoutInfo.visibleItemsInfo.firstOrNull()
                             if (oldFirstItem != null) {
                                 // TODO handle infoState and other items before post listing
                                 if (posts.items.getOrNull(oldFirstItem.index)?.key != oldFirstItem.key) {
                                     val newIndex =
                                         posts.items.indexOfFirst { it.key == oldFirstItem.key }
                                     if (newIndex != -1)
-                                        lazyListState.requestScrollToItem(
+                                        gridState.requestScrollToItem(
                                             newIndex,
-                                            lazyListState.firstVisibleItemScrollOffset
+                                            gridState.firstVisibleItemScrollOffset
                                         )
                                 }
                             }
                         }
+                        // Also save latest constraints so it can be used to calculate column size
+                        // SAFETY: Content lambda is called on measure call
+                        lazyListConstraints = constraints
                         val placeable = measurable.measure(constraints)
                         layout(placeable.width, placeable.height) {
                             placeable.place(0, 0)
@@ -197,65 +213,101 @@ fun Posts(
                     }
             ) {
                 when {
-                    component.infoState is InfoState.Loading -> item {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        CircularProgressIndicator()
-                        Spacer(modifier = Modifier.height(4.dp))
+                    component.infoState is InfoState.Loading -> item(span = StaggeredGridItemSpan.FullLine) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Spacer(modifier = Modifier.height(VERTICAL_SPACING))
+                            CircularProgressIndicator()
+                            Spacer(modifier = Modifier.height(VERTICAL_SPACING))
+                        }
                     }
 
-                    posts.loadStates.prepend is LoadState.Error -> item {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(stringResource(R.string.unknown_error))
-                        Button(onClick = { posts.retry() }) {
-                            Text(stringResource(R.string.retry))
+                    posts.loadStates.prepend is LoadState.Error -> item(span = StaggeredGridItemSpan.FullLine) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Spacer(modifier = Modifier.height(VERTICAL_SPACING))
+                            Text(stringResource(R.string.unknown_error))
+                            Button(onClick = { posts.retry() }) {
+                                Text(stringResource(R.string.retry))
+                            }
+                            Spacer(modifier = Modifier.height(VERTICAL_SPACING))
                         }
-                        Spacer(modifier = Modifier.height(4.dp))
                     }
 
                     (posts.loadStates.prepend is LoadState.Complete || posts.loadStates.prepend is LoadState.Idle) &&
                             component.infoState is InfoState.PoolInfo -> item(
                         "PoolInfoCard",
-                        contentType = "PoolInfoCard"
+                        contentType = "PoolInfoCard",
+                        span = StaggeredGridItemSpan.FullLine
                     ) {
                         PoolInfoCard(
                             component.infoState as InfoState.PoolInfo,
                             modifier = Modifier.padding(
-                                start = BASE_PADDING_HORIZONTAL,
-                                end = BASE_PADDING_HORIZONTAL,
-                                bottom = BASE_PADDING_HORIZONTAL,
-                                top = 4.dp
+                                vertical = VERTICAL_SPACING,
+                                horizontal = EDGE_PADDING
                             )
                         )
                     }
                 }
 
-                if (posts.size == 0) item {
-                    if (component.infoState is InfoState.None) Spacer(Modifier.height(4.dp))
-                    when (posts.loadStates.refresh) {
-                        is LoadState.Error -> {
-                            Icon(Icons.Outlined.Error, contentDescription = null)
-                            Text(stringResource(R.string.unknown_error))
-                            Button(onClick = { posts.retry() }) {
-                                Text(stringResource(R.string.retry))
+                if (posts.size == 0) item(span = StaggeredGridItemSpan.FullLine) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        if (component.infoState is InfoState.None) Spacer(Modifier.height(VERTICAL_SPACING))
+                        when (posts.loadStates.refresh) {
+                            is LoadState.Error -> {
+                                Icon(Icons.Outlined.Error, contentDescription = null)
+                                Text(stringResource(R.string.unknown_error))
+                                Button(onClick = { posts.retry() }) {
+                                    Text(stringResource(R.string.retry))
+                                }
                             }
-                        }
 
-                        LoadState.Complete -> Text(stringResource(R.string.empty_results))
-                        LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
-                        is LoadState.NotLoading, LoadState.Idle -> {}
+                            LoadState.Complete -> Text(stringResource(R.string.empty_results))
+                            LoadState.Loading -> {} // Nothing to do, PullRefreshIndicator already here
+                            is LoadState.NotLoading, LoadState.Idle -> {}
+                        }
                     }
                 }
+
+                val spanByIndex: (Int) -> StaggeredGridItemSpan = { index ->
+                    if (columnCount == 1) StaggeredGridItemSpan.FullLine
+                    else when (posts.items[index]) {
+                        is UIPostListingItem.Empty -> StaggeredGridItemSpan.FullLine // using the fact that it always follows HiddenItemsBridge
+                        is UIPostListingItem.HiddenItemsBridge -> StaggeredGridItemSpan.FullLine
+                        is UIPostListingItem.Post -> {
+                            // find the start of current column
+                            val startingIndex = (posts.items.subList(0, index).indexOfLast { item ->
+                                item is UIPostListingItem.Empty || item is UIPostListingItem.HiddenItemsBridge
+                            } + 1)
+                            val rowStartingIndex = index - ((index - startingIndex) % columnCount)
+
+                            when {
+                                // Not enough items to build full column
+                                posts.items.size < rowStartingIndex + columnCount -> StaggeredGridItemSpan.FullLine
+
+                                // Not enough items to build full column but this time a delimiter is found
+                                posts.items.drop(rowStartingIndex).take(columnCount).any { item ->
+                                    item is UIPostListingItem.Empty || item is UIPostListingItem.HiddenItemsBridge
+                                } -> StaggeredGridItemSpan.FullLine
+
+                                // Normal
+                                else -> StaggeredGridItemSpan.SingleLane
+                            }
+                        }
+                    }
+                }
+
 
                 items(
                     count = posts.size,
                     key = posts.itemKey { post -> post.key },
-                    contentType = posts.contentType { post -> post.contentType }
+                    contentType = posts.contentType { post -> post.contentType },
+                    span = spanByIndex
                 ) { index ->
                     val item = posts[index]
                     if (index == 0 && posts.loadStates.prepend is LoadState.Loading) {
+                        // TODO move it all into layout modifier
                         var height by remember { mutableIntStateOf(-1) }
                         Column(Modifier.onSizeChanged { height = it.height }) {
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(VERTICAL_SPACING))
                             // It normally should be a first item
                             // However, when it vanishes and new posts are prepended, LazyList maintains position by index, as prepend indicator is removed
                             // Its index is 0. At index 0 there's an item from a new page, leading to scroll jump.
@@ -266,12 +318,12 @@ fun Posts(
                             // - Prepending is started long before user actually reaches this item
                             // - Prepending is started due to retry, and retry button has "natural" snapping to this indicator
                             CircularProgressIndicator()
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(VERTICAL_SPACING))
                         }
                         DisposableEffect(Unit) {
                             onDispose { // called in applier thread
                                 val firstVisibleItem =
-                                    lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
+                                    gridState.layoutInfo.visibleItemsInfo.firstOrNull()
                                 // if user simply scrolled away, don't do anything
                                 if (firstVisibleItem?.key != item.key) return@onDispose
                                 // otherwise we compensate size change (due to CircularProgressIndicator being disposed) with scrolling back by that size change
@@ -282,39 +334,54 @@ fun Posts(
                                 // - Concurrent scroll is performed, then it is a race condition. firstVisibleItem is fully updated to accommodate that and
                                 //   offset is updated to new value, which we use here. firstVisibleItem.index being updated can be used to optimize this code.
                                 // This doesn't guarantee anything, but I think it is reasonable enough to be safe.
-                                lazyListState.requestScrollToItem(
+                                gridState.requestScrollToItem(
                                     posts.items.indexOfFirst { it.key == item.key },
-                                    firstVisibleItem.offset - height
+                                    firstVisibleItem.offset.y - height
                                 )
                             }
                         }
                     }
-
-                    when (item) {
-                        is UIPostListingItem.HiddenItemsBridge -> HiddenItems(item)
-
-                        is UIPostListingItem.Post -> Post(
-                            post = item.post,
-                            favouriteState = favouritesCache.isFavourite(item.post),
-                            isAuthorized = component.isAuthorized,
-                            onFavouriteChange = {
-                                component.handleFavouriteChange(item)
-                            },
-                            openPost = { openComments ->
-                                component.onOpenPost(item, openComments)
-                            },
-                            onVote = {
-                                component.vote(item, it)
-                            },
-                            getVote = {
-                                component.getVote(item) ?: 0
+                    val span = spanByIndex(index)
+                    Column(
+                        // horizontal padding 4 dp will be subtracted between elements
+                        modifier = Modifier.run {
+                            if (span == StaggeredGridItemSpan.SingleLane) padding(horizontal = EDGE_PADDING)
+                            else this
+                        }
+                    ) {
+                        when (item) {
+                            is UIPostListingItem.HiddenItemsBridge -> Row {
+                                Spacer(Modifier.weight(1f))
+                                HiddenItems(item)
+                                Spacer(Modifier.weight(1f))
                             }
-                        )
 
-                        is UIPostListingItem.Empty -> {}
+                            is UIPostListingItem.Post -> Post(
+                                post = item.post,
+                                favouriteState = favouritesCache.isFavourite(item.post),
+                                isAuthorized = component.isAuthorized,
+                                onFavouriteChange = {
+                                    component.handleFavouriteChange(item)
+                                },
+                                openPost = { openComments ->
+                                    component.onOpenPost(item, openComments)
+                                },
+                                onVote = {
+                                    component.vote(item, it)
+                                },
+                                getVote = {
+                                    component.getVote(item) ?: 0
+                                },
+                                hideChrome = span == StaggeredGridItemSpan.SingleLane
+                            )
+
+                            // TODO remove Empty, use layout modifier to handle blacklist state change
+                            //      and move spacer below to verticalItemSpacing in grid
+                            is UIPostListingItem.Empty -> {}
+                        }
+                        if (item !is UIPostListingItem.Empty && index != posts.size - 1)
+                            Spacer(Modifier.height(VERTICAL_SPACING))
                     }
-                    if (item !is UIPostListingItem.Empty && index != posts.size - 1)
-                        Spacer(Modifier.height(4.dp))
 
                 }
                 endOfPagePlaceholder(posts.loadStates.append, onRetry = posts::retry)
