@@ -22,11 +22,7 @@ package ru.herobrine1st.e621.navigation.component.posts
 
 import android.util.Log
 import androidx.annotation.IntRange
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
 import com.arkivanov.essenty.instancekeeper.getOrCreate
@@ -58,18 +54,9 @@ import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.pushIndexed
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
-import ru.herobrine1st.e621.util.ExceptionReporter
-import ru.herobrine1st.e621.util.FavouritesCache
+import ru.herobrine1st.e621.util.*
 import ru.herobrine1st.e621.util.FavouritesCache.FavouriteState.Determined.UNFAVOURITE
-import ru.herobrine1st.e621.util.InstanceBase
-import ru.herobrine1st.e621.util.accumulate
-import ru.herobrine1st.e621.util.debug
-import ru.herobrine1st.e621.util.isFavourite
-import ru.herobrine1st.paging.api.PagingConfig
-import ru.herobrine1st.paging.api.Snapshot
-import ru.herobrine1st.paging.api.applyPageBoundary
-import ru.herobrine1st.paging.api.transform
-import ru.herobrine1st.paging.api.waitStateRestorationAndCacheIn
+import ru.herobrine1st.paging.api.*
 import ru.herobrine1st.paging.contrib.decompose.connectToDecomposeComponentAsPagingItems
 import ru.herobrine1st.paging.contrib.decompose.consumePagingState
 import ru.herobrine1st.paging.contrib.decompose.registerPagingState
@@ -188,6 +175,11 @@ class PostListingComponent(
     val isAuthorized
         @Composable
         get() = dataStoreModule.cachedData.collectAsState().value.auth != null
+
+    @CachedDataStore
+    val layoutPreference
+        @Composable
+        get() = dataStoreModule.cachedData.collectAsState().value.postsColumns
 
     private class Instance(
         api: API,

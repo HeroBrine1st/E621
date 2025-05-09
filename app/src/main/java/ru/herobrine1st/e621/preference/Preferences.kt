@@ -24,22 +24,36 @@ package ru.herobrine1st.e621.preference
 
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.protobuf.ProtoNumber
+import kotlinx.serialization.protobuf.ProtoOneOf
 
 @Serializable
 data class Preferences(
-    val blacklistEnabled: Boolean = true,
-    val dataSaverModeEnabled: Boolean = false,
-    val dataSaverDisclaimerShown: Boolean = false,
-    val showRemainingTimeMedia: Boolean = true,
-    val muteSoundOnMedia: Boolean = false,
-    val auth: AuthorizationCredentials? = null,
-    val safeModeEnabled: Boolean = true,
-    val safeModeDisclaimerShown: Boolean = false,
-    val licenseAndNonAffiliationDisclaimerShown: Boolean = false,
-    val proxy: Proxy? = null,
-    val autoplayOnPostOpen: Boolean = true,
-    val autocompleteEnabled: Boolean = true
-)
+    @ProtoNumber(1) val blacklistEnabled: Boolean = true,
+    @ProtoNumber(2) val dataSaverModeEnabled: Boolean = false,
+    @ProtoNumber(3) val dataSaverDisclaimerShown: Boolean = false,
+    @ProtoNumber(4) val showRemainingTimeMedia: Boolean = true,
+    @ProtoNumber(5) val muteSoundOnMedia: Boolean = false,
+    @ProtoNumber(6) val auth: AuthorizationCredentials? = null,
+    @ProtoNumber(7) val safeModeEnabled: Boolean = true,
+    @ProtoNumber(8) val safeModeDisclaimerShown: Boolean = false,
+    @ProtoNumber(9) val licenseAndNonAffiliationDisclaimerShown: Boolean = false,
+    @ProtoNumber(10) val proxy: Proxy? = null,
+    @ProtoNumber(11) val autoplayOnPostOpen: Boolean = true,
+    @ProtoNumber(12) val autocompleteEnabled: Boolean = true,
+    @ProtoOneOf val postsColumns: PostsColumns = PostsColumns.Fixed(1)
+) {
+    @Serializable
+    sealed interface PostsColumns {
+        @JvmInline
+        @Serializable
+        value class Adaptive(@ProtoNumber(13) val widthDp: Float) : PostsColumns
+
+        @JvmInline
+        @Serializable
+        value class Fixed(@ProtoNumber(14) val columnCount: Int) : PostsColumns
+    }
+}
 
 @Serializable
 data class AuthorizationCredentials(

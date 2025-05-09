@@ -23,9 +23,9 @@ package ru.herobrine1st.e621.module
 import android.content.Context
 import androidx.room.Room
 import ru.herobrine1st.e621.BuildConfig
+import ru.herobrine1st.e621.database.Database
 import ru.herobrine1st.e621.database.repository.blacklist.BlacklistRepositoryImpl
 import ru.herobrine1st.e621.database.repository.vote.VoteRepositoryImpl
-import ru.herobrine1st.e621.database.Database
 
 class DatabaseModule(applicationContext: Context) {
 
