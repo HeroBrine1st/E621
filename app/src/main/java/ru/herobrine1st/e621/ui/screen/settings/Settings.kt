@@ -22,37 +22,23 @@ package ru.herobrine1st.e621.ui.screen.settings
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Assistant
-import androidx.compose.material.icons.filled.Block
-import androidx.compose.material.icons.filled.Copyright
-import androidx.compose.material.icons.filled.DataSaverOff
-import androidx.compose.material.icons.filled.Explicit
-import androidx.compose.material.icons.filled.PlayCircleOutline
-import androidx.compose.material.icons.filled.Public
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.settings.SettingsComponent
+import ru.herobrine1st.e621.preference.Preferences
 import ru.herobrine1st.e621.ui.component.preferences.SettingLink
 import ru.herobrine1st.e621.ui.component.preferences.SettingLinkWithSwitch
 import ru.herobrine1st.e621.ui.component.preferences.SettingSwitch
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.dialog.DisclaimerDialog
+import ru.herobrine1st.e621.ui.screen.settings.component.PostsColumnsDialog
 import ru.herobrine1st.e621.ui.screen.settings.component.ProxyDialog
 
 @OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class)
@@ -68,6 +54,7 @@ fun Settings(
     var showDataSaverModeDialog by remember { mutableStateOf(false) }
     var showSafeModeDisclaimer by remember { mutableStateOf(false) }
     var showProxySettingsDialog by remember { mutableStateOf(false) }
+    var showPostsColumnsDialog by remember { mutableStateOf(false) }
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -190,6 +177,34 @@ fun Settings(
             }
             item {
                 SettingLink(
+                    title = stringResource(R.string.settings_posts_columns_title),
+                    subtitle = when (val columns = preferences.postsColumns) {
+                        is Preferences.PostsColumns.Adaptive -> stringResource(
+                            R.string.settings_posts_columns_subtitle_adaptive,
+                            columns.widthDp
+                        )
+
+                        is Preferences.PostsColumns.Fixed if columns.columnCount != 1 -> stringResource(
+                            R.string.settings_posts_columns_subtitle_fixed,
+                            columns.columnCount
+                        )
+
+                        is Preferences.PostsColumns.Fixed -> stringResource(R.string.settings_posts_columns_subtitle_single_column)
+                    },
+                    // stable icon
+//                    icon = when (val columns = preferences.postsColumns) {
+//                        is Preferences.PostsColumns.Fixed if columns.columnCount == 1 -> Icons.AutoMirrored.Filled.Feed
+//                        else -> Icons.Default.Dashboard
+//                    },
+                    // but currently it is unstable
+                    icon = Icons.Default.Science,
+                    onClick = {
+                        showPostsColumnsDialog = true
+                    }
+                )
+            }
+            item {
+                SettingLink(
                     title = stringResource(R.string.about),
                     icon = Icons.Default.Copyright,
                     onClick = onNavigateToAbout
@@ -240,5 +255,16 @@ fun Settings(
                 copy(proxy = proxy)
             }
         }
-    )
+    ) else if (showPostsColumnsDialog) {
+        PostsColumnsDialog(
+            getInitialState = { preferences.postsColumns },
+            onApply = {
+                component.updatePreferences {
+                    copy(postsColumns = it)
+                }
+                showPostsColumnsDialog = false
+            },
+            onDismissRequest = { showPostsColumnsDialog = false }
+        )
+    }
 }
