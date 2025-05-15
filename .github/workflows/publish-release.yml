@@ -17,13 +17,6 @@ jobs:
         with: # fix git tag --format=... showing commit message instead of tag message
           fetch-depth: 1 # despite being the default, it allows checking out a tag
           ref: ${{ github.ref }}
-      - name: Abort if tag is not annotated
-        run: |
-          tag_type=$(git cat-file -t $GITHUB_REF)
-          if [ "$tag_type" != "tag" ]; then # if not annotated, tag_type is "commit"
-            echo "The tag $GITHUB_REF_NAME is not annotated. Aborting job."
-            exit 1
-          fi
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -63,14 +56,11 @@ jobs:
         run: tar -C app/build/outputs/mapping/release -c . | zstd --ultra --long -22 -T0 > ./dist/proguard-mappings.tar.zst
       - name: Rename apk
         run: mv app/build/outputs/apk/release/app-release.apk ./dist/e621-$GITHUB_REF_NAME.apk
-      - name: Fetch release notes
-        run: git tag -l --format="%(contents)" $GITHUB_REF_NAME | tee ./release.txt
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           files: |
             ./dist/**
           fail_on_unmatched_files: true
-          make_latest: true
-          body_path: "./release.txt"
+          draft: true
           generate_release_notes: true
