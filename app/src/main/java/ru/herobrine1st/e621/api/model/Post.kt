@@ -73,12 +73,13 @@ data class Post(
     val normalizedFile = NormalizedFile(file)
 
     @Transient
-    val files: List<NormalizedFile> = listOf(
-        normalizedFile,
-        normalizedSample,
-        *sample.alternates.filterNot { it.key == "original" }
-            .map { NormalizedFile(it.key, it.value) }.toTypedArray()
-    ).sortedWith(compareBy({ it.type.weight }, { it.width }))
+    val files: List<NormalizedFile> = buildList {
+        add(normalizedFile)
+        add(normalizedSample)
+        sample.alternates?.let { alternates ->
+            addAll(alternates.samples.map { NormalizedFile(it.key, it.value) })
+        }
+    }.sortedWith(compareBy({ it.type.weight }, { it.width }))
 }
 
 @Serializable

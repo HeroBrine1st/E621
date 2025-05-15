@@ -53,8 +53,8 @@ data class NormalizedFile(
     constructor(file: Sample) :
             this("sample", file.width, file.height, file.type, 0, file.url)
 
-    constructor(name: String, file: Alternate) :
-            this(name, file.width, file.height, file.normalizedType, 0, file.urls.filterNotNull())
+    constructor(name: String, file: Sample.Alternates.Alternate) :
+            this(name, file.width, file.height, file.normalizedType, 0, file.url)
 
     val aspectRatio get() = width.toFloat() / height.toFloat()
 
