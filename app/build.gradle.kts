@@ -98,8 +98,9 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11"
-        freeCompilerArgs = listOf(
+        freeCompilerArgs += listOf(
             "-opt-in=kotlin.RequiresOptIn",
+            "-Xwhen-guards"
         )
     }
     buildFeatures {

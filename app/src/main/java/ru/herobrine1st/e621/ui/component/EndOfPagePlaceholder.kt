@@ -23,6 +23,8 @@ package ru.herobrine1st.e621.ui.component
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridScope
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
@@ -56,6 +58,35 @@ fun LazyListScope.endOfPagePlaceholder(loadState: LoadState, onRetry: () -> Unit
                 }
             }
         }
+        else -> {}
+    }
+}
+
+fun LazyStaggeredGridScope.endOfPagePlaceholder(loadState: LoadState, onRetry: () -> Unit) {
+    when (loadState) {
+        is LoadState.Loading -> {
+            item(span = StaggeredGridItemSpan.FullLine) {
+                Base {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    CircularProgressIndicator()
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+        }
+
+        is LoadState.Error -> {
+            item(span = StaggeredGridItemSpan.FullLine) {
+                Base {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(stringResource(R.string.unknown_error))
+                    Button(onClick = onRetry) {
+                        Text(stringResource(R.string.retry))
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                }
+            }
+        }
+
         else -> {}
     }
 }

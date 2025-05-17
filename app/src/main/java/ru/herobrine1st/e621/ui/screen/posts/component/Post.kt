@@ -21,22 +21,12 @@
 package ru.herobrine1st.e621.ui.screen.posts.component
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -59,6 +49,8 @@ fun Post(
     openPost: (scrollToComments: Boolean) -> Unit,
     onVote: suspend (Int) -> VoteResult?,
     getVote: suspend () -> Int,
+    // If used in grid (not column), tags and other buttons are disrupting view
+    hideChrome: Boolean = false
 ) {
     ElevatedCard(
         modifier = Modifier.fillMaxWidth()
@@ -87,59 +79,61 @@ fun Post(
                     )
                 }
             }
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                modifier = Modifier.padding(8.dp)
-            ) {
-                var expandTags by remember { mutableStateOf(false) }
-                val visibleTags by remember(post.tags) {
-                    derivedStateOf {
-                        post.tags.reduced
-                            .let {
-                                if (expandTags) it
-                                else it.take(6)
+            if (!hideChrome) {
+                FlowRow(
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.padding(8.dp)
+                ) {
+                    var expandTags by remember { mutableStateOf(false) }
+                    val visibleTags by remember(post.tags) {
+                        derivedStateOf {
+                            post.tags.reduced
+                                .let {
+                                    if (expandTags) it
+                                    else it.take(6)
+                                }
+                        }
+                    }
+
+                    SuggestionChip(
+                        onClick = {},
+                        label = { Text(stringResource(post.rating.descriptionId)) }
+                    )
+
+                    visibleTags.forEach {
+                        SuggestionChip(
+                            onClick = { /*TODO*/ },
+                            label = {
+                                Text(it.text)
                             }
+                        )
+                    }
+
+                    // TODO use SubcomposeLayout to fill two lines of chips
+                    if (!expandTags && post.tags.reduced.size > 6) {
+                        SuggestionChip(
+                            onClick = { expandTags = true },
+                            label = {
+                                Text("...")
+                            }
+                        )
                     }
                 }
-
-                SuggestionChip(
-                    onClick = {},
-                    label = { Text(stringResource(post.rating.descriptionId)) }
+                HorizontalDivider(Modifier.padding(horizontal = 8.dp))
+                PostActionRow(
+                    post, favouriteState, isAuthorized,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .fillMaxWidth(),
+                    onFavouriteChange = onFavouriteChange,
+                    onOpenComments = {
+                        openPost(true)
+                    },
+                    onVote = onVote,
+                    getVote = getVote
                 )
-
-                visibleTags.forEach {
-                    SuggestionChip(
-                        onClick = { /*TODO*/ },
-                        label = {
-                            Text(it.text)
-                        }
-                    )
-                }
-
-                // TODO use SubcomposeLayout to fill two lines of chips
-                if (!expandTags && post.tags.reduced.size > 6) {
-                    SuggestionChip(
-                        onClick = { expandTags = true },
-                        label = {
-                            Text("...")
-                        }
-                    )
-                }
             }
-            HorizontalDivider(Modifier.padding(horizontal = 8.dp))
-            PostActionRow(
-                post, favouriteState, isAuthorized,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .fillMaxWidth(),
-                onFavouriteChange = onFavouriteChange,
-                onOpenComments = {
-                    openPost(true)
-                },
-                onVote = onVote,
-                getVote = getVote
-            )
         }
     }
 }
