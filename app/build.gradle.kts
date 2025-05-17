@@ -109,7 +109,6 @@ android {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
-        @Suppress("SpellCheckingInspection")
         jniLibs {
             // There's no use of multiprocess datastore, so this is not needed
             excludes += "/lib/*/libdatastore_shared_counter.so"
