@@ -21,15 +21,16 @@
 package ru.herobrine1st.e621.api.model
 
 import androidx.compose.runtime.Immutable
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonIgnoreUnknownKeys
 import ru.herobrine1st.e621.api.serializer.NullAsEmptyObjectSerializer
 
 
 @Immutable
 @Serializable
 data class Sample(
-    val has: Boolean, // вщ не ебу что это
+    val has: Boolean,
     val height: Int,
     val width: Int,
     // Strange bug on API side, probably database related
@@ -37,22 +38,27 @@ data class Sample(
     @Serializable(with = AlternatesFieldSerializer::class)
     val alternates: Alternates? = null
 ) {
+
     @Serializable
+    @JsonIgnoreUnknownKeys
+    @OptIn(ExperimentalSerializationApi::class)
     data class Alternates(
         val manifest: Int,
-        val original: JsonElement,
-        val variants: Map<String, Alternate>,
+//        val original: JsonElement,
+//        val variants: Map<String, Alternate>,
         val samples: Map<String, Alternate>
     ) {
         @Serializable
+        @JsonIgnoreUnknownKeys
+        @OptIn(ExperimentalSerializationApi::class)
         data class Alternate(
             val width: Int,
             val height: Int,
             val url: String,
             // The defaults represent the actual values of those fields
-            val fps: Int = 0,
-            val size: Int = 0,
-            val codec: JsonElement? = null,
+//            val fps: Float = 0f,
+//            val size: Int = 0,
+//            val codec: String? = null,
         ) {
             val normalizedType get() = FileType.byExtension[url.substringAfterLast(".")] ?: FileType.UNDEFINED
         }
