@@ -131,8 +131,6 @@ fun PostImage(
                     true -> CircularProgressIndicator()
                     false -> {
                         val progress1 by animateFloatAsState(
-                            // Non-nullability is guaranteed by collectDownloadProgressByState,
-                            // which internally uses non-nullable SharedFlow
                             targetValue = progress,
                             animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
                             label = "Progress animation"
