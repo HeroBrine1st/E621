@@ -41,6 +41,7 @@ import ru.herobrine1st.e621.ui.component.post.PostImage
 import ru.herobrine1st.e621.ui.component.rememberZoomableState
 import ru.herobrine1st.e621.ui.component.zoomable
 
+
 @Composable
 fun PostMediaScreen(
     component: PostMediaComponent,
@@ -57,9 +58,9 @@ fun PostMediaScreen(
             initialTranslation = Offset.Zero
             initialScale = 1f
         } else {
-            val width = constraints.maxHeight * file.aspectRatio
-            initialScale = constraints.maxWidth / width
-            initialTranslation = Offset(-(constraints.maxWidth - width) * initialScale / 2, 0f)
+            val width = this.constraints.maxHeight * file.aspectRatio
+            initialScale = this.constraints.maxWidth / width
+            initialTranslation = Offset(-(this.constraints.maxWidth - width) * initialScale / 2, 0f)
         }
         val maxScale = initialScale * MAX_SCALE_DEFAULT
 
