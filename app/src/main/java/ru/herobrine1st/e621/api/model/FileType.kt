@@ -52,8 +52,6 @@ enum class FileType(
         val byExtension = mutableMapOf<String, FileType>().apply {
             FileType.entries.forEach { this[it.extension] = it }
         }.toImmutableMap()
-
-        fun supportedValues() = entries.filter { it.isSupported }
     }
 }
 
