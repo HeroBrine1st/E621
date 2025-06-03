@@ -22,8 +22,8 @@ package ru.herobrine1st.e621.module
 
 import android.app.DownloadManager
 import android.content.Context
-import android.net.Uri
 import android.os.Environment
+import androidx.core.net.toUri
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
 
@@ -36,7 +36,8 @@ class DownloadManagerModule(context: Context) {
     private class DownloadManagerImpl(val proxy: DownloadManager) :
         IDownloadManager {
         override fun downloadFile(file: NormalizedFile) {
-            val url = file.urls.firstNotNullOfOrNull { it }?.let { Uri.parse(it) } ?: return
+            if (file.urls.isEmpty()) return
+            val url = file.urls.first().toUri()
             val request = DownloadManager.Request(url)
             request.setTitle(url.pathSegments.last())
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
