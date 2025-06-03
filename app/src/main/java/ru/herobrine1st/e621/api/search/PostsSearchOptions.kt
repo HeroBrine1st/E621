@@ -24,20 +24,14 @@ import android.util.Log
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.E621_MAX_POSTS_IN_QUERY
-import ru.herobrine1st.e621.api.model.FileType
-import ru.herobrine1st.e621.api.model.Order
-import ru.herobrine1st.e621.api.model.PoolId
-import ru.herobrine1st.e621.api.model.Post
-import ru.herobrine1st.e621.api.model.PostId
-import ru.herobrine1st.e621.api.model.Rating
-import ru.herobrine1st.e621.api.model.Tag
+import ru.herobrine1st.e621.api.model.*
 import ru.herobrine1st.e621.util.debug
 
 // A simplification of filetype, as there's actually no need to differ between png and jpg
 enum class PostType {
     IMAGE, // png, jpg
     ANIMATION, // gif
-    VIDEO // webm
+    VIDEO // webm, mp4
 }
 
 @Serializable
@@ -62,11 +56,11 @@ data class PostsSearchOptions(
         cache += noneOf.map { it.asExcluded }
         cache += anyOf.map { it.asAlternative }
         cache += optimizeRatingSelection(rating)
-        val fileTypes = types.flatMap {
-            when (it) {
+        val fileTypes = types.flatMap { type ->
+            when (type) {
                 PostType.IMAGE -> listOf(FileType.PNG, FileType.JPG)
                 PostType.ANIMATION -> listOf(FileType.GIF)
-                PostType.VIDEO -> listOf(FileType.WEBM)
+                PostType.VIDEO -> FileType.entries.filter { it.isVideo }
             }
         }
         // API does not support OR-ing file types. Alternative tags work, but on common conditions,

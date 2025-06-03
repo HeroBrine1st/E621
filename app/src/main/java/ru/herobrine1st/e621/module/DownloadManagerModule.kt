@@ -43,7 +43,7 @@ class DownloadManagerModule(context: Context) {
 
             val directory = when (file.type) {
                 FileType.JPG, FileType.PNG, FileType.GIF -> Environment.DIRECTORY_PICTURES
-                FileType.WEBM -> Environment.DIRECTORY_MOVIES
+                FileType.WEBM, FileType.MP4 -> Environment.DIRECTORY_MOVIES
                 FileType.SWF, FileType.UNDEFINED -> Environment.DIRECTORY_DOWNLOADS
             }
 
