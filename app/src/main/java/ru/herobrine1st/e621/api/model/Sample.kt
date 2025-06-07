@@ -43,7 +43,7 @@ data class Sample(
     @JsonIgnoreUnknownKeys
     @OptIn(ExperimentalSerializationApi::class)
     data class Alternates(
-        val manifest: Int,
+//        val manifest: Int,
 //        val original: JsonElement,
 //        val variants: Map<String, Alternate>,
         val samples: Map<String, Alternate>
