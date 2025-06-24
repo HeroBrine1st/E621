@@ -37,7 +37,9 @@ import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.ui.component.RenderBB
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun PoolInfoCard(info: PostListingComponent.InfoState.PoolInfo, modifier: Modifier = Modifier) {
     val pool = info.pool

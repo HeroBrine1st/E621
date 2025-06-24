@@ -20,14 +20,19 @@
 
 package ru.herobrine1st.e621.api.model
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import ru.herobrine1st.e621.api.serializer.ISO8601Serializer
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
+@OptIn(ExperimentalTime::class)
 @Serializable
 data class WikiPage(
     val id: Int,
+    @Serializable(with = ISO8601Serializer::class)
     val createdAt: Instant,
+    @Serializable(with = ISO8601Serializer::class)
     val updatedAt: Instant? = null,
     val title: String,
     val body: String,

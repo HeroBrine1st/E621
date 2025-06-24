@@ -109,10 +109,11 @@ import ru.herobrine1st.e621.ui.screen.post.component.PostComment
 import ru.herobrine1st.e621.ui.screen.post.component.tags
 import ru.herobrine1st.paging.api.LoadState
 import ru.herobrine1st.paging.api.collectAsPagingItems
+import kotlin.time.ExperimentalTime
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 
-@OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class)
+@OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class, ExperimentalTime::class)
 @Composable
 fun Post(
     screenSharedState: ScreenSharedState,
