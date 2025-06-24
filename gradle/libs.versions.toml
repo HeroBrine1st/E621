@@ -12,7 +12,7 @@ coil = "3.2.0"
 media3 = "1.7.1"
 
 kotlinx-serialization = "1.8.1"
-kotlinx-datetime = "0.6.2"
+kotlinx-datetime = "0.7.0"
 
 android-compileSdk = "35"
 android-minSdk = "28"

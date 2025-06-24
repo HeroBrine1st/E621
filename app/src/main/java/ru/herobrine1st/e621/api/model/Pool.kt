@@ -20,18 +20,23 @@
 
 package ru.herobrine1st.e621.api.model
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import ru.herobrine1st.e621.api.serializer.ISO8601Serializer
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 typealias PoolId = Int
 
+@OptIn(ExperimentalTime::class)
 @Serializable
 data class Pool(
     val id: PoolId,
     val name: String, // looks like it has underscores as spaces
     val description: String,
+    @Serializable(with = ISO8601Serializer::class)
     val createdAt: Instant,
+    @Serializable(with = ISO8601Serializer::class)
     val updatedAt: Instant?,
     val creatorId: Int,
     val creatorName: String,

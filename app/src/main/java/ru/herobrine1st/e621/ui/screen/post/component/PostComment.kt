@@ -49,7 +49,9 @@ import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
 import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
 import ru.herobrine1st.e621.ui.component.placeholder.material3.shimmer
+import kotlin.time.ExperimentalTime
 
+@OptIn(ExperimentalTime::class)
 @Composable
 fun PostComment(
     commentData: CommentData,

@@ -20,16 +20,20 @@
 
 package ru.herobrine1st.e621.api.model
 
-import kotlinx.datetime.Instant
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import org.jsoup.Jsoup
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
+import ru.herobrine1st.e621.api.serializer.ISO8601Serializer
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
+@OptIn(ExperimentalTime::class)
 @Serializable
 data class CommentBB(
     val id: Int,
+    @Serializable(with = ISO8601Serializer::class)
     val createdAt: Instant,
     @SerialName("post_id")
     val parentPostId: Int,
@@ -37,6 +41,7 @@ data class CommentBB(
     val updaterId: Int,
     val body: String,
     val score: Int,
+    @Serializable(with = ISO8601Serializer::class)
     val updatedAt: Instant,
     val doNotBumpPost: Boolean, // wtf
     val isHidden: Boolean, // okay maybe I understand it
