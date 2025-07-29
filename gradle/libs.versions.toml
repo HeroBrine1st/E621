@@ -6,7 +6,7 @@ ksp = "2.2.0-2.0.2"
 
 aboutlibraries = "12.2.4"
 room = "2.7.2"
-ktor = "3.2.2"
+ktor = "3.2.3"
 decompose = "3.3.0"
 coil = "3.3.0"
 media3 = "1.7.1"
