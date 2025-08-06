@@ -34,6 +34,7 @@ data class Sample(
     val height: Int,
     val width: Int,
     val url: String? = null,
+    val alt: String? = null, // unused
     @Serializable(with = AlternatesFieldSerializer::class)
     val alternates: Alternates? = null
 ) {
