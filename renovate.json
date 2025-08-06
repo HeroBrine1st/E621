@@ -18,5 +18,8 @@
       ],
       "allowedVersions": "!/\\-0\\.6\\.x\\-compat$/"
     }
+  ],
+  "ignoreDeps": [
+    "com.android.application"
   ]
 }
