@@ -43,8 +43,7 @@ enum class FileType(
     @SerialName("webm")
     WEBM("webm", isVideo = true, weight = 2),
     @SerialName("mp4")
-    MP4("mp4", isVideo = true, weight = 2),
-    UNDEFINED("undefined", isSupported = false);
+    MP4("mp4", isVideo = true, weight = 2);
 
     val isNotImage = !isImage
 

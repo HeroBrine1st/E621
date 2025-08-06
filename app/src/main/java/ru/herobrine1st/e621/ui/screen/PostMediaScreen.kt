@@ -139,7 +139,7 @@ fun PostMediaScreen(
                                                 FileType.JPG, FileType.PNG -> Icons.Default.Image
                                                 FileType.GIF -> Icons.Default.Animation
                                                 FileType.WEBM, FileType.MP4 -> Icons.Default.Movie
-                                                FileType.SWF, FileType.UNDEFINED -> return@DropdownMenuItem
+                                                FileType.SWF -> return@DropdownMenuItem
                                             }
                                             Icon(icon, null)
                                         },

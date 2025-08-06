@@ -21,6 +21,7 @@
 package ru.herobrine1st.e621.navigation.component.post
 
 import android.content.Context
+import android.util.Log
 import androidx.annotation.IntRange
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -54,7 +55,6 @@ import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Tag
-import ru.herobrine1st.e621.api.model.selectSample
 import ru.herobrine1st.e621.api.search.PoolSearchOptions
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
@@ -111,7 +111,7 @@ class PostComponent(
     // private var rememberedPositionMs = -1L
     private val state = MutableValue<PostState>(PostState.Loading)
 
-    var currentFile by mutableStateOf(NormalizedFile.STUB)
+    var currentFile by mutableStateOf<NormalizedFile?>(null)
         private set
 
 
@@ -209,8 +209,13 @@ class PostComponent(
     private fun useSampleAsDefault() {
         val state = state.value
         require(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
-        if (currentFile !== NormalizedFile.STUB) return
-        setFile(state.post.selectSample())
+        if (currentFile != null) return
+        val post = state.post
+        val sample = when {
+            post.file.type.isVideo -> post.files.first { it.type.isVideo }
+            else -> post.normalizedSample
+        }
+        setFile(sample)
     }
 
     fun getVideoPlayerComponent(file: NormalizedFile): VideoPlayerComponent {
@@ -318,11 +323,16 @@ class PostComponent(
     }
 
     fun openToFullscreen() {
+        val file = currentFile
+        if(file == null) {
+            Log.w(TAG, "Tried to open fullscreen image without shown file")
+            return
+        }
         val post = (state.value as PostState.Ready).post
         navigator.pushNew(
             Config.PostMedia(
                 post = post,
-                initialFile = currentFile
+                initialFile = file
             )
         )
     }

@@ -78,7 +78,7 @@ data class Post(
     val normalizedFile = NormalizedFile(file)
 
     @Transient
-    val normalizedSample = if(sample.url != null) NormalizedFile(sample) else normalizedFile.also {
+    val normalizedSample = NormalizedFile(sample) ?: normalizedFile.also {
         if(!it.type.isImage) {
             Log.w("Post Model", "No sample provided but file is not an image")
         }
@@ -87,9 +87,9 @@ data class Post(
     @Transient
     val files: List<NormalizedFile> = buildList {
         add(normalizedFile)
-        if(sample.url != null) add(normalizedSample)
+        normalizedSample.takeIf { it !== normalizedFile }?.let { add(it) }
         sample.alternates?.let { alternates ->
-            addAll(alternates.samples.map { NormalizedFile(it.key, it.value) })
+            addAll(alternates.samples.mapNotNull { NormalizedFile(it.key, it.value) })
         }
     }.sortedWith(compareBy({ it.type.weight }, { it.width }))
 }
@@ -123,8 +123,3 @@ data class PostReduced(
     val previewWidth: Int,
     val previewHeight: Int
 )
-
-fun Post.selectSample() = when {
-    file.type.isVideo -> files.first { it.type.isVideo }
-    else -> normalizedSample
-}

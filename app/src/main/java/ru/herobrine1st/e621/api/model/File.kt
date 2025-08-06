@@ -20,7 +20,6 @@
 
 package ru.herobrine1st.e621.api.model
 
-import android.util.Log
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -33,7 +32,7 @@ data class File(
     val size: Long,
     val md5: String,
     // URL may be null - strange bug on API side, probably database related
-    val url: String = ""
+    val url: String?
 )
 
 @Serializable
@@ -48,35 +47,28 @@ data class NormalizedFile(
     constructor(name: String, width: Int, height: Int, type: FileType, size: Long, url: String) :
             this(name, width, height, type, size, listOf(url))
 
-    constructor(file: File) :
-            this("original", file.width, file.height, file.type, file.size, file.url)
-
-    constructor(file: Sample) :
-            this("sample",
-                 file.width,
-                 file.height,
-                 file.type,
-                 0,
-                 file.url.also {
-                     if (it == null) {
-                         Log.w("NormalizedFile", "Got sample without url: $file")
-                     }
-                 } ?: "")
-
-    constructor(name: String, file: Sample.Alternates.Alternate) :
-            this(name, file.width, file.height, file.normalizedType, 0, file.url)
-
     val aspectRatio get() = width.toFloat() / height.toFloat()
 
     companion object {
-        val STUB = NormalizedFile(
-            "stub",
-            0,
-            0,
-            FileType.UNDEFINED,
-            0,
-            emptyList()
-        )
+        operator fun invoke(file: File): NormalizedFile {
+            // if there's no url so be it. There's no infrastructure to handle absence of ANY file
+            return NormalizedFile("original", file.width, file.height, file.type, file.size, listOfNotNull(file.url))
+        }
+
+        operator fun invoke(file: Sample): NormalizedFile? {
+            return NormalizedFile(
+                "sample",
+                file.width,
+                file.height,
+                file.type ?: return null,
+                0,
+                file.url ?: return null
+            )
+        }
+
+        operator fun invoke(name: String, file: Sample.Alternates.Alternate): NormalizedFile? {
+            return NormalizedFile(name, file.width, file.height, file.type ?: return null, 0, file.url)
+        }
     }
 }
 

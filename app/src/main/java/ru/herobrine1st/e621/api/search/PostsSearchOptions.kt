@@ -69,7 +69,7 @@ data class PostsSearchOptions(
         if (fileTypes.size == 1) {
             cache += "filetype:${fileTypes.single().extension}"
         } else if (fileTypes.size > 1) {
-            cache += (FileType.entries - fileTypes - FileType.UNDEFINED).map { "-filetype:${it.extension}" }
+            cache += (FileType.entries - fileTypes).map { "-filetype:${it.extension}" }
         }
         favouritesOf?.let { cache += "fav:$it" }
         (if (orderAscending) order.ascendingApiName else order.apiName)?.let { cache += "order:$it" }

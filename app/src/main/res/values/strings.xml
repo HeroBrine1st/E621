@@ -181,4 +181,5 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="settings_posts_columns_dialog_mode_adaptive">Adaptive</string>
     <string name="settings_posts_columns_dialog_mode_adaptive_hint">"On current device configuration, this will give around %1$d columns\nCurrent screen width is %2$d dp and you selected %3$.2f dp column width"</string>
     <string name="settings_posts_columns_dialog_mode_fixed_hint">"%1$d columns"</string>
+    <string name="no_image_available">There\'s no image provided, probably this post is deleted</string>
 </resources>

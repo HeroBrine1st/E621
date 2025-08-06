@@ -71,7 +71,7 @@ fun PostImage(
     val imageRequest = remember(file.urls) {
         ImageRequest.Builder(context)
             // toHttpUrlOrNull - because toUri does not throw
-            .data(file.urls.first { it.toHttpUrlOrNull() != null }.toUri())
+            .data(file.urls.firstOrNull { it.toHttpUrlOrNull() != null }?.toUri())
             .apply {
                 if (setSizeOriginal) size(coil3.size.Size.ORIGINAL)
                 extras[progressCallbackExtra] = ProgressListener { received, total ->
@@ -89,60 +89,67 @@ fun PostImage(
                 matchHeightConstraintsFirst = matchHeightConstraintsFirst
             )
     ) {
-        AsyncImage(
-            model = imageRequest,
-            contentDescription = contentDescription,
-            modifier = Modifier
-                .matchParentSize()
-                .placeholder(
-                    visible = painterState is Loading,
-                    highlight = PlaceholderHighlight.fade()
-                ),
-            onState = {
-                painterState = it
-            },
-            contentScale = if (aspectRatio > 0) ContentScale.Crop else ContentScale.Fit
-        )
-        if (actualPostFileType != null && actualPostFileType.isNotImage) AssistChip( // TODO
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .offset(x = 10.dp, y = 10.dp),
-            colors = AssistChipDefaults.assistChipColors(
-                disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
-            ),
-            enabled = false,
-            onClick = {},
-            border = null,
-            label = {
-                Text(actualPostFileType.extension)
-            }
-        )
-        when (painterState) {
-            is Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        if(file.urls.isEmpty()) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.align(Alignment.Center)) {
                 Icon(Icons.Outlined.Error, contentDescription = null)
-                Text(stringResource(R.string.unknown_error))
+                Text(stringResource(R.string.no_image_available))
             }
+        } else {
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = contentDescription,
+                modifier = Modifier
+                    .matchParentSize()
+                    .placeholder(
+                        visible = painterState is Loading,
+                        highlight = PlaceholderHighlight.fade()
+                    ),
+                onState = {
+                    painterState = it
+                },
+                contentScale = if (aspectRatio > 0) ContentScale.Crop else ContentScale.Fit
+            )
+            if (actualPostFileType != null && actualPostFileType.isNotImage) AssistChip( // TODO
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .offset(x = 10.dp, y = 10.dp),
+                colors = AssistChipDefaults.assistChipColors(
+                    disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
+                ),
+                enabled = false,
+                onClick = {},
+                border = null,
+                label = {
+                    Text(actualPostFileType.extension)
+                }
+            )
+            when (painterState) {
+                is Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Icon(Icons.Outlined.Error, contentDescription = null)
+                    Text(stringResource(R.string.unknown_error))
+                }
 
-            is Loading -> Crossfade(
-                progress < 0,
-                label = "Crossfade between indeterminate and determinate progress indicators"
-            ) {
-                when (it) {
-                    true -> CircularProgressIndicator()
-                    false -> {
-                        val progress1 by animateFloatAsState(
-                            targetValue = progress,
-                            animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
-                            label = "Progress animation"
-                        )
-                        CircularProgressIndicator(
-                            progress = { progress1 },
-                        )
+                is Loading -> Crossfade(
+                    progress < 0,
+                    label = "Crossfade between indeterminate and determinate progress indicators"
+                ) {
+                    when (it) {
+                        true -> CircularProgressIndicator()
+                        false -> {
+                            val progress1 by animateFloatAsState(
+                                targetValue = progress,
+                                animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec,
+                                label = "Progress animation"
+                            )
+                            CircularProgressIndicator(
+                                progress = { progress1 },
+                            )
+                        }
                     }
                 }
-            }
 
-            is Success, is Empty -> {}
+                is Success, is Empty -> {}
+            }
         }
     }
 }

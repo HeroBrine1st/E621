@@ -238,47 +238,49 @@ fun Post(
                 item("media") {
                     val file = component.currentFile
 
-                    // "Open to fullscreen" behavior
-                    // Currently no animation
-                    Box(
-                        Modifier
-                            // This box will be empty if image is gone to fullscreen
-                            .aspectRatio(file.aspectRatio)
-                            .fillMaxWidth()
-                            .clickable(
-                                enabled = !post.file.type.isVideo,
-                                indication = null,
-                                interactionSource = remember { MutableInteractionSource() }
-                            ) {
-                                component.openToFullscreen()
+                    if(file != null) {
+                        // "Open to fullscreen" behavior
+                        // Currently no animation
+                        Box(
+                            Modifier
+                                // This box will be empty if image is gone to fullscreen
+                                .aspectRatio(file.aspectRatio)
+                                .fillMaxWidth()
+                                .clickable(
+                                    enabled = !post.file.type.isVideo,
+                                    indication = null,
+                                    interactionSource = remember { MutableInteractionSource() }
+                                ) {
+                                    component.openToFullscreen()
+                                }
+                        ) {
+                            when {
+                                file.type.isVideo -> PostVideo(
+                                    component.getVideoPlayerComponent(file),
+                                    file,
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+
+                                file.type.isImage -> PostImage(
+                                    file = file,
+                                    contentDescription = remember(post.id) {
+                                        post.tags.all.joinToString(
+                                            " "
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    actualPostFileType = post.file.type,
+                                    setSizeOriginal = true // to be loaded instantly
+                                )
+
+                                else -> InvalidPost(
+                                    text = stringResource(
+                                        R.string.unsupported_post_type,
+                                        file.type.extension
+                                    ),
+                                    modifier = Modifier.fillMaxWidth()
+                                )
                             }
-                    ) {
-                        when {
-                            file.type.isVideo -> PostVideo(
-                                component.getVideoPlayerComponent(file),
-                                file,
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-
-                            file.type.isImage -> PostImage(
-                                file = file,
-                                contentDescription = remember(post.id) {
-                                    post.tags.all.joinToString(
-                                        " "
-                                    )
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                actualPostFileType = post.file.type,
-                                setSizeOriginal = true // to be loaded instantly
-                            )
-
-                            else -> InvalidPost(
-                                text = stringResource(
-                                    R.string.unsupported_post_type,
-                                    file.type.extension
-                                ),
-                                modifier = Modifier.fillMaxWidth()
-                            )
                         }
                     }
                 }
@@ -494,7 +496,7 @@ fun Post(
                 item("show original file button") {
                     TextButton(
                         onClick = { component.setFile(post.normalizedFile) },
-                        enabled = !component.currentFile.isOriginal()
+                        enabled = component.currentFile?.isOriginal() != true
                     ) {
                         Text(stringResource(R.string.show_original_file))
                         Spacer(Modifier.weight(1f))

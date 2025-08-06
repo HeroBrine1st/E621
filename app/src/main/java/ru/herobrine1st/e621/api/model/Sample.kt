@@ -60,11 +60,11 @@ data class Sample(
 //            val size: Int = 0,
 //            val codec: String? = null,
         ) {
-            val normalizedType get() = FileType.byExtension[url.substringAfterLast(".")] ?: FileType.UNDEFINED
+            val type get() = FileType.byExtension[url.substringAfterLast(".")]
         }
     }
 
-    val type get() = FileType.byExtension[url?.substringAfterLast(".")] ?: FileType.UNDEFINED
+    val type get() = FileType.byExtension[url?.substringAfterLast(".")]
 }
 
 class AlternatesFieldSerializer : NullAsEmptyObjectSerializer<Sample.Alternates>(Sample.Alternates.serializer())
