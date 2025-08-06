@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.api.model
 
+import android.util.Log
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
@@ -51,7 +52,16 @@ data class NormalizedFile(
             this("original", file.width, file.height, file.type, file.size, file.url)
 
     constructor(file: Sample) :
-            this("sample", file.width, file.height, file.type, 0, file.url)
+            this("sample",
+                 file.width,
+                 file.height,
+                 file.type,
+                 0,
+                 file.url.also {
+                     if (it == null) {
+                         Log.w("NormalizedFile", "Got sample without url: $file")
+                     }
+                 } ?: "")
 
     constructor(name: String, file: Sample.Alternates.Alternate) :
             this(name, file.width, file.height, file.normalizedType, 0, file.url)

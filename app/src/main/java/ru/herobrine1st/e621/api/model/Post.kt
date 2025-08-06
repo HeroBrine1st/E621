@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.api.model
 
+import android.util.Log
 import androidx.compose.runtime.Immutable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -49,7 +50,8 @@ data class Post(
     val updatedAt: Instant?,
     val file: File,
     val preview: Preview,
-    val sample: Sample,
+    // private due to wrapping. Some posts don't have a sample
+    private val sample: Sample,
     override val score: Score,
     override val tags: Tags,
     val lockedTags: List<String> = emptyList(),
@@ -71,16 +73,21 @@ data class Post(
     val hasNotes: Boolean = false,
     val duration: Float = 0f,
 ) : TagProcessablePost, FavourablePost {
-    @Transient
-    val normalizedSample = NormalizedFile(sample)
 
     @Transient
     val normalizedFile = NormalizedFile(file)
 
     @Transient
+    val normalizedSample = if(sample.url != null) NormalizedFile(sample) else normalizedFile.also {
+        if(!it.type.isImage) {
+            Log.w("Post Model", "No sample provided but file is not an image")
+        }
+    }
+
+    @Transient
     val files: List<NormalizedFile> = buildList {
         add(normalizedFile)
-        add(normalizedSample)
+        if(sample.url != null) add(normalizedSample)
         sample.alternates?.let { alternates ->
             addAll(alternates.samples.map { NormalizedFile(it.key, it.value) })
         }

@@ -33,8 +33,7 @@ data class Sample(
     val has: Boolean,
     val height: Int,
     val width: Int,
-    // Strange bug on API side, probably database related
-    val url: String = "",
+    val url: String? = null,
     @Serializable(with = AlternatesFieldSerializer::class)
     val alternates: Alternates? = null
 ) {
@@ -64,7 +63,7 @@ data class Sample(
         }
     }
 
-    val type get() = FileType.byExtension[url.substringAfterLast(".")] ?: FileType.UNDEFINED
+    val type get() = FileType.byExtension[url?.substringAfterLast(".")] ?: FileType.UNDEFINED
 }
 
 class AlternatesFieldSerializer : NullAsEmptyObjectSerializer<Sample.Alternates>(Sample.Alternates.serializer())
