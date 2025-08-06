@@ -20,6 +20,7 @@
 
 package ru.herobrine1st.e621.ui.component.scaffold
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Block
@@ -63,7 +64,7 @@ fun ActionBarMenu(
     onNavigateToSettings: () -> Unit,
     onOpenBlacklistDialog: () -> Unit,
     additionalMenuActions: @Composable () -> Unit = {},
-) {
+) = Box {
     var openMenu by remember { mutableStateOf(false) }
 
     IconButton(onClick = { openMenu = !openMenu }) {
