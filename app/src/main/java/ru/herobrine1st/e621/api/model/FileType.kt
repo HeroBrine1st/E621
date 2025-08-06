@@ -45,8 +45,6 @@ enum class FileType(
     @SerialName("mp4")
     MP4("mp4", isVideo = true, weight = 2);
 
-    val isNotImage = !isImage
-
     companion object {
         val byExtension = mutableMapOf<String, FileType>().apply {
             FileType.entries.forEach { this[it.extension] = it }

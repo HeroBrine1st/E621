@@ -20,6 +20,9 @@
 
 package ru.herobrine1st.e621.ui.component.post
 
+import android.R.attr.enabled
+import android.R.attr.label
+import android.R.attr.onClick
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
@@ -109,7 +112,7 @@ fun PostImage(
                 },
                 contentScale = if (aspectRatio > 0) ContentScale.Crop else ContentScale.Fit
             )
-            if (actualPostFileType != null && actualPostFileType.isNotImage) AssistChip( // TODO
+            if (actualPostFileType?.isImage == false) AssistChip( // TODO
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 10.dp, y = 10.dp),
