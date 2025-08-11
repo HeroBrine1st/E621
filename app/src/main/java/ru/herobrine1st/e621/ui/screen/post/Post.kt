@@ -23,34 +23,13 @@ package ru.herobrine1st.e621.ui.screen.post
 import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.*
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.consumeWindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBars
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -59,23 +38,8 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material3.BottomSheetScaffold
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SheetValue
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberBottomSheetScaffoldState
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -121,16 +85,11 @@ fun Post(
     component: PostComponent
 ) {
     val postState by component.postState.subscribeAsState()
-    val preferences by component.preferences.collectAsState()
 
     val coroutineScope = rememberCoroutineScope()
 
     // Probably can't use refresh state to replace this variable at first frame
-    val loadComments =
-        preferences.auth != null // Assuming there can't be invalid credentials in preferences
-                && (
-                !preferences.dataSaverModeEnabled // Do not make excessive API calls on user preference
-                        || component.openComments)
+    val loadComments = component.isAuthorized && (!component.isDataSaverModeEnabled || component.openComments)
     val comments = component.commentsFlow.collectAsPagingItems(startImmediately = loadComments)
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -176,7 +135,7 @@ fun Post(
                     CommentsBottomSheetContent(
                         comments = comments,
                         post = post,
-                        safeModeEnabled = preferences.safeModeEnabled
+                        safeModeEnabled = component.isSafeModeEnabled
                     )
                 }
             },
@@ -208,7 +167,7 @@ fun Post(
             }
 
 
-            if (preferences.safeModeEnabled && post.rating.isNotSafe) {
+            if (component.isSafeModeEnabled && post.rating.isNotSafe) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxSize()
@@ -239,7 +198,7 @@ fun Post(
                 item("media") {
                     val file = component.currentFile
 
-                    if(file != null) {
+                    if (file != null) {
                         // "Open to fullscreen" behavior
                         // Currently no animation
                         Box(
@@ -370,7 +329,7 @@ fun Post(
                     Column(
                         Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = post.commentCount != 0 && preferences.auth != null) {
+                            .clickable(enabled = post.commentCount != 0 && component.isAuthorized) {
                                 coroutineScope.launch {
                                     if (comments.loadStates.refresh is LoadState.NotLoading) {
                                         comments.refresh()
@@ -404,7 +363,7 @@ fun Post(
                                 }
                             }
 
-                            preferences.auth == null -> CommentsLoadingState.Forbidden
+                            !component.isAuthorized -> CommentsLoadingState.Forbidden
 
                             else -> CommentsLoadingState.NotLoading
                         }
@@ -422,7 +381,7 @@ fun Post(
                                 is CommentsLoadingState.Showable ->
                                     PostComment(
                                         state.commentData,
-                                        safeModeEnabled = preferences.safeModeEnabled,
+                                        safeModeEnabled = component.isSafeModeEnabled,
                                         placeholder = state.commentData === CommentData.PLACEHOLDER,
                                         animateTextChange = true
                                     )
