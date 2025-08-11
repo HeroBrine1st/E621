@@ -105,6 +105,16 @@ fun Post(
     )
 
     BoxWithConstraints {
+        // snackbar is shown under navigation bar
+        // https://issuetracker.google.com/issues/315695275 - won't fix (not reproducible)
+        // the cause is this code in BottomSheetScaffoldLayout:
+        //             val snackbarOffsetY =
+        //                when (sheetState.currentValue) {
+        //                    PartiallyExpanded -> sheetOffset().roundToInt() - snackbarHeight
+        //                    Expanded,
+        //                    Hidden -> layoutHeight - snackbarHeight
+        //                }
+        // I don't know what's not reproducible here. Insets are not read at all
         BottomSheetScaffold(
             topBar = {
                 TopAppBar(
@@ -179,6 +189,7 @@ fun Post(
 
             // provided PaddingValues aren't connected to actual visibility window, so are ignored
             // handling insets manually
+            // 2025 08 11 - still an issue!
             LazyColumn(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 contentPadding = with(LocalDensity.current) {
