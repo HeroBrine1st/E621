@@ -53,10 +53,4 @@ sealed interface CommentsLoadingState {
         override val index: Int
             get() = 3
     }
-
-    data object Forbidden/*due to credentials absence*/ : CommentsLoadingState {
-        override val index: Int
-            get() = 4
-    }
-
 }

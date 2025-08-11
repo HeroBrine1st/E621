@@ -89,16 +89,13 @@ fun Post(
     val coroutineScope = rememberCoroutineScope()
 
     // Probably can't use refresh state to replace this variable at first frame
-    val loadComments = component.isAuthorized && (!component.isDataSaverModeEnabled || component.openComments)
+    val loadComments = !component.isDataSaverModeEnabled || component.openComments
     val comments = component.commentsFlow.collectAsPagingItems(startImmediately = loadComments)
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
     val bottomSheetState = rememberStandardBottomSheetState(
-        // `&& loadComments` is a fix for unauthenticated usage case
-        // Think of it as there is no point in opening comments if they're not loading
-        initialValue = if (component.openComments && loadComments) SheetValue.PartiallyExpanded
-        else SheetValue.Hidden,
+        initialValue = if (component.openComments) SheetValue.PartiallyExpanded else SheetValue.Hidden,
         skipHiddenState = false
     )
 
@@ -329,7 +326,7 @@ fun Post(
                     Column(
                         Modifier
                             .fillMaxWidth()
-                            .clickable(enabled = post.commentCount != 0 && component.isAuthorized) {
+                            .clickable(enabled = post.commentCount != 0) {
                                 coroutineScope.launch {
                                     if (comments.loadStates.refresh is LoadState.NotLoading) {
                                         comments.refresh()
@@ -363,8 +360,6 @@ fun Post(
                                 }
                             }
 
-                            !component.isAuthorized -> CommentsLoadingState.Forbidden
-
                             else -> CommentsLoadingState.NotLoading
                         }
                         val transition = updateTransition(
@@ -387,7 +382,6 @@ fun Post(
                                     )
 
                                 CommentsLoadingState.NotLoading -> Text(stringResource(R.string.click_to_load))
-                                CommentsLoadingState.Forbidden -> Text(stringResource(R.string.post_comments_forbidden_auth_needed))
                             }
                         }
 
