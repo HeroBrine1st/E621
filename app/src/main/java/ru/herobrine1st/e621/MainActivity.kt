@@ -46,8 +46,6 @@ import ru.herobrine1st.e621.module.RestartModule
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponentImpl
 import ru.herobrine1st.e621.ui.Navigator
-import ru.herobrine1st.e621.ui.component.legal.LicenseDialog
-import ru.herobrine1st.e621.ui.component.legal.NonAffiliationDialog
 import ru.herobrine1st.e621.ui.dialog.BlacklistTogglesDialog
 import ru.herobrine1st.e621.ui.theme.E621Theme
 import ru.herobrine1st.e621.ui.theme.snackbar.LocalSnackbar
@@ -129,8 +127,6 @@ class MainActivity : ComponentActivity() {
                             BlacklistTogglesDialog(component = instance.component)
                         }
                         null -> {}
-                        is RootComponent.DialogChild.License -> LicenseDialog(instance.component)
-                        is RootComponent.DialogChild.NonAffiliation -> NonAffiliationDialog(instance.component)
                     }
                 }
             }

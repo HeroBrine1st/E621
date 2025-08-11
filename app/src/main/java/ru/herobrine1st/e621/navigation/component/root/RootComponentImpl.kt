@@ -22,51 +22,29 @@ package ru.herobrine1st.e621.navigation.component.root
 
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.slot.SlotNavigation
-import com.arkivanov.decompose.router.slot.activate
 import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.take
 import ru.herobrine1st.e621.module.ActivityInjectionCompanion
 import ru.herobrine1st.e621.module.RestartModule
-import ru.herobrine1st.e621.navigation.LifecycleScope
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
-import ru.herobrine1st.e621.navigation.component.LicenseDialogComponent
-import ru.herobrine1st.e621.navigation.component.NonAffiliationDialogComponent
 import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.DialogChild
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.DialogConfig
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.*
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutLibrariesComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistEntryComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsLicenseComponent
+import ru.herobrine1st.e621.navigation.component.settings.*
 import ru.herobrine1st.e621.navigation.config.Config
-import ru.herobrine1st.e621.navigation.config.Config.Home
-import ru.herobrine1st.e621.navigation.config.Config.Post
-import ru.herobrine1st.e621.navigation.config.Config.PostListing
-import ru.herobrine1st.e621.navigation.config.Config.Search
-import ru.herobrine1st.e621.navigation.config.Config.Settings
-import ru.herobrine1st.e621.navigation.config.Config.Wiki
+import ru.herobrine1st.e621.navigation.config.Config.*
 
 class RootComponentImpl(
     private val injectionCompanion: ActivityInjectionCompanion,
     private val restartModule: RestartModule,
     componentContext: ComponentContext
 ) : RootComponent, ComponentContext by componentContext {
-
-    private val lifecycleScope = LifecycleScope()
-
     override val navigation = StackNavigation<Config>()
     override val stack = childStack(
         source = navigation,
@@ -83,17 +61,6 @@ class RootComponentImpl(
         childFactory = ::createDialogChild
         // handleBackButton = false - dialogs handle it themselves
     )
-
-    init {
-        injectionCompanion.dataStoreModule.data
-            .take(1)
-            .onEach {
-                if (!it.licenseAndNonAffiliationDisclaimerShown) {
-                    dialogNavigation.activate(DialogConfig.License)
-                }
-            }
-            .launchIn(lifecycleScope)
-    }
 
     private fun createChild(
         configuration: Config,
@@ -204,7 +171,7 @@ class RootComponentImpl(
                 )
             )
 
-            is Config.PostMedia -> Child.PostMedia(
+            is PostMedia -> Child.PostMedia(
                 PostMediaComponent(
                     configuration.post,
                     configuration.initialFile,
@@ -226,21 +193,6 @@ class RootComponentImpl(
                         dialogNavigation.navigate { null }
                     },
                     injectionCompanion.databaseModule.blacklistRepository,
-                    injectionCompanion.dataStoreModule,
-                    componentContext
-                )
-            )
-
-            DialogConfig.License -> DialogChild.License(
-                LicenseDialogComponent(
-                    dialogNavigation,
-                    componentContext
-                )
-            )
-
-            DialogConfig.NonAffiliation -> DialogChild.NonAffiliation(
-                NonAffiliationDialogComponent(
-                    dialogNavigation,
                     injectionCompanion.dataStoreModule,
                     componentContext
                 )

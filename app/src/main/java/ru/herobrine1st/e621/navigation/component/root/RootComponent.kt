@@ -28,20 +28,13 @@ import com.arkivanov.decompose.value.Value
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
-import ru.herobrine1st.e621.navigation.component.LicenseDialogComponent
-import ru.herobrine1st.e621.navigation.component.NonAffiliationDialogComponent
 import ru.herobrine1st.e621.navigation.component.PostMediaComponent
 import ru.herobrine1st.e621.navigation.component.WikiComponent
 import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutLibrariesComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistEntryComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsComponent
-import ru.herobrine1st.e621.navigation.component.settings.SettingsLicenseComponent
+import ru.herobrine1st.e621.navigation.component.settings.*
 import ru.herobrine1st.e621.navigation.config.Config
 
 interface RootComponent {
@@ -63,14 +56,9 @@ interface RootComponent {
         }
     }
 
-    // Global dialogs only !!
-    // I mean, only dialogs that are not bound to component (hence, bind 'em to the root component)
+    // Only for global dialogs
     sealed interface DialogChild {
         class BlacklistToggles(val component: BlacklistTogglesDialogComponent) : DialogChild
-
-        class License(val component: LicenseDialogComponent) : DialogChild
-
-        class NonAffiliation(val component: NonAffiliationDialogComponent) : DialogChild
     }
 
     @Serializable
@@ -78,12 +66,6 @@ interface RootComponent {
     sealed interface DialogConfig {
         @Serializable
         data object BlacklistToggles : DialogConfig
-
-        @Serializable
-        data object License : DialogConfig
-
-        @Serializable
-        data object NonAffiliation : DialogConfig
     }
 
     val navigation: StackNavigation<Config>
