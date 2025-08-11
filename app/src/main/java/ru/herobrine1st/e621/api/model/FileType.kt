@@ -20,9 +20,9 @@
 
 package ru.herobrine1st.e621.api.model
 
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import okhttp3.internal.toImmutableMap
 
 @Serializable
 enum class FileType(
