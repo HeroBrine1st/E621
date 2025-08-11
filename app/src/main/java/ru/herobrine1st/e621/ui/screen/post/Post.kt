@@ -113,6 +113,7 @@ import kotlin.time.ExperimentalTime
 
 private const val DESCRIPTION_COLLAPSED_HEIGHT_FRACTION = 0.4f
 
+@Suppress("COMPOSE_APPLIER_CALL_MISMATCH") // fixed in kotlin 2.3
 @OptIn(ExperimentalMaterial3Api::class, CachedDataStore::class, ExperimentalTime::class)
 @Composable
 fun Post(

@@ -72,6 +72,7 @@ fun VideoPlayer(
         .heightIn(max = maxHeight),
         contentAlignment = Alignment.Center
     ) {
+        @Suppress("COMPOSE_APPLIER_CALL_MISMATCH") // fixed in Kotlin 2.3 https://github.com/JetBrains/kotlin/commit/b6067c557c7a80ab9426a51e664bc7d1289a27fc
         AndroidView(
             modifier = Modifier
                 .background(Color.Black)
