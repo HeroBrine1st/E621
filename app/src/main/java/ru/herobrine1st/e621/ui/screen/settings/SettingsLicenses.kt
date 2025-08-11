@@ -21,16 +21,12 @@
 package ru.herobrine1st.e621.ui.screen.settings
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import com.mikepenz.aboutlibraries.ui.compose.android.rememberLibraries
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
@@ -60,6 +56,7 @@ fun SettingsLicenses(screenSharedState: ScreenSharedState) {
         }
     ) { paddingValues ->
         LibrariesContainer(
+            rememberLibraries().value,
             Modifier
                 .nestedScroll(scrollBehavior.nestedScrollConnection)
                 .fillMaxSize(),

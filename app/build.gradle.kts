@@ -1,5 +1,6 @@
 
 import com.android.build.api.dsl.VariantDimension
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
@@ -96,13 +97,6 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    kotlinOptions {
-        jvmTarget = "11"
-        freeCompilerArgs += listOf(
-            "-opt-in=kotlin.RequiresOptIn",
-            "-Xwhen-guards"
-        )
-    }
     buildFeatures {
         buildConfig = true
     }
@@ -135,6 +129,13 @@ configurations.all {
     resolutionStrategy {
         // some libraries depend on older stdlib
         force("org.jetbrains.kotlin:kotlin-stdlib:${libs.versions.kotlin.get()}")
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_11
+        freeCompilerArgs.add("-Xannotation-default-target=param-property")
     }
 }
 
