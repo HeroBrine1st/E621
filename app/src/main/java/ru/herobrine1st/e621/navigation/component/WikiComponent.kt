@@ -27,10 +27,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
-import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.Dispatchers
+import io.ktor.http.*
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
@@ -71,7 +69,7 @@ class WikiComponent(
         if (restoredState !is WikiState.Success) {
             fetchWikiPage()
         } else {
-            lifecycleScope.launch { state = restoredState.parseWikiPage() }
+            lifecycleScope.launch { state = restoredState.parsed() }
         }
     }
 
@@ -88,7 +86,7 @@ class WikiComponent(
         state = WikiState.Loading
         lifecycleScope.launch {
             state = try {
-                WikiState.Success(api.getWikiPage(tag).getOrThrow()).parseWikiPage()
+                WikiState.Success(api.getWikiPage(tag).getOrThrow()).parsed()
             } catch (e: ApiException) {
                 if(e.status == HttpStatusCode.NotFound) {
                     WikiState.NotFound
@@ -110,20 +108,6 @@ class WikiComponent(
             }
         }
     }
-
-    // provided object is mutated!
-    private suspend fun WikiState.Success.parseWikiPage(): WikiState.Success {
-        // it may be true after configuration change
-        if (isParsed) return this
-        return withContext(Dispatchers.Default) {
-            this@parseWikiPage.setParsed(
-                parseBBCode(
-                    this@parseWikiPage.result.body
-                )
-            )
-            return@withContext this@parseWikiPage
-        }
-    }
 }
 
 @Serializable
@@ -136,15 +120,14 @@ sealed interface WikiState {
     @Serializable
     class Success(val result: WikiPage) : WikiState {
         @Transient // it is a cache
-        lateinit var parsed: List<MessageData>
+        lateinit var messageData: List<MessageData>
             private set
 
-        fun setParsed(v: List<MessageData>) {
-            if (::parsed.isInitialized) throw RuntimeException("This property is write-once")
-            parsed = v
+        fun parsed(): Success {
+            if (::messageData.isInitialized) return this
+            messageData = parseBBCode(result.body)
+            return this
         }
-
-        val isParsed get() = ::parsed.isInitialized
     }
 
     @Serializable

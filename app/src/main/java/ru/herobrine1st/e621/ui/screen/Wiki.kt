@@ -21,30 +21,20 @@
 package ru.herobrine1st.e621.ui.screen
 
 import androidx.compose.animation.Crossfade
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
 import androidx.compose.material.icons.outlined.LinkOff
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.navigation.component.WikiComponent
@@ -111,14 +101,14 @@ fun WikiScreen(screenSharedState: ScreenSharedState, component: WikiComponent) {
                         verticalArrangement = Arrangement.Center
                     ) {
                         Icon(Icons.Outlined.LinkOff, contentDescription = null)
-                        Text(stringResource(R.string.wiki_page_not_found))
+                        Text(stringResource(R.string.wiki_page_not_found), textAlign = TextAlign.Center)
                     }
                 }
 
                 is WikiState.Success -> {
                     SelectionContainer {
                         LazyColumn(Modifier.fillMaxSize()) {
-                            items(state.parsed) {
+                            items(state.messageData) {
                                 RenderBB(it, onWikiLinkClick = component::handleLinkClick)
                             }
                         }
