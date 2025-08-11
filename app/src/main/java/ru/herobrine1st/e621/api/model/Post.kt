@@ -115,11 +115,11 @@ data class PostReduced(
     val favoriteCount: Int,
     @SerialName("is_favorited")
     val isFavourite: Boolean,
-    val pools: List<PoolId>,
-    val md5: String?,
-    val previewUrl: String,
-    val largeUrl: String,
-    val fileUrl: String,
-    val previewWidth: Int,
-    val previewHeight: Int
+    val pools: String, // separator is unknown
+    val md5: String? = null,
+    val previewUrl: String? = null,
+    val sampleUrl: String? = null,
+    val fileUrl: String? = null,
+    val previewWidth: Int? = null,
+    val previewHeight: Int? = null
 )

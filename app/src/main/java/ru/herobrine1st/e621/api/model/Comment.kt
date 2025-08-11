@@ -22,7 +22,6 @@ package ru.herobrine1st.e621.api.model
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 import org.jsoup.Jsoup
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
 import ru.herobrine1st.e621.api.serializer.ISO8601Serializer
@@ -36,18 +35,19 @@ data class CommentBB(
     @Serializable(with = ISO8601Serializer::class)
     val createdAt: Instant,
     @SerialName("post_id")
-    val parentPostId: Int,
+    val parentPostId: PostId,
     val creatorId: Int,
-    val updaterId: Int,
     val body: String,
     val score: Int,
     @Serializable(with = ISO8601Serializer::class)
-    val updatedAt: Instant,
-    val doNotBumpPost: Boolean, // wtf
+    val updatedAt: Instant, // same aas createdAt if not updated
+    val updaterId: Int, // same as creatorId if not updated
+    @Deprecated("API-deprecated")
+    val doNotBumpPost: Boolean = false,
     val isHidden: Boolean, // okay maybe I understand it
     val isSticky: Boolean, // wtf
-    val warningType: JsonElement?, // unknown type
-    val warningUserId: JsonElement?, // unknown type
+    val warningType: WarningType?, // warning, record, ban
+    val warningUserId: Int?,
     val creatorName: String,
     val updaterName: String
 )

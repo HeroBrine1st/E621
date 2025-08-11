@@ -29,4 +29,6 @@ data class AvatarImageCommon(
     val rating: Rating,
 )
 
-fun PostReduced.toCommon() = AvatarImageCommon(id = id, url = previewUrl, rating = rating)
+fun PostReduced.toCommon(): AvatarImageCommon? {
+    return AvatarImageCommon(id = id, url = previewUrl ?: return null, rating = rating)
+}
