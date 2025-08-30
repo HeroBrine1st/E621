@@ -22,7 +22,7 @@ package ru.herobrine1st.e621.navigation.component.posts
 
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.ApiException
@@ -43,8 +43,8 @@ suspend fun handleFavouriteChange(
     snackbar: SnackbarAdapter,
     post: FavourablePost,
 ) {
-    val wasFavourite: FavouritesCache.FavouriteState = favouritesCache.isFavourite(post)
-    when (wasFavourite) {
+    val initialState: FavouritesCache.FavouriteState = favouritesCache.isFavourite(post)
+    when (initialState) {
         is FavouritesCache.FavouriteState.InFly -> {
             Log.w(
                 TAG,
@@ -56,9 +56,9 @@ suspend fun handleFavouriteChange(
         is FavouritesCache.FavouriteState.Determined -> {}
     }
     // Instant UI reaction
-    favouritesCache.setFavourite(post.id, FavouritesCache.FavouriteState.InFly(wasFavourite))
+    favouritesCache.setFavourite(post.id, FavouritesCache.FavouriteState.InFly(initialState))
     try {
-        if (wasFavourite.isFavourite) api.removeFromFavourites(post.id)
+        if (initialState.isFavourite) api.removeFromFavourites(post.id)
             .recover {
                 // https://github.com/e621ng/e621ng/blob/master/app/controllers/favorites_controller.rb#L45
                 if (it is ApiException && it.status == HttpStatusCode.UnprocessableEntity) Unit
@@ -72,27 +72,27 @@ suspend fun handleFavouriteChange(
         }.getOrThrow()
         favouritesCache.setFavourite(
             post.id,
-            FavouritesCache.FavouriteState.Determined.fromBoolean(!wasFavourite.isFavourite)
+            FavouritesCache.FavouriteState.Determined.fromBoolean(!initialState.isFavourite)
         )
     } catch (e: ApiException) {
         // TODO this can also occur when post is already (un)favourite
-        favouritesCache.setFavourite(post.id, wasFavourite)
+        favouritesCache.setFavourite(post.id, initialState)
         snackbar.enqueueMessage(R.string.unknown_api_error, SnackbarDuration.Long)
         Log.e(TAG, "An API exception occurred", e)
     } catch (e: IOException) {
-        favouritesCache.setFavourite(post.id, wasFavourite)
+        favouritesCache.setFavourite(post.id, initialState)
         Log.e(
             TAG,
-            "IO Error while while trying to (un)favorite post (id=${post.id}, wasFavourite=$wasFavourite)",
+            "IO Error while while trying to (un)favorite post (id=${post.id}, wasFavourite=$initialState)",
             e
         )
         snackbar.enqueueMessage(R.string.network_error, SnackbarDuration.Long)
     } catch (e: Throwable) {
         Log.e(
             TAG,
-            "An unknown error occurred while trying to (un)favourite post (id=${post.id}, wasFavourite=$wasFavourite)",
+            "An unknown error occurred while trying to (un)favourite post (id=${post.id}, wasFavourite=$initialState)",
             e
         )
-        favouritesCache.setFavourite(post.id, wasFavourite)
+        favouritesCache.setFavourite(post.id, initialState)
     }
 }
