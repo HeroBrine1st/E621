@@ -33,7 +33,7 @@ data class Preferences(
     @ProtoNumber(2) val dataSaverModeEnabled: Boolean = false,
     @ProtoNumber(3) val dataSaverDisclaimerShown: Boolean = false,
     @ProtoNumber(4) val showRemainingTimeMedia: Boolean = true,
-    @ProtoNumber(5) val muteSoundOnMedia: Boolean = false,
+    @ProtoNumber(5) val muteSoundOnMedia: Boolean = true,
     @ProtoNumber(6) val auth: AuthorizationCredentials? = null,
     @ProtoNumber(7) val safeModeEnabled: Boolean = true,
     @ProtoNumber(8) val safeModeDisclaimerShown: Boolean = false,

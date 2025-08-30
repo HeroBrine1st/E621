@@ -22,6 +22,8 @@ package ru.herobrine1st.e621.ui.screen.settings
 
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.VolumeOff
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -171,6 +173,18 @@ fun Settings(
                     onCheckedChange = {
                         component.updatePreferences {
                             copy(autoplayOnPostOpen = it)
+                        }
+                    }
+                )
+            }
+            item {
+                SettingSwitch(
+                    checked = preferences.muteSoundOnMedia,
+                    title = stringResource(R.string.settings_mute_video_on_start),
+                    icon = if (preferences.muteSoundOnMedia) Icons.AutoMirrored.Filled.VolumeOff else Icons.AutoMirrored.Filled.VolumeUp,
+                    onCheckedChange = {
+                        component.updatePreferences {
+                            copy(muteSoundOnMedia = it)
                         }
                     }
                 )
