@@ -20,7 +20,8 @@
 
 package ru.herobrine1st.e621.api.endpoint.favourites
 
-import io.ktor.resources.Resource
+import io.ktor.resources.*
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.HttpMethod
 import ru.herobrine1st.e621.api.HttpMethodType
@@ -34,4 +35,10 @@ import ru.herobrine1st.e621.api.model.PostId
 @Resource("/favorites/{id}")
 data class RemoveFromFavouritesEndpoint(
     val id: PostId
-) : APIEndpoint<Unit, Unit>
+) : APIEndpoint<Unit, RemoveFromFavouritesEndpoint.Response> {
+    @Serializable
+    data class Response(
+        @SerialName("post_id") val postId: PostId,
+        @SerialName("favorite_count") val favouriteCount: Int
+    )
+}

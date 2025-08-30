@@ -24,16 +24,9 @@ import androidx.annotation.IntRange
 import kotlinx.serialization.json.JsonObject
 import ru.herobrine1st.e621.api.endpoint.favourites.AddToFavouritesEndpoint
 import ru.herobrine1st.e621.api.endpoint.favourites.GetFavouritesEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsDTextEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.GetPostEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.GetPostsEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.VoteEndpoint
-import ru.herobrine1st.e621.api.model.Pool
-import ru.herobrine1st.e621.api.model.PostId
-import ru.herobrine1st.e621.api.model.Tag
-import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
-import ru.herobrine1st.e621.api.model.WikiPage
+import ru.herobrine1st.e621.api.endpoint.favourites.RemoveFromFavouritesEndpoint
+import ru.herobrine1st.e621.api.endpoint.posts.*
+import ru.herobrine1st.e621.api.model.*
 import ru.herobrine1st.e621.preference.AuthorizationCredentials
 
 interface AutocompleteSuggestionsAPI {
@@ -74,7 +67,7 @@ interface API : AutocompleteSuggestionsAPI {
 
     suspend fun removeFromFavourites(
         postId: PostId,
-    ): Result<Unit>
+    ): Result<RemoveFromFavouritesEndpoint.Response>
 
 
     suspend fun vote(

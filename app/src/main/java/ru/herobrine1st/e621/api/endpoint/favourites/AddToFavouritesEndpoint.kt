@@ -20,13 +20,12 @@
 
 package ru.herobrine1st.e621.api.endpoint.favourites
 
-import io.ktor.resources.Resource
+import io.ktor.resources.*
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.HttpMethod
 import ru.herobrine1st.e621.api.HttpMethodType
 import ru.herobrine1st.e621.api.endpoint.APIEndpoint
-import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
 
 @Serializable
@@ -37,6 +36,7 @@ data class AddToFavouritesEndpoint(
 ) : APIEndpoint<Unit, AddToFavouritesEndpoint.Response> {
     @Serializable
     data class Response(
-        val post: Post,
+        @SerialName("post_id") val postId: PostId,
+        @SerialName("favorite_count") val favouriteCount: Int
     )
 }
