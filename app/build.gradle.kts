@@ -25,8 +25,8 @@ android {
         applicationId = "ru.herobrine1st.e621"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 786
-        versionName = "0.1.6"
+        versionCode = 787
+        versionName = "0.1.7"
 
         vectorDrawables {
             useSupportLibrary = true
