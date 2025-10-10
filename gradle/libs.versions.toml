@@ -4,7 +4,7 @@ core = "1.7.0"
 kotlin = "2.2.20"
 ksp = "2.2.20-2.0.4"
 
-aboutlibraries = "12.2.4"
+aboutlibraries = "13.0.0"
 room = "2.8.2"
 ktor = "3.3.1"
 decompose = "3.4.0"
