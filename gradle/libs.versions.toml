@@ -35,7 +35,7 @@ kotlinx-serialization-protobuf = { module = "org.jetbrains.kotlinx:kotlinx-seria
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinx-datetime" }
 
 
-compose-ui-core = { module = "androidx.compose.ui:ui", version = "1.9.3" }
+compose-ui-core = { module = "androidx.compose.ui:ui", version = "1.9.4" }
 compose-ui-util = { module = "androidx.compose.ui:ui-util", version = "1.9.3" }
 compose-material-m3 = { module = "androidx.compose.material3:material3", version = "1.3.2" }
 compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version = "1.9.3" }
