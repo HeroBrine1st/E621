@@ -5,7 +5,7 @@ kotlin = "2.2.21"
 ksp = "2.3.0"
 
 aboutlibraries = "12.2.4"
-room = "2.8.2"
+room = "2.8.3"
 ktor = "3.3.1"
 decompose = "3.4.0"
 coil = "3.3.0"
