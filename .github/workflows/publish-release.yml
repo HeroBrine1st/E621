@@ -13,7 +13,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with: # fix git tag --format=... showing commit message instead of tag message
           fetch-depth: 1 # despite being the default, it allows checking out a tag
           ref: ${{ github.ref }}
