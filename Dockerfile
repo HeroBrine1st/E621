@@ -29,4 +29,4 @@ ENV ANDROID_HOME=${ANDROID_HOME}
 
 # Suppress warning
 SHELL ["/bin/sh", "-c"]
-CMD ./gradlew :app:assembleRelease && mkdir -p /out && cp app/build/outputs/apk/release/app-release-unsigned.apk /out
+CMD ./gradlew :app:assembleRelease && mkdir -p /out && cp app/build/outputs/apk/release/app-release.apk /out
