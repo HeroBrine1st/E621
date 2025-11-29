@@ -1,3 +1,5 @@
+# Requires keystore.jks in app/ folder
+
 FROM eclipse-temurin:21-jdk AS builder
 
 RUN apt-get update && apt-get install -y unzip git && rm -rf /var/lib/apt/lists/*
