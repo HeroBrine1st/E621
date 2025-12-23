@@ -23,29 +23,40 @@ package ru.herobrine1st.e621.api.model
 import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import ru.herobrine1st.e621.api.model.SimpleFileType.*
+
+// A simplification of filetype, as there's actually no need to differ between png and jpg
+enum class SimpleFileType {
+    IMAGE,
+    ANIMATION,
+    VIDEO
+}
 
 @Serializable
 enum class FileType(
     val extension: String,
+    val simpleType: SimpleFileType,
     val isSupported: Boolean = true,
-    val isImage: Boolean = false,
-    val isVideo: Boolean = false,
     val weight: Byte = 0 // to sort by sample type and then by resolution
 ) {
     @SerialName("jpg")
-    JPG("jpg", isImage = true),
+    JPG("jpg", IMAGE),
     @SerialName("png")
-    PNG("png", isImage = true),
+    PNG("png", IMAGE),
+
+    @SerialName("webp")
+    WEBP("webp", IMAGE),
     @SerialName("gif")
-    GIF("gif", isImage = true, weight = 1),
+    GIF("gif", ANIMATION, weight = 1),
     @SerialName("swf")
-    SWF("swf", isSupported = false),
+    SWF("swf", ANIMATION, isSupported = false),
     @SerialName("webm")
-    WEBM("webm", isVideo = true, weight = 2),
+    WEBM("webm", VIDEO, weight = 2),
     @SerialName("mp4")
-    MP4("mp4", isVideo = true, weight = 2);
+    MP4("mp4", VIDEO, weight = 2);
 
     companion object {
+        inline val supportedEntries get() = entries.filter { it.isSupported }
         val byExtension = mutableMapOf<String, FileType>().apply {
             FileType.entries.forEach { this[it.extension] = it }
         }.toImmutableMap()

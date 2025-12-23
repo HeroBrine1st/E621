@@ -33,7 +33,9 @@ data class File(
     val md5: String,
     // URL may be null - strange bug on API side, probably database related
     val url: String?
-)
+) {
+    val simpleType get() = type.simpleType
+}
 
 @Serializable
 data class NormalizedFile(
@@ -48,6 +50,8 @@ data class NormalizedFile(
             this(name, width, height, type, size, listOf(url))
 
     val aspectRatio get() = width.toFloat() / height.toFloat()
+
+    val simpleType get() = type.simpleType
 
     companion object {
         operator fun invoke(file: File): NormalizedFile {

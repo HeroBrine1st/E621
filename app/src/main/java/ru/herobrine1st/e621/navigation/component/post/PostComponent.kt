@@ -23,7 +23,13 @@ package ru.herobrine1st.e621.navigation.component.post
 import android.content.Context
 import android.util.Log
 import androidx.annotation.IntRange
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.stack.StackNavigator
@@ -31,7 +37,11 @@ import com.arkivanov.decompose.router.stack.pushNew
 import com.arkivanov.decompose.value.MutableValue
 import com.arkivanov.decompose.value.Value
 import com.arkivanov.essenty.instancekeeper.getOrCreate
-import com.arkivanov.essenty.lifecycle.*
+import com.arkivanov.essenty.lifecycle.Lifecycle
+import com.arkivanov.essenty.lifecycle.LifecycleRegistry
+import com.arkivanov.essenty.lifecycle.doOnResume
+import com.arkivanov.essenty.lifecycle.resume
+import com.arkivanov.essenty.lifecycle.stop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -40,7 +50,12 @@ import okhttp3.OkHttpClient
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.common.VoteResult
-import ru.herobrine1st.e621.api.model.*
+import ru.herobrine1st.e621.api.model.NormalizedFile
+import ru.herobrine1st.e621.api.model.Pool
+import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostId
+import ru.herobrine1st.e621.api.model.SimpleFileType.VIDEO
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.search.PoolSearchOptions
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.api.search.SearchOptions
@@ -194,7 +209,7 @@ class PostComponent(
 
     fun setFile(file: NormalizedFile) {
         currentFile = file
-        if (file.type.isVideo) {
+        if (file.simpleType == VIDEO) {
             getVideoPlayerComponent(file)
         }
     }
@@ -205,14 +220,14 @@ class PostComponent(
         if (currentFile != null) return
         val post = state.post
         val sample = when {
-            post.file.type.isVideo -> post.files.first { it.type.isVideo }
+            post.file.simpleType == VIDEO -> post.files.first { it.simpleType == VIDEO }
             else -> post.normalizedSample
         }
         setFile(sample)
     }
 
     fun getVideoPlayerComponent(file: NormalizedFile): VideoPlayerComponent {
-        require(file.type.isVideo) {
+        require(file.simpleType == VIDEO) {
             "File is not video"
         }
         // This function can be called in a result of scrolling down and back

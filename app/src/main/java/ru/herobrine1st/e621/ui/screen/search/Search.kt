@@ -84,9 +84,9 @@ import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
 import ru.herobrine1st.e621.api.model.Order
 import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.model.SimpleFileType
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.model.TagAutocompleteSuggestion
-import ru.herobrine1st.e621.api.search.PostType
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.module.DataStoreModule
@@ -331,7 +331,7 @@ fun Search(
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         CompositionLocalProvider(LocalRippleConfiguration provides null) {
-                            for (type in PostType.entries) {
+                            for (type in SimpleFileType.entries) {
                                 val selected = type in component.postTypes
                                 FilterChip(
                                     selected = selected,
@@ -346,9 +346,9 @@ fun Search(
                                     label = {
                                         Text(
                                             when (type) {
-                                                PostType.IMAGE -> stringResource(R.string.post_type_image)
-                                                PostType.ANIMATION -> stringResource(R.string.post_type_animation)
-                                                PostType.VIDEO -> stringResource(R.string.post_type_video)
+                                                SimpleFileType.IMAGE -> stringResource(R.string.post_type_image)
+                                                SimpleFileType.ANIMATION -> stringResource(R.string.post_type_animation)
+                                                SimpleFileType.VIDEO -> stringResource(R.string.post_type_video)
                                             }
                                         )
                                     },

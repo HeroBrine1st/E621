@@ -26,6 +26,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import ru.herobrine1st.e621.api.TagProcessablePost
+import ru.herobrine1st.e621.api.model.SimpleFileType.IMAGE
 import ru.herobrine1st.e621.api.serializer.ISO8601Serializer
 import ru.herobrine1st.e621.util.FavourablePost
 import kotlin.time.ExperimentalTime
@@ -79,7 +80,7 @@ data class Post(
 
     @Transient
     val normalizedSample = NormalizedFile(sample) ?: normalizedFile.also {
-        if(!it.type.isImage) {
+        if (it.simpleType == IMAGE) {
             Log.w("Post Model", "No sample provided but file is not an image")
         }
     }

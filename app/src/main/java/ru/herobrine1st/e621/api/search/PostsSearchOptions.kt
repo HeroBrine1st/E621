@@ -24,15 +24,15 @@ import android.util.Log
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.E621_MAX_POSTS_IN_QUERY
-import ru.herobrine1st.e621.api.model.*
+import ru.herobrine1st.e621.api.model.FileType
+import ru.herobrine1st.e621.api.model.Order
+import ru.herobrine1st.e621.api.model.PoolId
+import ru.herobrine1st.e621.api.model.Post
+import ru.herobrine1st.e621.api.model.PostId
+import ru.herobrine1st.e621.api.model.Rating
+import ru.herobrine1st.e621.api.model.SimpleFileType
+import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.util.debug
-
-// A simplification of filetype, as there's actually no need to differ between png and jpg
-enum class PostType {
-    IMAGE, // png, jpg
-    ANIMATION, // gif
-    VIDEO // webm, mp4
-}
 
 @Serializable
 data class PostsSearchOptions(
@@ -43,7 +43,7 @@ data class PostsSearchOptions(
     val orderAscending: Boolean = false,
     val rating: Set<Rating> = emptySet(),
     val favouritesOf: String? = null, // "favorited_by" in api
-    val types: Set<PostType> = emptySet(),
+    val types: Set<SimpleFileType> = emptySet(),
     val parent: PostId = PostId.INVALID,
     val poolId: PoolId = -1,
 ) : SearchOptions {
@@ -57,19 +57,15 @@ data class PostsSearchOptions(
         cache += anyOf.map { it.asAlternative }
         cache += optimizeRatingSelection(rating)
         val fileTypes = types.flatMap { type ->
-            when (type) {
-                PostType.IMAGE -> listOf(FileType.PNG, FileType.JPG)
-                PostType.ANIMATION -> listOf(FileType.GIF)
-                PostType.VIDEO -> FileType.entries.filter { it.isVideo }
-            }
+            FileType.supportedEntries.filter { it.simpleType == type }
         }
         // API does not support OR-ing file types. Alternative tags work, but on common conditions,
-        // so e.g. `~type:png ~type:jpg ~anthro ~feral` returns posts that have `anthro` despite being a video)
+        // so e.g. `~type:png ~type:jpg ~anthro ~feral` returns posts that have `anthro` despite being a video
         // De Morgan's Law is here to save the day
         if (fileTypes.size == 1) {
             cache += "filetype:${fileTypes.single().extension}"
         } else if (fileTypes.size > 1) {
-            cache += (FileType.entries - fileTypes).map { "-filetype:${it.extension}" }
+            cache += (FileType.entries - fileTypes.toSet()).map { "-filetype:${it.extension}" }
         }
         favouritesOf?.let { cache += "fav:$it" }
         (if (orderAscending) order.ascendingApiName else order.apiName)?.let { cache += "order:$it" }
@@ -144,7 +140,7 @@ data class PostsSearchOptions(
         var orderAscending: Boolean = false,
         var rating: MutableSet<Rating> = mutableSetOf(),
         var favouritesOf: String? = null,
-        var types: Set<PostType> = mutableSetOf(),
+        var types: Set<SimpleFileType> = mutableSetOf(),
         var parent: PostId = PostId.INVALID,
         var poolId: PoolId = -1,
     ) {

@@ -20,9 +20,6 @@
 
 package ru.herobrine1st.e621.ui.component.post
 
-import android.R.attr.enabled
-import android.R.attr.label
-import android.R.attr.onClick
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
@@ -31,8 +28,19 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.offset
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -49,6 +57,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
+import ru.herobrine1st.e621.api.model.SimpleFileType.ANIMATION
+import ru.herobrine1st.e621.api.model.SimpleFileType.IMAGE
 import ru.herobrine1st.e621.ui.component.placeholder.PlaceholderHighlight
 import ru.herobrine1st.e621.ui.component.placeholder.material3.fade
 import ru.herobrine1st.e621.ui.component.placeholder.material3.placeholder
@@ -92,7 +102,7 @@ fun PostImage(
                 matchHeightConstraintsFirst = matchHeightConstraintsFirst
             )
     ) {
-        if(file.urls.isEmpty()) {
+        if (file.urls.isEmpty()) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.align(Alignment.Center)) {
                 Icon(Icons.Outlined.Error, contentDescription = null)
                 Text(stringResource(R.string.no_image_available))
@@ -112,7 +122,7 @@ fun PostImage(
                 },
                 contentScale = if (aspectRatio > 0) ContentScale.Crop else ContentScale.Fit
             )
-            if (actualPostFileType?.isImage == false) AssistChip( // TODO
+            if (actualPostFileType != null && actualPostFileType.simpleType != IMAGE && actualPostFileType.simpleType != ANIMATION) AssistChip( // TODO
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 10.dp, y = 10.dp),

@@ -24,8 +24,8 @@ import android.app.DownloadManager
 import android.content.Context
 import android.os.Environment
 import androidx.core.net.toUri
-import ru.herobrine1st.e621.api.model.FileType
 import ru.herobrine1st.e621.api.model.NormalizedFile
+import ru.herobrine1st.e621.api.model.SimpleFileType.*
 
 class DownloadManagerModule(context: Context) {
     private val _downloadManager =
@@ -42,10 +42,9 @@ class DownloadManagerModule(context: Context) {
             request.setTitle(url.pathSegments.last())
             request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
 
-            val directory = when (file.type) {
-                FileType.JPG, FileType.PNG, FileType.GIF -> Environment.DIRECTORY_PICTURES
-                FileType.WEBM, FileType.MP4 -> Environment.DIRECTORY_MOVIES
-                FileType.SWF -> Environment.DIRECTORY_DOWNLOADS
+            val directory = when (file.type.simpleType) {
+                IMAGE, ANIMATION -> Environment.DIRECTORY_PICTURES
+                VIDEO -> Environment.DIRECTORY_MOVIES
             }
 
             request.setDestinationInExternalPublicDir(

@@ -23,13 +23,34 @@ package ru.herobrine1st.e621.ui.screen.post
 import android.text.format.DateUtils
 import android.text.format.DateUtils.SECOND_IN_MILLIS
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -38,7 +59,21 @@ import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Explicit
 import androidx.compose.material.icons.outlined.Error
-import androidx.compose.material3.*
+import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberBottomSheetScaffoldState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -54,6 +89,7 @@ import com.arkivanov.decompose.extensions.compose.subscribeAsState
 import kotlinx.coroutines.launch
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.common.CommentData
+import ru.herobrine1st.e621.api.model.SimpleFileType.*
 import ru.herobrine1st.e621.api.model.isOriginal
 import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
@@ -215,21 +251,27 @@ fun Post(
                                 .aspectRatio(file.aspectRatio)
                                 .fillMaxWidth()
                                 .clickable(
-                                    enabled = !post.file.type.isVideo,
+                                    enabled = post.file.simpleType != VIDEO,
                                     indication = null,
                                     interactionSource = remember { MutableInteractionSource() }
                                 ) {
                                     component.openToFullscreen()
                                 }
                         ) {
-                            when {
-                                file.type.isVideo -> PostVideo(
+                            if (!file.type.isSupported) InvalidPost(
+                                text = stringResource(
+                                    R.string.unsupported_post_type,
+                                    file.type.extension
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) else when (file.simpleType) {
+                                VIDEO -> PostVideo(
                                     component.getVideoPlayerComponent(file),
                                     file,
                                     modifier = Modifier.fillMaxWidth(),
                                 )
 
-                                file.type.isImage -> PostImage(
+                                IMAGE, ANIMATION -> PostImage(
                                     file = file,
                                     contentDescription = remember(post.id) {
                                         post.tags.all.joinToString(
@@ -239,14 +281,6 @@ fun Post(
                                     modifier = Modifier.fillMaxWidth(),
                                     actualPostFileType = post.file.type,
                                     setSizeOriginal = true // to be loaded instantly
-                                )
-
-                                else -> InvalidPost(
-                                    text = stringResource(
-                                        R.string.unsupported_post_type,
-                                        file.type.extension
-                                    ),
-                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         }
