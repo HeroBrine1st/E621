@@ -20,8 +20,11 @@
 
 package ru.herobrine1st.e621.ui.component.post
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.aspectRatio
@@ -122,20 +125,27 @@ fun PostImage(
                 },
                 contentScale = if (aspectRatio > 0) ContentScale.Crop else ContentScale.Fit
             )
-            if (actualPostFileType != null && actualPostFileType.simpleType != IMAGE && actualPostFileType.simpleType != ANIMATION) AssistChip( // TODO
+            if (actualPostFileType != null) AnimatedVisibility(
+                actualPostFileType.simpleType != IMAGE
+                        && (actualPostFileType.simpleType != ANIMATION || painterState !is Success),
+                enter = EnterTransition.None,
+                exit = fadeOut(),
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .offset(x = 10.dp, y = 10.dp),
-                colors = AssistChipDefaults.assistChipColors(
-                    disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
-                ),
-                enabled = false,
-                onClick = {},
-                border = null,
-                label = {
-                    Text(actualPostFileType.extension)
-                }
-            )
+            ) {
+                AssistChip( // TODO
+                    colors = AssistChipDefaults.assistChipColors(
+                        disabledContainerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
+                    ),
+                    enabled = false,
+                    onClick = {},
+                    border = null,
+                    label = {
+                        Text(actualPostFileType.extension)
+                    }
+                )
+            }
             when (painterState) {
                 is Error -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(Icons.Outlined.Error, contentDescription = null)
