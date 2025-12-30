@@ -80,7 +80,7 @@ data class Post(
 
     @Transient
     val normalizedSample = NormalizedFile(sample) ?: normalizedFile.also {
-        if (it.simpleType == IMAGE) {
+        if (it.simpleType != IMAGE) {
             Log.w("Post Model", "No sample provided but file is not an image")
         }
     }
