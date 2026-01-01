@@ -70,7 +70,7 @@ media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp"
 okhttp = "com.squareup.okhttp3:okhttp:5.3.2"
 
 
-jsoup = "org.jsoup:jsoup:1.21.2"
+jsoup = "org.jsoup:jsoup:1.22.1"
 aboutlibraries = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 
 androidx-test-ktx = { module = "androidx.test:core-ktx", version = "1.7.0" }
