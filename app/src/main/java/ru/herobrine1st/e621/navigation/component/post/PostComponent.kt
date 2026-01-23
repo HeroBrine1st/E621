@@ -185,7 +185,7 @@ class PostComponent(
                     || !dataStore.data.map { it.dataSaverModeEnabled }.first()
                 )
                     refreshPostInternal()
-                useSampleAsDefault()
+                if (state.value is PostState.Ready) useSampleAsDefault()
             }
 
         }
@@ -216,7 +216,7 @@ class PostComponent(
 
     private fun useSampleAsDefault() {
         val state = state.value
-        require(state is PostState.Ready) { "setMediaItem should be called only after post loading" }
+        require(state is PostState.Ready) { "useSampleAsDefault should be called only after post loading" }
         if (currentFile != null) return
         val post = state.post
         val sample = when {
@@ -332,7 +332,7 @@ class PostComponent(
 
     fun openToFullscreen() {
         val file = currentFile
-        if(file == null) {
+        if (file == null) {
             Log.w(TAG, "Tried to open fullscreen image without shown file")
             return
         }
