@@ -10,7 +10,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.kotlin.compose)
 
-    alias(libs.plugins.aboutlibraries)
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 val gitCommitShortHashProvider = providers.exec {
@@ -178,7 +178,7 @@ dependencies {
     implementation(libs.media3.datasource.okhttp)
 
     implementation(libs.jsoup)
-    implementation(libs.aboutlibraries)
+    implementation(libs.aboutlibraries.compose.material3)
 
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.datetime)

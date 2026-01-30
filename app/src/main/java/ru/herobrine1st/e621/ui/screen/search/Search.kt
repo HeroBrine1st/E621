@@ -245,7 +245,7 @@ fun Search(
                         ExposedDropdownMenu(
                             expanded = expanded,
                             onDismissRequest = { expanded = false },
-                            modifier = Modifier.exposedDropdownSize(matchTextFieldWidth = true)
+                            modifier = Modifier.exposedDropdownSize(matchAnchorWidth = true),
                         ) {
                             Order.entries.forEach {
                                 DropdownMenuItem(

@@ -206,21 +206,9 @@ fun Track(
 // A copy of private functions from 1.2 M3
 // It would be easier if those functions were public, as all of them are pure
 
-@OptIn(ExperimentalMaterial3Api::class)
-private val SliderState.coercedValueAsFraction
-    get() = calcFraction(
-        valueRange.start,
-        valueRange.endInclusive,
-        value.coerceIn(valueRange.start, valueRange.endInclusive)
-    )
-
 private fun stepsToTickFractions(steps: Int): FloatArray {
     return if (steps == 0) floatArrayOf() else FloatArray(steps + 2) { it.toFloat() / (steps + 1) }
 }
-
-// Calculate the 0..1 fraction that `pos` value represents between `a` and `b`
-private fun calcFraction(a: Float, b: Float, pos: Float) =
-    (if (b - a == 0f) 0f else (pos - a) / (b - a)).coerceIn(0f, 1f)
 
 private fun DrawScope.drawTrack(
     tickFractions: FloatArray,
