@@ -37,6 +37,11 @@ import kotlin.uuid.Uuid
 
 @Serializable
 data class PostsSearchOptions(
+    // backend query string became too complex
+    // now supporting nested grouping like `( ~( felid -leopard ) ~( leopard tiger ) ) dog`, it is impossible
+    // to store a query in any unstructured way
+    // TODO Make raw query string primary way to search (at least internally) with support to parse the string
+    //      into the `Set<Tag>` fields below, and allow user to switch from chip tags to raw query
     val allOf: Set<Tag> = emptySet(),
     val noneOf: Set<Tag> = emptySet(),
     val anyOf: Set<Tag> = emptySet(),
