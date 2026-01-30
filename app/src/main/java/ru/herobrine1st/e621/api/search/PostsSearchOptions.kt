@@ -33,8 +33,10 @@ import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.SimpleFileType
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.util.debug
+import kotlin.uuid.ExperimentalUuidApi
 
 @Serializable
+@OptIn(ExperimentalUuidApi::class)
 data class PostsSearchOptions(
     val allOf: Set<Tag> = emptySet(),
     val noneOf: Set<Tag> = emptySet(),
@@ -49,13 +51,11 @@ data class PostsSearchOptions(
 ) : SearchOptions {
     // TODO randomSeed or something like that for Order.RANDOM
 
-    private fun compileToQuery(): String {
-        val cache = mutableListOf<String>()
-
-        cache += allOf.map { it.value }
-        cache += noneOf.map { it.asExcluded }
-        cache += anyOf.map { it.asAlternative }
-        cache += optimizeRatingSelection(rating)
+    private fun compileToQuery(): String = buildList {
+        addAll(allOf.map { it.value })
+        addAll(noneOf.map { it.asExcluded })
+        addAll(anyOf.map { it.asAlternative })
+        addAll(optimizeRatingSelection(rating))
         val fileTypes = types.flatMap { type ->
             FileType.supportedEntries.filter { it.simpleType == type }
         }
@@ -63,18 +63,16 @@ data class PostsSearchOptions(
         // so e.g. `~type:png ~type:jpg ~anthro ~feral` returns posts that have `anthro` despite being a video
         // De Morgan's Law is here to save the day
         if (fileTypes.size == 1) {
-            cache += "filetype:${fileTypes.single().extension}"
+            this += "filetype:${fileTypes.single().extension}"
         } else if (fileTypes.size > 1) {
-            cache += (FileType.entries - fileTypes.toSet()).map { "-filetype:${it.extension}" }
+            addAll((FileType.entries - fileTypes.toSet()).map { "-filetype:${it.extension}" })
         }
-        favouritesOf?.let { cache += "fav:$it" }
-        (if (orderAscending) order.ascendingApiName else order.apiName)?.let { cache += "order:$it" }
-        if (parent != PostId.INVALID) cache += "parent:${parent.value}"
-        if (poolId > 0) cache += "pool:$poolId"
-
-        return cache.joinToString(" ").debug {
-            Log.d(PostsSearchOptions::class.simpleName, "Built query: $this")
-        }
+        favouritesOf?.let { this += "fav:$it" }
+        (if (orderAscending) order.ascendingApiName else order.apiName)?.let { this += "order:$it" }
+        if (parent != PostId.INVALID) this += "parent:${parent.value}"
+        if (poolId > 0) this += "pool:$poolId"
+    }.joinToString(" ").debug {
+        Log.d(PostsSearchOptions::class.simpleName, "Built query: $this")
     }
 
     private fun optimizeRatingSelection(
@@ -119,7 +117,7 @@ data class PostsSearchOptions(
                     favouritesOf = favouritesOf,
                     types = types,
                     parent = parent,
-                    poolId = poolId
+                    poolId = poolId,
                 )
             }
 
@@ -127,7 +125,7 @@ data class PostsSearchOptions(
             is PoolSearchOptions -> PostsSearchOptions(
                 poolId = options.pool.id,
                 order = Order.NEWEST_TO_OLDEST,
-                orderAscending = true
+                orderAscending = true,
             )
         }
     }
@@ -155,7 +153,7 @@ data class PostsSearchOptions(
                 favouritesOf = favouritesOf,
                 types = this@Builder.types,
                 parent = parent,
-                poolId = poolId
+                poolId = poolId,
             )
 
         companion object {
@@ -171,7 +169,7 @@ data class PostsSearchOptions(
                         favouritesOf = favouritesOf,
                         types = types,
                         parent = parent,
-                        poolId = poolId
+                        poolId = poolId,
                     )
                 }
 
@@ -179,7 +177,7 @@ data class PostsSearchOptions(
                 is PoolSearchOptions -> Builder(
                     poolId = options.pool.id,
                     order = Order.NEWEST_TO_OLDEST,
-                    orderAscending = true
+                    orderAscending = true,
                 )
             }
         }
