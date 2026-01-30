@@ -53,4 +53,8 @@ value class Tag(val value: String) {
     // It is not ideal, but I couldn't figure any better
     inline val asAlternative get() = Tokens.ALTERNATIVE + value
     inline val asExcluded get() = Tokens.EXCLUDED + value
+
+    init {
+        check(value.isNotBlank()) { "Tag cannot be blank" }
+    }
 }

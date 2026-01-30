@@ -111,7 +111,12 @@ fun ModifyTagDialog(
     fun apply() {
         if (' ' in textValue.text)
             Log.wtf(TAG, "Found spaces in tag, which should not be possible: ${textValue.text}")
-        onApply(textValue.text.lowercase().trimEnd('_'))
+        val result = textValue.text.lowercase().trimEnd('_')
+        when {
+            result.isNotBlank() -> onApply(result)
+            onDelete != null -> onDelete()
+            else -> onClose()
+        }
     }
 
     ActionDialog(title = stringResource(R.string.add_tag), actions = {
