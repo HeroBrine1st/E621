@@ -267,8 +267,8 @@ fun Search(
 
                     ItemSelectionCheckbox(
                         checked = component.orderAscending,
-                        enabled = component.order.supportsAscending,
-                        text = stringResource(R.string.order_ascending)
+                        enabled = component.order.ascendingApiName != null,
+                        text = stringResource(R.string.order_ascending),
                     ) {
                         component.orderAscending = !component.orderAscending
                     }

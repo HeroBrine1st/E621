@@ -72,7 +72,13 @@ class SearchComponent private constructor(
         allOf.map { it.value } + anyOf.map { it.asAlternative } + noneOf.map { it.asExcluded }
     }.toMutableStateList()
 
-    var order by mutableStateOf(initialSearchOptions.order)
+    private var _order by mutableStateOf(initialSearchOptions.order)
+    var order
+        get() = _order
+        set(v) {
+            if (v.ascendingApiName == null) orderAscending = false
+            _order = v
+        }
     var orderAscending by mutableStateOf(initialSearchOptions.orderAscending)
     val rating = initialSearchOptions.rating.toMutableStateList()
     var favouritesOf by mutableStateOf(initialSearchOptions.favouritesOf ?: "")

@@ -71,7 +71,8 @@ data class PostsSearchOptions(
             @Suppress("SpellCheckingInspection")
             this += "randseed:$randomSeed"
         }
-        (if (orderAscending) order.ascendingApiName else order.apiName)?.let { this += "order:$it" }
+        // elvis operator handles corner cases when orderAscending is selected while order has no support for that
+        (order.ascendingApiName?.takeIf { orderAscending } ?: order.apiName)?.let { this += "order:$it" }
 
         if (parent != PostId.INVALID) this += "parent:${parent.value}"
         if (poolId > 0) this += "pool:$poolId"
