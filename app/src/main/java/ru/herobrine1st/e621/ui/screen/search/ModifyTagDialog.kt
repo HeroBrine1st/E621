@@ -32,11 +32,11 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -148,24 +148,26 @@ fun ModifyTagDialog(
                     val actuallyChanged =
                         it.text != textValue.text || it.selection != textValue.selection
                     // Single tag in single object
-                    textValue = it.copy(text = it.text.lowercase().replace(' ', '_').let { query ->
-                        // sanitize input
-                        val prefix =
-                            if (query.startsWith(Tokens.ALTERNATIVE)) Tokens.ALTERNATIVE
-                            else if (query.startsWith(Tokens.EXCLUDED)) Tokens.EXCLUDED
-                            else ""
-                        prefix + query.removePrefix(prefix)
-                            .let { it1 ->
-                                // remove additional tokens
-                                var res = it1
-                                while (res.startsWith(Tokens.EXCLUDED) || res.startsWith(Tokens.ALTERNATIVE)) {
-                                    res = res.removePrefix(Tokens.ALTERNATIVE)
-                                        .removePrefix(Tokens.EXCLUDED)
+                    textValue = it.copy(
+                        text = it.text.lowercase().replace(' ', '_').let { query ->
+                            // sanitize input
+                            val prefix =
+                                if (query.startsWith(Tokens.ALTERNATIVE)) Tokens.ALTERNATIVE
+                                else if (query.startsWith(Tokens.EXCLUDED)) Tokens.EXCLUDED
+                                else ""
+                            prefix + query.removePrefix(prefix)
+                                .let { it1 ->
+                                    // remove additional tokens
+                                    var res = it1
+                                    while (res.startsWith(Tokens.EXCLUDED) || res.startsWith(Tokens.ALTERNATIVE)) {
+                                        res = res.removePrefix(Tokens.ALTERNATIVE)
+                                            .removePrefix(Tokens.EXCLUDED)
+                                    }
+                                    res
                                 }
-                                res
-                            }
-                            .trimStart('_')
-                    })
+                                .trimStart('_')
+                        }
+                    )
                     if (!actuallyChanged) return@OutlinedTextField
                     selectedFromSuggested = false
                     if (!autocompleteExpanded && autocomplete is Autocomplete.Ready) {
@@ -176,7 +178,7 @@ fun ModifyTagDialog(
                 label = { Text(stringResource(R.string.tag)) },
                 singleLine = true,
                 modifier = Modifier
-                    .menuAnchor(MenuAnchorType.PrimaryEditable)
+                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
                     .fillMaxWidth()
                     .focusRequester(focusRequester),
                 keyboardActions = KeyboardActions { apply() },
@@ -186,7 +188,8 @@ fun ModifyTagDialog(
                             it.text.runIf(BuildConfig.HIDE_UNDERSCORES_FROM_USER) {
                                 replace('_', ' ')
                             }
-                        ), offsetMapping = OffsetMapping.Identity
+                        ),
+                        offsetMapping = OffsetMapping.Identity
                     )
                 },
                 trailingIcon = {
@@ -208,7 +211,7 @@ fun ModifyTagDialog(
                     capitalization = KeyboardCapitalization.None,
                     keyboardType = KeyboardType.Text,
                     imeAction = ImeAction.Done
-                )
+                ),
             )
             ExposedDropdownMenu(
                 expanded = autocompleteExpanded && autocomplete is Autocomplete.Ready && autocomplete.result.isNotEmpty(),
