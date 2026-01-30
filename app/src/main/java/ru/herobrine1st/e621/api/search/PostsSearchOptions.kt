@@ -33,10 +33,9 @@ import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.SimpleFileType
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.util.debug
-import kotlin.uuid.ExperimentalUuidApi
+import kotlin.uuid.Uuid
 
 @Serializable
-@OptIn(ExperimentalUuidApi::class)
 data class PostsSearchOptions(
     val allOf: Set<Tag> = emptySet(),
     val noneOf: Set<Tag> = emptySet(),
@@ -48,9 +47,8 @@ data class PostsSearchOptions(
     val types: Set<SimpleFileType> = emptySet(),
     val parent: PostId = PostId.INVALID,
     val poolId: PoolId = -1,
+    val randomSeed: Uuid = Uuid.generateV4(),
 ) : SearchOptions {
-    // TODO randomSeed or something like that for Order.RANDOM
-
     private fun compileToQuery(): String = buildList {
         addAll(allOf.map { it.value })
         addAll(noneOf.map { it.asExcluded })
@@ -68,7 +66,13 @@ data class PostsSearchOptions(
             addAll((FileType.entries - fileTypes.toSet()).map { "-filetype:${it.extension}" })
         }
         favouritesOf?.let { this += "fav:$it" }
+
+        if (order == Order.RANDOM) {
+            @Suppress("SpellCheckingInspection")
+            this += "randseed:$randomSeed"
+        }
         (if (orderAscending) order.ascendingApiName else order.apiName)?.let { this += "order:$it" }
+
         if (parent != PostId.INVALID) this += "parent:${parent.value}"
         if (poolId > 0) this += "pool:$poolId"
     }.joinToString(" ").debug {
