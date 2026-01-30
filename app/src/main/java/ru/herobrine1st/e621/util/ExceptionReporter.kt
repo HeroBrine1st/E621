@@ -22,10 +22,10 @@ package ru.herobrine1st.e621.util
 
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
-import io.ktor.serialization.ContentConvertException
+import io.ktor.serialization.*
+import io.ktor.util.network.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.yield
-import kotlinx.serialization.SerializationException
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.ui.theme.snackbar.SnackbarAdapter
 import java.io.IOException
@@ -52,14 +52,14 @@ class ExceptionReporterImpl(
         if(dontShowSnackbar) return
         when (t) {
             // TODO it suspends on queue and may block network requests in some cases (that's why "dontShowSnackbar" - to avoid suspending)
-            is IOException -> snackbarAdapter.enqueueMessage(
+            is IOException, is UnresolvedAddressException -> snackbarAdapter.enqueueMessage(
                 R.string.network_error,
-                SnackbarDuration.Indefinite
+                SnackbarDuration.Indefinite,
             )
 
-            is SerializationException, is ContentConvertException -> snackbarAdapter.enqueueMessage(
+            is IllegalArgumentException, is ContentConvertException -> snackbarAdapter.enqueueMessage(
                 R.string.deserialization_error,
-                SnackbarDuration.Indefinite
+                SnackbarDuration.Indefinite,
             )
 
             is CancellationException -> {

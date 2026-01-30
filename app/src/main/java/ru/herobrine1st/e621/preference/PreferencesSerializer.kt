@@ -25,7 +25,6 @@ import androidx.datastore.core.Serializer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.SerializationException
 import kotlinx.serialization.decodeFromByteArray
 import kotlinx.serialization.encodeToByteArray
 import kotlinx.serialization.protobuf.ProtoBuf
@@ -41,7 +40,7 @@ object PreferencesSerializer : Serializer<Preferences> {
     override suspend fun readFrom(input: InputStream): Preferences = try {
         val bytes = withContext(Dispatchers.IO) { input.readBytes() }
         ProtoBuf.decodeFromByteArray<Preferences>(bytes)
-    } catch (exception: SerializationException) {
+    } catch (exception: IllegalArgumentException) {
         throw CorruptionException("Cannot read proto.", exception)
     }
 
