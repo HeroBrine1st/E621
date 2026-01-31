@@ -21,8 +21,8 @@
 package ru.herobrine1st.paging.contrib.decompose
 
 import com.arkivanov.essenty.lifecycle.Lifecycle
-import com.arkivanov.essenty.lifecycle.doOnPause
 import com.arkivanov.essenty.lifecycle.doOnResume
+import com.arkivanov.essenty.lifecycle.doOnStop
 import com.arkivanov.essenty.statekeeper.StateKeeper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharedFlow
@@ -66,8 +66,7 @@ fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.connectToDecompose
         // but its coroutine scope is destroyed after composition is gone
         // At this time, decompose component is in STOPPED state, which allows to
         // match behavior of compose collector on decompose too
-        // Pause/resume is used as more strict form of lifecycle (although I don't see difference between STARTED and RESUMED)
-        lifecycle.doOnPause(isOneTime = true) {
+        lifecycle.doOnStop(isOneTime = true) {
             job.cancel()
         }
     }
