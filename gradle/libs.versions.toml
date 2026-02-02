@@ -18,6 +18,7 @@ android-compileSdk = "36"
 android-minSdk = "28"
 # 36 requires predictive back
 android-targetSdk = "35"
+accompanist = "0.1.5"
 
 [libraries]
 androidx-core = { module = "androidx.test:core", version.ref = "core" }
@@ -69,6 +70,7 @@ media3-ui = { module = "androidx.media3:media3-ui", version.ref = "media3" }
 media3-datasource-okhttp = { module = "androidx.media3:media3-datasource-okhttp", version.ref = "media3" }
 okhttp = "com.squareup.okhttp3:okhttp:5.3.2"
 
+accompanist-autocomplete = { module = "ru.herobrine1st.accompanist:autocomplete", version.ref = "accompanist" }
 
 jsoup = "org.jsoup:jsoup:1.22.1"
 aboutlibraries-compose-material3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }

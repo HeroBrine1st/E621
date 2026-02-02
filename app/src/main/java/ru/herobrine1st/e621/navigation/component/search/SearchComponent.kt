@@ -33,7 +33,6 @@ import com.arkivanov.decompose.router.stack.StackNavigator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
@@ -41,6 +40,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import ru.herobrine1st.autocomplete.AutocompleteSearchResult
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
 import ru.herobrine1st.e621.api.Tokens
 import ru.herobrine1st.e621.api.model.PostId
@@ -63,7 +63,7 @@ class SearchComponent private constructor(
     private val navigator: StackNavigator<Config>,
     private val api: AutocompleteSuggestionsAPI,
     private val exceptionReporter: ExceptionReporter,
-    private val dataStoreModule: DataStoreModule
+    private val dataStoreModule: DataStoreModule,
 ) : ComponentContext by componentContext {
 
     private val lifecycleScope = LifecycleScope()
@@ -105,58 +105,54 @@ class SearchComponent private constructor(
                     favouritesOf = it.username
                 }
             }
-
         }
     }
 
-    fun tagSuggestionFlow(getCurrentText: () -> String): Flow<Autocomplete> {
-        val currentTextFlow = snapshotFlow {
-            getCurrentText()
-                .lowercase()
-                .trim()
-        }
+    fun tagSuggestionFlow(getCurrentText: () -> String): Flow<AutocompleteSearchResult<TagSuggestion>> {
+        val currentTextFlow = snapshotFlow { getCurrentText() }
         return currentTextFlow
             .drop(1) // Ignore first as it is a starting tag (which is either an empty string or a valid tag)
-            .conflate() // mapLatest would have no meaning: user should wait or no suggestions at all
             // delay handled by round-trip time and server (via retry plugin)
             // delaying here is wrong: response can be cached and so delay is pointless yet dispatched
             .combine(dataStoreModule.dataStore.data.map { it.autocompleteEnabled }) { query, isAutocompleteEnabled ->
-                if (query.length < 3 || !isAutocompleteEnabled) {
-                    return@combine Autocomplete.Ready(emptyList(), query)
+                val cleanedQuery = query.lowercase().trim()
+                    .removePrefix(Tokens.ALTERNATIVE)
+                    .removePrefix(Tokens.EXCLUDED)
+                if (cleanedQuery.length < 3 || !isAutocompleteEnabled) {
+                    return@combine AutocompleteSearchResult.Ready(emptyList(), query)
                 }
 
-                api.getAutocompleteSuggestions(query).map {
-                    it.map { suggestion ->
-                        TagSuggestion(
-                            name = suggestion.name,
-                            postCount = suggestion.postCount,
-                            antecedentName = suggestion.antecedentName
-                        )
-                    }
-                }.map {
-                    Autocomplete.Ready(it, query)
+                api.getAutocompleteSuggestions(cleanedQuery).map {
+                    AutocompleteSearchResult.Ready(
+                        suggestions = it.map { suggestion ->
+                            TagSuggestion(
+                                name = suggestion.name,
+                                postCount = suggestion.postCount,
+                                antecedentName = suggestion.antecedentName,
+                            )
+                        },
+                        query = query,
+                    )
                 }.recover {
                     exceptionReporter.handleRequestException(it, dontShowSnackbar = true)
-                    Autocomplete.Error
+                    AutocompleteSearchResult.Error
                 }.getOrThrow()
             }
             // Make it 🚀 turbo reactive 🚀
             .combine(currentTextFlow) { res, query ->
-                when (res) {
-                    is Autocomplete.Ready -> when (res.query) {
-                        query -> res
-                        else -> Autocomplete.Ready(
-                            res.result.filter {
-                                query in it.name.value || it.antecedentName?.value?.contains(
-                                    query
-                                ) == true
-                            },
-                            res.query
+                (res as? AutocompleteSearchResult.Ready)
+                    ?.takeIf { it.query != query }
+                    ?.let { res ->
+                        res.copy(
+                            suggestions = res.suggestions
+                                .filter { suggestion ->
+                                    query in suggestion.name.value
+                                            || suggestion.antecedentName?.value?.contains(query) == true
+                                },
                         )
                     }
+                    ?: res
 
-                    else -> res
-                }
             }
             .flowOn(Dispatchers.Default)
     }
@@ -168,18 +164,18 @@ class SearchComponent private constructor(
         initialSearchOptions: PostsSearchOptions,
         api: AutocompleteSuggestionsAPI,
         exceptionReporter: ExceptionReporter,
-        dataStoreModule: DataStoreModule
+        dataStoreModule: DataStoreModule,
     ) : this(
         componentContext,
         componentContext.stateKeeper.consume(
             SEARCH_OPTIONS_STATE_KEY,
-            strategy = PostsSearchOptions.serializer()
+            strategy = PostsSearchOptions.serializer(),
         )
             ?: initialSearchOptions,
         navigator,
         api,
         exceptionReporter,
-        dataStoreModule
+        dataStoreModule,
     )
 
     init {
@@ -241,7 +237,7 @@ class SearchComponent private constructor(
             favouritesOf = favouritesOf.ifBlank { null },
             types = postTypes.toSet(),
             parent = PostId(parentPostId),
-            poolId = poolId
+            poolId = poolId,
         )
     }
 
@@ -254,11 +250,4 @@ class SearchComponent private constructor(
         val postCount: Int,
         val antecedentName: Tag?,
     )
-
-    sealed interface Autocomplete {
-        data class Ready(val result: List<TagSuggestion>, val query: String) :
-            Autocomplete
-
-        data object Error : Autocomplete
-    }
 }

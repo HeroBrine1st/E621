@@ -22,51 +22,40 @@ package ru.herobrine1st.e621.ui.screen.search
 
 import android.util.Log
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Error
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.Flow
+import ru.herobrine1st.autocomplete.AutocompleteInputField
+import ru.herobrine1st.autocomplete.AutocompleteInputFieldDefaults
+import ru.herobrine1st.autocomplete.AutocompleteSearchResult
+import ru.herobrine1st.autocomplete.rememberAutocompleteState
 import ru.herobrine1st.e621.BuildConfig
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.Tokens
-import ru.herobrine1st.e621.navigation.component.search.SearchComponent.Autocomplete
+import ru.herobrine1st.e621.navigation.component.search.SearchComponent.TagSuggestion
 import ru.herobrine1st.e621.ui.dialog.ActionDialog
 import ru.herobrine1st.e621.util.runIf
 import ru.herobrine1st.e621.util.text
@@ -77,41 +66,36 @@ private const val TAG = "ModifyTagDialog"
 @Composable
 fun ModifyTagDialog(
     initialText: String,
-    getSuggestionsFlow: (() -> String) -> Flow<Autocomplete>,
+    getSuggestionsFlow: (() -> String) -> Flow<AutocompleteSearchResult<TagSuggestion>>,
     onClose: () -> Unit,
     onDelete: (() -> Unit)? = null,
     onApply: (String) -> Unit,
 ) {
-    var autocompleteExpanded by remember { mutableStateOf(false) }
-    var textValue by remember { mutableStateOf(TextFieldValue(AnnotatedString(initialText))) }
-    val query by remember {
-        derivedStateOf {
-            textValue.text
-                .removePrefix(Tokens.ALTERNATIVE)
-                .removePrefix(Tokens.EXCLUDED)
-                .lowercase()
-        }
-    }
-    // suggestions open again after clicking one
-    var selectedFromSuggested by remember { mutableStateOf(false) }
+    val autocompleteState = rememberAutocompleteState(
+        initialItem = initialText,
+        // INVARIANCE: initialText parameter is re-used as initial value in produceState
+        initialText = initialText,
+        transformToInputText = { it },
+    )
+
     val focusRequester = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
 
-    val autocomplete = produceState<Autocomplete>(Autocomplete.Ready(emptyList(), query)) {
-        getSuggestionsFlow { query }.collect {
+
+    val suggestions by produceState(AutocompleteSearchResult.Ready(emptyList(), initialText)) {
+        getSuggestionsFlow { autocompleteState.currentText }.collect {
             value = it
-            if (!selectedFromSuggested && it is Autocomplete.Ready)
-                autocompleteExpanded = it.result.isNotEmpty()
         }
-    }.value
+    }
 
     fun apply() {
-        if (' ' in textValue.text)
-            Log.wtf(TAG, "Found spaces in tag, which should not be possible: ${textValue.text}")
-        val result = textValue.text.lowercase().trimEnd('_')
+        val text = autocompleteState.currentText
+        if (' ' in text)
+            Log.wtf(TAG, "Found spaces in tag, which should not be possible: ${autocompleteState.currentText}")
+        val result = text.lowercase().trimEnd('_')
         when {
             result.isNotBlank() -> onApply(result)
             onDelete != null -> onDelete()
@@ -119,132 +103,107 @@ fun ModifyTagDialog(
         }
     }
 
-    ActionDialog(title = stringResource(R.string.add_tag), actions = {
-        TextButton(onClick = onClose) {
-            Text(stringResource(R.string.close))
-        }
-        if (onDelete != null) {
-            TextButton(
-                onClick = onDelete, colors = ButtonDefaults.textButtonColors(
-                    contentColor = Color.Red
-                )
-            ) {
-                Text(stringResource(R.string.remove))
+    ActionDialog(
+        title = stringResource(R.string.add_tag),
+        actions = {
+            TextButton(onClick = onClose) {
+                Text(stringResource(R.string.close))
             }
-        }
-        TextButton(onClick = ::apply) {
-            Text(stringResource(if (onDelete == null) R.string.add else R.string.apply))
-        }
-    }, onDismissRequest = onClose) {
-        ExposedDropdownMenuBox(
-            expanded = autocompleteExpanded,
-            onExpandedChange = { autocompleteExpanded = !autocompleteExpanded }
-        ) {
-            OutlinedTextField(
-                value = textValue,
-                onValueChange = {
-                    // composition may change after clicking on suggestion
-                    // so that suggestions will open again
-                    val actuallyChanged =
-                        it.text != textValue.text || it.selection != textValue.selection
-                    // Single tag in single object
-                    textValue = it.copy(
-                        text = it.text.lowercase().replace(' ', '_').let { query ->
-                            // sanitize input
-                            val prefix =
-                                if (query.startsWith(Tokens.ALTERNATIVE)) Tokens.ALTERNATIVE
-                                else if (query.startsWith(Tokens.EXCLUDED)) Tokens.EXCLUDED
-                                else ""
-                            prefix + query.removePrefix(prefix)
-                                .let { it1 ->
-                                    // remove additional tokens
-                                    var res = it1
-                                    while (res.startsWith(Tokens.EXCLUDED) || res.startsWith(Tokens.ALTERNATIVE)) {
-                                        res = res.removePrefix(Tokens.ALTERNATIVE)
-                                            .removePrefix(Tokens.EXCLUDED)
-                                    }
-                                    res
-                                }
-                                .trimStart('_')
-                        }
-                    )
-                    if (!actuallyChanged) return@OutlinedTextField
-                    selectedFromSuggested = false
-                    if (!autocompleteExpanded && autocomplete is Autocomplete.Ready) {
-                        autocompleteExpanded =
-                            autocomplete.result.isNotEmpty() // Popup closes on keyboard tap - open it here
-                    }
-                },
-                label = { Text(stringResource(R.string.tag)) },
-                singleLine = true,
-                modifier = Modifier
-                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryEditable)
-                    .fillMaxWidth()
-                    .focusRequester(focusRequester),
-                keyboardActions = KeyboardActions { apply() },
-                visualTransformation = {
-                    TransformedText(
-                        text = AnnotatedString(
-                            it.text.runIf(BuildConfig.HIDE_UNDERSCORES_FROM_USER) {
-                                replace('_', ' ')
-                            }
-                        ),
-                        offsetMapping = OffsetMapping.Identity
-                    )
-                },
-                trailingIcon = {
-                    when (autocomplete) {
-                        is Autocomplete.Ready -> if (autocomplete.query != query) {
-                            // 24.dp is size of icon
-                            // strokeWidth is decreased in proportion (24/40 * 4)
-                            CircularProgressIndicator(Modifier.size(24.dp), strokeWidth = 2.4.dp)
-                        }
-
-                        is Autocomplete.Error -> Icon(
-                            Icons.Default.Error,
-                            contentDescription = stringResource(R.string.unknown_error)
-                        )
-                    }
-                },
-                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    keyboardType = KeyboardType.Text,
-                    imeAction = ImeAction.Done
-                ),
-            )
-            ExposedDropdownMenu(
-                expanded = autocompleteExpanded && autocomplete is Autocomplete.Ready && autocomplete.result.isNotEmpty(),
-                onDismissRequest = {
-                    autocompleteExpanded = false
-                },
-                modifier = Modifier
-                    .heightIn(max = (48 * 3).dp) // FIXME it can't overlap keyboard, but instead it does not scroll if it is under keyboard
-            ) {
-                if (autocomplete !is Autocomplete.Ready) return@ExposedDropdownMenu
-                autocomplete.result.forEach {
-                    val name = it.name.text
-                    val suggestionText = when (it.antecedentName) {
-                        null -> name
-                        else -> it.antecedentName.text + " → " + name
-                    }
-                    DropdownMenuItem(
-                        text = { Text(suggestionText, style = MaterialTheme.typography.bodyLarge) },
-                        onClick = {
-                            val prefix = listOf(Tokens.ALTERNATIVE, Tokens.EXCLUDED).find { token ->
-                                textValue.text.startsWith(token)
-                            } ?: ""
-
-                            autocompleteExpanded = false
-                            selectedFromSuggested = true
-                            textValue = textValue.copy(
-                                annotatedString = AnnotatedString(prefix + it.name.value),
-                                selection = TextRange(name.length + prefix.length)
-                            )
-                        })
+            if (onDelete != null) {
+                TextButton(
+                    onClick = onDelete,
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = Color.Red,
+                    ),
+                ) {
+                    Text(stringResource(R.string.remove))
                 }
             }
-        }
+            TextButton(onClick = ::apply) {
+                Text(stringResource(if (onDelete == null) R.string.add else R.string.apply))
+            }
+        },
+        onDismissRequest = onClose,
+    ) {
+        AutocompleteInputField(
+            autocompleteState,
+            suggestions = { suggestions },
+            transformToSelectedItem = { it.name.value },
+            suggestedItem = { item ->
+                val name = item.name.text
+                val suggestionText = when (item.antecedentName) {
+                    null -> name
+                    else -> item.antecedentName.text + " → " + name
+                }
+                DropdownMenuItem(
+                    text = { Text(suggestionText, style = MaterialTheme.typography.bodyLarge) },
+                    onClick = {
+                        val prefix = listOf(Tokens.ALTERNATIVE, Tokens.EXCLUDED).find { token ->
+                            autocompleteState.currentText.startsWith(token)
+                        } ?: ""
+                        autocompleteState.selectItem(prefix + item.name.value)
+                    },
+                )
+            },
+            textField = { modifier ->
+                OutlinedTextField(
+                    value = autocompleteState.currentTextValue,
+                    onValueChange = { value ->
+                        autocompleteState.onValueChange(
+                            value.copy(
+                                text = value.text.lowercase().replace(' ', '_').let { query ->
+                                    // sanitize input
+                                    val prefix = listOf(Tokens.ALTERNATIVE, Tokens.EXCLUDED).find { token ->
+                                        query.startsWith(token)
+                                    } ?: ""
+                                    prefix + query.removePrefix(prefix)
+                                        .let { it1 ->
+                                            // remove additional tokens
+                                            var res = it1
+                                            while (res.startsWith(Tokens.EXCLUDED) || res.startsWith(Tokens.ALTERNATIVE)) {
+                                                res = res.removePrefix(Tokens.ALTERNATIVE)
+                                                    .removePrefix(Tokens.EXCLUDED)
+                                            }
+                                            res
+                                        }
+                                        .trimStart('_')
+                                },
+                            ),
+                        )
+                    },
+                    label = { Text(stringResource(R.string.tag)) },
+                    singleLine = true,
+                    modifier = modifier
+                        .fillMaxWidth()
+                        .focusRequester(focusRequester),
+                    keyboardActions = KeyboardActions { apply() },
+                    visualTransformation = {
+                        TransformedText(
+                            text = AnnotatedString(
+                                it.text.runIf(BuildConfig.HIDE_UNDERSCORES_FROM_USER) {
+                                    replace('_', ' ')
+                                },
+                            ),
+                            offsetMapping = OffsetMapping.Identity,
+                        )
+                    },
+                    trailingIcon = {
+                        AutocompleteInputFieldDefaults.DefaultTrailingIcon(
+                            autocompleteState,
+                            enabled = true,
+                            withArrowIcon = true,
+                            suggestions = { suggestions },
+                        )
+                    },
+                    colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Done,
+                    ),
+                )
+            },
+        )
     }
 }
 

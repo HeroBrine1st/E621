@@ -177,6 +177,7 @@ dependencies {
     implementation(libs.media3.ui)
     implementation(libs.media3.datasource.okhttp)
 
+    implementation(libs.accompanist.autocomplete)
     implementation(libs.jsoup)
     implementation(libs.aboutlibraries.compose.material3)
 
