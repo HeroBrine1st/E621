@@ -117,22 +117,22 @@ fun Search(
         TagModificationState.None -> {}
         is TagModificationState.Editing, TagModificationState.AddingNew -> {
             ModifyTagDialog(
-                (state as? TagModificationState.Editing)?.index?.let { component.tags[it] } ?: "",
+                (state as? TagModificationState.Editing)?.index?.let { component.query[it] } ?: "",
                 getSuggestionsFlow = component::tagSuggestionFlow,
                 onClose = {
                     tagModificationState = TagModificationState.None
                 },
                 onDelete = if (state is TagModificationState.Editing) fun() {
-                    component.tags.removeAt(state.index)
+                    component.query.removeAt(state.index)
                     tagModificationState = TagModificationState.None
                 } else null,
                 onApply = if (state is TagModificationState.Editing) fun(it: String) {
-                    component.tags[state.index] = it
+                    component.query[state.index] = it
                     tagModificationState = TagModificationState.None
                 } else fun(it: String) {
-                    component.tags.add(it)
+                    component.query.add(it)
                     tagModificationState = TagModificationState.None
-                }
+                },
             )
         }
     }
@@ -183,7 +183,7 @@ fun Search(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        component.tags.forEachIndexed { index, tag ->
+                        component.query.forEachIndexed { index, tag ->
                             key(tag) {
                                 // TODO place it in text field
                                 //      https://firebasestorage.googleapis.com/v0/b/design-spec/o/projects%2Fm3%2Fimages%2Fkzhfok2g-chip_extra-backspace_3P.mp4?alt=media
@@ -462,11 +462,7 @@ fun SearchPreview() {
             getPreviewComponentContext(),
             getPreviewStackNavigator(),
             PostsSearchOptions(
-                allOf = @Suppress("SpellCheckingInspection") setOf(
-                    Tag("asdlkfjaskldjfasdf"),
-                    Tag("asddlkfjaslkdjfas"),
-                    Tag("test")
-                )
+                query = "test test2 test3",
             ),
             api = object : AutocompleteSuggestionsAPI {
                 override suspend fun getAutocompleteSuggestions(query: String, expiry: Int) =
@@ -482,7 +478,7 @@ fun SearchPreview() {
                     // ignore
                 }
             },
-            dataStoreModule = DataStoreModule(LocalContext.current.applicationContext)
-        )
+            dataStoreModule = DataStoreModule(LocalContext.current.applicationContext),
+        ),
     )
 }

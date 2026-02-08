@@ -31,20 +31,12 @@ import ru.herobrine1st.e621.api.model.Post
 import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.SimpleFileType
-import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.util.debug
 import kotlin.uuid.Uuid
 
 @Serializable
 data class PostsSearchOptions(
-    // backend query string became too complex
-    // now supporting nested grouping like `( ~( felid -leopard ) ~( leopard tiger ) ) dog`, it is impossible
-    // to store a query in any unstructured way
-    // TODO Make raw query string primary way to search (at least internally) with support to parse the string
-    //      into the `Set<Tag>` fields below, and allow user to switch from chip tags to raw query
-    val allOf: Set<Tag> = emptySet(),
-    val noneOf: Set<Tag> = emptySet(),
-    val anyOf: Set<Tag> = emptySet(),
+    val query: String = "",
     val order: Order = Order.NEWEST_TO_OLDEST,
     val orderAscending: Boolean = false,
     val rating: Set<Rating> = emptySet(),
@@ -55,9 +47,6 @@ data class PostsSearchOptions(
     val randomSeed: Uuid = Uuid.generateV4(),
 ) : SearchOptions {
     private fun compileToQuery(): String = buildList {
-        addAll(allOf.map { it.value })
-        addAll(noneOf.map { it.asExcluded })
-        addAll(anyOf.map { it.asAlternative })
         addAll(optimizeRatingSelection(rating))
         val fileTypes = types.flatMap { type ->
             FileType.supportedEntries.filter { it.simpleType == type }
@@ -81,7 +70,7 @@ data class PostsSearchOptions(
 
         if (parent != PostId.INVALID) this += "parent:${parent.value}"
         if (poolId > 0) this += "pool:$poolId"
-    }.joinToString(" ").debug {
+    }.joinToString(" ", prefix = "$query ").debug {
         Log.d(PostsSearchOptions::class.simpleName, "Built query: $this")
     }
 
@@ -118,9 +107,7 @@ data class PostsSearchOptions(
         fun from(options: SearchOptions) = when (options) {
             is PostsSearchOptions -> with(options) {
                 PostsSearchOptions(
-                    allOf = allOf.toSet(),
-                    noneOf = noneOf.toSet(),
-                    anyOf = anyOf.toSet(),
+                    query = query,
                     order = order,
                     orderAscending = orderAscending,
                     rating = rating.toSet(),
@@ -141,9 +128,7 @@ data class PostsSearchOptions(
     }
 
     class Builder(
-        val allOf: MutableSet<Tag> = mutableSetOf(),
-        val noneOf: MutableSet<Tag> = mutableSetOf(),
-        val anyOf: MutableSet<Tag> = mutableSetOf(),
+        var query: String = "",
         var order: Order = Order.NEWEST_TO_OLDEST,
         var orderAscending: Boolean = false,
         var rating: MutableSet<Rating> = mutableSetOf(),
@@ -154,9 +139,7 @@ data class PostsSearchOptions(
     ) {
         fun build() =
             PostsSearchOptions(
-                allOf = allOf,
-                noneOf = noneOf,
-                anyOf = anyOf,
+                query = query,
                 order = order,
                 orderAscending = orderAscending,
                 rating = rating,
@@ -170,9 +153,7 @@ data class PostsSearchOptions(
             fun from(options: SearchOptions) = when (options) {
                 is PostsSearchOptions -> with(options) {
                     Builder(
-                        allOf = allOf.toMutableSet(),
-                        noneOf = noneOf.toMutableSet(),
-                        anyOf = anyOf.toMutableSet(),
+                        query = query,
                         order = order,
                         orderAscending = orderAscending,
                         rating = rating.toMutableSet(),

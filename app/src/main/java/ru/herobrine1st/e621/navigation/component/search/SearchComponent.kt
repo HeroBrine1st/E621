@@ -27,6 +27,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
@@ -68,9 +69,9 @@ class SearchComponent private constructor(
 
     private val lifecycleScope = LifecycleScope()
 
-    val tags = initialSearchOptions.run {
-        allOf.map { it.value } + anyOf.map { it.asAlternative } + noneOf.map { it.asExcluded }
-    }.toMutableStateList()
+    val query: SnapshotStateList<String> = initialSearchOptions.query.split(" ")
+        .filter { it.isNotBlank() }
+        .toMutableStateList()
 
     private var _order by mutableStateOf(initialSearchOptions.order)
     var order
@@ -205,32 +206,8 @@ class SearchComponent private constructor(
     }
 
     private fun makeSearchOptions(): PostsSearchOptions {
-        val noneOf = tags.filter { it.startsWith(Tokens.EXCLUDED) }
-        val anyOf = tags.filter { it.startsWith(Tokens.ALTERNATIVE) }
-
-        val allOf = tags - noneOf.toSet() - anyOf.toSet()
-        // O(n) implementation, because lists are ordered
-        // But there won't be much items, so that it commented out because it may be erroneous..
-//        val allOf = tags.let {
-//            var noneOfIndex = 0
-//            var anyOfIndex = 0
-//            val result = mutableSetOf<Tag>()
-//            for(i in it.indices) {
-//                if(it[i] == noneOf[noneOfIndex]) {
-//                    noneOfIndex++
-//                } else if(it[i] == anyOf[anyOfIndex]) {
-//                    anyOfIndex++
-//                } else {
-//                    result += Tag(it[i])
-//                }
-//            }
-//            return@let result
-//        }
-
         return PostsSearchOptions(
-            allOf = allOf.mapTo(mutableSetOf()) { Tag(it) },
-            noneOf = noneOf.mapTo(mutableSetOf()) { Tag(it.substring(1)) },
-            anyOf = anyOf.mapTo(mutableSetOf()) { Tag(it.substring(1)) },
+            query = query.joinToString(" "),
             order = order,
             orderAscending = orderAscending,
             rating = rating.toSet(),
