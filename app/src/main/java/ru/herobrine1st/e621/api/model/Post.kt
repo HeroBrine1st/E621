@@ -66,6 +66,7 @@ data class Post(
     val pools: List<PoolId>,
     val relationships: Relationships,
     val approverId: Int?,
+    val uploaderName: String,
     val uploaderId: Int,
     val description: String,
     override val commentCount: Int,
