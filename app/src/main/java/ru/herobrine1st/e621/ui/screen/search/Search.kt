@@ -56,7 +56,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.InputChip
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -236,9 +235,9 @@ fun Search(
                                             animateFloatAsState(
                                                 if (expanded) 180f else 360f,
                                                 label = "dropdown arrow rotation animation"
-                                            ).value
+                                            ).value,
                                         )
-                                        .menuAnchor(MenuAnchorType.SecondaryEditable)
+                                        .menuAnchor(ExposedDropdownMenuAnchorType.SecondaryEditable),
                                 )
                             },
                             colors = ExposedDropdownMenuDefaults.textFieldColors(),
