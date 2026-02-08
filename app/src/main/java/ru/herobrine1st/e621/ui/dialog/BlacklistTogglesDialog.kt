@@ -64,7 +64,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
@@ -81,9 +81,9 @@ fun BlacklistTogglesDialog(
     component: BlacklistTogglesDialogComponent
 ) {
     val maxListHeight = floor(
-        LocalConfiguration.current.screenHeightDp
+        LocalWindowInfo.current.containerDpSize.height.value
             .times(0.4f) // Take 40% of screen height
-            .div(49f)    // 49 dp is the height of one entry (48 dp checkbox/switch + 1 dp separator)
+            .div(49f),    // 49 dp is the height of one entry (48 dp checkbox/switch + 1 dp separator)
     )                          // Floor for all the perfectionists
         .times(49f)      // Return back
         .minus(1f)       // Remove 1 pixel because on my device that "last" separator from lazy layout is visible just for 1 pixel (or simply placebo)
