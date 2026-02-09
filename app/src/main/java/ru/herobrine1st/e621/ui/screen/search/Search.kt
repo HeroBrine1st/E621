@@ -20,12 +20,16 @@
 
 package ru.herobrine1st.e621.ui.screen.search
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.expandIn
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -46,6 +50,7 @@ import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.CodeOff
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -69,6 +74,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -79,6 +85,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -90,6 +98,7 @@ import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
 import ru.herobrine1st.e621.api.model.Order
+import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.SimpleFileType
 import ru.herobrine1st.e621.api.model.Tag
@@ -495,50 +504,112 @@ fun Search(
                 }
             }
 
-            // TODO make both chips that can be dismissed to clear a field
-            item("parent post") {
-                SettingCard(title = stringResource(R.string.parent_post)) {
-                    OutlinedTextField(
-                        value = component.parentPostId.takeIf { it > 0 }?.toString() ?: "",
-                        onValueChange = { value ->
-                            component.parentPostId = value.toIntOrNull()?.takeIf { it > 0 }
-                                ?: return@OutlinedTextField
-                        },
-                        label = { Text(stringResource(R.string.post_id)) },
-                        singleLine = true,
-                        trailingIcon = {
-                            IconButton(onClick = { component.parentPostId = -1 }) {
-                                Icon(
-                                    Icons.Default.Clear,
-                                    contentDescription = stringResource(R.string.clear),
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
+            item("additional chips") {
+                SettingCard(title = stringResource(R.string.search_screen_additional_filters)) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        var postIdDialog by remember { mutableStateOf(false) }
+                        var poolIdDialog by remember { mutableStateOf(false) }
 
-            item("pool") {
-                SettingCard(title = stringResource(R.string.search_pool)) {
-                    OutlinedTextField(
-                        value = component.poolId.takeIf { it > 0 }?.toString() ?: "",
-                        onValueChange = { value ->
-                            component.poolId = value.toIntOrNull()?.takeIf { it > 0 }
-                                ?: return@OutlinedTextField
-                        },
-                        label = { Text(stringResource(R.string.search_pool_id)) },
-                        singleLine = true,
-                        trailingIcon = {
-                            IconButton(onClick = { component.poolId = -1 }) {
-                                Icon(
-                                    Icons.Default.Clear,
-                                    contentDescription = stringResource(R.string.clear),
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
+                        val postIdTransition =
+                            updateTransition(component.parentPostId != PostId.INVALID, "PostId chip transition")
+                        val poolIdTransition = updateTransition(component.poolId != -1, "PoolId chip transition")
+                        FilterChip(
+                            selected = component.parentPostId != PostId.INVALID,
+                            onClick = {
+                                if (component.parentPostId == PostId.INVALID) {
+                                    postIdDialog = true
+                                } else component.parentPostId = PostId.INVALID
+                            },
+                            label = {
+                                postIdTransition.AnimatedContent(
+                                    transitionSpec = {
+                                        fadeIn() togetherWith fadeOut() using SizeTransform()
+                                    },
+                                ) { set ->
+                                    Text(
+                                        if (set) stringResource(
+                                            R.string.search_screen_child_of_parent_input_chip,
+                                            // remember so doesn't change to -1
+                                            remember { component.parentPostId.value },
+                                        ) else stringResource(R.string.search_screen_child_of_parent_input_chip_disabled),
+                                    )
+                                }
+                            },
+                            leadingIcon = {
+                                postIdTransition.AnimatedVisibility(
+                                    visible = { it },
+                                    enter = fadeIn() + expandIn(expandFrom = Alignment.CenterStart),
+                                    exit = shrinkOut(shrinkTowards = Alignment.CenterStart) + fadeOut(),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    )
+                                }
+                            },
+                        )
+
+                        FilterChip(
+                            selected = component.poolId != -1,
+                            onClick = {
+                                if (component.poolId == -1) {
+                                    poolIdDialog = true
+                                } else component.poolId = -1
+                            },
+                            label = {
+                                poolIdTransition.AnimatedContent(
+                                    transitionSpec = {
+                                        fadeIn() togetherWith fadeOut() using SizeTransform()
+                                    },
+                                ) { set ->
+                                    Text(
+                                        if (set) stringResource(
+                                            R.string.search_screen_pool_input_chip,
+                                            // remember so doesn't change to -1
+                                            remember { component.poolId },
+                                        ) else stringResource(R.string.search_screen_pool_input_chip_disabled),
+                                    )
+                                }
+                            },
+                            leadingIcon = {
+                                AnimatedVisibility(
+                                    visible = component.poolId != -1,
+                                    enter = fadeIn() + expandIn(expandFrom = Alignment.CenterStart),
+                                    exit = shrinkOut(shrinkTowards = Alignment.CenterStart) + fadeOut(),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    )
+                                }
+                            },
+                        )
+
+                        if (postIdDialog) {
+                            NaturalNumberInputDialog(
+                                onDismissRequest = { postIdDialog = false },
+                                title = { Text(stringResource(R.string.post_id)) },
+                                onApply = {
+                                    component.parentPostId = PostId(it)
+                                    postIdDialog = false
+                                },
+                            )
+                        } else if (poolIdDialog) {
+                            NaturalNumberInputDialog(
+                                onDismissRequest = { poolIdDialog = false },
+                                title = { Text(stringResource(R.string.search_pool_id)) },
+                                onApply = {
+                                    component.poolId = it
+                                    poolIdDialog = false
+                                },
+                            )
+                        }
+                    }
                 }
             }
 
@@ -584,7 +655,7 @@ fun SearchPreview() {
 }
 
 @Composable
-fun TagModificationDialog(
+private fun TagModificationDialog(
     tagModificationState: MutableState<TagModificationState>,
     component: SearchComponent,
 ) {
@@ -618,4 +689,47 @@ fun TagModificationDialog(
             )
         }
     }
+}
+
+@Composable
+private fun NaturalNumberInputDialog(
+    onDismissRequest: () -> Unit,
+    title: @Composable () -> Unit,
+    onApply: (Int) -> Unit,
+) {
+    var value by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = title,
+        text = {
+            OutlinedTextField(
+                value,
+                onValueChange = { input ->
+                    if (input.toIntOrNull()?.takeIf { it > 0 } != null || input.isEmpty()) value = input
+                },
+                modifier = Modifier.focusRequester(focusRequester),
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    onApply(value.toIntOrNull() ?: return@TextButton)
+                },
+                enabled = value.toIntOrNull() != null,
+            ) {
+                Text(stringResource(R.string.apply))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(stringResource(R.string.dialog_dismiss))
+            }
+        },
+    )
 }

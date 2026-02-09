@@ -185,4 +185,9 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="search_screen_raw_query_input_field">Query string</string>
     <string name="search_screen_disable_raw_query">Switch to simple query</string>
     <string name="search_screen_enable_raw_query">Switch to raw query</string>
+    <string name="search_screen_child_of_parent_input_chip">Child of post %1$s</string>
+    <string name="search_screen_pool_input_chip">In pool %1$s</string>
+    <string name="search_screen_child_of_parent_input_chip_disabled">Child post</string>
+    <string name="search_screen_pool_input_chip_disabled">In pool</string>
+    <string name="search_screen_additional_filters">Additional filters</string>
 </resources>

@@ -43,7 +43,6 @@ import kotlinx.coroutines.launch
 import ru.herobrine1st.autocomplete.AutocompleteSearchResult
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
 import ru.herobrine1st.e621.api.Tokens
-import ru.herobrine1st.e621.api.model.PostId
 import ru.herobrine1st.e621.api.model.Rating
 import ru.herobrine1st.e621.api.model.Tag
 import ru.herobrine1st.e621.api.search.PostsSearchOptions
@@ -81,7 +80,7 @@ class SearchComponent private constructor(
     val rating = initialSearchOptions.rating.toMutableStateList()
     var favouritesOf by mutableStateOf(initialSearchOptions.favouritesOf ?: "")
     val postTypes = initialSearchOptions.types.toMutableStateList()
-    var parentPostId by mutableIntStateOf(initialSearchOptions.parent.value)
+    var parentPostId by mutableStateOf(initialSearchOptions.parent)
     var poolId by mutableIntStateOf(initialSearchOptions.poolId)
 
     @CachedDataStore
@@ -210,7 +209,7 @@ class SearchComponent private constructor(
             rating = rating.toSet(),
             favouritesOf = favouritesOf.ifBlank { null },
             types = postTypes.toSet(),
-            parent = PostId(parentPostId),
+            parent = parentPostId,
             poolId = poolId,
         )
     }
