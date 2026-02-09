@@ -27,7 +27,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.runtime.toMutableStateList
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.router.stack.StackNavigator
@@ -69,9 +68,7 @@ class SearchComponent private constructor(
 
     private val lifecycleScope = LifecycleScope()
 
-    val query: SnapshotStateList<String> = initialSearchOptions.query.split(" ")
-        .filter { it.isNotBlank() }
-        .toMutableStateList()
+    var presentedQuery: QueryPresentation by mutableStateOf(QueryPresentation.fromString(initialSearchOptions.query))
 
     private var _order by mutableStateOf(initialSearchOptions.order)
     var order
@@ -207,7 +204,7 @@ class SearchComponent private constructor(
 
     private fun makeSearchOptions(): PostsSearchOptions {
         return PostsSearchOptions(
-            query = query.joinToString(" "),
+            query = presentedQuery.query,
             order = order,
             orderAscending = orderAscending,
             rating = rating.toSet(),
@@ -227,4 +224,37 @@ class SearchComponent private constructor(
         val postCount: Int,
         val antecedentName: Tag?,
     )
+
+    sealed interface QueryPresentation {
+        val query: String
+
+        data class Raw(override val query: String) : QueryPresentation {
+            // TODO reuse previous state to avoid recalculations
+            //      can be done with custom copy and private constructor
+            val canTransformToTagList get() = canParseQuery(query)
+            fun toTagList(): TagList? = TagList.fromString(query)
+        }
+
+        data class TagList(val tags: List<String>) : QueryPresentation {
+            override val query: String get() = tags.joinToString(" ")
+
+            fun toRaw() = Raw(tags.joinToString(" "))
+
+            companion object {
+                fun fromString(query: String): TagList? {
+                    if (!canParseQuery(query)) return null
+                    return TagList(query.split(" ").filter { it.isNotBlank() })
+                }
+            }
+        }
+
+        companion object {
+            fun fromString(query: String): QueryPresentation = TagList.fromString(query) ?: Raw(query)
+        }
+    }
+}
+
+private fun canParseQuery(query: String) = query.split(" ").none {
+    // disallow groups
+    it == "(" || it == "-(" || it == "~("
 }

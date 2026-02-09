@@ -21,6 +21,7 @@
 package ru.herobrine1st.e621.ui.component.scaffold
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.outlined.Block
@@ -52,33 +53,35 @@ fun MenuAction(
         leadingIcon = {
             Icon(icon, null)
         },
-        onClick = onClick
+        onClick = onClick,
     )
 }
 
 /**
- * @param onNavigateToSettings called when user click "Settings". Should prohibit multiple Settings configurations in backstack.
+ * @param onNavigateToSettings called when user clicks "Settings". Should prohibit multiple Settings configurations in backstack.
  */
 @Composable
 fun ActionBarMenu(
     onNavigateToSettings: () -> Unit,
     onOpenBlacklistDialog: () -> Unit,
-    additionalMenuActions: @Composable () -> Unit = {},
+    additionalMenuActions: @Composable ColumnScope.(close: () -> Unit) -> Unit = {},
 ) = Box {
     var openMenu by remember { mutableStateOf(false) }
 
     IconButton(onClick = { openMenu = !openMenu }) {
         Icon(
             Icons.Default.MoreVert,
-            contentDescription = stringResource(R.string.appbar_morevert)
+            contentDescription = stringResource(R.string.appbar_morevert),
         )
     }
 
     DropdownMenu(
         expanded = openMenu,
-        onDismissRequest = { openMenu = false }
+        onDismissRequest = { openMenu = false },
     ) {
-        additionalMenuActions()
+        additionalMenuActions {
+            openMenu = false
+        }
         MenuAction(Icons.Outlined.Block, stringResource(R.string.blacklist)) {
             openMenu = false
             onOpenBlacklistDialog()

@@ -171,4 +171,5 @@
     <string name="post_type_image">Изображение</string>
     <string name="post_type_video">Видео</string>
     <string name="post_type_animation">Анимация</string>
+    <string name="search_screen_raw_query_input_field">Поисковый запрос</string>
 </resources>

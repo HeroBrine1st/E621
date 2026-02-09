@@ -182,4 +182,7 @@ You should have received a copy of the GNU General Public License along with thi
     <string name="settings_posts_columns_dialog_mode_fixed_hint">"%1$d columns"</string>
     <string name="no_image_available">There\'s no image provided, probably this post is deleted</string>
     <string name="settings_mute_video_on_start">Mute videos</string>
+    <string name="search_screen_raw_query_input_field">Query string</string>
+    <string name="search_screen_disable_raw_query">Switch to simple query</string>
+    <string name="search_screen_enable_raw_query">Switch to raw query</string>
 </resources>

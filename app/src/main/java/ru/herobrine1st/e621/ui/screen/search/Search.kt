@@ -36,11 +36,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Code
+import androidx.compose.material.icons.filled.CodeOff
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material3.DropdownMenuItem
@@ -66,6 +69,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -78,6 +82,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import ru.herobrine1st.e621.R
@@ -92,6 +99,7 @@ import ru.herobrine1st.e621.module.CachedDataStore
 import ru.herobrine1st.e621.module.DataStoreModule
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
 import ru.herobrine1st.e621.ui.component.scaffold.ActionBarMenu
+import ru.herobrine1st.e621.ui.component.scaffold.MenuAction
 import ru.herobrine1st.e621.ui.component.scaffold.ScreenSharedState
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenPreviewSharedState
 import ru.herobrine1st.e621.util.ExceptionReporter
@@ -100,42 +108,20 @@ import ru.herobrine1st.e621.util.getPreviewComponentContext
 import ru.herobrine1st.e621.util.getPreviewStackNavigator
 import ru.herobrine1st.e621.util.text
 
-
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class, CachedDataStore::class)
 @Composable
 fun Search(
     screenSharedState: ScreenSharedState,
     component: SearchComponent,
 ) {
-    var tagModificationState by rememberSaveable(saver = TagModificationState.Saver) {
+    val tagModificationState = rememberSaveable(saver = TagModificationState.Saver) {
         mutableStateOf(
-            TagModificationState.None
+            TagModificationState.None,
         )
     }
 
-    when (val state = tagModificationState) {
-        TagModificationState.None -> {}
-        is TagModificationState.Editing, TagModificationState.AddingNew -> {
-            ModifyTagDialog(
-                (state as? TagModificationState.Editing)?.index?.let { component.query[it] } ?: "",
-                getSuggestionsFlow = component::tagSuggestionFlow,
-                onClose = {
-                    tagModificationState = TagModificationState.None
-                },
-                onDelete = if (state is TagModificationState.Editing) fun() {
-                    component.query.removeAt(state.index)
-                    tagModificationState = TagModificationState.None
-                } else null,
-                onApply = if (state is TagModificationState.Editing) fun(it: String) {
-                    component.query[state.index] = it
-                    tagModificationState = TagModificationState.None
-                } else fun(it: String) {
-                    component.query.add(it)
-                    tagModificationState = TagModificationState.None
-                },
-            )
-        }
-    }
+    // This dialog will cause too many recompositions so better isolate it in its own restartable function
+    TagModificationDialog(tagModificationState, component)
 
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
 
@@ -148,10 +134,33 @@ fun Search(
                 actions = {
                     ActionBarMenu(
                         onNavigateToSettings = screenSharedState.goToSettings,
-                        onOpenBlacklistDialog = screenSharedState.openBlacklistDialog
-                    )
+                        onOpenBlacklistDialog = screenSharedState.openBlacklistDialog,
+                    ) { close ->
+                        // remember so that it doesn't change while collapsing
+                        when (val queryPresentation = remember { component.presentedQuery }) {
+                            is SearchComponent.QueryPresentation.Raw -> if (queryPresentation.canTransformToTagList) {
+                                MenuAction(
+                                    Icons.Default.CodeOff,
+                                    stringResource(R.string.search_screen_disable_raw_query),
+                                ) {
+                                    queryPresentation.toTagList()?.let { component.presentedQuery = it }
+                                    close()
+                                }
+                            }
+
+                            is SearchComponent.QueryPresentation.TagList -> {
+                                MenuAction(
+                                    Icons.Default.Code,
+                                    stringResource(R.string.search_screen_enable_raw_query),
+                                ) {
+                                    component.presentedQuery = queryPresentation.toRaw()
+                                    close()
+                                }
+                            }
+                        }
+                    }
                 },
-                scrollBehavior = scrollBehavior
+                scrollBehavior = scrollBehavior,
             )
         },
         snackbarHost = {
@@ -165,58 +174,149 @@ fun Search(
                 icon = {
                     Icon(Icons.Default.Search, contentDescription = stringResource(R.string.search))
                 },
-                onClick = component::proceed
+                onClick = component::proceed,
             )
         },
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier
                 .padding(horizontal = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = paddingValues
+            contentPadding = paddingValues,
         ) {
             item {}
             item("tags") {
                 SettingCard(title = stringResource(R.string.tags)) {
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
-                    ) {
-                        component.query.forEachIndexed { index, tag ->
-                            key(tag) {
-                                // TODO place it in text field
-                                //      https://firebasestorage.googleapis.com/v0/b/design-spec/o/projects%2Fm3%2Fimages%2Fkzhfok2g-chip_extra-backspace_3P.mp4?alt=media
-                                InputChip(
-                                    selected = false,
-                                    onClick = {
-                                        tagModificationState = TagModificationState.Editing(index)
-                                    },
-                                    label = {
-                                        Text(Tag(tag).text)
+                    when (val presentedQuery = component.presentedQuery) {
+                        is SearchComponent.QueryPresentation.Raw -> {
+//                            val autocompleteState: AutocompleteState<String>
+//                            autocompleteState = rememberAutocompleteState(
+//                                initialItem = presentedQuery.query,
+//                                initialText = presentedQuery.query,
+//                                transformToInputText = { suggestion ->
+//                                    // TODO pass full state here and make it return TextFieldValue
+//                                    // (looks like it requires full API rewrite since transformToInputText is called immediately to get TextFieldValue
+//                                    //  so currently not possible)
+//                                    val textFieldValue = autocompleteState.currentTextValue
+//                                    val cursorPosition = textFieldValue.selection.start
+//                                    val currentQuery = textFieldValue.text.takeLast(cursorPosition).substringAfter(" ")
+//                                    textFieldValue.copy(
+//                                        text = textFieldValue.text.substring(0, cursorPosition - currentQuery.length) +
+//                                                suggestion +
+//                                                textFieldValue.text.substring(cursorPosition),
+//                                        selection = TextRange(textFieldValue.selection.start + suggestion.length - currentQuery.length),
+//                                    ).text
+//                                },
+//                            )
+//
+//                            val suggestions by produceState(
+//                                AutocompleteSearchResult.Ready(
+//                                    emptyList(),
+//                                    presentedQuery.query.substringAfter(" "),
+//                                ),
+//                            ) {
+//                                component.tagSuggestionFlow {
+//                                    val textFieldValue = autocompleteState.currentTextValue
+//                                    textFieldValue.selection.let {
+//                                        if (!it.collapsed) return@tagSuggestionFlow ""
+//                                    }
+//                                    // take everything before cursor
+//                                    textFieldValue.text.takeLast(textFieldValue.selection.start).substringAfter(" ")
+//                                }.collect {
+//                                    value = it
+//                                }
+//                            }
+//
+//                            AutocompleteInputField(
+//                                autocompleteState,
+//                                suggestions = { suggestions },
+//                                transformToSelectedItem = { it.name.value },
+//                                suggestedItem = { item ->
+//                                    val name = item.name.text
+//                                    val suggestionText = when (item.antecedentName) {
+//                                        null -> name
+//                                        else -> item.antecedentName.text + " → " + name
+//                                    }
+//                                    DropdownMenuItem(
+//                                        text = { Text(suggestionText, style = MaterialTheme.typography.bodyLarge) },
+//                                        onClick = {
+//                                            val prefix = listOf(Tokens.ALTERNATIVE, Tokens.EXCLUDED).find { token ->
+//                                                autocompleteState.currentText.startsWith(token)
+//                                            } ?: ""
+//                                            autocompleteState.selectItem(prefix + item.name.value)
+//                                        },
+//                                    )
+//                                },
+//                                textField = { modifier ->
+                            OutlinedTextField(
+//                                        value = autocompleteState.currentTextValue,
+//                                        onValueChange = autocompleteState::onValueChange,
+                                value = presentedQuery.query,
+                                onValueChange = {
+                                    component.presentedQuery = presentedQuery.copy(query = it)
+                                },
+                                label = { Text(stringResource(R.string.search_screen_raw_query_input_field)) },
+                                singleLine = true,
+                                modifier = Modifier.fillMaxWidth(),
+//                                        trailingIcon = {
+//                                            AutocompleteInputFieldDefaults.DefaultTrailingIcon(
+//                                                autocompleteState,
+//                                                enabled = true,
+//                                                withArrowIcon = true,
+//                                                suggestions = { suggestions },
+//                                            )
+//                                        },
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                                keyboardOptions = KeyboardOptions(
+                                    capitalization = KeyboardCapitalization.None,
+                                    keyboardType = KeyboardType.Text,
+                                    imeAction = ImeAction.Done,
+                                ),
+                            )
+//                                },
+//                            )
+                        }
+
+                        is SearchComponent.QueryPresentation.TagList -> {
+                            FlowRow(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                verticalArrangement = Arrangement.spacedBy(2.dp),
+                            ) {
+                                presentedQuery.tags.forEachIndexed { index, tag ->
+                                    key(tag) {
+                                        InputChip(
+                                            selected = false,
+                                            onClick = {
+                                                tagModificationState.value = TagModificationState.Editing(index)
+                                            },
+                                            label = {
+                                                Text(Tag(tag).text)
+                                            },
+                                        )
                                     }
-                                )
+                                }
+                            }
+                            TextButton(
+                                onClick = { tagModificationState.value = TagModificationState.AddingNew },
+                                modifier = Modifier.align(Alignment.Start),
+                            ) {
+                                Text(stringResource(R.string.add_tag))
+                                Icon(Icons.Rounded.Add, contentDescription = null)
                             }
                         }
-                    }
-                    TextButton(
-                        onClick = { tagModificationState = TagModificationState.AddingNew },
-                        modifier = Modifier.align(Alignment.Start)
-                    ) {
-                        Text(stringResource(R.string.add_tag))
-                        Icon(Icons.Rounded.Add, contentDescription = null)
                     }
                 }
             }
             item("order") {
                 SettingCard(
-                    title = stringResource(R.string.order)
+                    title = stringResource(R.string.order),
                 ) {
                     var expanded by remember { mutableStateOf(false) }
                     ExposedDropdownMenuBox(
                         expanded = expanded,
                         onExpandedChange = { expanded = it },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         TextField(
                             modifier = Modifier
@@ -234,7 +334,7 @@ fun Search(
                                         .rotate(
                                             animateFloatAsState(
                                                 if (expanded) 180f else 360f,
-                                                label = "dropdown arrow rotation animation"
+                                                label = "dropdown arrow rotation animation",
                                             ).value,
                                         )
                                         .menuAnchor(ExposedDropdownMenuAnchorType.SecondaryEditable),
@@ -252,7 +352,7 @@ fun Search(
                                     text = {
                                         Text(
                                             stringResource(it.descriptionId),
-                                            style = MaterialTheme.typography.bodyLarge
+                                            style = MaterialTheme.typography.bodyLarge,
                                         )
                                     },
                                     onClick = {
@@ -277,7 +377,7 @@ fun Search(
             item("rating") {
                 SettingCard(
                     title = stringResource(R.string.rating),
-                    modifier = Modifier.selectableGroup()
+                    modifier = Modifier.selectableGroup(),
                 ) {
                     AnimatedVisibility(visible = component.shouldBlockRatingChange) {
                         Text(stringResource(R.string.search_safe_mode))
@@ -285,7 +385,7 @@ fun Search(
 
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         CompositionLocalProvider(LocalRippleConfiguration provides null) {
                             for (v in Rating.entries) {
@@ -311,10 +411,10 @@ fun Search(
                                             Icon(
                                                 Icons.Default.Check,
                                                 null,
-                                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                                modifier = Modifier.size(FilterChipDefaults.IconSize),
                                             )
                                         }
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -324,11 +424,11 @@ fun Search(
             item("file type") {
                 SettingCard(
                     title = stringResource(R.string.post_type),
-                    modifier = Modifier.selectableGroup()
+                    modifier = Modifier.selectableGroup(),
                 ) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalArrangement = Arrangement.spacedBy(2.dp)
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
                         CompositionLocalProvider(LocalRippleConfiguration provides null) {
                             for (type in SimpleFileType.entries) {
@@ -349,7 +449,7 @@ fun Search(
                                                 SimpleFileType.IMAGE -> stringResource(R.string.post_type_image)
                                                 SimpleFileType.ANIMATION -> stringResource(R.string.post_type_animation)
                                                 SimpleFileType.VIDEO -> stringResource(R.string.post_type_video)
-                                            }
+                                            },
                                         )
                                     },
                                     leadingIcon = {
@@ -361,10 +461,10 @@ fun Search(
                                             Icon(
                                                 Icons.Default.Check,
                                                 null,
-                                                modifier = Modifier.size(FilterChipDefaults.IconSize)
+                                                modifier = Modifier.size(FilterChipDefaults.IconSize),
                                             )
                                         }
-                                    }
+                                    },
                                 )
                             }
                         }
@@ -383,14 +483,14 @@ fun Search(
                             IconButton(onClick = component::onFavouritesOfTrailingButtonClick) {
                                 if (component.shouldShowAccountFillInFavouritesOfField) Icon(
                                     Icons.Default.AccountCircle,
-                                    contentDescription = stringResource(R.string.search_fill_myself)
+                                    contentDescription = stringResource(R.string.search_fill_myself),
                                 ) else Icon(
                                     Icons.Default.Clear,
-                                    contentDescription = stringResource(R.string.clear)
+                                    contentDescription = stringResource(R.string.clear),
                                 )
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -410,11 +510,11 @@ fun Search(
                             IconButton(onClick = { component.parentPostId = -1 }) {
                                 Icon(
                                     Icons.Default.Clear,
-                                    contentDescription = stringResource(R.string.clear)
+                                    contentDescription = stringResource(R.string.clear),
                                 )
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -433,11 +533,11 @@ fun Search(
                             IconButton(onClick = { component.poolId = -1 }) {
                                 Icon(
                                     Icons.Default.Clear,
-                                    contentDescription = stringResource(R.string.clear)
+                                    contentDescription = stringResource(R.string.clear),
                                 )
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
             }
@@ -481,4 +581,41 @@ fun SearchPreview() {
             dataStoreModule = DataStoreModule(LocalContext.current.applicationContext),
         ),
     )
+}
+
+@Composable
+fun TagModificationDialog(
+    tagModificationState: MutableState<TagModificationState>,
+    component: SearchComponent,
+) {
+    var tagModificationState by tagModificationState
+    val presentedQuery = component.presentedQuery
+    if (presentedQuery is SearchComponent.QueryPresentation.TagList) when (val state = tagModificationState) {
+        TagModificationState.None -> {}
+        is TagModificationState.Editing, TagModificationState.AddingNew -> {
+            ModifyTagDialog(
+                (state as? TagModificationState.Editing)?.index?.let { presentedQuery.tags[it] } ?: "",
+                getSuggestionsFlow = component::tagSuggestionFlow,
+                onClose = {
+                    tagModificationState = TagModificationState.None
+                },
+                onDelete = if (state is TagModificationState.Editing) fun() {
+                    component.presentedQuery =
+                        presentedQuery.copy(tags = presentedQuery.tags.toMutableList().apply { removeAt(state.index) })
+                    tagModificationState = TagModificationState.None
+                } else null,
+                onApply = {
+                    component.presentedQuery = presentedQuery.copy(
+                        tags = presentedQuery.tags.toMutableList().apply {
+                            when (state) {
+                                is TagModificationState.Editing -> set(state.index, it)
+                                is TagModificationState.AddingNew -> add(it)
+                            }
+                        },
+                    )
+                    tagModificationState = TagModificationState.None
+                },
+            )
+        }
+    }
 }
