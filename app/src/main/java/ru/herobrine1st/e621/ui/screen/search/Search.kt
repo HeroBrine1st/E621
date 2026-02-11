@@ -576,8 +576,8 @@ fun Search(
                                 }
                             },
                             leadingIcon = {
-                                AnimatedVisibility(
-                                    visible = component.poolId != -1,
+                                poolIdTransition.AnimatedVisibility(
+                                    { it },
                                     enter = fadeIn() + expandIn(expandFrom = Alignment.CenterStart),
                                     exit = shrinkOut(shrinkTowards = Alignment.CenterStart) + fadeOut(),
                                 ) {
@@ -714,6 +714,7 @@ private fun NaturalNumberInputDialog(
                     if (input.toIntOrNull()?.takeIf { it > 0 } != null || input.isEmpty()) value = input
                 },
                 modifier = Modifier.focusRequester(focusRequester),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             )
         },
         confirmButton = {
