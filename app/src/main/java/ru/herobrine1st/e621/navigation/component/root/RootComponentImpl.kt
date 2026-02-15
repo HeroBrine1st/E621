@@ -26,6 +26,7 @@ import com.arkivanov.decompose.router.slot.childSlot
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.router.stack.childStack
+import com.arkivanov.decompose.router.stack.pop
 import ru.herobrine1st.e621.module.ActivityInjectionCompanion
 import ru.herobrine1st.e621.module.RestartModule
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
@@ -36,7 +37,12 @@ import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.navigation.component.root.RootComponent.*
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
-import ru.herobrine1st.e621.navigation.component.settings.*
+import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutLibrariesComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistEntryComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsLicenseComponent
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.navigation.config.Config.*
 
@@ -58,9 +64,13 @@ class RootComponentImpl(
     override val dialogSlot = childSlot(
         source = dialogNavigation,
         serializer = DialogConfig.serializer(),
-        childFactory = ::createDialogChild
+        childFactory = ::createDialogChild,
         // handleBackButton = false - dialogs handle it themselves
     )
+
+    override fun onBackClicked() {
+        navigation.pop()
+    }
 
     private fun createChild(
         configuration: Config,

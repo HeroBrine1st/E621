@@ -20,11 +20,14 @@
 
 package ru.herobrine1st.e621.ui.animation
 
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.tween
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.layout
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimator
 
-fun reducedSlide(slideFactor: Float) = stackAnimator { factor, _, content ->
+fun reducedSlide(slideFactor: Float, animationSpec: FiniteAnimationSpec<Float> = tween()) =
+    stackAnimator(animationSpec) { factor, _, content ->
     content(
         Modifier
             .layout { measurable, constraints ->

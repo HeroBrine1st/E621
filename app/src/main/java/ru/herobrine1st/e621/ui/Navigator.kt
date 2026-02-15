@@ -20,24 +20,24 @@
 
 package ru.herobrine1st.e621.ui
 
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.arkivanov.decompose.Child
+import com.arkivanov.decompose.ExperimentalDecomposeApi
 import com.arkivanov.decompose.extensions.compose.stack.Children
 import com.arkivanov.decompose.extensions.compose.stack.animation.fade
 import com.arkivanov.decompose.extensions.compose.stack.animation.plus
+import com.arkivanov.decompose.extensions.compose.stack.animation.predictiveback.androidPredictiveBackAnimatableV2
+import com.arkivanov.decompose.extensions.compose.stack.animation.predictiveback.predictiveBackAnimation
 import com.arkivanov.decompose.extensions.compose.stack.animation.stackAnimation
 import com.arkivanov.decompose.router.slot.navigate
 import com.arkivanov.decompose.router.stack.navigate
 import com.arkivanov.decompose.router.stack.pushNew
 import ru.herobrine1st.e621.navigation.component.root.RootComponent
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Home
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Post
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.PostListing
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Search
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Settings
-import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.Wiki
+import ru.herobrine1st.e621.navigation.component.root.RootComponent.Child.*
 import ru.herobrine1st.e621.navigation.config.Config
 import ru.herobrine1st.e621.ui.animation.reducedSlide
 import ru.herobrine1st.e621.ui.component.scaffold.rememberScreenSharedState
@@ -53,6 +53,7 @@ import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklist
 import ru.herobrine1st.e621.ui.screen.settings.SettingsBlacklistEntry
 import ru.herobrine1st.e621.ui.screen.settings.SettingsLicense
 import ru.herobrine1st.e621.ui.screen.settings.SettingsLicenses
+
 
 @Composable
 fun Navigator(
@@ -75,32 +76,40 @@ fun Navigator(
                 // so it is safe to omit checks
                 RootComponent.DialogConfig.BlacklistToggles
             }
-        }
+        },
     )
 
     Children(
         stack = rootComponent.stack,
         modifier = Modifier.fillMaxSize(),
-        animation = stackAnimation(
-            fade() + reducedSlide(1 / 16f)
-        )
+        animation = @OptIn(ExperimentalDecomposeApi::class) predictiveBackAnimation(
+            backHandler = rootComponent.backHandler,
+            fallbackAnimation = stackAnimation(
+                run {
+                    val spec = tween<Float>(durationMillis = 200, easing = CubicBezierEasing(0.7f, 0.2f, 0.0f, 0.4f))
+                    fade(spec) + reducedSlide(0.2f, spec)
+                },
+            ),
+            selector = { backEvent, _, _ -> androidPredictiveBackAnimatableV2(backEvent) },
+            onBack = rootComponent::onBackClicked,
+        ),
     ) { child: Child.Created<*, RootComponent.Child> ->
         when (val instance: RootComponent.Child = child.instance) {
             is Home -> Home(
                 screenSharedState = sharedState,
-                component = instance.component
+                component = instance.component,
             )
 
             is Search -> Search(sharedState, instance.component)
 
             is PostListing -> Posts(
                 sharedState,
-                instance.component
+                instance.component,
             )
 
             is Post -> Post(
                 screenSharedState = sharedState,
-                component = instance.component
+                component = instance.component,
             )
 
             is Settings -> Settings(
@@ -111,18 +120,18 @@ fun Navigator(
                 onNavigateToAbout = {
                     navigation.pushNew(Config.Settings.About)
                 },
-                component = instance.component
+                component = instance.component,
             )
 
             is Settings.Blacklist ->
                 SettingsBlacklist(
                     screenSharedState = sharedState,
-                    component = instance.component
+                    component = instance.component,
                 )
 
             is Settings.Blacklist.Entry -> SettingsBlacklistEntry(
                 sharedState,
-                instance.component
+                instance.component,
             )
 
             is Settings.About -> SettingsAbout(
@@ -132,13 +141,13 @@ fun Navigator(
                 },
                 navigateToOssLicenses = {
                     navigation.pushNew(Config.Settings.AboutLibraries)
-                }
+                },
             )
 
             is Settings.License -> SettingsLicense(sharedState)
             is Settings.AboutLibraries -> SettingsLicenses(sharedState)
             is Wiki -> WikiScreen(sharedState, instance.component)
-            is RootComponent.Child.PostMedia -> PostMediaScreen(instance.component)
+            is PostMedia -> PostMediaScreen(instance.component)
         }
     }
 }

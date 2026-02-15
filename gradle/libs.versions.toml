@@ -16,8 +16,7 @@ kotlinx-datetime = "0.7.1"
 
 android-compileSdk = "36"
 android-minSdk = "28"
-# 36 requires predictive back
-android-targetSdk = "35"
+android-targetSdk = "36"
 accompanist = "0.1.5"
 
 [libraries]

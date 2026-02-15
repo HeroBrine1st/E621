@@ -25,6 +25,7 @@ import com.arkivanov.decompose.router.slot.SlotNavigation
 import com.arkivanov.decompose.router.stack.ChildStack
 import com.arkivanov.decompose.router.stack.StackNavigation
 import com.arkivanov.decompose.value.Value
+import com.arkivanov.essenty.backhandler.BackHandlerOwner
 import kotlinx.serialization.Polymorphic
 import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.navigation.component.BlacklistTogglesDialogComponent
@@ -34,10 +35,15 @@ import ru.herobrine1st.e621.navigation.component.home.HomeComponent
 import ru.herobrine1st.e621.navigation.component.post.PostComponent
 import ru.herobrine1st.e621.navigation.component.posts.PostListingComponent
 import ru.herobrine1st.e621.navigation.component.search.SearchComponent
-import ru.herobrine1st.e621.navigation.component.settings.*
+import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsAboutLibrariesComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsBlacklistEntryComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsComponent
+import ru.herobrine1st.e621.navigation.component.settings.SettingsLicenseComponent
 import ru.herobrine1st.e621.navigation.config.Config
 
-interface RootComponent {
+interface RootComponent : BackHandlerOwner {
     sealed interface Child {
         class Home(val component: HomeComponent) : Child
         class Search(val component: SearchComponent) : Child
@@ -73,5 +79,8 @@ interface RootComponent {
 
     val dialogNavigation: SlotNavigation<DialogConfig>
     val dialogSlot: Value<ChildSlot<DialogConfig, DialogChild>>
+
+    fun onBackClicked()
+
 }
 
