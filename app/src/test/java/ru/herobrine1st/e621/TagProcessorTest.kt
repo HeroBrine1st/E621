@@ -92,6 +92,7 @@ val samplePost = """{
       },
       "approver_id": null,
       "uploader_id": 0,
+      "uploader_name": "redacted",
       "description": "redacted",
       "comment_count": 0,
       "is_favorited": false,
