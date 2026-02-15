@@ -34,12 +34,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.launch
 import ru.herobrine1st.autocomplete.AutocompleteSearchResult
 import ru.herobrine1st.e621.api.AutocompleteSuggestionsAPI
 import ru.herobrine1st.e621.api.Tokens
@@ -89,21 +87,7 @@ class SearchComponent private constructor(
         get() = dataStoreModule.cachedData.collectAsState().value.safeModeEnabled
 
     @CachedDataStore
-    val shouldShowAccountFillInFavouritesOfField
-        @Composable
-        get() = dataStoreModule.cachedData.collectAsState().value.auth != null && favouritesOf.isEmpty()
-
-    fun onFavouritesOfTrailingButtonClick() {
-        lifecycleScope.launch {
-            if (favouritesOf.isNotEmpty()) {
-                favouritesOf = ""
-            } else {
-                dataStoreModule.data.first().auth?.let {
-                    favouritesOf = it.username
-                }
-            }
-        }
-    }
+    val accountName @Composable get() = dataStoreModule.cachedData.collectAsState().value.auth?.username
 
     fun tagSuggestionFlow(getCurrentText: () -> String): Flow<AutocompleteSearchResult<TagSuggestion>> {
         val currentTextFlow = snapshotFlow { getCurrentText() }

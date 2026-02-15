@@ -480,29 +480,6 @@ fun Search(
                     }
                 }
             }
-            item("favourites of") {
-                SettingCard(title = stringResource(R.string.favourite_of)) {
-                    // TODO autocomplete
-                    OutlinedTextField(
-                        value = component.favouritesOf,
-                        onValueChange = { component.favouritesOf = it },
-                        label = { Text(stringResource(R.string.user)) },
-                        singleLine = true,
-                        trailingIcon = {
-                            IconButton(onClick = component::onFavouritesOfTrailingButtonClick) {
-                                if (component.shouldShowAccountFillInFavouritesOfField) Icon(
-                                    Icons.Default.AccountCircle,
-                                    contentDescription = stringResource(R.string.search_fill_myself),
-                                ) else Icon(
-                                    Icons.Default.Clear,
-                                    contentDescription = stringResource(R.string.clear),
-                                )
-                            }
-                        },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                }
-            }
 
             item("additional chips") {
                 SettingCard(title = stringResource(R.string.search_screen_additional_filters)) {
@@ -510,18 +487,69 @@ fun Search(
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalArrangement = Arrangement.spacedBy(2.dp),
                     ) {
+                        var favouritesOfDialog by remember { mutableStateOf(false) }
                         var postIdDialog by remember { mutableStateOf(false) }
                         var poolIdDialog by remember { mutableStateOf(false) }
 
+                        val favouritesOfTransition =
+                            updateTransition(component.favouritesOf.isNotEmpty(), "FavouritesOf chip transition")
                         val postIdTransition =
                             updateTransition(component.parentPostId != PostId.INVALID, "PostId chip transition")
-                        val poolIdTransition = updateTransition(component.poolId != -1, "PoolId chip transition")
+                        val poolIdTransition =
+                            updateTransition(component.poolId != -1, "PoolId chip transition")
+
+                        // targetState is synchronously updated like rememberUpdatedState
+
                         FilterChip(
-                            selected = component.parentPostId != PostId.INVALID,
+                            selected = favouritesOfTransition.targetState,
                             onClick = {
-                                if (component.parentPostId == PostId.INVALID) {
-                                    postIdDialog = true
-                                } else component.parentPostId = PostId.INVALID
+                                if (favouritesOfTransition.targetState) component.favouritesOf = ""
+                                else favouritesOfDialog = true
+                            },
+                            label = {
+                                favouritesOfTransition.AnimatedContent(
+                                    transitionSpec = {
+                                        fadeIn() togetherWith fadeOut() using SizeTransform()
+                                    },
+                                ) { set ->
+                                    // remember so doesn't change to blank
+                                    val favouritesOf = remember { component.favouritesOf }
+                                    Text(
+                                        when {
+                                            set && favouritesOf == component.accountName -> stringResource(
+                                                R.string.search_screen_favourites_of_input_chip_yourself,
+                                            )
+
+                                            set -> stringResource(
+                                                R.string.search_screen_favourites_of_input_chip,
+                                                favouritesOf,
+                                            )
+
+                                            else -> stringResource(R.string.search_screen_favourites_of_input_chip_disabled)
+                                        },
+                                    )
+                                }
+                            },
+                            leadingIcon = {
+                                favouritesOfTransition.AnimatedVisibility(
+                                    visible = { it },
+                                    enter = fadeIn() + expandIn(expandFrom = Alignment.CenterStart),
+                                    exit = shrinkOut(shrinkTowards = Alignment.CenterStart) + fadeOut(),
+                                ) {
+                                    Icon(
+                                        Icons.Default.Check,
+                                        null,
+                                        modifier = Modifier.size(FilterChipDefaults.IconSize),
+                                    )
+                                }
+                            },
+                        )
+
+                        FilterChip(
+                            selected = postIdTransition.targetState,
+                            onClick = {
+                                if (postIdTransition.targetState) component.parentPostId = PostId.INVALID
+                                else postIdDialog = true
                             },
                             label = {
                                 postIdTransition.AnimatedContent(
@@ -554,11 +582,10 @@ fun Search(
                         )
 
                         FilterChip(
-                            selected = component.poolId != -1,
+                            selected = poolIdTransition.targetState,
                             onClick = {
-                                if (component.poolId == -1) {
-                                    poolIdDialog = true
-                                } else component.poolId = -1
+                                if (!poolIdTransition.targetState) poolIdDialog = true
+                                else component.poolId = -1
                             },
                             label = {
                                 poolIdTransition.AnimatedContent(
@@ -590,7 +617,16 @@ fun Search(
                             },
                         )
 
-                        if (postIdDialog) {
+                        if (favouritesOfDialog) {
+                            UsernameInputDialog(
+                                onDismissRequest = { favouritesOfDialog = false },
+                                usernameMyself = component.accountName,
+                                onApply = {
+                                    component.favouritesOf = it
+                                    favouritesOfDialog = false
+                                },
+                            )
+                        } else if (postIdDialog) {
                             NaturalNumberInputDialog(
                                 onDismissRequest = { postIdDialog = false },
                                 title = { Text(stringResource(R.string.post_id)) },
@@ -723,6 +759,68 @@ private fun NaturalNumberInputDialog(
                     onApply(value.toIntOrNull() ?: return@TextButton)
                 },
                 enabled = value.toIntOrNull() != null,
+            ) {
+                Text(stringResource(R.string.apply))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismissRequest) {
+                Text(stringResource(R.string.dialog_dismiss))
+            }
+        },
+    )
+}
+
+@Composable
+private fun UsernameInputDialog(
+    onDismissRequest: () -> Unit,
+    usernameMyself: String?,
+    onApply: (String) -> Unit,
+) {
+    var value by remember { mutableStateOf("") }
+    val focusRequester = remember { FocusRequester() }
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismissRequest,
+        title = {
+            Text(stringResource(R.string.favourite_of))
+        },
+        text = {
+            OutlinedTextField(
+                value,
+                onValueChange = { input ->
+                    value = input
+                },
+                label = { Text(stringResource(R.string.user)) },
+                singleLine = true,
+                modifier = Modifier.focusRequester(focusRequester),
+                trailingIcon = {
+                    IconButton(
+                        onClick = {
+                            value = if (usernameMyself != null && value.isEmpty()) usernameMyself else ""
+                        },
+                    ) {
+                        if (usernameMyself != null && value.isEmpty()) Icon(
+                            Icons.Default.AccountCircle,
+                            contentDescription = stringResource(R.string.search_fill_myself),
+                        ) else Icon(
+                            Icons.Default.Clear,
+                            contentDescription = stringResource(R.string.clear),
+                        )
+                    }
+                },
+            )
+        },
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (value.isNotBlank()) onApply(value.trim())
+                },
+                enabled = value.isNotBlank(),
             ) {
                 Text(stringResource(R.string.apply))
             }
