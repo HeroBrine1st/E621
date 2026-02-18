@@ -20,8 +20,7 @@
 
 package ru.herobrine1st.e621.ui
 
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -84,12 +83,7 @@ fun Navigator(
         modifier = Modifier.fillMaxSize(),
         animation = @OptIn(ExperimentalDecomposeApi::class) predictiveBackAnimation(
             backHandler = rootComponent.backHandler,
-            fallbackAnimation = stackAnimation(
-                run {
-                    val spec = tween<Float>(durationMillis = 200, easing = CubicBezierEasing(0.7f, 0.2f, 0.0f, 0.4f))
-                    fade(spec) + reducedSlide(0.2f, spec)
-                },
-            ),
+            fallbackAnimation = stackAnimation(fade(spring()) + reducedSlide(0.2f, spring())),
             selector = { backEvent, _, _ -> androidPredictiveBackAnimatableV2(backEvent) },
             onBack = rootComponent::onBackClicked,
         ),
