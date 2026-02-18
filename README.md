@@ -4,81 +4,49 @@ Read-only Android client for e621.net. e926 is also supported but requires rebui
 
 Releases are available [here](https://github.com/HeroBrine1st/E621/releases).
 
+This application is released under GNU GPLv3 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)).
+
 # Features
 
-TL;DR you can browse, search and save ("Favorite" button) posts and view wiki. This client is mostly
-read-only.
+TL;DR you can browse, search and save ("Favorite" button) posts and view wiki. This client is mostly read-only.
 
-- [x] Search posts
-    * [x] Search by arbitrary tags
-        * You can use ``~`` (OR), ``-`` (NOT) and meta-tags (for example, ``type:png``), as tags
-          sent to the API almost as is. Underscores are hidden and instead replaced with spaces in
-          UI.
-    * [x] UI to sort search results (`order` meta-tag)
-    * [x] UI to filter by rating (safe-questionable-explicit)
-    * [x] UI to filter by file type
-    * [x] Search favourites
-        * [x] Server-side
+- View posts
+    - All formats except Adobe Flash  
+      Parity with website is kept on best-effort basis, usually after someone encounters new format
+    - Zoom images
+    - View max resolution file
+    - Post listing supports staggered grid better than one on website as unstable feature
+- Search posts
+    * Search by arbitrary tags: fancy UI and raw query support (toggleable in topbar while on search screen)
+    * UI to sort search results (`order` meta-tag)
+    * UI to filter by rating (safe-questionable-explicit)
+    * UI to filter by post type
+    * Search favourites
+        * Server-side
         * [ ] Local
     * [ ] "Micro-search" (fast local search through current results)
-  * [x] Pools support
-- [x] Safe mode on (probably) every screen with images, enabled by default with disclaimer on disable.
-- [x] Autocomplete tags
-- [x] Authorization by API key
-  - ~~Authorization by regular username and password~~ failed to circumvent CSRF despite having no browser sandboxing :-/
-    For that reason, this feature is no longer planned.
-- [x] Blacklisting
+    * Pools support
+- Safe mode on (probably) every screen with images, enabled by default with disclaimer on disable.
+- Autocomplete tags
+- Authorization by API key (auth by login/password is not provided by API thus not planned)
+- Blacklisting, with pretty basic query filtering (should be enough for most)  
+  It fetches blacklist from website on first auth, but there's no synchronisation.
     - [ ] Fancy UI to configure blacklist
-    - [x] Support for extended syntax (still incubating)
 - [ ] Hiding posts at the click of button
-- [x] Favorites
-    * [x] Add and remove
-    * [x] View
-- [x] Post screen
-    * [x] Comments
-        * [x] Read
-            * [x] Basic formatting (bold, italic, quotes)
-            * [ ] Advanced formatting (sub/sup, colors, inline post previews, links)
-    * [x] Tags
-        * [x] Add to/exclude from search
-        * [x] View wiki
-            * [x] Formatting (the same as in comments)
-- [x] Up/down score
-- [x] Basic SOCKS5 proxy support. **WARNING**: it *will* fall back to direct connection if proxy is
+- Favorites
+    * Add and remove
+    * View
+- Post screen
+    * Comments
+        * Read
+            * Basic formatting (bold, italic, quotes)
+            * [ ] Advanced formatting (sub/sup, colours, inline post previews, links)
+    * Tags
+        * Add to/exclude from search
+        * View wiki
+            * Formatting (the same as in comments)
+- Up/down score
+- (Deprecated, unsupported and likely broken) Basic SOCKS5 proxy support. **WARNING**: it *will* fall back to direct
+  connection if proxy is
   unreachable in any way
-    - [ ] Preference to control fall back behavior
-
-## File types supported
-
-- [x] JPG
-- [x] PNG
-- [x] GIF
-- [x] WEBM
-- [x] MP4
-- SWF - can't be supported
-
-# License
-
-This application is released under GNU GPLv3 (see [LICENSE](LICENSE) and [NOTICE](NOTICE)). The used
-libraries are released under different licenses, mostly Apache 2.0 and some under BSD 3-clause and
-MIT License.
-
-If you found any violation of your copyright, contact HeroBrine1st Erquilenne. See details below.
-
-# Contact
-
-To directly contact me, HeroBrine1st Erquilenne:
-
-1. Make an issue - optional, but it will speed up my answer and so highly recommended, as I don't
-   check email inbox every day.
-2. Write to project-e621-android@herobrine1st.ru - be advised that I will respond you from other
-   email address as this address is a proxy address (I'm just too lazy to set up a proper e-mail
-   server).
-
-Note that this email address is not for bugs, feature requests and anything that can be discussed
-publicly. Use Github Issues instead.
-
-P.s. (If you're curious) I use email on own domain primarily to protect from spammers: that is, I
-can easily block spam and know which site leaked my email, potentially improving my security by
-detecting leaks before they get into public, for example, when only addresses are got to spammers
-and remaining data is still being processed.
+    - [ ] Preference to control fall back behaviour
