@@ -35,17 +35,29 @@ import ru.herobrine1st.e621.util.debug
 import kotlin.uuid.Uuid
 
 @Serializable
-data class PostsSearchOptions(
-    val query: String = "",
-    val order: Order = Order.NEWEST_TO_OLDEST,
-    val orderAscending: Boolean = false,
-    val rating: Set<Rating> = emptySet(),
-    val favouritesOf: String? = null, // "favorited_by" in api
-    val types: Set<SimpleFileType> = emptySet(),
-    val parent: PostId = PostId.INVALID,
-    val poolId: PoolId = -1,
-    val randomSeed: Uuid = Uuid.generateV4(),
+@ConsistentCopyVisibility
+data class PostsSearchOptions private constructor(
+    val query: String,
+    val order: Order,
+    val orderAscending: Boolean,
+    val rating: Set<Rating>,
+    val favouritesOf: String?, // "favorited_by" in api
+    val types: Set<SimpleFileType>,
+    val parent: PostId,
+    val poolId: PoolId,
+    val randomSeed: Uuid,
 ) : SearchOptions {
+    constructor(
+        query: String = "",
+        order: Order = Order.NEWEST_TO_OLDEST,
+        orderAscending: Boolean = false,
+        rating: Set<Rating> = emptySet(),
+        favouritesOf: String? = null,
+        types: Set<SimpleFileType> = emptySet(),
+        parent: PostId = PostId.INVALID,
+        poolId: PoolId = -1,
+    ) : this(query, order, orderAscending, rating, favouritesOf, types, parent, poolId, Uuid.generateV4())
+
     private fun compileToQuery(): String = buildList {
         addAll(optimizeRatingSelection(rating))
         val fileTypes = types.flatMap { type ->
