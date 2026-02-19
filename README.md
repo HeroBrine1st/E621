@@ -28,7 +28,7 @@ TL;DR you can browse, search and save ("Favorite" button) posts and view wiki. T
     * Pools support
 - Safe mode on (probably) every screen with images, enabled by default with disclaimer on disable.
 - Autocomplete tags
-- Authorization by API key (auth by login/password is not provided by API thus not planned)
+- Authorization with API key (auth with login/password is not provided by API thus not planned)
 - Blacklisting, with pretty basic query filtering (should be enough for most)  
   It fetches blacklist from website on first auth, but there's no synchronisation.
     - [ ] Fancy UI to configure blacklist
