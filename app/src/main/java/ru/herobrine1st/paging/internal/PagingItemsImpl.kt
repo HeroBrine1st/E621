@@ -113,14 +113,14 @@ class PagingItemsImpl<Key : Any, Value : Any>(
             // SAFETY: requestChannel is never null here
             requestChannel!!.trySend(PagingRequest.Refresh)
                 .ensureSuccess(note = "Initial refresh request") { PagingRequest.Refresh }
+            check(
+                loadStates == LoadStates(
+                    prepend = LoadState.Idle,
+                    append = LoadState.Idle,
+                    refresh = LoadState.Loading,
+                ),
+            ) { "State is initialized incorrectly: got $loadStates but initial start condition is satisfied" }
             debug {
-                assert(
-                    loadStates == LoadStates(
-                        prepend = LoadState.Idle,
-                        append = LoadState.Idle,
-                        refresh = LoadState.Loading
-                    )
-                ) { "State is initialized incorrectly: got $loadStates but initial start condition is satisfied" }
                 Log.d(TAG, "Sending refresh request because immediate start is requested")
             }
             return
