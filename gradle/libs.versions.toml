@@ -71,7 +71,7 @@ okhttp = "com.squareup.okhttp3:okhttp:5.3.2"
 
 accompanist-autocomplete = { module = "ru.herobrine1st.accompanist:autocomplete", version.ref = "accompanist" }
 
-jsoup = "org.jsoup:jsoup:1.22.1"
+jsoup = "org.jsoup:jsoup:1.22.2"
 aboutlibraries-compose-material3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutlibraries" }
 
 androidx-test-ktx = { module = "androidx.test:core-ktx", version = "1.7.0" }
