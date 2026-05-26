@@ -2,7 +2,7 @@
 agp = "8.13.2"
 core = "1.7.0"
 kotlin = "2.3.21"
-ksp = "2.3.8"
+ksp = "2.3.9"
 
 aboutlibraries = "13.2.1"
 room = "2.8.4"
