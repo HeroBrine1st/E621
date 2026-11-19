@@ -45,7 +45,7 @@ class PostsSource(
             LoadResult.Page(
                 data = posts.map { TransientPost(it) },
                 previousKey = if (page == 1) null else page - 1,
-                nextKey = if (posts.size == params.requestedSize) page + 1 else null
+                nextKey = if (posts.size == limit) page + 1 else null,
             )
         } catch (t: Throwable) {
             exceptionReporter.handleRequestException(t)

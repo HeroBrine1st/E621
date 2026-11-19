@@ -33,6 +33,6 @@ import ru.herobrine1st.e621.api.model.Post
 data class GetPostsEndpoint(
     val tags: String? = null,
     val page: Int? = null, // 1 by default
-    val limit: Int? = null, // 250 by default
+    val limit: Int? = null, // 75 by default
     val mode: String = "extended", // Post model supports only extended mode
 ) : APIEndpoint<Unit, List<Post>>
