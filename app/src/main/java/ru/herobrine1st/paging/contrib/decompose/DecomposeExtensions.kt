@@ -21,7 +21,7 @@
 package ru.herobrine1st.paging.contrib.decompose
 
 import com.arkivanov.essenty.lifecycle.Lifecycle
-import com.arkivanov.essenty.lifecycle.doOnResume
+import com.arkivanov.essenty.lifecycle.doOnStart
 import com.arkivanov.essenty.lifecycle.doOnStop
 import com.arkivanov.essenty.statekeeper.StateKeeper
 import kotlinx.coroutines.CoroutineScope
@@ -38,8 +38,8 @@ import ru.herobrine1st.paging.internal.SavedPagerState
 /**
  * Collects this pager as PagingItems in Decompose component.
  *
- * The pager must be cached using [cachedIn] or its variants, and also cache should have equal or longer
- * lifespan than component itself. If violated, **behavior is undefined**.
+ * The pager must be cached using [cachedIn] or its variants, so that it has lifespan longer
+ * than of component itself. If violated, **behavior is undefined**.
  *
  * @param coroutineScope scope to launch coroutine in
  * @param lifecycle Essenty [Lifecycle] of calling component
@@ -58,7 +58,7 @@ fun <Key : Any, Value : Any> SharedFlow<Snapshot<Key, Value>>.connectToDecompose
     // if startImmediately is true, pagingItems.state.refresh is already Loading here,
     // avoiding visual bugs
 
-    lifecycle.doOnResume {
+    lifecycle.doOnStart {
         val job = coroutineScope.launch {
             pagingItems.collectPagingData()
         }
