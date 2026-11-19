@@ -28,7 +28,5 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Relationships(
     val parentId: PostId?,
-    val hasChildren: Boolean,
-    val hasActiveChildren: Boolean,
     val children: List<PostId>,
 )

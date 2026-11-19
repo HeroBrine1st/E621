@@ -20,7 +20,7 @@
 
 package ru.herobrine1st.e621.api.common
 
-import ru.herobrine1st.e621.api.model.PostReduced
+import ru.herobrine1st.e621.api.model.DeferredPost
 import ru.herobrine1st.e621.api.model.Rating
 
 data class AvatarImageCommon(
@@ -29,6 +29,6 @@ data class AvatarImageCommon(
     val rating: Rating,
 )
 
-fun PostReduced.toCommon(): AvatarImageCommon? {
+fun DeferredPost.toCommon(): AvatarImageCommon? {
     return AvatarImageCommon(id = id, url = previewUrl ?: return null, rating = rating)
 }

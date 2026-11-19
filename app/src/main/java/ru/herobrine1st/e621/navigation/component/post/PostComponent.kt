@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotApplyResult.Success.check
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.stack.StackNavigator
@@ -220,7 +221,7 @@ class PostComponent(
         if (currentFile != null) return
         val post = state.post
         val sample = when {
-            post.file.simpleType == VIDEO -> post.files.first { it.simpleType == VIDEO }
+            post.files.meta.type.simpleType == VIDEO -> post.allFiles.first { it.simpleType == VIDEO }
             else -> post.normalizedSample
         }
         setFile(sample)

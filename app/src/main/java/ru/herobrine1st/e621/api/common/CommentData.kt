@@ -24,7 +24,7 @@ import androidx.compose.ui.text.AnnotatedString
 import ru.herobrine1st.e621.api.MessageData
 import ru.herobrine1st.e621.api.MessageText
 import ru.herobrine1st.e621.api.model.CommentBB
-import ru.herobrine1st.e621.api.model.PostReduced
+import ru.herobrine1st.e621.api.model.DeferredPost
 import ru.herobrine1st.e621.api.parseBBCode
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -41,7 +41,7 @@ data class CommentData(
     val message: List<MessageData>,
 ) {
     companion object {
-        fun fromE621Comment(comment: CommentBB, authorAvatarPost: PostReduced?) =
+        fun fromE621Comment(comment: CommentBB, authorAvatarPost: DeferredPost?) =
             CommentData(
                 id = comment.id,
                 author = UserData(

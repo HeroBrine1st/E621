@@ -20,21 +20,79 @@
 
 package ru.herobrine1st.e621.api.model
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonIgnoreUnknownKeys
+import java.util.Collections.emptyMap
 
 @Serializable
-data class File(
-    val width: Int,
-    val height: Int,
+data class PostFiles(
+    val meta: FileMeta,
+    val original: FileOriginal,
+    val preview: FileVariants,
+    val sample: FileVariants,
+    val video: FileVideo? = null,
+)
+
+@Serializable
+data class FileMeta(
+    val md5: String,
     @SerialName("ext")
     val type: FileType,
     val size: Long,
-    val md5: String,
+    val duration: Float? = null,
+    val hasSample: Boolean = false,
+)
+
+@Serializable
+data class FileOriginal(
+    val width: Int,
+    val height: Int,
     // URL may be null - strange bug on API side, probably database related
-    val url: String?
+    val url: String?,
+)
+
+@Serializable
+data class FileVariants(
+    val width: Int,
+    val height: Int,
+    val jpg: String? = null,
+    val webp: String? = null,
 ) {
-    val simpleType get() = type.simpleType
+    val urls get() = listOfNotNull(jpg, webp)
+}
+
+@Serializable
+@JsonIgnoreUnknownKeys
+@OptIn(ExperimentalSerializationApi::class)
+data class FileVideo(
+    val has: Boolean = false,
+    val original: VideoAlternate? = null,
+    val variants: FileVideoVariants? = null,
+    val samples: Map<String, VideoAlternate> = emptyMap(),
+)
+
+@Serializable
+@JsonIgnoreUnknownKeys
+@OptIn(ExperimentalSerializationApi::class)
+data class FileVideoVariants(
+    val webm: VideoAlternate? = null,
+    val mp4: VideoAlternate? = null,
+)
+
+@Serializable
+@JsonIgnoreUnknownKeys
+@OptIn(ExperimentalSerializationApi::class)
+data class VideoAlternate(
+    val width: Int,
+    val height: Int,
+    val url: String,
+    val fps: Float = 0f,
+    val size: Long = 0L,
+    val codec: String? = null,
+) {
+    val type get() = FileType.byExtension[url.substringAfterLast(".")]
 }
 
 @Serializable
@@ -54,24 +112,33 @@ data class NormalizedFile(
     val simpleType get() = type.simpleType
 
     companion object {
-        operator fun invoke(file: File): NormalizedFile {
+        operator fun invoke(files: PostFiles): NormalizedFile {
             // if there's no url so be it. There's no infrastructure to handle absence of ANY file
-            return NormalizedFile("original", file.width, file.height, file.type, file.size, listOfNotNull(file.url))
-        }
-
-        operator fun invoke(file: Sample): NormalizedFile? {
             return NormalizedFile(
-                "sample",
-                file.width,
-                file.height,
-                file.type ?: return null,
-                0,
-                file.url ?: return null
+                "original",
+                files.original.width,
+                files.original.height,
+                files.meta.type,
+                files.meta.size,
+                listOfNotNull(files.original.url),
             )
         }
 
-        operator fun invoke(name: String, file: Sample.Alternates.Alternate): NormalizedFile? {
-            return NormalizedFile(name, file.width, file.height, file.type ?: return null, 0, file.url)
+        operator fun invoke(name: String, variants: FileVariants): NormalizedFile? {
+            val type = variants.urls.firstOrNull()
+                ?.let { FileType.byExtension[it.substringAfterLast(".")] } ?: return null
+            return NormalizedFile(name, variants.width, variants.height, type, 0, variants.urls)
+        }
+
+        operator fun invoke(name: String, alternate: VideoAlternate): NormalizedFile? {
+            return NormalizedFile(
+                name,
+                alternate.width,
+                alternate.height,
+                alternate.type ?: return null,
+                alternate.size,
+                alternate.url,
+            )
         }
     }
 }

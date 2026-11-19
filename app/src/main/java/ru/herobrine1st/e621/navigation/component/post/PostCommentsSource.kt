@@ -25,13 +25,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import ru.herobrine1st.e621.api.API
 import ru.herobrine1st.e621.api.common.CommentData
+import ru.herobrine1st.e621.api.model.DeferredPost
 import ru.herobrine1st.e621.api.model.PostId
-import ru.herobrine1st.e621.api.model.PostReduced
 import ru.herobrine1st.e621.api.model.parseCommentAvatarsAndGetCommentCount
 import ru.herobrine1st.e621.util.ExceptionReporter
 import ru.herobrine1st.paging.api.LoadParams
 import ru.herobrine1st.paging.api.LoadResult
 import ru.herobrine1st.paging.api.PagingSource
+import java.util.Collections.emptyList
 import kotlin.math.ceil
 import kotlin.properties.Delegates
 
@@ -41,7 +42,7 @@ class PostCommentsSource(
     private val postId: PostId,
 ) : PagingSource<Int, CommentData> {
     // commentId to post
-    private lateinit var avatars: Map<Int, PostReduced?>
+    private lateinit var avatars: Map<Int, DeferredPost?>
     private var firstPage by Delegates.notNull<Int>()
 
 //    override fun getRefreshKey(state: PagingState<Int, CommentData>): Int? {

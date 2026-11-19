@@ -20,15 +20,14 @@
 
 package ru.herobrine1st.e621.api.model
 
-import android.util.Log
 import androidx.compose.runtime.Immutable
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.Transient
 import ru.herobrine1st.e621.api.TagProcessablePost
-import ru.herobrine1st.e621.api.model.SimpleFileType.IMAGE
 import ru.herobrine1st.e621.api.serializer.ISO8601Serializer
 import ru.herobrine1st.e621.util.FavourablePost
+import java.util.Collections.emptyList
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -49,62 +48,55 @@ data class Post(
     val createdAt: Instant,
     @Serializable(with = ISO8601Serializer::class)
     val updatedAt: Instant?,
-    val file: File,
-    val preview: Preview,
-    // private due to wrapping. Some posts don't have a sample
-    private val sample: Sample,
-    override val score: Score,
-    override val tags: Tags,
-    val lockedTags: List<String> = emptyList(),
     @SerialName("change_seq")
     val changeSequence: Int,
-    val flags: PostFlags,
-    override val rating: Rating,
-    @SerialName("fav_count")
-    override val favoriteCount: Int,
-    val sources: List<String>,
-    val pools: List<PoolId>,
-    val relationships: Relationships,
-    val approverId: Int?,
-    val uploaderName: String,
+    val files: PostFiles,
     val uploaderId: Int,
+    val uploaderName: String,
+    val approverId: Int?,
+    val stats: PostStats,
+    val flags: PostFlags,
+    val has: PostHas,
+    val relationships: Relationships,
+    val pools: List<PoolId>,
+    override val rating: Rating,
+    val lockedTags: List<String> = emptyList(),
+    val sources: List<String>,
     val description: String,
-    override val commentCount: Int,
-    @SerialName("isFavorited")
-    override val isFavourite: Boolean = false,
-    val hasNotes: Boolean = false,
-    val duration: Float = 0f,
+    override val tags: Tags,
 ) : TagProcessablePost, FavourablePost {
 
     @Transient
-    val normalizedFile = NormalizedFile(file)
+    val normalizedFile = NormalizedFile(files)
 
     @Transient
-    val normalizedSample = NormalizedFile(sample) ?: normalizedFile.also {
-        if (it.simpleType != IMAGE) {
-            Log.w("Post Model", "No sample provided but file is not an image")
-        }
-    }
+    val normalizedSample = NormalizedFile("sample", files.sample) ?: normalizedFile
 
     @Transient
-    val files: List<NormalizedFile> = buildList {
+    val allFiles: List<NormalizedFile> = buildList {
         add(normalizedFile)
         normalizedSample.takeIf { it !== normalizedFile }?.let { add(it) }
-        sample.alternates?.let { alternates ->
-            addAll(alternates.samples.mapNotNull { NormalizedFile(it.key, it.value) })
+        files.video?.samples?.forEach { (name, alternate) ->
+            NormalizedFile(name, alternate)?.let { add(it) }
         }
     }.sortedWith(compareBy({ it.type.weight }, { it.width }))
+
+    override val score get() = stats.score
+    override val favoriteCount get() = stats.favCount
+    override val commentCount get() = stats.commentCount
+    override val isFavourite get() = stats.isFavourite
 }
 
 @OptIn(ExperimentalTime::class)
 @Serializable
-data class PostReduced(
+data class DeferredPost(
     val id: Int,
     val flags: String,
     val tags: String,
     val rating: Rating,
     @SerialName("file_ext")
     val type: FileType,
+    val duration: Float? = null,
     val width: Int,
     val height: Int,
     val size: Int,
@@ -117,11 +109,16 @@ data class PostReduced(
     val favoriteCount: Int,
     @SerialName("is_favorited")
     val isFavourite: Boolean,
-    val pools: String, // separator is unknown
+    val vote: Int,
+    @SerialName("comment_count")
+    val commentCount: Int,
+    val pools: String,  // space-separated
     val md5: String? = null,
     val previewUrl: String? = null,
+    val previewWebp: String? = null,
     val sampleUrl: String? = null,
+    val largeUrl: String? = null,
     val fileUrl: String? = null,
     val previewWidth: Int? = null,
-    val previewHeight: Int? = null
+    val previewHeight: Int? = null,
 )

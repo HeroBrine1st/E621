@@ -251,12 +251,12 @@ fun Post(
                                 .aspectRatio(file.aspectRatio)
                                 .fillMaxWidth()
                                 .clickable(
-                                    enabled = post.file.simpleType != VIDEO,
+                                    enabled = post.files.meta.type.simpleType != VIDEO,
                                     indication = null,
-                                    interactionSource = remember { MutableInteractionSource() }
+                                    interactionSource = remember { MutableInteractionSource() },
                                 ) {
                                     component.openToFullscreen()
-                                }
+                                },
                         ) {
                             if (!file.type.isSupported) InvalidPost(
                                 text = stringResource(
@@ -279,8 +279,8 @@ fun Post(
                                         )
                                     },
                                     modifier = Modifier.fillMaxWidth(),
-                                    actualPostFileType = post.file.type,
-                                    setSizeOriginal = true // to be loaded instantly
+                                    actualPostFileType = post.files.meta.type,
+                                    setSizeOriginal = true, // to be loaded instantly
                                 )
                             }
                         }
@@ -440,9 +440,9 @@ fun Post(
                         content = {
                             Text(stringResource(R.string.parent_post))
                             Spacer(Modifier.weight(1f))
-                        }
+                        },
                     )
-                    if (post.relationships.hasChildren && post.relationships.children.isNotEmpty()) TextButton(
+                    if (post.relationships.children.isNotEmpty()) TextButton(
                         onClick = component::openChildrenPostListing,
                         content = {
                             Text(
@@ -452,7 +452,7 @@ fun Post(
                                 )
                             )
                             Spacer(Modifier.weight(1f))
-                        }
+                        },
                     )
 
                     if (post.pools.isNotEmpty()) {
@@ -489,7 +489,7 @@ fun Post(
                         )
                     }
 
-                    if (post.relationships.hasChildren || post.relationships.parentId != null || post.pools.isNotEmpty())
+                    if (post.relationships.children.isNotEmpty() || post.relationships.parentId != null || post.pools.isNotEmpty())
                         HorizontalDivider()
                 }
                 item("show original file button") {
@@ -537,7 +537,7 @@ fun Post(
                             )
                         )
                         if (post.flags.pending) Text(stringResource(R.string.post_is_pending))
-                        if (post.hasNotes) Text(stringResource(R.string.post_has_notes))
+                        if (post.has.notes) Text(stringResource(R.string.post_has_notes))
                     }
 
                 }

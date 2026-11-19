@@ -34,9 +34,5 @@ data class GetPostsEndpoint(
     val tags: String? = null,
     val page: Int? = null, // 1 by default
     val limit: Int? = null, // 250 by default
-): APIEndpoint<Unit, GetPostsEndpoint.Response> {
-    @Serializable
-    data class Response(
-        val posts: List<Post>
-    )
-}
+    val mode: String = "extended", // Post model supports only extended mode
+) : APIEndpoint<Unit, List<Post>>

@@ -37,6 +37,6 @@ data class FavouritesSearchOptions(
         id = id ?: favouritesOf.let {
             api.getUser(favouritesOf).getOrThrow()["id"]!!.jsonPrimitive.content.toInt()
         }
-        return api.getFavourites(userId = id, page = page, limit = limit).getOrThrow().posts
+        return api.getFavourites(userId = id, page = page, limit = limit).getOrThrow()
     }
 }

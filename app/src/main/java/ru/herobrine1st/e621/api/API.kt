@@ -23,7 +23,6 @@ package ru.herobrine1st.e621.api
 import androidx.annotation.IntRange
 import kotlinx.serialization.json.JsonObject
 import ru.herobrine1st.e621.api.endpoint.favourites.AddToFavouritesEndpoint
-import ru.herobrine1st.e621.api.endpoint.favourites.GetFavouritesEndpoint
 import ru.herobrine1st.e621.api.endpoint.favourites.RemoveFromFavouritesEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.*
 import ru.herobrine1st.e621.api.model.*
@@ -46,7 +45,7 @@ interface API : AutocompleteSuggestionsAPI {
         tags: String? = null,
         page: Int? = null, // 1 by default
         limit: Int? = null, // 250 by default
-    ): Result<GetPostsEndpoint.Response>
+    ): Result<List<Post>>
 
 
     suspend fun getPost(
@@ -58,7 +57,7 @@ interface API : AutocompleteSuggestionsAPI {
         userId: Int? = null,
         page: Int? = null, // 1 by default
         limit: Int? = null, // 250 by default
-    ): Result<GetFavouritesEndpoint.Response>
+    ): Result<List<Post>>
 
     suspend fun addToFavourites(
         postId: PostId,

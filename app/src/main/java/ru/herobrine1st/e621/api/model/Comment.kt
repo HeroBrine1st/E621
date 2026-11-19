@@ -52,7 +52,7 @@ data class CommentBB(
     val updaterName: String
 )
 
-fun parseCommentAvatarsAndGetCommentCount(response: GetPostCommentsHTMLEndpoint.Response): Pair<Map<Int, PostReduced?>, Int> {
+fun parseCommentAvatarsAndGetCommentCount(response: GetPostCommentsHTMLEndpoint.Response): Pair<Map<Int, DeferredPost?>, Int> {
     val document = Jsoup.parse(response.html).body()
     return document.children().associate { article ->
         val id = article.attr("data-comment-id").toInt()

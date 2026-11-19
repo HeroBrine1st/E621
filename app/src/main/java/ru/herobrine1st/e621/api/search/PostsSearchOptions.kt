@@ -101,7 +101,7 @@ data class PostsSearchOptions private constructor(
     override val maxLimit: Int get() = E621_MAX_POSTS_IN_QUERY
 
     override suspend fun getPosts(api: API, limit: Int, page: Int): List<Post> {
-        return api.getPosts(tags = compileToQuery(), page = page, limit = limit).getOrThrow().posts
+        return api.getPosts(tags = compileToQuery(), page = page, limit = limit).getOrThrow()
     }
 
 

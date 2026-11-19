@@ -2,7 +2,7 @@
  * This file is part of ru.herobrine1st.e621.
  *
  * ru.herobrine1st.e621 is an android client for https://e621.net
- * Copyright (C) 2022-2025 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
+ * Copyright (C) 2022-2026 HeroBrine1st Erquilenne <project-e621-android@herobrine1st.ru>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,12 +20,15 @@
 
 package ru.herobrine1st.e621.api.model
 
+import androidx.compose.runtime.Immutable
 import kotlinx.serialization.Serializable
 
+@Immutable
 @Serializable
-data class Preview(
-    val width: Int,
-    val height: Int,
-    val url: String = "",
-    val alt: String = "",
+data class PostHas(
+    val parent: Boolean,
+    val children: Boolean,
+    val activeChildren: Boolean,
+    val notes: Boolean,
+    val sample: Boolean,
 )

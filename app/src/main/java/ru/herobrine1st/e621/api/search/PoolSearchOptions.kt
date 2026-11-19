@@ -45,7 +45,6 @@ data class PoolSearchOptions(
         val posts =
             api.getPosts(tags = "id:${postIds.joinToString(",") { it.value.toString() }} order:id")
                 .getOrThrow()
-                .posts
 
         assert(posts.size == postIds.size) { "Expected ${postIds.size} posts, got ${posts.size}" }
 

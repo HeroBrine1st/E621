@@ -57,7 +57,7 @@ data class TransientPost(
         post.isFavourite,
         post.commentCount,
         post.favoriteCount,
-        post.file.type,
-        post
+        post.files.meta.type,
+        post,
     )
 }

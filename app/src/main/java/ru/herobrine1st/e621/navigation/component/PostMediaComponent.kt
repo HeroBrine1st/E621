@@ -23,6 +23,7 @@ package ru.herobrine1st.e621.navigation.component
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshots.SnapshotApplyResult.Success.check
 import com.arkivanov.decompose.ComponentContext
 import ru.herobrine1st.e621.api.model.NormalizedFile
 import ru.herobrine1st.e621.api.model.Post
@@ -34,7 +35,7 @@ class PostMediaComponent(
     private val downloadManager: IDownloadManager,
     componentContext: ComponentContext,
 ) : ComponentContext by componentContext {
-    val files = post.files
+    val files = post.allFiles
 
     init {
         check(initialFile in files) { "Initial file does not belong to post" }

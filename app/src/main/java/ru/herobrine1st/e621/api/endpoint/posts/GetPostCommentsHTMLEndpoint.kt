@@ -25,8 +25,8 @@ import kotlinx.serialization.Serializable
 import ru.herobrine1st.e621.api.HttpMethod
 import ru.herobrine1st.e621.api.HttpMethodType
 import ru.herobrine1st.e621.api.endpoint.APIEndpoint
+import ru.herobrine1st.e621.api.model.DeferredPost
 import ru.herobrine1st.e621.api.model.PostId
-import ru.herobrine1st.e621.api.model.PostReduced
 
 @Serializable
 @HttpMethod(HttpMethodType.GET)
@@ -34,5 +34,5 @@ import ru.herobrine1st.e621.api.model.PostReduced
 data class GetPostCommentsHTMLEndpoint(val id: PostId) :
     APIEndpoint<Unit, GetPostCommentsHTMLEndpoint.Response> {
     @Serializable
-    data class Response(val html: String, val posts: Map<Int, PostReduced>)
+    data class Response(val html: String, val posts: Map<Int, DeferredPost>)
 }
