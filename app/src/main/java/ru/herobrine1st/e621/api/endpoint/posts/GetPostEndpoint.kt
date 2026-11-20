@@ -36,9 +36,4 @@ import ru.herobrine1st.e621.api.model.PostId
 data class GetPostEndpoint(
     val id: PostId,
     val mode: String = "extended", // Post model supports only extended mode
-): APIEndpoint<Unit, GetPostEndpoint.Response> {
-    @Serializable
-    data class Response(
-        val post: Post
-    )
-}
+) : APIEndpoint<Unit, Post>

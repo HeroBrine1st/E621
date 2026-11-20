@@ -26,7 +26,6 @@ import ru.herobrine1st.e621.api.endpoint.favourites.AddToFavouritesEndpoint
 import ru.herobrine1st.e621.api.endpoint.favourites.RemoveFromFavouritesEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsDTextEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.GetPostCommentsHTMLEndpoint
-import ru.herobrine1st.e621.api.endpoint.posts.GetPostEndpoint
 import ru.herobrine1st.e621.api.endpoint.posts.VoteEndpoint
 import ru.herobrine1st.e621.api.model.Pool
 import ru.herobrine1st.e621.api.model.Post
@@ -58,7 +57,7 @@ interface API : AutocompleteSuggestionsAPI {
 
     suspend fun getPost(
         id: PostId,
-    ): Result<GetPostEndpoint.Response>
+    ): Result<Post>
 
 
     suspend fun getFavourites(

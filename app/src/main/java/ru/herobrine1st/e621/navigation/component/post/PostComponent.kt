@@ -30,7 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotApplyResult.Success.check
 import com.arkivanov.decompose.ComponentContext
 import com.arkivanov.decompose.childContext
 import com.arkivanov.decompose.router.stack.StackNavigator
@@ -199,7 +198,7 @@ class PostComponent(
             if (state.value is PostState.Error) state.value = PostState.Loading
         }
         api.getPost(postId).map {
-            PostState.Ready(it.post)
+            PostState.Ready(it)
         }.onSuccess {
             state.value = it
         }.onFailure {
