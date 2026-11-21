@@ -8,7 +8,7 @@ aboutlibraries = "13.2.1"
 room = "2.8.5"
 ktor = "3.5.2"
 decompose = "3.5.0"
-coil = "3.5.0"
+coil = "3.6.3"
 media3 = "1.11.1"
 
 kotlinx-serialization = "1.11.0"
